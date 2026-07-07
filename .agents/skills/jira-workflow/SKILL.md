@@ -14,6 +14,7 @@ This skill is the **single source of truth** for all JIRA interactions in the **
 |---|---|
 | Cloud ID | `alphasolutionsdk.atlassian.net` |
 | Project key | `NIMBUS` |
+| Required component | `Customer Portal` |
 
 It covers four scenarios:
 
@@ -44,6 +45,7 @@ Call your harness' JIRA tool (e.g. `mcp_atlassian_getJiraIssue`) for the NIMBUS 
 - `status` (current workflow status name)
 - `issuetype` (Story / Task / Bug / Sub-task / Epic)
 - `summary` (sanity-check)
+- `components` (must include `Customer Portal`)
 
 Report assignee + status back to the user in one short line:
 
@@ -59,13 +61,21 @@ If `assignee` is `null`:
 
 If already assigned to someone else — surface it, do **not** auto-reassign.
 
-### A3. Suggest a status transition
+### A3. Ensure required component
+
+All NIMBUS issues in this project must include component `Customer Portal`.
+
+- If the issue already has `Customer Portal`, do nothing.
+- If not, update the issue to include it (preserve any existing components).
+- Confirm: *"Added component `Customer Portal` to NIMBUS-xxx."*
+
+### A4. Suggest a status transition
 
 Default: propose **In Progress** unless the issue is already past that. Always fetch the valid transitions before transitioning; workflow names vary.
 
-### A4. Don't re-run on the same issue in the same session
+### A5. Don't re-run on the same issue in the same session
 
-Once steps 1–3 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
+Once steps A1–A4 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
 
 ## B. Commit Message — JIRA Reference
 
@@ -100,6 +110,9 @@ Examples:
   "issueTypeName": "Story",
   "summary": "...",
   "description": "...",
+  "additional_fields": {
+    "components": [{ "name": "Customer Portal" }]
+  },
   "contentFormat": "markdown"
 }
 ```
@@ -218,6 +231,7 @@ Commit: `{short SHA}`
 - Silently starting changes without checking JIRA assignee/status.
 - Reassigning an issue that belongs to another teammate without asking.
 - Committing without a JIRA reference when one is available.
+- Creating or editing a NIMBUS issue without component `Customer Portal`.
 - **Transitioning an issue to Done without adding a closing comment first (§ E).** This is the most common violation — even when the user says "mark as done" or "close it", always add the comment before the transition.
 - Dumping raw analysis or agent reasoning into JIRA comments instead of the repo issue folder.
 - Writing bare workspace-relative paths in JIRA — always use the full `https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/blob/develop/...` URL.
