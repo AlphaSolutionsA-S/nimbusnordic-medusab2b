@@ -1,9 +1,9 @@
-﻿---
+---
 applyTo: "**/*.{cs,csx,cshtml,razor}"
 description: "Use when writing, reviewing, or modifying C# / .NET code for Nimbus Nordic. Enforces the Alpha C# style and idioms."
 ---
 
-# C# / .NET Style â€” Nimbus Nordic
+# C# / .NET Style — Nimbus Nordic
 
 Apply to every C# file you write or modify. Follow the official [.NET runtime coding conventions](https://learn.microsoft.com/dotnet/csharp/fundamentals/coding-style/coding-conventions) unless overridden below.
 
@@ -79,8 +79,8 @@ Do **not** use Hungarian notation. Do not abbreviate beyond well-known terms (`D
 
 - Use `ILogger<T>` via DI. No `Console.WriteLine` / `Debug.WriteLine` in production code.
 - Use structured logging placeholders, never string interpolation:
-  - âœ… `logger.LogInformation("User {UserId} signed in", userId);`
-  - âŒ `logger.LogInformation($"User {userId} signed in");`
+  - ✅ `logger.LogInformation("User {UserId} signed in", userId);`
+  - ❌ `logger.LogInformation($"User {userId} signed in");`
 - Never log secrets, tokens, full request bodies, or PII.
 
 ## Anti-patterns
@@ -89,6 +89,5 @@ Do **not** use Hungarian notation. Do not abbreviate beyond well-known terms (`D
 - `async void` (except for event handlers).
 - Static mutable state.
 - Reflection on hot paths.
-- LINQ chains longer than 4 operators on a single line â€” extract a method.
+- LINQ chains longer than 4 operators on a single line — extract a method.
 - `#region` to hide complexity instead of splitting the type.
-

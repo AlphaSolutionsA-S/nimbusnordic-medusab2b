@@ -1,4 +1,4 @@
-﻿# Alpha Solutions Agent Setup — Nimbus Nordic
+# Alpha Solutions Agent Setup - Nimbus Nordic
 
 This repository includes installed team skills and instructions for GitHub Copilot and Codex.
 

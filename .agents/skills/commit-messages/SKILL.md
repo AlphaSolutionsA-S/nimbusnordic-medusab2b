@@ -1,9 +1,9 @@
-﻿---
+---
 name: commit-messages
 description: "Use when committing code, staging changes, running `git commit`, or preparing commit messages. Enforces the Nimbus Nordic commit-message convention."
 ---
 
-# Commit Message Convention â€” Nimbus Nordic
+# Commit Message Convention — Nimbus Nordic
 
 Every commit message MUST follow the format below.
 
@@ -22,8 +22,8 @@ Where `NIMBUS-<number>|chore` is either:
 
 ## Rules
 
-- Subject line â‰¤ 72 characters.
-- Imperative mood ("Add", "Fix", "Remove") â€” never "Added", "Fixes", "Removed".
+- Subject line ≤ 72 characters.
+- Imperative mood ("Add", "Fix", "Remove") — never "Added", "Fixes", "Removed".
 - Never commit without confirming the issue reference if one exists.
 - Multi-issue commits: use the primary issue in the subject, mention the others in the body.
 
@@ -41,5 +41,4 @@ If the issue is not obvious from the conversation, refer to the issue-tracker sk
 
 - **Never** use `git add -A` or `git add .` unless the user explicitly tells you to.
 - Stage only the specific files you know were changed as part of the task.
-- Before committing, confirm the issue key with the user â€” do not assume based on context alone.
-
+- Before committing, confirm the issue key with the user — do not assume based on context alone.

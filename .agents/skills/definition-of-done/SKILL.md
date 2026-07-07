@@ -1,10 +1,10 @@
-﻿---
+---
 name: definition-of-done
 description: "Use when closing an issue, marking work complete, opening a PR, or asking 'is this done?' for Nimbus Nordic. Enforces the Alpha Definition of Done."
 argument-hint: "Issue key or PR reference"
 ---
 
-# Definition of Done â€” Nimbus Nordic
+# Definition of Done — Nimbus Nordic
 
 A change is **Done** only when every item below is true. If any item cannot be satisfied, surface it explicitly and leave the issue open (or request a documented exception).
 
@@ -14,7 +14,7 @@ A change is **Done** only when every item below is true. If any item cannot be s
 - About to mark a PR as ready for review or merge.
 - The user asks "is this ready?", "can we close this?", "is this done?".
 
-## Definition of Done â€” Checklist
+## Definition of Done — Checklist
 
 ### 1. Scope
 
@@ -91,4 +91,3 @@ A change is **Done** only when every item below is true. If any item cannot be s
 - `code-review` (review checklist)
 - `secure-coding-owasp` (security gate)
 - The tracker workflow skill (issue transitions)
-

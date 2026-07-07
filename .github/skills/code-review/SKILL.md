@@ -1,10 +1,10 @@
-﻿---
+---
 name: code-review
 description: "Use when reviewing a pull request, a diff, a patch, or staged changes for Nimbus Nordic. Applies the Alpha code-review checklist."
 argument-hint: "PR URL, branch name, or path to a diff"
 ---
 
-# Code Review Checklist â€” Nimbus Nordic
+# Code Review Checklist — Nimbus Nordic
 
 Apply this checklist on every review. Block the merge on any **Must** item; flag **Should** items as comments.
 
@@ -16,22 +16,22 @@ Apply this checklist on every review. Block the merge on any **Must** item; flag
 
 ## Procedure
 
-### Step 1 â€” Frame the change
+### Step 1 — Frame the change
 
 1. Read the linked issue (do **not** review a PR with no tracker reference unless explicitly told it is a `chore`).
 2. State in one line what the change *should* do.
-3. Skim the diff start-to-end before commenting â€” context first, line-by-line second.
+3. Skim the diff start-to-end before commenting — context first, line-by-line second.
 
-### Step 2 â€” Walk the checklist
+### Step 2 — Walk the checklist
 
 **Correctness (Must)**
 
 - [ ] Does the change actually implement the stated objective?
 - [ ] Are edge cases (empty, null, large, concurrent, unicode, timezone) handled?
-- [ ] Are error paths handled â€” not just the happy path?
+- [ ] Are error paths handled — not just the happy path?
 - [ ] Are new public APIs / DB migrations backwards compatible, or is the breakage intentional and documented?
 
-**Security (Must â€” see `secure-coding-owasp` if installed)**
+**Security (Must — see `secure-coding-owasp` if installed)**
 
 - [ ] No secrets, tokens, or PII in code, logs, or fixtures.
 - [ ] User input validated at the trust boundary; parameterised queries; safe templating.
@@ -47,7 +47,7 @@ Apply this checklist on every review. Block the merge on any **Must** item; flag
 **Readability & maintainability (Should)**
 
 - [ ] Names describe intent; no `data2`, `tempFix`, `handlerHandlerHandler`.
-- [ ] Functions do one thing; nesting depth â‰¤ 3; cyclomatic complexity reasonable.
+- [ ] Functions do one thing; nesting depth ≤ 3; cyclomatic complexity reasonable.
 - [ ] Comments explain *why*, never *what*.
 - [ ] Dead code, commented-out blocks, and stray `console.log` / `Debug.WriteLine` removed.
 
@@ -57,7 +57,7 @@ Apply this checklist on every review. Block the merge on any **Must** item; flag
 - [ ] No premature abstraction ("rule of three") and no copy-paste duplication.
 - [ ] Public surface area increased only when justified.
 
-**Performance (Should â€” only when it matters)**
+**Performance (Should — only when it matters)**
 
 - [ ] No N+1 queries on hot paths.
 - [ ] No unbounded loops, allocations, or external calls inside request handlers.
@@ -73,14 +73,14 @@ Apply this checklist on every review. Block the merge on any **Must** item; flag
 - [ ] README / runbook / ADR updated if behaviour or operations changed.
 - [ ] Public API docs updated.
 
-### Step 3 â€” Comment style
+### Step 3 — Comment style
 
 - Use prefixes so the author can scan: `must:`, `should:`, `nit:`, `question:`, `praise:`.
 - One topic per comment; avoid wall-of-text threads.
 - Suggest a concrete fix when you can ("Try `Result.unwrap_or_else(...)` here.") rather than only flagging the problem.
 - Approve only when every `must:` is resolved.
 
-### Step 4 â€” Wrap up
+### Step 4 — Wrap up
 
 Summarise in one short message:
 
@@ -91,7 +91,7 @@ Summarise in one short message:
 - Approving a PR you didn't actually read end-to-end.
 - "LGTM" with no evidence you walked the checklist.
 - Bikeshedding style while ignoring a correctness or security issue.
-- Demanding refactors unrelated to the PR's scope â€” file a follow-up issue instead.
+- Demanding refactors unrelated to the PR's scope — file a follow-up issue instead.
 - Rewriting the author's code in review comments instead of explaining the problem.
 
 ## References
@@ -99,4 +99,3 @@ Summarise in one short message:
 - `secure-coding-owasp` (security checks)
 - `commit-messages` (commit reference rules)
 - The tracker workflow skill (issue / work item linkage)
-
