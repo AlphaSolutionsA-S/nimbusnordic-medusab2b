@@ -1,10 +1,10 @@
-﻿---
+---
 name: jira-workflow
-description: "Use when starting work on a JIRA issue, switching to a new issue, being asked to 'work on NIMBUS-xxx', 'solve NIMBUS-xxx', 'fix NIMBUS-xxx', 'implement NIMBUS-xxx', or committing code. Also applies when the user pastes a Jira URL (e.g. alphasolutionsdk.atlassian.net/browse/NIMBUS-xxx). Also applies when closing, completing, or marking an issue as done â€” the agent MUST add a closing comment before transitioning to Done. Single source of truth for JIRA issue lookup, assignee/status hygiene, commit-message formatting, and technical issue documentation."
+description: "Use when starting work on a JIRA issue, switching to a new issue, being asked to 'work on NIMBUS-xxx', 'solve NIMBUS-xxx', 'fix NIMBUS-xxx', 'implement NIMBUS-xxx', or committing code. Also applies when the user pastes a Jira URL (e.g. alphasolutionsdk.atlassian.net/browse/NIMBUS-xxx). Also applies when closing, completing, or marking an issue as done — the agent MUST add a closing comment before transitioning to Done. Single source of truth for JIRA issue lookup, assignee/status hygiene, commit-message formatting, and technical issue documentation."
 argument-hint: "NIMBUS issue key (e.g. NIMBUS-42) or short description"
 ---
 
-# JIRA Workflow â€” Issue Lookup, Assignment, Status & Commit Messages
+# JIRA Workflow — Issue Lookup, Assignment, Status & Commit Messages
 
 This skill is the **single source of truth** for all JIRA interactions in the **Nimbus Nordic** project.
 
@@ -17,12 +17,12 @@ This skill is the **single source of truth** for all JIRA interactions in the **
 
 It covers four scenarios:
 
-1. **Starting work** â€” assignment + status hygiene (Â§ A).
-2. **Committing code** â€” JIRA-referenced commit messages (Â§ B).
-3. **Technical documentation** â€” repo-side issue folder for analysis, plans & data (Â§ C).
-4. **Closing an issue** â€” mandatory closing comment before Done transition (Â§ E).
+1. **Starting work** — assignment + status hygiene (§ A).
+2. **Committing code** — JIRA-referenced commit messages (§ B).
+3. **Technical documentation** — repo-side issue folder for analysis, plans & data (§ C).
+4. **Closing an issue** — mandatory closing comment before Done transition (§ E).
 
-> **HARD RULE:** Never call `transitionJiraIssue` to **Done** without first calling `addCommentToJiraIssue` with a closing summary (see Â§ E). This is the most commonly violated rule in the skill.
+> **HARD RULE:** Never call `transitionJiraIssue` to **Done** without first calling `addCommentToJiraIssue` with a closing summary (see § E). This is the most commonly violated rule in the skill.
 
 ## When this skill applies
 
@@ -31,7 +31,7 @@ It covers four scenarios:
 - The user pastes a Jira URL like `https://alphasolutionsdk.atlassian.net/browse/NIMBUS-xxx`.
 - A new issue is identified during a session (e.g. from a commit-message lookup) and you are about to start changes.
 - Switching focus from one NIMBUS issue to another.
-- The user says "mark as done", "close the issue", "mark as fixed", "transition to done", or any variant that implies completing an issue â†’ follow Â§ E.
+- The user says "mark as done", "close the issue", "mark as fixed", "transition to done", or any variant that implies completing an issue → follow § E.
 - The agent is about to commit code (any `git commit`).
 
 ## A. Mandatory Steps When Starting Work
@@ -47,7 +47,7 @@ Call your harness' JIRA tool (e.g. `mcp_atlassian_getJiraIssue`) for the NIMBUS 
 
 Report assignee + status back to the user in one short line:
 
-> `NIMBUS-42` â€” *Unassigned*, status **To Do**. Type: Task.
+> `NIMBUS-42` — *Unassigned*, status **To Do**. Type: Task.
 
 ### A2. Self-assign if unassigned
 
@@ -57,7 +57,7 @@ If `assignee` is `null`:
 2. Set `assignee` to that accountId.
 3. Confirm: *"Assigned NIMBUS-xxx to you."*
 
-If already assigned to someone else â€” surface it, do **not** auto-reassign.
+If already assigned to someone else — surface it, do **not** auto-reassign.
 
 ### A3. Suggest a status transition
 
@@ -65,9 +65,9 @@ Default: propose **In Progress** unless the issue is already past that. Always f
 
 ### A4. Don't re-run on the same issue in the same session
 
-Once steps 1â€“3 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
+Once steps 1–3 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
 
-## B. Commit Message â€” JIRA Reference
+## B. Commit Message — JIRA Reference
 
 Every commit message MUST reference a NIMBUS issue.
 
@@ -83,13 +83,13 @@ Examples:
 
 ### B2. Issue lookup workflow
 
-1. **JIRA known from context** â€” use it directly.
-2. **JIRA unclear** â€” search:
+1. **JIRA known from context** — use it directly.
+2. **JIRA unclear** — search:
    ```
    project = NIMBUS AND text ~ "<keywords>" ORDER BY updated DESC
    ```
    Present the top matches; let the user pick.
-3. **No match** â€” ask the user: create a new issue, or use `chore: <description>` (no JIRA reference).
+3. **No match** — ask the user: create a new issue, or use `chore: <description>` (no JIRA reference).
 
 ### B2a. Creating a new issue (mandatory fields)
 
@@ -108,11 +108,11 @@ Examples:
 
 - Never commit without confirming the JIRA reference.
 - Prefer the most specific issue (Story/Task over Epic).
-- Subject line â‰¤ 72 characters, imperative mood ("Add", "Fix", "Remove").
+- Subject line ≤ 72 characters, imperative mood ("Add", "Fix", "Remove").
 
 ## C. Issue References (Descriptions & Comments)
 
-### C1. Repo files â†’ full Git host URL
+### C1. Repo files → full Git host URL
 
 Never use bare workspace-relative paths in JIRA. Always link to the canonical URL on `develop` at `https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b`.
 
@@ -122,13 +122,13 @@ Never use bare workspace-relative paths in JIRA. Always link to the canonical UR
 https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/blob/develop/<repo-relative-path>
 ```
 
-### C2. Cross-issue references â†’ real Jira links
+### C2. Cross-issue references → real Jira links
 
-Use `createIssueLink` to create proper *Linked issues* entries â€” do not dump `Related: NIMBUS-10, NIMBUS-15` in description text.
+Use `createIssueLink` to create proper *Linked issues* entries — do not dump `Related: NIMBUS-10, NIMBUS-15` in description text.
 
 ### C5. Never overwrite the description of an existing issue with attachments
 
-`mcp_atlassian_editJiraIssue` replaces the entire `description` field. If the original description contained inline image attachments (screenshots pasted by a human), rewriting it strips those embeds and the attachments become orphaned â€” the screenshots disappear from the rendered view even though the files still exist on the issue.
+`mcp_atlassian_editJiraIssue` replaces the entire `description` field. If the original description contained inline image attachments (screenshots pasted by a human), rewriting it strips those embeds and the attachments become orphaned — the screenshots disappear from the rendered view even though the files still exist on the issue.
 
 Rules:
 
@@ -137,7 +137,7 @@ Rules:
 - Field edits other than `description` (assignee, status via transition, labels, links, summary) are safe and do not touch attachments.
 - If the user explicitly asks to rewrite a description that contains attachments, warn them that inline screenshots will be lost and require explicit confirmation before proceeding.
 
-## D. Technical Issue Documentation â€” Repo-Side
+## D. Technical Issue Documentation — Repo-Side
 
 **JIRA is for humans.** Keep JIRA descriptions/comments non-technical.
 
@@ -147,11 +147,11 @@ Rules:
 
 ```
 issues/
-â””â”€â”€ NIMBUS-42/
-    â”œâ”€â”€ PLAN.md
-    â”œâ”€â”€ ANALYSIS.md
-    â”œâ”€â”€ samples/
-    â””â”€â”€ notes.md
+└── NIMBUS-42/
+    ├── PLAN.md
+    ├── ANALYSIS.md
+    ├── samples/
+    └── notes.md
 ```
 
 Only `PLAN.md` is expected for every issue. Create the rest as needed.
@@ -181,7 +181,7 @@ Only `PLAN.md` is expected for every issue. Create the rest as needed.
 - [ ] {How to verify.}
 ```
 
-## E. Closing an Issue â€” Mandatory Comment Before Done
+## E. Closing an Issue — Mandatory Comment Before Done
 
 When transitioning a NIMBUS issue to **Done**, always add a closing comment **before** the transition. Never transition silently.
 
@@ -189,10 +189,10 @@ When transitioning a NIMBUS issue to **Done**, always add a closing comment **be
 
 The comment must include:
 
-1. **Branch name** â€” e.g. `feature/NIMBUS-373-sap-search-highlight`
-2. **Summary of changes** â€” concise bullet list of what was implemented
-3. **Key files changed** â€” the most important files, not an exhaustive list
-4. **Commit SHA** (optional but recommended) â€” the final commit hash
+1. **Branch name** — e.g. `feature/NIMBUS-373-sap-search-highlight`
+2. **Summary of changes** — concise bullet list of what was implemented
+3. **Key files changed** — the most important files, not an exhaustive list
+4. **Commit SHA** (optional but recommended) — the final commit hash
 
 ### E2. Template
 
@@ -211,15 +211,14 @@ Commit: `{short SHA}`
 
 1. **Add comment** via `addCommentToJiraIssue` with the closing summary.
 2. **Then transition** to Done via `transitionJiraIssue`.
-3. Never transition to Done without the comment â€” if the user asks to "close" or "mark done", add the comment first.
+3. Never transition to Done without the comment — if the user asks to "close" or "mark done", add the comment first.
 
 ## Anti-patterns
 
 - Silently starting changes without checking JIRA assignee/status.
 - Reassigning an issue that belongs to another teammate without asking.
 - Committing without a JIRA reference when one is available.
-- **Transitioning an issue to Done without adding a closing comment first (Â§ E).** This is the most common violation â€” even when the user says "mark as done" or "close it", always add the comment before the transition.
+- **Transitioning an issue to Done without adding a closing comment first (§ E).** This is the most common violation — even when the user says "mark as done" or "close it", always add the comment before the transition.
 - Dumping raw analysis or agent reasoning into JIRA comments instead of the repo issue folder.
-- Writing bare workspace-relative paths in JIRA â€” always use the full `https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/blob/develop/...` URL.
+- Writing bare workspace-relative paths in JIRA — always use the full `https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/blob/develop/...` URL.
 - Listing related tickets as plain text instead of creating Jira issue links.
-
