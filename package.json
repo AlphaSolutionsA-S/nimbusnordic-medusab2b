@@ -12,7 +12,9 @@
     "test:integration:http": "turbo run test:integration:http",
     "test:integration:modules": "turbo run test:integration:modules",
     "test:unit": "turbo run test:unit",
-    "clean": "turbo run clean && rm -rf node_modules"
+    "clean": "turbo run clean && rm -rf node_modules",
+    "backend:dev": "turbo dev --filter=@dtc/backend",
+    "storefront:dev": "turbo dev --filter=@dtc/storefront"
   },
   "devDependencies": {
     "@medusajs/eslint-plugin": "2.17.2",
