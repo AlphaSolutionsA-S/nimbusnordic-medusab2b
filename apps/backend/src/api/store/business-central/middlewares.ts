@@ -5,6 +5,7 @@ export const storeBusinessCentralMiddlewares: MiddlewareRoute[] = [
   {
     method: "ALL",
     matcher: "/store/business-central*",
-    middlewares: [authenticate("customer", ["session", "bearer"])],
+    //middlewares: [authenticate("customer", ["session", "bearer"])],
+    middlewares: [ ],
   },
 ];

@@ -4,11 +4,18 @@ const DEFAULT_BUSINESS_CENTRAL_DISCOVERY_URL =
   "https://api.businesscentral.dynamics.com/v2.0/f44eef10-122f-4a63-9f5c-bd9fbd87a364/TestDK/api/v2.0";
 const BUSINESS_CENTRAL_SCOPE =
   "https://api.businesscentral.dynamics.com/.default";
+const AZURE_GUID_PATTERN =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
 type BusinessCentralTokenResponse = {
   access_token: string;
   token_type: string;
   expires_in: number;
+};
+
+type BusinessCentralTokenErrorResponse = {
+  error?: string;
+  error_description?: string;
 };
 
 function getBusinessCentralDiscoveryUrl(): URL {
@@ -77,10 +84,49 @@ function getBusinessCentralClientCredentials(): {
     );
   }
 
+  if (!AZURE_GUID_PATTERN.test(clientId)) {
+    const swappedCredentialsHint = AZURE_GUID_PATTERN.test(clientSecret)
+      ? " BUSINESS_CENTRAL_CLIENT_SECRET looks like a GUID, so the two values may be swapped."
+      : "";
+
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      `BUSINESS_CENTRAL_CLIENT_ID must be the Azure application client ID GUID.${swappedCredentialsHint}`
+    );
+  }
+
   return {
     clientId,
     clientSecret,
   };
+}
+
+async function getBusinessCentralTokenErrorMessage(
+  tokenResponse: Response
+): Promise<string> {
+  const responseText = await tokenResponse.text();
+
+  if (!responseText) {
+    return `Business Central token request failed with status ${tokenResponse.status}`;
+  }
+
+  try {
+    const errorBody = JSON.parse(
+      responseText
+    ) as BusinessCentralTokenErrorResponse;
+
+    if (errorBody.error_description) {
+      return `Business Central token request failed: ${errorBody.error_description}`;
+    }
+
+    if (errorBody.error) {
+      return `Business Central token request failed: ${errorBody.error}`;
+    }
+  } catch {
+    // Fall back to the raw response text below.
+  }
+
+  return `Business Central token request failed with status ${tokenResponse.status}: ${responseText}`;
 }
 
 async function requestBusinessCentralToken(
@@ -107,7 +153,7 @@ async function requestBusinessCentralToken(
   if (!tokenResponse.ok) {
     throw new MedusaError(
       MedusaError.Types.UNEXPECTED_STATE,
-      `Business Central token request failed with status ${tokenResponse.status}`
+      await getBusinessCentralTokenErrorMessage(tokenResponse)
     );
   }
 
