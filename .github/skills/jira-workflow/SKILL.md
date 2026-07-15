@@ -84,9 +84,23 @@ user explicitly changes direction. Do not replace earlier entries.
 ### A6. check SCOPE.MD - Advise to use scoper agent to determine detailed scope
 - ALWAYS CHECK THIS: if no SCOPE.md file exists, output a handover prompt to the user and advise to use the scoper agent to determine detailed scope and create SCOPE.md in the same folder. ask if it should be run straight away. Please hand over to the scoper if the user confirms. you should always ask the user if they want to run the scoper agent if SCOPE.md does not exist.
 
-### A7. Don't re-run on the same issue in the same session
+### A7. Route to the next workflow agent
 
-Once steps A1–A6 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
+After completing A5 and A6, use the latest `PROGRESS.md` handover when it names a next
+agent. Otherwise, route the issue as follows:
+
+1. If `SCOPE.md` exists but `manifest.md` does not, provide a handover prompt and advise
+  using the `implementation-planner` agent to create an approved implementation plan.
+2. If `manifest.md` states `**Ready for Dispatch:** true`, provide a handover prompt and
+  advise using the `implementor` agent to execute its dependency-ready task files.
+3. If every manifest task is complete, continue with the normal closing workflow in § E.
+
+Ask whether the recommended agent should be run immediately. Do not route directly to the
+implementor without a dispatch-ready manifest.
+
+### A8. Don't re-run on the same issue in the same session
+
+Once steps A1–A7 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
 
 
 ## B. Commit Message — JIRA Reference
