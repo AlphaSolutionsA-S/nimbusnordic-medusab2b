@@ -13,7 +13,7 @@ This is a **monorepo** with two apps:
 
 | App | Path | Stack |
 |-----|------|-------|
-| Storefront | `apps/storefront/` | Next.js 16 + Medusa JS SDK |
+| Storefront | `apps/storefront/` | Next.js 15 + Medusa JS SDK |
 | Backend | `apps/backend/` | Medusa v2 (TypeScript, PostgreSQL) |
 
 ## Input
@@ -138,18 +138,19 @@ Use the following fields:
 
 **Scope:**
 <High-level description of what's included and what's not>
-
-**Scope document:** agent/wip/<project-id>/scope.md
 ```
 
-- **No file paths** in the description (except the scope document link)
 - **No code references** or technical jargon
 
-After creation:
-1. Update the scope document `**Jira:**` field with the real key.
-2. If the project ID was temporary, move the project folder to the canonical issue folder: `issues/<JIRA-KEY>/`
+After creation (do these steps **in order** before anything else):
+1. Note the returned Jira key (e.g. `NIMBUS-42`).
+2. Move the project folder to the canonical issue folder: `issues/<JIRA-KEY>/`
    (This aligns with the `jira-workflow` skill's convention of `issues/NIMBUS-{number}/`.)
-3. Update the scope document `**Project ID:**` and `**Project Folder:**` fields.
+3. Update the scope document `**Jira:**`, `**Project ID:**`, and `**Project Folder:**` fields.
+4. Edit the Jira description to append the now-correct scope document link:
+   ```
+   **Scope document:** issues/<JIRA-KEY>/scope.md
+   ```
 
 ### Step 6b — Transition to To Do (Conditional)
 
@@ -158,10 +159,6 @@ After creation:
 1. Get the available transitions for the newly created issue.
 2. Transition the issue to **"To Do"** (pick the closest matching transition name).
 
-### Step 7 — Hand Off to Implementation Planner
-
-Hand off to the `implementation-planner` agent with:
-- The **project folder path** (e.g. `issues/NIMBUS-150/` if Jira was used, or `agent/wip/<project-id>/` if not)
 
 ## Constraints
 

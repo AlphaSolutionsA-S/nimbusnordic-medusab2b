@@ -33,11 +33,11 @@ issues/
 
 ### What is `<caseid>`?
 
-`<caseid>` is the **tracker issue key**, lowercased and used verbatim as the folder name:
+`<caseid>` is the **tracker issue key**, used verbatim as the folder name (uppercase for JIRA keys):
 
-- JIRA: `lp-1234`
-- Azure DevOps: `ab-12345`
-- Linear: `eng-42`
+- JIRA: `NIMBUS-42`
+- Azure DevOps: `AB-12345`
+- Linear: `ENG-42`
 - GitHub Issues: `42`
 - **No tracker yet**: temporary id `feat-<YYYYMMDDHHmmss>-<short-slug>`, **renamed** to the real key as soon as the tracker issue is created.
 

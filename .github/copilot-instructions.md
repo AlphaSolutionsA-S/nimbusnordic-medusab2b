@@ -8,7 +8,7 @@
 
 | Path | App | Purpose |
 |------|-----|---------|
-| `apps/storefront/` | Next.js Storefront | Customer-facing storefront with  Medusa commerce |
+| `apps/storefront/` | Next.js Storefront | Customer-facing storefront with  Medusa commerce (Next.js 15) |
 | `apps/backend/` | Medusa Commerce Engine | Headless commerce API, admin dashboard, product/order management |
 
 ## Tooling

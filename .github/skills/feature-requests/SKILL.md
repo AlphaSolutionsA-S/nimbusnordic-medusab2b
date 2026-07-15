@@ -25,6 +25,7 @@ Always create or update **both** when a feature is requested, and link them to e
 issues/
 └── <caseid>/
     ├── FEATURE.md      ← this skill's output
+    ├── SCOPE.md        ← output of the scoper agent - detailed scope    
     ├── PLAN.md         ← created when work starts (tracker workflow skill)
     ├── ANALYSIS.md     ← optional design / discovery notes
     ├── mockups/        ← optional UI references
@@ -33,11 +34,11 @@ issues/
 
 ### What is `<caseid>`?
 
-`<caseid>` is the **tracker issue key**, lowercased and used verbatim as the folder name:
+`<caseid>` is the **tracker issue key**, used verbatim as the folder name (uppercase for JIRA keys):
 
-- JIRA: `lp-1234`
-- Azure DevOps: `ab-12345`
-- Linear: `eng-42`
+- JIRA: `NIMBUS-42`
+- Azure DevOps: `AB-12345`
+- Linear: `ENG-42`
 - GitHub Issues: `42`
 - **No tracker yet**: temporary id `feat-<YYYYMMDDHHmmss>-<short-slug>`, **renamed** to the real key as soon as the tracker issue is created.
 
@@ -57,12 +58,18 @@ One folder per case. Never two folders for the same case. Bugs and features shar
 ```markdown
 # {Feature title}
 
+- **Date:** <today>
+- **Status:** Feature captured
+- **Type:** <Epic|Story|Bug|Hotfix>
 - **Tracker:** JIRA — {Issue link, or "Not yet filed"}
-- **Priority:** Must / Should / Could / Won't (MoSCoW)
+- **Priority:** <Critical|High|Medium|Low>
+- **Project Folder:** issues<caseid>/
 - **Size:** XS / S / M / L / XL (T-shirt)
 - **Area:** {Component / module / page}
+- **Base Branch:** <branch name>
 - **Requested by:** {Name or stakeholder}
 - **Requested at:** {ISO-8601 UTC timestamp}
+
 
 ## Description
 {What the user wants. Plain language, no implementation details. Safe to quote verbatim in the tracker.}
@@ -105,6 +112,30 @@ Engineering detail: https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/
 - Acceptance criteria are the contract — they must match between tracker and FEATURE.md. If they drift, update both in the same commit.
 - Implementation details (architecture, data model, queries, libraries) live in `PLAN.md` and never leak into the tracker description.
 - When the feature ships, leave `issues/<caseid>/` in place as the historical record.
+
+### Step 5 - advise to use scoper agent to determine detailed scope
+- output a handover prompt to the user and advise to use the scoper agent to determine detailed scope and create SCOPE.md in the same folder. ask if it should be run straight away or later.
+- if the file issues/<caseid>/SCOPE.md already exists, advise to use the scoper agent to update it instead of creating a new one.
+- if the file issues/<caseid>/PROGRESS.md does not exist, please create it with the format
+```markdown
+# {Feature title}
+
+- **Date:** <today>
+- **Type:** <Epic|Story|Bug|Hotfix>
+- **Tracker:** JIRA — {Issue link, or "Not yet filed"}
+- **Priority:** <Critical|High|Medium|Low>
+- **Project Folder:** issues/<caseid>/
+- **Updated by:** feature skill
+- **Handover to: scoper agent
+- **handover prompt:** {prompt to the scoper agent to determine detailed scope and create SCOPE.md in the same folder}
+```
+- if the file issues/<caseid>/PROGRESS.md exists, please add to it with the format
+```markdown
+- **Date:** <today>
+- **Updated by:** feature skill
+- **Handover to: scoper agent
+- **Handover prompt:** {prompt to the scoper agent to determine detailed scope and create SCOPE.md in the same folder}
+```
 
 ## Rules
 

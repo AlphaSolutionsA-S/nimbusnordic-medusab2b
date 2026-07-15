@@ -25,7 +25,7 @@ Always create or update **both** when a bug is reported, and link them to each o
 issues/
 └── <caseid>/
     ├── BUG.md          ← this skill's output
-    ├── ANALYSIS.md     ← optional, created during investigation
+    ├── SCOPE.md     ← optional, created during SCOPE
     ├── PLAN.md         ← created when work starts (tracker workflow skill)
     ├── samples/        ← optional repro data
     └── logs/           ← optional captured logs
@@ -33,12 +33,9 @@ issues/
 
 ### What is `<caseid>`?
 
-`<caseid>` is the **tracker issue key**, lowercased and used verbatim as the folder name:
+`<caseid>` is the **tracker issue key**, used verbatim as the folder name (uppercase for JIRA keys):
 
-- JIRA: `lp-1234`
-- Azure DevOps: `ab-12345`
-- Linear: `eng-42`
-- GitHub Issues: `42`
+- JIRA: `NIMBUS-42`
 - **No tracker yet**: temporary id `bug-<YYYYMMDDHHmmss>-<short-slug>`, **renamed** to the real key as soon as the tracker issue is created.
 
 One folder per case. Never two folders for the same case.
@@ -49,7 +46,7 @@ One folder per case. Never two folders for the same case.
 
 1. Ask the user, or search the tracker for an existing match before creating a new one.
 2. If one exists → use its key as `<caseid>`.
-3. If none exists and the user wants one → defer to the installed tracker workflow skill (`jira-workflow` / `azure-devops-workflow` / `linear-workflow` / `github-issues-workflow`) to create it, then use the returned key.
+3. If none exists and the user wants one → defer to the installed tracker workflow skill (`jira-workflow`) to create it, then use the returned key.
 4. If the user explicitly does **not** want a tracker issue → use the temporary `bug-<YYYYMMDDHHmmss>-<slug>` id and note this in BUG.md.
 
 ### Step 2 — Create `issues/<caseid>/BUG.md`
@@ -107,6 +104,31 @@ Engineering detail: https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/
 - Status, severity, and assignee live in the **tracker** — do not duplicate them in BUG.md (the tracker is authoritative).
 - Reproduction steps, logs, and analysis live in the **repo** — never paste log dumps or stack traces into tracker comments.
 - When the tracker issue moves to Done, leave `issues/<caseid>/` in place as the historical record.
+
+### Step 5 - advise to use scoper agent to determine detailed scope
+- output a handover prompt to the user and advise to use the scoper agent to determine detailed scope and create SCOPE.md in the same folder. ask if it should be run straight away or later.
+- if the file issues/<caseid>/SCOPE.md already exists, advise to use the scoper agent to update it instead of creating a new one.
+- if the file issues/<caseid>/PROGRESS.md does not exist, please create it with the format
+```markdown
+# {Feature title}
+
+- **Date:** <today>
+- **Type:** <Epic|Story|Bug|Hotfix>
+- **Tracker:** JIRA — {Issue link, or "Not yet filed"}
+- **Priority:** <Critical|High|Medium|Low>
+- **Project Folder:** issues/<caseid>/
+- **Updated by:** bug reporting skill
+- **Handover to:** scoper agent
+- **Handover prompt:** {prompt to the scoper agent to determine detailed scope and create SCOPE.md in the same folder}
+```
+- if the file issues/<caseid>/PROGRESS.md exists, please add to it with the format
+```markdown
+- **Date:** <today>
+- **Updated by:** bug reporting skill
+- **Handover to:** scoper agent
+- **Handover prompt:** {prompt to the scoper agent to determine detailed scope and create SCOPE.md in the same folder}
+```
+
 
 ## Rules
 
