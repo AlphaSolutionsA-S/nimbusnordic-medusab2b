@@ -30,8 +30,9 @@ If no path is provided, search for `**/scope.md` files under `agent/wip/` and `i
 
 ### Step 1 — Read the Scope
 
-1. Read `scope.md` and other files from the project folder
-2. Extract: title, type, priority, base branch, affected apps, requirements.
+1. Read `scope.md`, `PROGRESS.md` when present, and other files from the project folder.
+2. Extract: title, type, priority, base branch, affected apps, requirements, and the latest
+   handover state.
 3. If no scope document exists, ask the user: *"There's no scope document in this folder. Would you like to run the scoper agent first, or provide the requirements directly?"*
 
 ### Step 2 — Determine Base Branch
@@ -258,6 +259,7 @@ Ask: **"Does this plan look correct? Should I proceed to dispatch?"**
 - **Priority:** <Critical|High|Medium|Low>
 - **Project Folder:** issues/<caseid>/
 - **Updated by:** implementation-planner agent
+- **Outcome:** Implementation plan is ready; implementation is the next stage.
 - **Handover to:** implementor agent
 - **Handover prompt:** {prompt to the implementor agent to implement the code based on the implementation plan and task files in the same folder}
 ```
@@ -265,6 +267,7 @@ Ask: **"Does this plan look correct? Should I proceed to dispatch?"**
 ```markdown
 - **Date:** <today>
 - **Updated by:** implementation-planner agent
+- **Outcome:** Implementation plan is ready; implementation is the next stage.
 - **Handover to:** implementor agent
 - **Handover prompt:** {prompt to the implementor agent to implement the code based on the implementation plan and task files in the same folder}
 ```

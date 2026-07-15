@@ -50,6 +50,8 @@ A change is **Done** only when every item below is true. If any item cannot be s
 - [ ] README, runbook, or ADR updated if behaviour, operations, or architecture changed.
 - [ ] Public API documentation updated.
 - [ ] Repo-side `issues/<id>/PLAN.md` reflects the final approach and verification steps.
+- [ ] Repo-side `issues/<id>/PROGRESS.md` was checked and records the final outcome, blocker,
+      or next owner.
 
 ### 7. Operability
 
@@ -75,7 +77,8 @@ A change is **Done** only when every item below is true. If any item cannot be s
 
 1. Walk the checklist in order.
 2. For each unchecked item, decide: **block** (must fix), **defer** (file a follow-up issue and link it), or **waive** (require explicit user approval and record the waiver in the issue).
-3. Only after every item is resolved, transition the issue and confirm to the user:
+3. Append the final outcome or handover to `issues/<id>/PROGRESS.md` before closing the issue.
+4. Only after every item is resolved, transition the issue and confirm to the user:
 
    > `{ISSUE-KEY}` meets Definition of Done. Closed.
 

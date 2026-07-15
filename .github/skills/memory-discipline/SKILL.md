@@ -19,7 +19,7 @@ This skill defines where information is allowed to live.
 
 | Information | Lives in | Why |
 |---|---|---|
-| **Per-case** notes, analysis, repro data, plans | `issues/<caseid>/` (PLAN.md, ANALYSIS.md, notes.md, samples/, logs/) | Mirrors the tracker case; reviewable in PRs; survives developer turnover |
+| **Per-case** notes, analysis, repro data, plans, and workflow handovers | `issues/<caseid>/` (PROGRESS.md, PLAN.md, ANALYSIS.md, notes.md, samples/, logs/) | Mirrors the tracker case; reviewable in PRs; survives developer turnover |
 | **Repo-wide** conventions, build commands, deployment quirks, agent rules | `AGENTS.md`, `.github/copilot-instructions.md`, `CLAUDE.md`, or an installed skill (`.github/skills/`, `.claude/skills/`, `.cursor/rules/`) | One source of truth, version controlled, visible to every teammate and every harness |
 | **Repo-scoped working notes** for *this clone only* (e.g. local TODOs while exploring) | Repo-scoped memory (`/memories/repo/` if your harness supports it) | Stays with the workspace; doesn't pollute user memory |
 | **Cross-project agent ergonomics** (e.g. "I prefer concise answers") | User-scope memory | Genuinely personal; not project knowledge |

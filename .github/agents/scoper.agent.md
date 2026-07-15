@@ -52,6 +52,10 @@ The project folder will be created at the **workspace root**: `issues/<caseid>/`
 
 Ask focused questions. Do not proceed until you have a clear understanding.
 
+When an issue folder already exists, read `PROGRESS.md` before starting the workflow. Use
+its latest entry to identify the current handover state and do not supersede it until the
+scoping outcome is ready to append.
+
 For an existing Jira issue with an empty or insufficient description, the issue summary is
 not a sufficient understanding. Ask the missing questions before researching or drafting.
 
@@ -225,6 +229,7 @@ After creation (do these steps **in order** before anything else):
 - **Priority:** <Critical|High|Medium|Low>
 - **Project Folder:** issues/<caseid>/
 - **Updated by:** scoper agent
+- **Outcome:** Scope approved; implementation planning is the next stage.
 - **Handover to:** implementation-planner agent
 - **handover prompt:** {prompt to the implementation-planner agent to implement the plan based on the detailed scope and SCOPE.md in the same folder}
 ```
@@ -232,6 +237,7 @@ After creation (do these steps **in order** before anything else):
 ```markdown
 - **Date:** <today>
 - **Updated by:** scoper agent
+- **Outcome:** Scope approved; implementation planning is the next stage.
 - **Handover to:** implementation-planner agent
 - **Handover prompt:** {prompt to the implementation-planner agent to implement the plan based on the detailed scope and SCOPE.md in the same folder}
 ```

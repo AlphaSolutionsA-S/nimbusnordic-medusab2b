@@ -72,3 +72,11 @@ When working on Medusa-related code, load the appropriate skill:
 
 - github-copilot-vscode
 - codex
+
+## Issue Progress Records
+
+For work associated with `issues/<caseid>/`, check `PROGRESS.md` before acting when it
+exists. Treat its latest entry as the current workflow state and handover target. Before
+finishing a workflow stage, append a dated entry that records the outcome, the next owner,
+and any handover prompt. If the issue folder has no `PROGRESS.md`, create it when your
+workflow first records a handover; never replace earlier entries.

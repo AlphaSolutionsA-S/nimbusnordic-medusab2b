@@ -75,12 +75,18 @@ All NIMBUS issues in this project must include component `Customer Portal`.
 
 Default: propose **In Progress** unless the issue is already past that. Always fetch the valid transitions before transitioning; workflow names vary.
 
-### A5. check SCOPE.MD - Advise to use scoper agent to determine detailed scope
+### A5. Check Issue Progress
+
+Before acting on a NIMBUS issue, check `issues/NIMBUS-<number>/PROGRESS.md` when it
+exists. Read the latest entry, report its current handover target, and follow it unless the
+user explicitly changes direction. Do not replace earlier entries.
+
+### A6. check SCOPE.MD - Advise to use scoper agent to determine detailed scope
 - ALWAYS CHECK THIS: if no SCOPE.md file exists, output a handover prompt to the user and advise to use the scoper agent to determine detailed scope and create SCOPE.md in the same folder. ask if it should be run straight away. Please hand over to the scoper if the user confirms. you should always ask the user if they want to run the scoper agent if SCOPE.md does not exist.
 
-### A6. Don't re-run on the same issue in the same session
+### A7. Don't re-run on the same issue in the same session
 
-Once steps A1–A4 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
+Once steps A1–A6 have completed for an issue, treat it as "checked in" and skip the workflow on subsequent edits.
 
 
 ## B. Commit Message — JIRA Reference
@@ -168,13 +174,14 @@ Rules:
 issues/
 └── NIMBUS-42/
     ├── SCOPE.md
+  ├── PROGRESS.md
     ├── PLAN.md
     ├── ANALYSIS.md
     ├── samples/
     └── notes.md
 ```
 
-Only `PLAN.md` is expected for every issue. Create the rest as needed.
+Use `PROGRESS.md` for dated workflow outcomes and handovers. Create the other files as needed.
 
 ### PLAN.md template
 

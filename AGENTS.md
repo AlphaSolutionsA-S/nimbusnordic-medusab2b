@@ -248,3 +248,11 @@ Do not prefix interfaces with `I`. Do not suffix types with `Type` unless disamb
 - Barrel files (`index.ts` re-exporting everything) that hurt tree-shaking; only export what is part of the public API.
 - Side effects at module top level (work that runs on import).
 - `useEffect` to derive state — derive in render or use `useMemo`.
+
+## Issue Progress Records
+
+For work associated with `issues/<caseid>/`, check `PROGRESS.md` before acting when it
+exists. Treat its latest entry as the current workflow state and handover target. Before
+finishing a workflow stage, append a dated entry that records the outcome, the next owner,
+and any handover prompt. If the issue folder has no `PROGRESS.md`, create it when your
+workflow first records a handover; never replace earlier entries.

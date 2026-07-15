@@ -25,6 +25,7 @@ Always create or update **both** when a bug is reported, and link them to each o
 issues/
 └── <caseid>/
     ├── BUG.md          ← this skill's output
+    ├── PROGRESS.md     ← current workflow outcome and handover
     ├── SCOPE.md     ← optional, created during SCOPE
     ├── PLAN.md         ← created when work starts (tracker workflow skill)
     ├── samples/        ← optional repro data
@@ -48,6 +49,8 @@ One folder per case. Never two folders for the same case.
 2. If one exists → use its key as `<caseid>`.
 3. If none exists and the user wants one → defer to the installed tracker workflow skill (`jira-workflow`) to create it, then use the returned key.
 4. If the user explicitly does **not** want a tracker issue → use the temporary `bug-<YYYYMMDDHHmmss>-<slug>` id and note this in BUG.md.
+5. If `issues/<caseid>/PROGRESS.md` exists, read its latest entry before creating or updating
+    the bug record.
 
 ### Step 2 — Create `issues/<caseid>/BUG.md`
 
@@ -118,6 +121,7 @@ Engineering detail: https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/
 - **Priority:** <Critical|High|Medium|Low>
 - **Project Folder:** issues/<caseid>/
 - **Updated by:** bug reporting skill
+- **Outcome:** Bug captured; scoping is the next stage.
 - **Handover to:** scoper agent
 - **Handover prompt:** {prompt to the scoper agent to determine detailed scope and create SCOPE.md in the same folder}
 ```
@@ -125,6 +129,7 @@ Engineering detail: https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b/
 ```markdown
 - **Date:** <today>
 - **Updated by:** bug reporting skill
+- **Outcome:** Bug captured; scoping is the next stage.
 - **Handover to:** scoper agent
 - **Handover prompt:** {prompt to the scoper agent to determine detailed scope and create SCOPE.md in the same folder}
 ```
