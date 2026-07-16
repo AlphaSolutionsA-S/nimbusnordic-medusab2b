@@ -2,13 +2,17 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework";
-import { getBusinessCentralOperations } from "../../../../utils/business-central-client";
+import { BUSINESS_CENTRAL_MODULE } from "../../../../modules/business-central";
+import type { IBusinessCentralModuleService } from "../../../../modules/business-central/types";
 
 export const GET = async (
-  _req: AuthenticatedMedusaRequest,
+  req: AuthenticatedMedusaRequest,
   res: MedusaResponse
 ) => {
-  const operations = await getBusinessCentralOperations();
+  const businessCentralService =
+    req.scope.resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
+
+  const operations = await businessCentralService.getOperations();
 
   res.json({
     operations,
