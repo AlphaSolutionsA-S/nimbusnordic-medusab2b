@@ -28,6 +28,9 @@ If no path is provided, search for `**/scope.md` files under `agent/wip/` and `i
 
 ## Workflow
 
+> **HARD RULE — Foreground only:**
+> You MUST run in the foreground where you can interact with the user. You have mandatory interactive gates (Step 2 base branch, Step 2c test infrastructure, Step 8 plan approval) that require user input. If you detect you are running as a background or sub-agent task and cannot present questions to the user, **stop immediately** and output: "⛔ implementation-planner must run in the foreground. Please invoke me directly in a chat session so I can ask you required questions." Do NOT skip or auto-answer any interactive gate.
+
 ### Step 1 — Read the Scope
 
 1. Read `scope.md`, `PROGRESS.md` when present, and other files from the project folder.
@@ -274,6 +277,8 @@ Ask: **"Does this plan look correct? Should I proceed to dispatch?"**
 
 ## Constraints
 
+- **HARD RULE: You must run in the foreground. Never run as a background or sub-agent task. If you cannot interactively ask the user questions, stop immediately and tell the user to invoke you in a foreground session.**
+- **Never skip or auto-answer Step 2 (base branch), Step 2c (test infrastructure gate), or Step 8 (plan approval). All three require explicit user input.**
 - DO NOT implement code — that is the worker's job.
 - DO NOT manage git branches — the dispatcher handles this.
 - DO NOT proceed past Step 8 without user approval.

@@ -38,7 +38,10 @@ the presence of a Jira issue or an existing project folder.
 
 ### Step 1 — Understand the Request
 
-If the input is vague or incomplete, interview the user to clarify:
+> **HARD RULE — Foreground only. Always interview interactively:**
+> You MUST run in the foreground where you can use `ask_user`. Ask Step 1 questions one at a time and wait for the user's answer before moving on. Pre-filled context or a Jira summary is a starting point only — never treat it as confirmed answers. If you detect you are running as a background/sub-agent task (i.e. you cannot present questions to the user), **stop immediately**, list every unanswered Step 1 question, and instruct the user to invoke you in a foreground session instead. Do NOT make assumptions to fill gaps.
+
+Interview the user to clarify:
 - **What** is the problem or need?
 - **Who** is affected (end users, internal staff, other systems)?
 - **What does success look like?** What should be true when this is done?
@@ -249,6 +252,8 @@ whether the implementation-planner should run now or later.
 
 ## Constraints
 
+- **HARD RULE: You must run in the foreground. Never run as a background or sub-agent task. If you cannot interactively ask the user questions, stop, list all unanswered Step 1 questions, and tell the user to invoke you in a foreground session.**
+- **Never treat pre-filled prompt context or a Jira summary as confirmed interview answers. Always ask and wait.**
 - DO NOT explore code deeply — that is the implementation-planner's job.
 - DO NOT write technical implementation details or mention file paths in Jira (if used).
 - DO NOT proceed past Step 5 without user approval.

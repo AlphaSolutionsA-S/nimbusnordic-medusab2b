@@ -1,0 +1,31 @@
+# NIMBUS-136 Progress
+
+## 2026-07-16 — Scoping complete
+
+**Outcome:** Created implementation-ready scope for Jira story `NIMBUS-136` (`Show order list`). The scope documents current storefront account order-list behavior, existing Medusa Store Orders API usage, backend order-related findings, UX states, acceptance criteria, technical tasks, risks, assumptions, and open questions.
+
+**Next owner:** implementation-planner
+
+**Handover prompt:**
+
+You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\SCOPE.md` and create an implementation plan for the Customer Portal order-list story. Keep Jira business-facing and write technical planning only under `issues\NIMBUS-136\`. Investigate the existing storefront account order-list path, especially `apps\storefront\src\app\[countryCode]\(main)\account\@dashboard\orders\page.tsx`, `apps\storefront\src\lib\data\orders.ts`, `apps\storefront\src\modules\account\components\order-overview\index.tsx`, and `apps\storefront\src\modules\account\components\order-card\index.tsx`. Also verify backend/auth implications in `apps\backend\src\api\middlewares.ts`, `apps\backend\src\links\order-company.ts`, and `apps\backend\src\workflows\hooks\order-created.ts`. Decide whether built-in Medusa `sdk.store.order.list` and `sdk.store.order.retrieve` are sufficient, or whether a protected backend route is needed for company-wide/customer-safe access. Produce implementation tasks with dependencies, validation steps, and explicit handling of loading, empty, error, populated, pagination, and unauthorized states. Do not modify source code during planning.
+
+## 2026-07-16 - Interview-driven scope revision
+
+**Outcome:** Re-scoped `NIMBUS-136` using explicit interview decisions: company-wide visibility, Business Central-only order source for first delivery, all BC statuses, required status/date/search filters, required pagination with default page size 20, pending approvals removed/moved off `/account/orders`, and BC-backed order details explicitly deferred to `NIMBUS-137`.
+
+**Next owner:** implementation-planner
+
+**Handover prompt:**
+
+You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\SCOPE.md` and produce an implementation plan aligned to the locked interview decisions: company-wide orders, Business Central-only list source, all BC statuses, status/date/search filters, pagination with default page size 20, and removal/move of pending approvals from `/account/orders`. Keep BC-backed order details out of scope and reference `NIMBUS-137` for details work. Keep Jira business-facing and store technical planning in repo issue files only.
+
+## 2026-07-16 - Route split and nav clarification
+
+**Outcome:** Updated scope with explicit route split decision: keep existing `/account/orders` UI unchanged (approvals stay there), add dedicated BC history route `/account/bcorders`, and add an account navigation item `BC Orders` linking to `/account/bcorders`.
+
+**Next owner:** implementation-planner
+
+**Handover prompt:**
+
+You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\SCOPE.md` and produce an implementation plan aligned to the locked decisions: company-wide Business Central orders on `/account/bcorders`, all BC statuses, status/date/search filters, pagination default 20, add `BC Orders` nav link, keep `/account/orders` unchanged with approvals, and keep BC-backed details out of scope for `NIMBUS-136` (tracked by `NIMBUS-137`). Keep Jira business-facing and store technical planning only in repo issue files.

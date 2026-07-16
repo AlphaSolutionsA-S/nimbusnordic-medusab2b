@@ -81,22 +81,48 @@ Before acting on a NIMBUS issue, check `issues/NIMBUS-<number>/PROGRESS.md` when
 exists. Read the latest entry, report its current handover target, and follow it unless the
 user explicitly changes direction. Do not replace earlier entries.
 
-### A6. check SCOPE.MD - Advise to use scoper agent to determine detailed scope
-- ALWAYS CHECK THIS: if no SCOPE.md file exists, output a handover prompt to the user and advise to use the scoper agent to determine detailed scope and create SCOPE.md in the same folder. ask if it should be run straight away. Please hand over to the scoper if the user confirms. you should always ask the user if they want to run the scoper agent if SCOPE.md does not exist.
+### A6. Check SCOPE.md — Direct user to run the scoper agent in the foreground
+
+- ALWAYS CHECK THIS: if no `issues/NIMBUS-<number>/SCOPE.md` exists, scoping has not been done.
+
+> **HARD RULE — Never launch the scoper as a background or sub-agent task.**
+>
+> The scoper agent MUST run in the foreground so it can conduct its Step 1 interview interactively with the user. A background scoper cannot use `ask_user` and will substitute assumptions for real answers — this is the exact failure mode we are preventing.
+>
+> **Required action when SCOPE.md is missing:**
+> 1. Tell the user that scoping is needed before implementation can begin.
+> 2. Provide the following ready-to-use instruction for the user to paste into a **new chat session** (or invoke directly in a foreground agent context):
+>
+> ```
+> @scoper Please scope NIMBUS-<number>. Jira issue: https://alphasolutionsdk.atlassian.net/browse/NIMBUS-<number>. Interview me interactively before writing any scope document.
+> ```
+>
+> 3. **Stop here.** Do not proceed past A6 until `SCOPE.md` exists. Do not launch the scoper yourself. Do not conduct the interview yourself on behalf of the scoper.
 
 ### A7. Route to the next workflow agent
 
-After completing A5 and A6, use the latest `PROGRESS.md` handover when it names a next
-agent. Otherwise, route the issue as follows:
+After completing A5 and A6, use the latest `PROGRESS.md` handover when it names a next agent. Otherwise, route the issue as follows.
 
-1. If `SCOPE.md` exists but `manifest.md` does not, provide a handover prompt and advise
-  using the `implementation-planner` agent to create an approved implementation plan.
-2. If `manifest.md` states `**Ready for Dispatch:** true`, provide a handover prompt and
-  advise using the `implementor` agent to execute its dependency-ready task files.
+> **HARD RULE — Never launch implementation-planner or implementor as a background or sub-agent task.**
+> Both agents have mandatory interactive gates (base branch confirmation, test infrastructure gate, plan approval) that require user input. A background run skips those gates silently, producing plans or code that bypass critical checks.
+>
+> For each routing case below, give the user the ready-to-use instruction and **stop**. Do not launch the agent yourself.
+
+1. If `SCOPE.md` exists but `manifest.md` does not, tell the user the next step is implementation planning and provide this prompt:
+
+   ```
+   @implementation-planner Please plan NIMBUS-<number>. Project folder: issues/NIMBUS-<number>
+   ```
+
+2. If `manifest.md` states `**Ready for Dispatch:** true`, tell the user the next step is implementation and provide this prompt:
+
+   ```
+   @implementor Please implement NIMBUS-<number>. Project folder: issues/NIMBUS-<number>
+   ```
+
 3. If every manifest task is complete, continue with the normal closing workflow in § E.
 
-Ask whether the recommended agent should be run immediately. Do not route directly to the
-implementor without a dispatch-ready manifest.
+**Stop after providing the routing prompt.** Do not proceed further until the user has run the recommended agent and returned.
 
 ### A8. Don't re-run on the same issue in the same session
 
