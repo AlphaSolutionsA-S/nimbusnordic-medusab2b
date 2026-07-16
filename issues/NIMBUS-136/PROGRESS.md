@@ -20,6 +20,25 @@ You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbu
 
 You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\SCOPE.md` and produce an implementation plan aligned to the locked interview decisions: company-wide orders, Business Central-only list source, all BC statuses, status/date/search filters, pagination with default page size 20, and removal/move of pending approvals from `/account/orders`. Keep BC-backed order details out of scope and reference `NIMBUS-137` for details work. Keep Jira business-facing and store technical planning in repo issue files only.
 
+## 2026-07-16 — Implementation complete
+
+**Outcome:** All four tasks implemented and committed on `feature/NIMBUS-136` (commit `b8f411f`). Backend builds cleanly. Storefront TypeScript compiles cleanly; static-path fetch failure at build time is a pre-existing infra constraint (no backend running during CI build), not a code error.
+
+**Changes:**
+- `apps/backend/src/api/store/bc-orders/` — new authenticated GET endpoint
+- `apps/backend/src/modules/business-central/service.ts` — `listOrders()` added
+- `apps/backend/src/modules/business-central/types.ts` — interface extended
+- `apps/storefront/src/app/[countryCode]/(main)/account/@dashboard/bcorders/` — new page + loading state
+- `apps/storefront/src/modules/account/components/bc-order-*` — card, filters, overview components
+- `apps/storefront/src/types/bc-order.ts` — shared BC order types
+- `apps/storefront/src/modules/account/components/account-nav/index.tsx` — BC Orders nav link added
+
+**Next owner:** reviewer / QA
+
+**Handover prompt:**
+
+Review `feature/NIMBUS-136` against the acceptance criteria in `issues/NIMBUS-136/SCOPE.md`. Verify: authenticated users see company-scoped BC orders on `/account/bcorders`; status/date/search filters work; pagination defaults to 20; `/account/orders` and approvals are unchanged; BC-backed order details are NOT present (deferred to NIMBUS-137).
+
 ## 2026-07-16 - Route split and nav clarification
 
 **Outcome:** Updated scope with explicit route split decision: keep existing `/account/orders` UI unchanged (approvals stay there), add dedicated BC history route `/account/bcorders`, and add an account navigation item `BC Orders` linking to `/account/bcorders`.
