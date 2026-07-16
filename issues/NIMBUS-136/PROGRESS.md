@@ -29,3 +29,12 @@ You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbu
 **Handover prompt:**
 
 You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\SCOPE.md` and produce an implementation plan aligned to the locked decisions: company-wide Business Central orders on `/account/bcorders`, all BC statuses, status/date/search filters, pagination default 20, add `BC Orders` nav link, keep `/account/orders` unchanged with approvals, and keep BC-backed details out of scope for `NIMBUS-136` (tracked by `NIMBUS-137`). Keep Jira business-facing and store technical planning only in repo issue files.
+
+---
+
+## 2026-07-16 — Implementation plan complete
+
+- **Updated by:** implementation-planner agent
+- **Outcome:** Implementation plan is ready; implementation is the next stage.
+- **Handover to:** implementor agent
+- **Handover prompt:** You are the implementor for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\manifest.md` and implement all four tasks in dependency order (01 → 02 → 03 → 04). Task files are in `issues\NIMBUS-136\`. Work on branch `feature/NIMBUS-136` from `develop`. Do not implement BC-backed order detail pages — those are NIMBUS-137. After each task, run `pnpm build` (from repo root) to verify no TypeScript errors before proceeding to the next task.
