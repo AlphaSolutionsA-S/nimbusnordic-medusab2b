@@ -11,6 +11,7 @@ export interface CompanyDTO {
   zip: string | null;
   country: string | null;
   logo_url: string | null;
+  business_central_customer_number: string | null;
   employees?: EmployeeDTO[];
   currency_code: string | null;
   customer_group?: CustomerGroupDTO;

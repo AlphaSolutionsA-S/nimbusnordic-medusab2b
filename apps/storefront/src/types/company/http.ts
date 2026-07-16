@@ -25,6 +25,7 @@ export type StoreCreateCompany = {
   country?: string | null
   logo_url?: string | null
   spending_limit_reset_frequency?: ModuleCompanySpendingLimitResetFrequency | null
+  business_central_customer_number?: string | null
 }
 
 export type StoreUpdateCompany = Partial<StoreCreateCompany> & {

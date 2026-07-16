@@ -55,7 +55,7 @@ const CompanyCard = ({
           className={clx(
             "grid grid-cols-2 gap-4 border-b border-neutral-200 overflow-hidden transition-all duration-300 ease-in-out ",
             {
-              "max-h-[422px] opacity-100 p-4": isEditing,
+              "max-h-[560px] opacity-100 p-4": isEditing,
               "max-h-0 opacity-0": !isEditing,
             }
           )}
@@ -202,6 +202,23 @@ const CompanyCard = ({
               )}
             </Select>
           </div>
+          <div className="flex flex-col gap-y-2">
+            <Text className="font-medium text-neutral-950">
+              BC Customer Number
+            </Text>
+            <Input
+              label="BC Customer Number"
+              name="business_central_customer_number"
+              value={companyData.business_central_customer_number || ""}
+              onChange={(e) =>
+                setCompanyData({
+                  ...companyData,
+                  business_central_customer_number:
+                    e.target.value || null,
+                })
+              }
+            />
+          </div>
         </form>
         <div
           className={clx(
@@ -247,6 +264,16 @@ const CompanyCard = ({
                 company.spending_limit_reset_frequency?.slice(1)}
             </Text>
           </div>
+          {company.business_central_customer_number && (
+            <div className="flex flex-col gap-y-2">
+              <Text className="font-medium text-neutral-950">
+                BC Customer Number
+              </Text>
+              <Text className=" text-neutral-500">
+                {company.business_central_customer_number}
+              </Text>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-end gap-2 bg-neutral-50 p-4">

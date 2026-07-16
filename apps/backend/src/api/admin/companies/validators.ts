@@ -18,6 +18,11 @@ export const AdminCreateCompany = z
     zip: z.string().optional(),
     country: z.string().optional(),
     logo_url: z.string().optional(),
+    business_central_customer_number: z
+      .string()
+      .regex(/^\d+$/, "Business Central customer number must be numeric only")
+      .optional()
+      .nullable(),
   })
   .strict();
 
@@ -34,6 +39,11 @@ export const AdminUpdateCompany = z
     zip: z.string().optional(),
     country: z.string().optional(),
     logo_url: z.string().optional().nullable(),
+    business_central_customer_number: z
+      .string()
+      .regex(/^\d+$/, "Business Central customer number must be numeric only")
+      .optional()
+      .nullable(),
   })
   .strict();
 

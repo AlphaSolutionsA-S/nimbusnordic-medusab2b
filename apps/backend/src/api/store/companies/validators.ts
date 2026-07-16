@@ -23,6 +23,11 @@ export const StoreCreateCompany = z
       .enum(["never", "daily", "weekly", "monthly", "yearly"])
       .optional()
       .nullable(),
+    business_central_customer_number: z
+      .string()
+      .regex(/^\d+$/, "Business Central customer number must be numeric only")
+      .optional()
+      .nullable(),
   })
   .strict();
 
@@ -41,6 +46,11 @@ export const StoreUpdateCompany = z
     logo_url: z.string().optional().nullable(),
     spending_limit_reset_frequency: z
       .enum(["never", "daily", "weekly", "monthly", "yearly"])
+      .optional()
+      .nullable(),
+    business_central_customer_number: z
+      .string()
+      .regex(/^\d+$/, "Business Central customer number must be numeric only")
       .optional()
       .nullable(),
   })

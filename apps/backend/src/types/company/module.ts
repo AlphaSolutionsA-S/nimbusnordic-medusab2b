@@ -24,6 +24,7 @@ export type ModuleCompany = {
   country: string | null;
   logo_url: string | null;
   currency_code: string | null;
+  business_central_customer_number: string | null;
   spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency;
   created_at: Date;
   updated_at: Date;
@@ -42,6 +43,7 @@ export type ModuleCreateCompany = {
   country: string | null;
   logo_url: string | null;
   currency_code: string;
+  business_central_customer_number?: string | null;
   spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency | null;
 };
 

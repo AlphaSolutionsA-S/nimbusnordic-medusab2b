@@ -273,5 +273,127 @@ medusaIntegrationTestRunner({
         expect(response.status).toEqual(204);
       });
     });
+
+    describe("Business Central customer number", () => {
+      it("TC-1: creates company with numeric business_central_customer_number", async () => {
+        const response = await api.post(
+          "/store/companies",
+          {
+            name: "BC Company",
+            email: "bc@company.com",
+            currency_code: "USD",
+            business_central_customer_number: "123456",
+          },
+          storeHeaders
+        );
+
+        expect(response.status).toEqual(200);
+        expect(response.data.companies[0]).toMatchObject({
+          business_central_customer_number: "123456",
+        });
+      });
+
+      it("TC-2: rejects non-numeric business_central_customer_number on create", async () => {
+        const { response } = await api
+          .post(
+            "/store/companies",
+            {
+              name: "BC Company",
+              email: "bc@company.com",
+              currency_code: "USD",
+              business_central_customer_number: "ABC123",
+            },
+            storeHeaders
+          )
+          .catch((e) => e);
+
+        expect(response.status).toEqual(400);
+      });
+
+      it("TC-3: updates company with numeric business_central_customer_number", async () => {
+        const createResponse = await api.post(
+          "/store/companies",
+          {
+            name: "BC Company",
+            email: "bc@company.com",
+            currency_code: "USD",
+          },
+          storeHeaders
+        );
+        const company = createResponse.data.companies[0];
+
+        const updateResponse = await api.post(
+          `/store/companies/${company.id}`,
+          { business_central_customer_number: "98765" },
+          storeHeaders
+        );
+
+        expect(updateResponse.status).toEqual(200);
+        expect(updateResponse.data.company).toMatchObject({
+          business_central_customer_number: "98765",
+        });
+      });
+
+      it("TC-4: rejects non-numeric business_central_customer_number on update", async () => {
+        const createResponse = await api.post(
+          "/store/companies",
+          {
+            name: "BC Company",
+            email: "bc@company.com",
+            currency_code: "USD",
+            business_central_customer_number: "11111",
+          },
+          storeHeaders
+        );
+        const company = createResponse.data.companies[0];
+
+        const { response } = await api
+          .post(
+            `/store/companies/${company.id}`,
+            { business_central_customer_number: "12A34" },
+            storeHeaders
+          )
+          .catch((e) => e);
+
+        expect(response.status).toEqual(400);
+
+        const getResponse = await api.get(
+          `/store/companies/${company.id}`,
+          storeHeaders
+        );
+        expect(getResponse.data.company.business_central_customer_number).toEqual(
+          "11111"
+        );
+      });
+
+      it("TC-5: no regression when business_central_customer_number is absent", async () => {
+        const createResponse = await api.post(
+          "/store/companies",
+          {
+            name: "No BC Company",
+            email: "nobc@company.com",
+            currency_code: "USD",
+          },
+          storeHeaders
+        );
+
+        expect(createResponse.status).toEqual(200);
+        expect(
+          createResponse.data.companies[0].business_central_customer_number
+        ).toBeNull();
+
+        const company = createResponse.data.companies[0];
+        const updateResponse = await api.post(
+          `/store/companies/${company.id}`,
+          { name: "No BC Company Updated" },
+          storeHeaders
+        );
+
+        expect(updateResponse.status).toEqual(200);
+        expect(
+          updateResponse.data.company.business_central_customer_number
+        ).toBeNull();
+      });
+    });
   },
 });

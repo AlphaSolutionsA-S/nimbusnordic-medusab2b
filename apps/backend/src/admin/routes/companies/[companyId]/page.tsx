@@ -95,6 +95,14 @@ const CompanyDetails = () => {
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell className="font-medium font-sans txt-compact-small">
+                    BC Customer Number
+                  </Table.Cell>
+                  <Table.Cell>
+                    {company?.business_central_customer_number || "-"}
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell className="font-medium font-sans txt-compact-small">
                     Customer Group
                   </Table.Cell>
                   <Table.Cell>

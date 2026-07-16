@@ -11,6 +11,7 @@ export const storeCompanyFields = [
   "zip",
   "country",
   "currency_code",
+  "business_central_customer_number",
   "*employees",
   "*approval_settings",
 ];

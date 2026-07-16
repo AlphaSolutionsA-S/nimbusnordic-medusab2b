@@ -152,6 +152,14 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="https://example.com/logo.png"
           />
+          <Label size="xsmall">Business Central Customer Number</Label>
+          <Input
+            type="text"
+            name="business_central_customer_number"
+            value={formData.business_central_customer_number || ""}
+            onChange={handleChange}
+            placeholder="123456"
+          />
         </div>
       </Drawer.Body>
       <Drawer.Footer>

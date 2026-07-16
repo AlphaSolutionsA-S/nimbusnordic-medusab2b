@@ -18,6 +18,7 @@ export type ModuleCompany = {
   country: string | null
   logo_url: string | null
   currency_code: string | null
+  business_central_customer_number: string | null
   spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency
   created_at: string
   updated_at: string
