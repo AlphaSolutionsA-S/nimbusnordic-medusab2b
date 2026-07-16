@@ -24,3 +24,9 @@
 - **Outcome:** Plan updated to explicitly include admin dashboard company controls for the Business Central customer number in addition to backend and storefront surfaces.
 - **Handover to:** implementor agent
 - **Handover prompt:** Implement NIMBUS-131 using `issues/NIMBUS-131/manifest.md`, `issues/NIMBUS-131/PLAN.md`, `issues/NIMBUS-131/01-backend-business-central-customer-number-implementation.md`, `issues/NIMBUS-131/03-admin-company-business-central-customer-number-ui-implementation.md`, and `issues/NIMBUS-131/02-storefront-business-central-customer-number-implementation.md`. Preserve scope exactly: add a manually maintained numeric-only `business_central_customer_number` on backend company; expose it through relevant backend APIs/workflows/query fields; add admin company create/update/details controls for the field; surface it in storefront company/customer information where present; and keep no-regression behavior when value is absent.
+
+- **Date:** 2026-07-15
+- **Updated by:** implementor agent
+- **Outcome:** Implementation complete. All 16 files changed in commit `962f951` on branch `agents/nimbus-131-business-central-customer-number`. Backend build: 0 errors. Storefront tsc: 0 new errors (4 pre-existing in unrelated files). Integration tests extended with TC-1..TC-5. Ready for PR review, migration run, and integration test run.
+- **Handover to:** developer / PR reviewer
+- **Handover prompt:** Review and merge branch `agents/nimbus-131-business-central-customer-number`. Run `pnpm backend:migrate` to apply `Migration20260715000000`. Run `cd apps/backend && pnpm test:integration:http` to verify. Close NIMBUS-131 after merge.
