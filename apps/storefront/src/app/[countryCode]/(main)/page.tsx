@@ -1,7 +1,9 @@
+import { retrieveCustomer } from "@/lib/data/customer"
 import FeaturedProducts from "@/modules/home/components/featured-products"
 import Hero from "@/modules/home/components/hero"
 import SkeletonFeaturedProducts from "@/modules/skeletons/templates/skeleton-featured-products"
 import { Metadata } from "next"
+import { redirect } from "next/navigation"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
@@ -13,9 +15,14 @@ export const metadata: Metadata = {
 export default async function Home(props: {
   params: Promise<{ countryCode: string }>
 }) {
+  const customer = await retrieveCustomer()
   const params = await props.params
 
   const { countryCode } = params
+
+  if (!customer) {
+    redirect(`/${countryCode}/account`)
+  }
 
   return (
     <div className="flex flex-col gap-y-2 m-2">

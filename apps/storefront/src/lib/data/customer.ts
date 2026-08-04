@@ -61,6 +61,23 @@ export const updateCustomer = async (body: HttpTypes.StoreUpdateCustomer) => {
   return updateRes
 }
 
+export const updatePassword = async (body: {
+  old_password: string
+  new_password: string
+}) => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  return await sdk.client
+    .fetch<{ success: boolean }>(`/store/customers/me/password`, {
+      method: "POST",
+      body,
+      headers,
+    })
+    .catch(medusaError)
+}
+
 export async function signup(_currentState: unknown, formData: FormData) {
   const password = formData.get("password") as string
   const customerForm = {

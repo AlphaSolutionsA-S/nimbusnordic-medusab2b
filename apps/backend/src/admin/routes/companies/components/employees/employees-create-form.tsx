@@ -30,7 +30,7 @@ export function EmployeesCreateForm({
     company_id: company.id,
     is_admin: false,
     spending_limit: "0",
-    customer_id: "",
+    password: "",
   });
 
   const handleChange = (
@@ -107,6 +107,22 @@ export function EmployeesCreateForm({
               onChange={handleChange}
               placeholder="0612345678"
             />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label size="xsmall" className="txt-compact-small font-medium">
+              Initial Password
+            </Label>
+            <Input
+              type="password"
+              name="password"
+              onChange={handleChange}
+              placeholder="••••••••"
+              autoComplete="new-password"
+              minLength={8}
+            />
+            <Text size="xsmall" className="text-ui-fg-subtle">
+              The employee uses this password to sign in. Minimum 8 characters.
+            </Text>
           </div>
         </div>
         <div className="flex flex-col gap-3">

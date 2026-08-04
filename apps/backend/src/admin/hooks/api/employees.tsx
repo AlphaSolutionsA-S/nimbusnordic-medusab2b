@@ -15,6 +15,7 @@ import {
 } from "@tanstack/react-query";
 import { sdk } from "../../lib/client";
 import { queryKeysFactory } from "../../lib/query-key-factory";
+import { companyQueryKey } from "./companies";
 
 export const employeeQueryKey = queryKeysFactory("employee");
 
@@ -72,6 +73,9 @@ export const useCreateEmployee = (
     onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({
         queryKey: employeeQueryKey.list(companyId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: companyQueryKey.detail(companyId),
       });
       options?.onSuccess?.(data, variables, context);
     },
