@@ -30,5 +30,19 @@ module.exports = defineConfig({
     [BUSINESS_CENTRAL_MODULE]: {
       resolve: "./modules/business-central",
     },
+    [ "notification" ]: {
+      resolve: "@medusajs/medusa/notification",
+      options: {
+        providers: [
+          {
+            resolve: "@medusajs/medusa/notification-local",
+            id: "local",
+            options: {
+              channels: ["email"],
+            },
+          },
+        ],
+      },
+    }
   },
 });

@@ -1,4 +1,5 @@
 export * from "./create-employees";
+export * from "./delete-auth-identity";
 export * from "./delete-employees";
 export * from "./link-employee-to-customer";
 export * from "./register-customer-identity";

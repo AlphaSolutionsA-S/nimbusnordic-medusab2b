@@ -1,9 +1,11 @@
 import { Trash } from "@medusajs/icons";
 import { Button, Prompt } from "@medusajs/ui";
+import type { ReactNode } from "react";
 
 interface DeletePromptProps {
   handleDelete: () => void;
   loading: boolean;
+  children?: ReactNode;
   open: boolean;
   setOpen: (open: boolean) => void;
 }
@@ -11,6 +13,7 @@ interface DeletePromptProps {
 export const DeletePrompt = ({
   handleDelete,
   loading,
+  children,
   open,
   setOpen,
 }: DeletePromptProps) => {
@@ -27,6 +30,7 @@ export const DeletePrompt = ({
           Are you sure you want to delete this item? This action cannot be
           undone.
         </Prompt.Description>
+        {children}
         <Prompt.Footer>
           <Button
             variant="danger"

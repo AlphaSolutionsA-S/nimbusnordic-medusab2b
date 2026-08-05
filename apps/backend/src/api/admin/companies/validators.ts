@@ -113,6 +113,13 @@ export const AdminUpdateEmployee = z
   })
   .strict();
 
+export type AdminDeleteEmployeeType = z.infer<typeof AdminDeleteEmployee>;
+export const AdminDeleteEmployee = z
+  .object({
+    delete_customer_account: z.boolean().default(false),
+  })
+  .strict();
+
 /* Approval Settings Validators */
 export type AdminGetApprovalSettingsParamsType = z.infer<
   typeof AdminGetApprovalSettingsParams

@@ -95,6 +95,13 @@ export const StoreUpdateEmployee = z
   })
   .strict();
 
+export type StoreDeleteEmployeeType = z.infer<typeof StoreDeleteEmployee>;
+export const StoreDeleteEmployee = z
+  .object({
+    delete_customer_account: z.boolean().default(false),
+  })
+  .strict();
+
 /* Approval Settings Validators */
 export type StoreGetApprovalSettingsParamsType = z.infer<
   typeof StoreGetApprovalSettingsParams

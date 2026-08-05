@@ -121,21 +121,36 @@ export const useUpdateEmployee = (
 
 export const useDeleteEmployee = (
   companyId: string,
-  options?: UseMutationOptions<void, FetchError, string>
+  options?: UseMutationOptions<
+    void,
+    FetchError,
+    { employeeId: string; delete_customer_account: boolean }
+  >
 ) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (employeeId: string) =>
+    mutationFn: (
+      variables: { employeeId: string; delete_customer_account: boolean }
+    ) =>
       sdk.client.fetch<void>(
-        `/admin/companies/${companyId}/employees/${employeeId}`,
+        `/admin/companies/${companyId}/employees/${variables.employeeId}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: {
+            delete_customer_account: variables.delete_customer_account,
+          },
         }
       ),
     onSuccess: (data: any, variables: any, context: any) => {
       queryClient.invalidateQueries({
         queryKey: employeeQueryKey.list(companyId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: companyQueryKey.detail(companyId),
       });
       options?.onSuccess?.(data, variables, context);
     },

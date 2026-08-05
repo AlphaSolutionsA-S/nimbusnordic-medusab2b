@@ -9,6 +9,7 @@ import {
 } from "../../../../../../workflows/employee/workflows";
 import {
   AdminGetEmployeeParamsType,
+  AdminDeleteEmployeeType,
   AdminUpdateEmployeeType,
 } from "../../../validators";
 
@@ -66,15 +67,17 @@ export const POST = async (
 };
 
 export const DELETE = async (
-  req: AuthenticatedMedusaRequest,
+  req: AuthenticatedMedusaRequest<AdminDeleteEmployeeType>,
   res: MedusaResponse
 ) => {
   const { id, employeeId } = req.params;
+  const { delete_customer_account } = req.validatedBody;
 
   await deleteEmployeesWorkflow.run({
     input: {
-      id: employeeId,
+      employee_id: employeeId,
       company_id: id,
+      delete_customer_account,
     },
     container: req.scope,
   });

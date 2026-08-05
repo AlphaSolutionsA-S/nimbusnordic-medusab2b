@@ -16,20 +16,35 @@ import {
   StoreUpdateEmployee,
 } from "@/types"
 import { HttpTypes } from "@medusajs/types"
-import { CurrencyInput, Prompt, Text, clx, toast } from "@medusajs/ui"
+import {
+  Checkbox,
+  CurrencyInput,
+  Label,
+  Prompt,
+  Text,
+  clx,
+  toast,
+} from "@medusajs/ui"
 import { useState } from "react"
 
 const RemoveEmployeePrompt = ({ employee }: { employee: QueryEmployee }) => {
   const [isRemoving, setIsRemoving] = useState(false)
+  const [deleteCustomerAccount, setDeleteCustomerAccount] = useState(false)
 
   const handleRemove = async () => {
     setIsRemoving(true)
-    await deleteEmployee(employee.company_id, employee.id).catch(() => {
+    try {
+      await deleteEmployee(
+        employee.company_id,
+        employee.id,
+        deleteCustomerAccount
+      )
+      toast.success("Employee deleted")
+    } catch {
       toast.error("Error deleting employee")
-    })
-    setIsRemoving(false)
-
-    toast.success("Employee deleted")
+    } finally {
+      setIsRemoving(false)
+    }
   }
 
   return (
@@ -46,6 +61,17 @@ const RemoveEmployeePrompt = ({ employee }: { employee: QueryEmployee }) => {
             no longer be able to purchase on behalf of your company.
           </Prompt.Description>
         </Prompt.Header>
+        <div className="flex items-center gap-3 px-6 pb-6">
+          <Checkbox
+            checked={deleteCustomerAccount}
+            onCheckedChange={(checked) =>
+              setDeleteCustomerAccount(Boolean(checked))
+            }
+          />
+          <Label className="txt-compact-small font-medium">
+            Also delete the linked customer account and login
+          </Label>
+        </div>
         <Prompt.Footer>
           <Prompt.Cancel className="h-10 rounded-full shadow-borders-base">
             Cancel
@@ -53,6 +79,7 @@ const RemoveEmployeePrompt = ({ employee }: { employee: QueryEmployee }) => {
           <Prompt.Action
             className="h-10 px-4 rounded-full shadow-none"
             onClick={handleRemove}
+            disabled={isRemoving}
           >
             Remove
           </Prompt.Action>

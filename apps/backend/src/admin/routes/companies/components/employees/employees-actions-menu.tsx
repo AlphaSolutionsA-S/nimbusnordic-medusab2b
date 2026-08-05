@@ -1,5 +1,5 @@
 import { EllipsisHorizontal, PencilSquare, Trash } from "@medusajs/icons";
-import { DropdownMenu, IconButton, toast } from "@medusajs/ui";
+import { Checkbox, DropdownMenu, IconButton, Label, toast } from "@medusajs/ui";
 import { useState } from "react";
 import { EmployeesUpdateDrawer } from ".";
 import { QueryCompany, QueryEmployee } from "../../../../../types";
@@ -15,15 +15,22 @@ export const EmployeesActionsMenu = ({
 }) => {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteCustomerAccount, setDeleteCustomerAccount] = useState(false);
   const { mutateAsync: mutateDelete, isPending: loadingDelete } =
     useDeleteEmployee(employee.company_id);
 
   const handleDelete = async () => {
-    await mutateDelete(employee.id, {
-      onSuccess: () => {
-        toast.success(`Employee deleted successfully`);
+    await mutateDelete(
+      {
+        employeeId: employee.id,
+        delete_customer_account: deleteCustomerAccount,
       },
-    });
+      {
+        onSuccess: () => {
+          toast.success(`Employee deleted successfully`);
+        },
+      }
+    );
   };
 
   return (
@@ -45,7 +52,10 @@ export const EmployeesActionsMenu = ({
           <DropdownMenu.Separator />
           <DropdownMenu.Item
             className="gap-x-2"
-            onClick={() => setDeleteOpen(true)}
+            onClick={() => {
+              setDeleteCustomerAccount(false);
+              setDeleteOpen(true);
+            }}
           >
             <Trash />
             Delete
@@ -61,6 +71,19 @@ export const EmployeesActionsMenu = ({
       />
       <DeletePrompt
         handleDelete={handleDelete}
+        children={
+          <div className="flex items-center gap-3">
+            <Checkbox
+              checked={deleteCustomerAccount}
+              onCheckedChange={(checked) =>
+                setDeleteCustomerAccount(Boolean(checked))
+              }
+            />
+            <Label className="txt-compact-small font-medium">
+              Also delete the linked customer account and login
+            </Label>
+          </div>
+        }
         loading={loadingDelete}
         open={deleteOpen}
         setOpen={setDeleteOpen}

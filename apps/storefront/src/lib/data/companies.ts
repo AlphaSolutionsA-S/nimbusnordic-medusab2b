@@ -137,7 +137,11 @@ export const updateEmployee = async (data: StoreUpdateEmployee) => {
   return employee
 }
 
-export const deleteEmployee = async (companyId: string, employeeId: string) => {
+export const deleteEmployee = async (
+  companyId: string,
+  employeeId: string,
+  deleteCustomerAccount = false
+) => {
   const headers = {
     ...(await getAuthHeaders()),
   }
@@ -146,6 +150,9 @@ export const deleteEmployee = async (companyId: string, employeeId: string) => {
     `/store/companies/${companyId}/employees/${employeeId}`,
     {
       method: "DELETE",
+      body: {
+        delete_customer_account: deleteCustomerAccount,
+      },
       headers,
     }
   )
