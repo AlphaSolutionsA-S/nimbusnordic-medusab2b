@@ -17,7 +17,7 @@
     "storefront:dev": "turbo dev --filter=@dtc/storefront"
   },
   "devDependencies": {
-    "@medusajs/eslint-plugin": "2.17.2",
+    "@medusajs/eslint-plugin": "2.18.0",
     "eslint": "^9.13.0",
     "jiti": "^2.7.0",
     "turbo": "^2.3.3"
