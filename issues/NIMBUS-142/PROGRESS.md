@@ -1,0 +1,196 @@
+# NIMBUS-142 Progress
+
+## 2026-08-05 - Scoping complete
+
+**Outcome:** Created the initial scope for Jira story `NIMBUS-142` (`Create claim
+information page`). Jira contained only the story title, so the scope is grounded in the
+existing Customer Portal account-dashboard implementation and the title's explicit
+"information page" wording. The story is limited to a signed-in `/account/claims` page,
+a desktop/mobile account-navigation entry, approved process guidance, and an approved
+support destination. Claim submission, order-item selection, uploads, and all backend
+claim workflows are explicitly excluded.
+
+Official Medusa documentation was checked: its `beginClaimOrderWorkflow` underpins the
+Admin claim-creation route, with no ready-made customer Store API. A future submission
+capability therefore requires separate product scope and custom backend authorisation,
+workflow, and API design.
+
+**Issue hygiene:** `NIMBUS-142` was assigned to Klaus Petersen. It remains in **Scoping**,
+which is appropriate while business-owned copy and support-channel decisions are pending.
+
+**Next owner:** Product owner, then implementation-planner
+
+**Handover prompt:**
+
+Confirm the following product inputs for `NIMBUS-142`: (1) the approved claim-process
+copy, (2) the support destination (email, telephone, or external portal), and (3) whether
+the page is visible to every authenticated employee or company administrators only. After
+those inputs are confirmed, act as the implementation-planner for `NIMBUS-142` in
+`D:\projects\Nimbus\nimbusnordic-medusab2b`. Read
+`issues\NIMBUS-142\SCOPE.md` and create an implementation plan limited to the storefront:
+an authenticated `@dashboard/claims/page.tsx` route and a `Claims` link in both variants
+of `apps\storefront\src\modules\account\components\account-nav\index.tsx`. Reuse the
+existing account login guard and account-page conventions. Do not add a backend route,
+workflow, data model, migration, claim submission form, order-item selector, upload, or
+any mutation. Include focused page/navigation tests and the storefront lint/build checks.
+
+## 2026-08-05 - Scope revised for Admin-managed content
+
+**Outcome:** The scope now includes a native Medusa content-management capability. An
+authenticated Medusa Admin user edits one structured Claims Information record through a
+custom Admin UI route; protected Admin APIs persist it, and a customer-authenticated Store
+API serves it to the storefront page. This supersedes the initial static-copy assumption.
+
+The selected approach is a custom Medusa module and Admin UI, not Payload or another
+external CMS. The repository already uses Medusa custom modules, protected Admin routes,
+and Admin UI routes, so the native solution avoids another service, content store,
+authentication boundary, and deployment surface for one page. The editor is intentionally
+structured and plain-text only: title, introductory copy, guidance, support-action label,
+and support-action URL. Raw HTML, rich-text rendering, page-builder editing, media,
+versioning, and publishing workflow are out of scope.
+
+**Confirmed product decision:** Every authenticated Customer Portal employee can view the
+page. Medusa Admin users alone can edit it.
+
+**Next owner:** Product owner, then implementation-planner
+
+**Handover prompt:**
+
+Confirm the approved initial claim-process copy and support destination for `NIMBUS-142`.
+Then act as the implementation-planner for `NIMBUS-142` in
+`D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-142\SCOPE.md` and plan a
+native Medusa content-management implementation: a singleton custom content module plus
+migration, protected Admin read/update routes, a customer-authenticated Store read route,
+and a custom Admin UI route using the existing Medusa Admin patterns. The Storefront route
+`@dashboard/claims/page.tsx` must use the SDK-backed Store API helper and display
+structured plain text; add Claims navigation links in both account-nav variants. Use a
+workflow for the Admin update mutation, validate inputs at the API boundary, and ensure
+untrusted text is never rendered as HTML. Do not add Payload, another CMS, a claim form,
+order-item selection, uploads, claim workflow, or any customer mutation. Include focused
+backend, Admin UI, and storefront tests plus backend/storefront lint and build validation.
+
+## 2026-08-05 - Rich text and images added to scope
+
+**Outcome:** The Claims Information editor now requires a constrained rich-text authoring
+experience with headings, paragraphs, emphasis, lists, links, and inline images. Content
+is stored as Markdown rather than raw HTML. The storefront uses an allowlisted Markdown
+renderer with raw HTML disabled, building on the existing `react-markdown` pattern in the
+storefront.
+
+Images are uploaded by authenticated Medusa Admin users through Medusa's File Module and
+embedded using the returned public URL with required alt text. The current backend has no
+explicit durable file provider; production implementation must configure an S3-compatible
+File Module provider before enabling image publishing. Upload validation must limit files
+to approved raster-image MIME types and a defined size limit, reject SVG/active content,
+and refuse arbitrary external image URLs.
+
+**Next owner:** Product owner, then implementation-planner
+
+**Handover prompt:**
+
+Confirm the approved initial claim content, support destination, and the production
+S3-compatible object-storage provider/configuration for `NIMBUS-142`. Then act as the
+implementation-planner for `NIMBUS-142` in
+`D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-142\SCOPE.md` and plan a
+native Medusa implementation with a singleton content module, migration, protected Admin
+read/update APIs, a customer-authenticated Store read API, and a custom Admin UI route.
+Use a constrained rich Markdown editor supporting headings, paragraphs, bold, italic,
+lists, links, and inline images; use Medusa's authenticated upload flow and File Module
+for image uploads, not arbitrary external URLs. Require alt text, validate image MIME type
+and size server-side, reject SVG and active content, and use public access only for images
+intended for the authenticated portal. Store Markdown rather than HTML and render it in
+the storefront without raw HTML support. Add Claims navigation links for every
+authenticated employee and include focused backend, Admin UI, and storefront tests plus
+lint/build validation. Do not add Payload, another CMS, a page builder, raw HTML,
+iframe/script embeds, arbitrary external images, a claim form, or any customer mutation.
+
+## 2026-08-10 - Scope revised to Payload CMS
+
+**Outcome:** `NIMBUS-142` now uses Payload as a dedicated CMS service for the Claims page
+only. The previous native Medusa editor proposal is superseded. Payload owns the Claims
+page's allowlisted blocks, rich content, media, drafts, preview, publishing, and
+content-admin experience; the storefront server-renders published content at
+`/account/claims`.
+
+Payload is explicitly not used for products or any other commerce domain. Medusa remains
+the system of record for product, price, inventory, cart, checkout, quote, order, customer,
+company, approval, Business Central, and claim data. Additional portal pages and templates
+are future work and require their own scope.
+
+Payload requires its own initial content-administrator accounts, database, object storage,
+hosting, backups, monitoring, and secret management. Shared Medusa/Payload authentication
+or SSO is deferred. The storefront controls employee access through its existing account
+guard and retrieves only published Payload content with a server-only integration.
+
+**Next owner:** Product owner, then implementation-planner
+
+**Handover prompt:**
+
+Confirm Payload hosting, PostgreSQL, S3-compatible media storage, initial Payload content
+administrators, and approved Claims-page copy/images for `NIMBUS-142`. Then act as the
+implementation-planner for `NIMBUS-142` in
+`D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-142\SCOPE.md` and plan the
+first Payload integration only: deploy/configure Payload with persistent storage and secure
+secrets; define a `portal-pages` collection containing only the singleton Claims page plus
+a media collection; enable drafts/publish and allowlisted Rich Text, Image, Callout, CTA,
+and FAQ blocks. Add a server-only storefront client that retrieves published Claims content
+and render it through fixed block components at `/account/claims`, with navigation in both
+account-nav variants. Preserve the existing Customer Portal login guard and allow every
+authenticated employee to view the published page. Do not add Payload product, catalog,
+price, order, customer, claim, or other commerce collections; do not add arbitrary page
+building, raw HTML/scripts/iframes, SSO, or another editable portal page. Include Payload
+access/publishing/media tests, storefront integration tests, lint/build checks, and a
+deployed draft/publish verification.
+
+## 2026-08-10 - Azure persistence decisions confirmed
+
+**Outcome:** Payload will use Azure Database for PostgreSQL through a connection string
+provided outside the repository. Claims-page media will use Payload's Azure Blob Storage
+adapter. The implementation must configure both through deployment environment variables;
+no database connection string, storage credential, or other secret belongs in source
+control.
+
+**Remaining infrastructure question:** choose the hosting target for the Payload
+application itself. Initial Payload content administrators and approved Claims-page content
+and images also remain to be confirmed.
+
+**Next owner:** implementation-planner
+
+**Handover prompt:**
+
+Plan `NIMBUS-142` using the confirmed infrastructure decisions in
+`issues\NIMBUS-142\SCOPE.md`: configure Payload's PostgreSQL database connection from the
+provided Azure connection string and configure the Payload Azure Blob Storage adapter for
+the `media` collection. Keep all secrets in deployment environment variables and do not
+commit them. The Payload hosting target remains to be selected. Maintain the existing
+Payload-only Claims-page boundary: do not add product or other commerce collections.
+
+## 2026-08-10 - Scope complete
+
+**Outcome:** The Payload hosting decision is complete. Implementation creates a separate
+Linux Azure App Service running Node.js 22 for Payload. It uses Azure Database for
+PostgreSQL through a deployment-provided connection string and Payload's Azure Blob Storage
+adapter for media. Payload Admin and API run in this one service; the public Claims-page
+view remains a server-rendered storefront route at `/account/claims`.
+
+The scope is now implementation-ready. The App Service URL/deployment settings, initial
+Payload content administrators, and approved Claims-page copy/images are implementation
+inputs, not unresolved product or architecture decisions.
+
+**Next owner:** implementation-planner
+
+**Handover prompt:**
+
+You are the implementation-planner for `NIMBUS-142` in
+`D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-142\SCOPE.md` and create
+the implementation plan for a Payload-managed Claims page only. Plan a separate Linux
+Azure App Service running Node.js 22 for the combined Payload Admin and API application,
+configured with Azure Database for PostgreSQL and Payload's Azure Blob Storage adapter.
+Treat the App Service URL/deployment configuration, initial Payload content administrators,
+and approved page copy/images as deployment/content inputs to obtain during implementation.
+Add the server-rendered storefront `/account/claims` route and navigation links, retrieving
+published Payload content through a server-only integration. Preserve the Customer Portal
+login guard and allow every authenticated employee to view the page. Do not add Payload
+product, catalog, price, order, customer, claim, or other commerce collections; do not add
+SSO, another editable portal page, or arbitrary page-builder behavior. Include deployment,
+security, Payload, storefront integration, and draft/publish verification tasks.
