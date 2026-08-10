@@ -56,7 +56,7 @@ stages:
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
               # Zip into a single file so artifact upload is fast (1 file vs 48k)
               cd $(Build.ArtifactStagingDirectory)
-              zip -r cms.zip cms/
+              zip -qr cms.zip cms/
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact (single zip = fast upload)
