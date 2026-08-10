@@ -82,7 +82,6 @@ stages:
     jobs:
       - deployment: DeployToAppService
         displayName: 'Deploy CMS to App Service'
-        environment: 'production'
         strategy:
           runOnce:
             deploy:
