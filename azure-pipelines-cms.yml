@@ -1,13 +1,5 @@
-trigger:
-  branches:
-    include:
-      - develop
-      - main
-  paths:
-    include:
-      - apps/cms/**
-      - package.json
-      - pnpm-lock.yaml
+trigger: none
+pr: none
 
 pool:
   vmImage: 'ubuntu-latest'
@@ -98,8 +90,8 @@ stages:
               azureSubscription: $(AZURE_SUBSCRIPTION)
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
-              runtimeStack: 'NODE|20-lts'
-              startupCommand: 'pnpm install --frozen-lockfile && npm run start'
+              runtimeStack: 'NODE|22-lts'
+              startupCommand: 'corepack enable && corepack prepare pnpm@$(PNPM_VERSION) --activate && pnpm install --frozen-lockfile && npm run start'
               package: '$(Pipeline.Workspace)/cms-app'
             displayName: 'Deploy to App Service'
 
