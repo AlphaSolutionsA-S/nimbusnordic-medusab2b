@@ -28,9 +28,9 @@ stages:
         displayName: 'Build and Test'
         steps:
           # Install Node.js
-          - task: NodeTool@0
+          - task: UseNode@1
             inputs:
-              versionSpec: $(NODE_VERSION)
+              version: $(NODE_VERSION)
             displayName: 'Install Node.js'
 
           # Install pnpm
@@ -108,7 +108,7 @@ stages:
             inputs:
               azureSubscription: $(AZURE_SUBSCRIPTION)
               action: 'Restart Azure App Service'
-              appName: $(APP_SERVICE_NAME)
+              WebAppName: $(APP_SERVICE_NAME)
             displayName: 'Restart App Service'
 
           # Post-deployment note
