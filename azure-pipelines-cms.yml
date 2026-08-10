@@ -55,12 +55,12 @@ stages:
               cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
               cp -r apps/cms/.next "$DEST/.next"
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
-              # Generate a standalone package.json + package-lock.json for npm ci on App Service
-              # Strip workspace-only fields so npm works without pnpm
+              # Tell Oryx which Node version to use
+              echo "22" > "$DEST/.nvmrc"
+              # Generate a standalone package.json for npm ci on App Service
               node -e "
                 const fs = require('fs');
                 const pkg = JSON.parse(fs.readFileSync('apps/cms/package.json', 'utf8'));
-                // Remove type:module so Oryx startup script (CJS) can require it
                 delete pkg.scripts.dev;
                 delete pkg.scripts.test;
                 delete pkg.devDependencies;
@@ -69,10 +69,10 @@ stages:
               # Generate package-lock.json so Oryx uses npm ci (fast, reproducible)
               cd "$DEST"
               npm install --package-lock-only --ignore-scripts 2>/dev/null || true
-              # Zip — only source + .next, no node_modules
+              # Zip from inside the dir so files are at zip root (not inside cms/ subfolder)
               cd $(Build.ArtifactStagingDirectory)
-              zip -qr cms.zip cms/
-              echo "Artifact file count: $(unzip -l cms.zip | tail -1)"
+              cd cms && zip -qr ../cms.zip . && cd ..
+              echo "Artifact size: $(du -sh cms.zip)"
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact (single zip = fast upload)
