@@ -91,7 +91,7 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: 'corepack enable && corepack prepare pnpm@$(PNPM_VERSION) --activate && pnpm install --frozen-lockfile && npm run start'
+              startupCommand: 'corepack enable && corepack prepare pnpm@$(PNPM_VERSION) --activate && pnpm install --no-frozen-lockfile && npm run start'
               package: '$(Pipeline.Workspace)/cms-app'
             displayName: 'Deploy to App Service'
 
