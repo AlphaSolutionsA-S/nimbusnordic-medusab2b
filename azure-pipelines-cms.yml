@@ -47,16 +47,32 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Use pnpm deploy to produce a lean self-contained production artifact
+          # Build a clean deployment package: source + .next build + package-lock for Oryx
           - script: |
               DEST=$(Build.ArtifactStagingDirectory)/cms
-              pnpm --filter '@dtc/cms' deploy --prod "$DEST"
-              # Copy the built .next output (pnpm deploy only copies source)
+              mkdir -p "$DEST"
+              # Copy app files (no node_modules — Oryx installs on App Service)
+              cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
               cp -r apps/cms/.next "$DEST/.next"
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
-              # Zip into a single file so artifact upload is fast (1 file vs 48k)
+              # Generate a standalone package.json + package-lock.json for npm ci on App Service
+              # Strip workspace-only fields so npm works without pnpm
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('apps/cms/package.json', 'utf8'));
+                // Remove type:module so Oryx startup script (CJS) can require it
+                delete pkg.scripts.dev;
+                delete pkg.scripts.test;
+                delete pkg.devDependencies;
+                fs.writeFileSync('$DEST/package.json', JSON.stringify(pkg, null, 2));
+              "
+              # Generate package-lock.json so Oryx uses npm ci (fast, reproducible)
+              cd "$DEST"
+              npm install --package-lock-only --ignore-scripts 2>/dev/null || true
+              # Zip — only source + .next, no node_modules
               cd $(Build.ArtifactStagingDirectory)
               zip -qr cms.zip cms/
+              echo "Artifact file count: $(unzip -l cms.zip | tail -1)"
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact (single zip = fast upload)
@@ -91,7 +107,7 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: 'node /home/site/wwwroot/node_modules/next/dist/bin/next start'
+              startupCommand: 'next start'
               package: '$(Pipeline.Workspace)/cms-app/cms.zip'
             displayName: 'Deploy to App Service'
 
