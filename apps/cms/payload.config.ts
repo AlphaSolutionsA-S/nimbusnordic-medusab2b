@@ -4,16 +4,18 @@ import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { buildConfig } from 'payload';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { Users } from './src/collections/Users';
+import { Media } from './src/collections/Media';
+import { PortalPages } from './src/collections/PortalPages';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default buildConfig({
   admin: {
-    // IMPLEMENT (task 02): set user collection slug once Users collection exists
+    user: 'users',
   },
   editor: lexicalEditor(),
-  // IMPLEMENT (task 02): collections: [PortalPages, Media, Users]
-  collections: [],
+  collections: [Users, Media, PortalPages],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
@@ -25,8 +27,9 @@ export default buildConfig({
   }),
   plugins: [
     azureStorage({
-      // IMPLEMENT (task 02): enable only for the `media` collection
-      collections: {},
+      collections: {
+        media: true,
+      },
       allowContainerCreate: process.env.AZURE_STORAGE_ALLOW_CONTAINER_CREATE === 'true',
       baseURL: process.env.AZURE_STORAGE_ACCOUNT_BASEURL || '',
       connectionString: process.env.AZURE_STORAGE_CONNECTION_STRING || '',
