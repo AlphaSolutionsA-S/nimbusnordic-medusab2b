@@ -47,16 +47,16 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Create artifact directory
+          # Create standalone deployment artifact (no runtime install needed)
           - script: |
               mkdir -p $(Build.ArtifactStagingDirectory)/cms
-              cp -r apps/cms/.next $(Build.ArtifactStagingDirectory)/cms/
-              cp -r apps/cms/public $(Build.ArtifactStagingDirectory)/cms/ 2>/dev/null || true
-              cp apps/cms/package.json $(Build.ArtifactStagingDirectory)/cms/
-              cp apps/cms/next.config.mjs $(Build.ArtifactStagingDirectory)/cms/
-              cp apps/cms/tsconfig.json $(Build.ArtifactStagingDirectory)/cms/
-              cp apps/cms/payload.config.ts $(Build.ArtifactStagingDirectory)/cms/
-              cp pnpm-lock.yaml $(Build.ArtifactStagingDirectory)/cms/
+              cp -r apps/cms/.next/standalone/* $(Build.ArtifactStagingDirectory)/cms/
+              mkdir -p $(Build.ArtifactStagingDirectory)/cms/.next
+              mkdir -p $(Build.ArtifactStagingDirectory)/cms/apps/cms/.next
+              cp -r apps/cms/.next/static $(Build.ArtifactStagingDirectory)/cms/.next/static
+              cp -r apps/cms/.next/static $(Build.ArtifactStagingDirectory)/cms/apps/cms/.next/static
+              cp -r apps/cms/public $(Build.ArtifactStagingDirectory)/cms/public 2>/dev/null || true
+              cp -r apps/cms/public $(Build.ArtifactStagingDirectory)/cms/apps/cms/public 2>/dev/null || true
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact
@@ -91,17 +91,9 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: 'corepack enable && corepack prepare pnpm@$(PNPM_VERSION) --activate && pnpm install --no-frozen-lockfile && npm run start'
+              startupCommand: '[ -f server.js ] && node server.js || (cd apps/cms && node server.js)'
               package: '$(Pipeline.Workspace)/cms-app'
             displayName: 'Deploy to App Service'
-
-          # Restart App Service to trigger startup command
-          - task: AzureAppServiceManage@0
-            inputs:
-              azureSubscription: $(AZURE_SUBSCRIPTION)
-              action: 'Restart Azure App Service'
-              WebAppName: $(APP_SERVICE_NAME)
-            displayName: 'Restart App Service'
 
           # Post-deployment note
           - script: echo "✓ Deployment complete. Payload migrations run automatically on startup."
@@ -113,7 +105,7 @@ stages:
 #    Never commit these to source control.
 #
 # 2. Payload CMS 3.x automatically runs migrations on startup.
-#    The startup command installs dependencies and starts the app.
+#    Startup uses Next.js standalone output, so no runtime install is required.
 #
 # 3. After first deployment, create admin user via App Service Console:
 #    cd /home/site/wwwroot/apps/cms
