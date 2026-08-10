@@ -119,6 +119,19 @@ const AccountNav = ({
                     <ChevronDown className="transform -rotate-90" />
                   </LocalizedClientLink>
                 </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/account/claims"
+                    className="flex items-center justify-between py-4 border-b border-gray-200 px-8"
+                    data-testid="claims-link"
+                  >
+                    <div className="flex items-center gap-x-2">
+                      <FilePlus size={16} />
+                      <span>Claims</span>
+                    </div>
+                    <ChevronDown className="transform -rotate-90" />
+                  </LocalizedClientLink>
+                </li>
                 {customer?.employee?.is_admin && (
                   <li>
                     <LocalizedClientLink
@@ -221,6 +234,15 @@ const AccountNav = ({
                 data-testid="bc-orders-link"
               >
                 BC Orders
+              </AccountNavLink>
+            </li>
+            <li>
+              <AccountNavLink
+                href="/account/claims"
+                route={route!}
+                data-testid="claims-link"
+              >
+                Claims
               </AccountNavLink>
             </li>
             {customer?.employee?.is_admin && (
