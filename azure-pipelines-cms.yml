@@ -57,6 +57,8 @@ stages:
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
               # Tell Oryx which Node version to use
               echo "22" > "$DEST/.nvmrc"
+              # Disable Oryx build step (we pre-built in CI; only need npm install)
+              printf '[config]\nSCM_DO_BUILD_DURING_DEPLOYMENT=false\n' > "$DEST/.deployment"
               # Generate a standalone package.json for npm ci on App Service
               node -e "
                 const fs = require('fs');
