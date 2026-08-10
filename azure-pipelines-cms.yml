@@ -47,20 +47,16 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Package app with production-only deps installed in isolation
+          # Package app + node_modules installed on the build agent
           - script: |
               DEST=$(Build.ArtifactStagingDirectory)/cms
               mkdir -p "$DEST"
-              # Copy app source needed for production install
               cp apps/cms/package.json "$DEST/package.json"
               cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
               cp -r apps/cms/.next "$DEST/.next"
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
-              # Install production deps only in the artifact dir (isolated, no workspace)
               cd "$DEST"
               npm install --omit=dev --ignore-scripts --no-package-lock
-              # Disable Oryx so it doesn't interfere with node_modules at runtime
-              echo -e '[build]\ncommand = ""' > oryx-manifest.toml
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact
@@ -95,7 +91,7 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: './node_modules/.bin/next start -p 8080'
+              startupCommand: 'node /home/site/wwwroot/node_modules/next/dist/bin/next start'
               package: '$(Pipeline.Workspace)/cms-app'
             displayName: 'Deploy to App Service'
 
