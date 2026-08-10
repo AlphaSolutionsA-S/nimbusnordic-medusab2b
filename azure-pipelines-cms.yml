@@ -47,16 +47,18 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Package app + node_modules built on the agent (no runtime install needed)
+          # Package app with production-only deps installed in isolation
           - script: |
               DEST=$(Build.ArtifactStagingDirectory)/cms
               mkdir -p "$DEST"
-              cp -r apps/cms/.next "$DEST/.next"
-              cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
+              # Copy app source needed for production install
               cp apps/cms/package.json "$DEST/package.json"
               cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
-              # Copy the hoisted node_modules that next/server requires
-              cp -rL node_modules "$DEST/node_modules"
+              cp -r apps/cms/.next "$DEST/.next"
+              cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
+              # Install production deps only in the artifact dir (isolated, no workspace)
+              cd "$DEST"
+              npm install --omit=dev --ignore-scripts --no-package-lock
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact
