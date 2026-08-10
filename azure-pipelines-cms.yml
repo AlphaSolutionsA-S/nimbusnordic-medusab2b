@@ -47,16 +47,16 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Create standalone deployment artifact (no runtime install needed)
+          # Package app + node_modules built on the agent (no runtime install needed)
           - script: |
-              mkdir -p $(Build.ArtifactStagingDirectory)/cms
-              cp -r apps/cms/.next/standalone/* $(Build.ArtifactStagingDirectory)/cms/
-              mkdir -p $(Build.ArtifactStagingDirectory)/cms/.next
-              mkdir -p $(Build.ArtifactStagingDirectory)/cms/apps/cms/.next
-              cp -r apps/cms/.next/static $(Build.ArtifactStagingDirectory)/cms/.next/static
-              cp -r apps/cms/.next/static $(Build.ArtifactStagingDirectory)/cms/apps/cms/.next/static
-              cp -r apps/cms/public $(Build.ArtifactStagingDirectory)/cms/public 2>/dev/null || true
-              cp -r apps/cms/public $(Build.ArtifactStagingDirectory)/cms/apps/cms/public 2>/dev/null || true
+              DEST=$(Build.ArtifactStagingDirectory)/cms
+              mkdir -p "$DEST"
+              cp -r apps/cms/.next "$DEST/.next"
+              cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
+              cp apps/cms/package.json "$DEST/package.json"
+              cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
+              # Copy the hoisted node_modules that next/server requires
+              cp -rL node_modules "$DEST/node_modules"
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact
@@ -91,7 +91,7 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: '[ -f server.js ] && node server.js || (cd apps/cms && node server.js)'
+              startupCommand: 'node node_modules/.bin/next start -p 8080'
               package: '$(Pipeline.Workspace)/cms-app'
             displayName: 'Deploy to App Service'
 
@@ -99,13 +99,31 @@ stages:
           - script: echo "✓ Deployment complete. Payload migrations run automatically on startup."
             displayName: 'Deployment Summary'
 
+          # Warm-up: hit the site to ensure the container handles its first request
+          - script: |
+              APP_URL="https://$(APP_SERVICE_NAME).azurewebsites.net"
+              echo "Warming up $APP_URL ..."
+              for i in 1 2; do
+                STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL/admin")
+                echo "Attempt $i: HTTP $STATUS"
+                if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ] || [ "$STATUS" = "301" ]; then
+                  echo "✓ Site is up."
+                  exit 0
+                fi
+                echo "Not ready yet, waiting 60s..."
+                sleep 60
+              done
+              echo "##[warning]Site did not respond with 2xx/3xx after 5 attempts — check App Service logs."
+              exit 0
+            displayName: 'Warm-up ping'
+
 # Note: 
 # 1. Environment variables (PAYLOAD_SECRET, DATABASE_URI, AZURE_STORAGE_* etc.) 
 #    should be configured in Azure App Service → Configuration → Application settings
 #    Never commit these to source control.
 #
 # 2. Payload CMS 3.x automatically runs migrations on startup.
-#    Startup uses Next.js standalone output, so no runtime install is required.
+#    node_modules are bundled from the build agent — no runtime install required.
 #
 # 3. After first deployment, create admin user via App Service Console:
 #    cd /home/site/wwwroot/apps/cms
