@@ -42,16 +42,16 @@ stages:
             displayName: 'Install dependencies'
 
           # Lint CMS app
-          - script: pnpm --filter '@b2b-starter/cms' lint
+          - script: pnpm --filter '@dtc/cms' lint
             displayName: 'Lint CMS app'
             continueOnError: true
 
           # Build CMS app
-          - script: pnpm --filter '@b2b-starter/cms' build
+          - script: pnpm --filter '@dtc/cms' build
             displayName: 'Build CMS app'
 
           # Test CMS app (if tests exist)
-          - script: pnpm --filter '@b2b-starter/cms' test
+          - script: pnpm --filter '@dtc/cms' test
             displayName: 'Run CMS tests'
             continueOnError: true
 
