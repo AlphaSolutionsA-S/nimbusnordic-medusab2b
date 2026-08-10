@@ -17,7 +17,7 @@ variables:
   PNPM_VERSION: '9.15.0'
   APP_SERVICE_NAME: 'app-payload-ekhaedeqa9gugmfw'
   RESOURCE_GROUP: 'rg_nimbus_customerportal'
-  AZURE_SUBSCRIPTION: 'YOUR_SUBSCRIPTION_ID'  # Set this to your Azure subscription ID
+  AZURE_SUBSCRIPTION: 'new azure deploy for nimbus'  # Set this to your Azure subscription ID
   BUILD_OUTPUT_PATH: '$(System.DefaultWorkingDirectory)/apps/cms/.next'
 
 stages:
