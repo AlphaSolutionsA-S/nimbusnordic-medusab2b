@@ -13,7 +13,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  NODE_VERSION: '20'
+  NODE_VERSION: '22'
   PNPM_VERSION: '9.15.0'
   APP_SERVICE_NAME: 'app-payload-ekhaedeqa9gugmfw'
   RESOURCE_GROUP: 'rg_nimbus_customerportal'
