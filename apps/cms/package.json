@@ -1,0 +1,35 @@
+{
+  "name": "@dtc/cms",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "lint": "next lint",
+    "generate:types": "payload generate:types",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@payloadcms/db-postgres": "3.8.0",
+    "@payloadcms/next": "3.8.0",
+    "@payloadcms/richtext-lexical": "3.8.0",
+    "@payloadcms/storage-azure": "3.8.0",
+    "@payloadcms/ui": "3.8.0",
+    "next": "15.5.18",
+    "payload": "3.8.0",
+    "react": "19.0.5",
+    "react-dom": "19.0.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "19.0.5",
+    "@types/react-dom": "19.0.5",
+    "typescript": "^5.5.3",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
