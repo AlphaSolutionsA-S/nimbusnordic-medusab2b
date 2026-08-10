@@ -47,22 +47,22 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Package app + node_modules installed on the build agent
+          # Use pnpm deploy to produce a lean self-contained production artifact
           - script: |
               DEST=$(Build.ArtifactStagingDirectory)/cms
-              mkdir -p "$DEST"
-              cp apps/cms/package.json "$DEST/package.json"
-              cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
+              pnpm --filter '@dtc/cms' deploy --prod "$DEST"
+              # Copy the built .next output (pnpm deploy only copies source)
               cp -r apps/cms/.next "$DEST/.next"
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
-              cd "$DEST"
-              npm install --omit=dev --ignore-scripts --no-package-lock
+              # Zip into a single file so artifact upload is fast (1 file vs 48k)
+              cd $(Build.ArtifactStagingDirectory)
+              zip -r cms.zip cms/
             displayName: 'Prepare deployment artifacts'
 
-          # Publish artifact
+          # Publish artifact (single zip = fast upload)
           - task: PublishBuildArtifacts@1
             inputs:
-              pathToPublish: '$(Build.ArtifactStagingDirectory)/cms'
+              pathToPublish: '$(Build.ArtifactStagingDirectory)/cms.zip'
               artifactName: 'cms-app'
               publishLocation: 'Container'
             displayName: 'Publish artifacts'
@@ -92,7 +92,7 @@ stages:
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
               startupCommand: 'node /home/site/wwwroot/node_modules/next/dist/bin/next start'
-              package: '$(Pipeline.Workspace)/cms-app'
+              package: '$(Pipeline.Workspace)/cms-app/cms.zip'
             displayName: 'Deploy to App Service'
 
           # Post-deployment note
