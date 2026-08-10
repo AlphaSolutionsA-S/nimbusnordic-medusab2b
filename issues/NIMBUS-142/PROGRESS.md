@@ -194,3 +194,28 @@ login guard and allow every authenticated employee to view the page. Do not add 
 product, catalog, price, order, customer, claim, or other commerce collections; do not add
 SSO, another editable portal page, or arbitrary page-builder behavior. Include deployment,
 security, Payload, storefront integration, and draft/publish verification tasks.
+
+## 2026-08-10 - Implementation plan ready
+
+- **Date:** 2026-08-10
+- **Updated by:** implementation-planner agent
+- **Outcome:** Implementation plan is ready; implementation is the next stage. Base branch
+  confirmed as `develop`; new Payload CMS app placement confirmed as `apps/cms`. Test
+  infrastructure gate resolved with **Option B** (wire storefront Jest + RTL and cover the
+  new Claims surface only; no repo-wide backfill). Wrote `PLAN.md`, `manifest.md`, and
+  seven task files (01 CMS scaffold, 02 collections/access/tests, 03 storefront Jest infra,
+  04 server-only CMS client, 05 Claims renderer/route, 06 account-nav links, 07
+  deployment/security verification).
+- **Handover to:** implementor agent
+- **Handover prompt:** Act as the implementor for `NIMBUS-142` in
+  `D:\projects\Nimbus\nimbusnordic-medusab2b`. Create branch `feature/NIMBUS-142` from
+  `develop`. Implement the tasks in `issues\NIMBUS-142\` per `manifest.md` and `PLAN.md`,
+  in dependency order (CMS track 01→02 and storefront track 03→04→05→06 may run in
+  parallel; 07 last). Follow each task file's skeletons and guardrails: a new Payload 3
+  app at `apps/cms` (separate Linux Node.js 22 App Service, Azure PostgreSQL, Azure Blob
+  media), a singleton published Claims page with allowlisted blocks, a server-only
+  storefront CMS client, a fail-closed `/account/claims` route with Claims nav links for
+  every authenticated employee, and Option B tests (Vitest for CMS, Jest+RTL for
+  storefront). Never commit secrets. Do not add any commerce collection, SSO, another
+  editable page, a claim form, or any customer mutation. Run lint/build/test for
+  `apps/cms` and `apps/storefront` before marking tasks done.
