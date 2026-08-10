@@ -59,6 +59,8 @@ stages:
               # Install production deps only in the artifact dir (isolated, no workspace)
               cd "$DEST"
               npm install --omit=dev --ignore-scripts --no-package-lock
+              # Disable Oryx so it doesn't interfere with node_modules at runtime
+              echo -e '[build]\ncommand = ""' > oryx-manifest.toml
             displayName: 'Prepare deployment artifacts'
 
           # Publish artifact
@@ -93,7 +95,7 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: 'node node_modules/.bin/next start -p 8080'
+              startupCommand: './node_modules/.bin/next start -p 8080'
               package: '$(Pipeline.Workspace)/cms-app'
             displayName: 'Deploy to App Service'
 
@@ -103,7 +105,7 @@ stages:
 
           # Warm-up: hit the site to ensure the container handles its first request
           - script: |
-              APP_URL="https://$(APP_SERVICE_NAME).azurewebsites.net"
+              APP_URL="https://app-payload-ekhaedeqa9gugmfw.westeurope-01.azurewebsites.net/admin"
               echo "Warming up $APP_URL ..."
               for i in 1 2; do
                 STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL/admin")
@@ -115,7 +117,7 @@ stages:
                 echo "Not ready yet, waiting 60s..."
                 sleep 60
               done
-              echo "##[warning]Site did not respond with 2xx/3xx after 5 attempts — check App Service logs."
+              echo "##[warning]Site did not respond with 2xx/3xx after 2 attempts — check App Service logs."
               exit 0
             displayName: 'Warm-up ping'
 
