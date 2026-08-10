@@ -1,0 +1,134 @@
+trigger:
+  branches:
+    include:
+      - develop
+      - main
+  paths:
+    include:
+      - apps/cms/**
+      - package.json
+      - pnpm-lock.yaml
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9.15.0'
+  APP_SERVICE_NAME: 'app-payload-ekhaedeqa9gugmfw'
+  RESOURCE_GROUP: 'rg_nimbus_customerportal'
+  AZURE_SUBSCRIPTION: 'YOUR_SUBSCRIPTION_ID'  # Set this to your Azure subscription ID
+  BUILD_OUTPUT_PATH: '$(System.DefaultWorkingDirectory)/apps/cms/.next'
+
+stages:
+  - stage: Build
+    displayName: 'Build CMS App'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build and Test'
+        steps:
+          # Install Node.js
+          - task: NodeTool@0
+            inputs:
+              versionSpec: $(NODE_VERSION)
+            displayName: 'Install Node.js'
+
+          # Install pnpm
+          - script: npm install -g pnpm@$(PNPM_VERSION)
+            displayName: 'Install pnpm'
+
+          # Install dependencies
+          - script: pnpm install --frozen-lockfile
+            displayName: 'Install dependencies'
+
+          # Lint CMS app
+          - script: pnpm --filter '@b2b-starter/cms' lint
+            displayName: 'Lint CMS app'
+            continueOnError: true
+
+          # Build CMS app
+          - script: pnpm --filter '@b2b-starter/cms' build
+            displayName: 'Build CMS app'
+
+          # Test CMS app (if tests exist)
+          - script: pnpm --filter '@b2b-starter/cms' test
+            displayName: 'Run CMS tests'
+            continueOnError: true
+
+          # Create artifact directory
+          - script: |
+              mkdir -p $(Build.ArtifactStagingDirectory)/cms
+              cp -r apps/cms/.next $(Build.ArtifactStagingDirectory)/cms/
+              cp -r apps/cms/public $(Build.ArtifactStagingDirectory)/cms/ 2>/dev/null || true
+              cp apps/cms/package.json $(Build.ArtifactStagingDirectory)/cms/
+              cp apps/cms/next.config.mjs $(Build.ArtifactStagingDirectory)/cms/
+              cp apps/cms/tsconfig.json $(Build.ArtifactStagingDirectory)/cms/
+              cp apps/cms/payload.config.ts $(Build.ArtifactStagingDirectory)/cms/
+              cp pnpm-lock.yaml $(Build.ArtifactStagingDirectory)/cms/
+            displayName: 'Prepare deployment artifacts'
+
+          # Publish artifact
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)/cms'
+              artifactName: 'cms-app'
+              publishLocation: 'Container'
+            displayName: 'Publish artifacts'
+
+  - stage: Deploy
+    displayName: 'Deploy to Azure App Service'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - deployment: DeployToAppService
+        displayName: 'Deploy CMS to App Service'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                # Download artifact
+                - task: DownloadBuildArtifacts@0
+                  inputs:
+                    buildType: 'current'
+                    downloadType: 'single'
+                    artifactName: 'cms-app'
+                    downloadPath: '$(Pipeline.Workspace)'
+                  displayName: 'Download artifacts'
+
+                # Deploy using Azure App Service Deploy task
+                - task: AzureWebApp@1
+                  inputs:
+                    azureSubscription: $(AZURE_SUBSCRIPTION)
+                    appType: 'webAppLinux'
+                    appName: $(APP_SERVICE_NAME)
+                    runtimeStack: 'NODE|20-lts'
+                    startupCommand: 'pnpm install --frozen-lockfile && npm run start'
+                    package: '$(Pipeline.Workspace)/cms-app'
+                  displayName: 'Deploy to App Service'
+
+                # Restart App Service to trigger startup command
+                - task: AzureAppServiceManage@0
+                  inputs:
+                    azureSubscription: $(AZURE_SUBSCRIPTION)
+                    action: 'Restart Azure App Service'
+                    appName: $(APP_SERVICE_NAME)
+                  displayName: 'Restart App Service'
+
+                # Post-deployment note
+                - script: echo "✓ Deployment complete. Payload migrations run automatically on startup."
+                  displayName: 'Deployment Summary'
+
+# Note: 
+# 1. Environment variables (PAYLOAD_SECRET, DATABASE_URI, AZURE_STORAGE_* etc.) 
+#    should be configured in Azure App Service → Configuration → Application settings
+#    Never commit these to source control.
+#
+# 2. Payload CMS 3.x automatically runs migrations on startup.
+#    The startup command installs dependencies and starts the app.
+#
+# 3. After first deployment, create admin user via App Service Console:
+#    cd /home/site/wwwroot/apps/cms
+#    pnpm exec payload createUser --collection users --email admin@example.com --password YourSecurePassword
+#
+# 4. Access the admin dashboard at: https://<app-service-url>/admin
