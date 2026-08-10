@@ -15,7 +15,7 @@ pool:
 variables:
   NODE_VERSION: '22'
   PNPM_VERSION: '9.15.0'
-  APP_SERVICE_NAME: 'app-payload-ekhaedeqa9gugmfw'
+  APP_SERVICE_NAME: 'app-payload'
   RESOURCE_GROUP: 'rg_nimbus_customerportal'
   AZURE_SUBSCRIPTION: 'new azure deploy for nimbus'  # Set this to your Azure subscription ID
   BUILD_OUTPUT_PATH: '$(System.DefaultWorkingDirectory)/apps/cms/.next'
