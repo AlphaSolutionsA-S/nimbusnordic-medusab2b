@@ -288,3 +288,20 @@ Set `STOREFRONT_URL` and `STOREFRONT_DEFAULT_COUNTRY` on the Payload App Service
 retaining its existing server-to-server `PAYLOAD_API_URL`, then redeploy both applications.
 Log into the storefront as a customer in the same browser before opening Payload Live
 Preview because the Claims route intentionally retains the Customer Portal account guard.
+
+## 2026-08-11 - Resend email adapter configured
+
+**Outcome:** Added Payload's official Resend adapter for password resets and other Payload
+authentication emails. The API key, verified sender address, and sender name are read only
+from CMS environment variables. An entirely absent configuration retains Payload's standard
+disabled-email behavior, while partial configuration fails explicitly without logging
+secret values.
+
+**Next owner:** deployment/release
+
+**Handover prompt:**
+
+Set `RESEND_API_KEY`, `RESEND_FROM_ADDRESS`, and `RESEND_FROM_NAME` on the Payload App
+Service. The sender address must belong to a domain verified in Resend. Redeploy the CMS,
+confirm the previous missing-email-adapter startup warning is gone, and test a password-reset
+email for a Payload administrator.

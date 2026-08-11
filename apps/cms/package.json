@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@payloadcms/db-postgres": "3.8.0",
+    "@payloadcms/email-resend": "3.8.0",
     "@payloadcms/next": "3.8.0",
     "@payloadcms/richtext-lexical": "3.8.0",
     "@payloadcms/storage-azure": "3.8.0",

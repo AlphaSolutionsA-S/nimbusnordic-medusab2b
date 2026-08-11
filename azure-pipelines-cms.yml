@@ -143,7 +143,8 @@ stages:
 
 # Note: 
 # 1. Environment variables (PAYLOAD_SECRET, DATABASE_URI, AZURE_STORAGE_*,
-#    STOREFRONT_URL, and STOREFRONT_DEFAULT_COUNTRY)
+#    STOREFRONT_URL, STOREFRONT_DEFAULT_COUNTRY, RESEND_API_KEY,
+#    RESEND_FROM_ADDRESS, and RESEND_FROM_NAME)
 #    should be configured in Azure App Service → Configuration → Application settings
 #    Never commit these to source control.
 #

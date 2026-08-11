@@ -49,7 +49,7 @@ export async function getClaimsPageDocument(): Promise<PayloadClaimsPage | null>
         'Content-Type': 'application/json',
       },
       next: {
-        revalidate: 3600, // 1 hour
+        revalidate: 600, // 1 hour
         tags: ['claims'],
       },
     });

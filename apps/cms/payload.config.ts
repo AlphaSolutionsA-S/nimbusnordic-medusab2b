@@ -1,4 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres';
+import { resendAdapter } from '@payloadcms/email-resend';
 import { azureStorage } from '@payloadcms/storage-azure';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { buildConfig } from 'payload';
@@ -7,10 +8,12 @@ import { fileURLToPath } from 'url';
 import { Users } from './src/collections/Users';
 import { Media } from './src/collections/Media';
 import { PortalPages } from './src/collections/PortalPages';
+import { getResendAdapterArgs } from './src/email';
 import { getStorefrontOrigin } from './src/live-preview';
 import { migrations } from './src/migrations';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
+const resendAdapterArgs = getResendAdapterArgs();
 
 export default buildConfig({
   admin: {
@@ -20,6 +23,7 @@ export default buildConfig({
   collections: [Users, Media, PortalPages],
   cors: [getStorefrontOrigin()],
   csrf: [getStorefrontOrigin()],
+  email: resendAdapterArgs ? resendAdapter(resendAdapterArgs) : undefined,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
