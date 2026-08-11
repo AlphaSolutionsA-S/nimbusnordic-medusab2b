@@ -47,13 +47,16 @@ stages:
             displayName: 'Run CMS tests'
             continueOnError: true
 
-          # Build a clean deployment package: source + .next build + package-lock for Oryx
+          # Build a clean deployment package: migration source + .next build + package-lock for Oryx
           - script: |
               DEST=$(Build.ArtifactStagingDirectory)/cms
               mkdir -p "$DEST"
-              # Copy app files (no node_modules — Oryx installs on App Service)
+              # Copy runtime and migration files (no node_modules — Oryx installs on App Service)
               cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
+              cp apps/cms/payload.config.ts "$DEST/payload.config.ts"
+              cp apps/cms/tsconfig.json "$DEST/tsconfig.json"
               cp -r apps/cms/.next "$DEST/.next"
+              cp -r apps/cms/src "$DEST/src"
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
               # Tell Oryx which Node version to use
               echo "22" > "$DEST/.nvmrc"
@@ -67,6 +70,7 @@ stages:
                 delete pkg.scripts.test;
                 delete pkg.devDependencies;
                 pkg.scripts.build = 'echo Pre-built in CI, skipping build';
+                pkg.scripts.migrate = 'payload migrate';
                 pkg.scripts.start = 'node node_modules/.bin/next start';
                 fs.writeFileSync('$DEST/package.json', JSON.stringify(pkg, null, 2));
               "
@@ -111,12 +115,12 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: 'node node_modules/.bin/next start'
+              startupCommand: 'npm run migrate && npm start'
               package: '$(Pipeline.Workspace)/cms-app/cms.zip'
             displayName: 'Deploy to App Service'
 
           # Post-deployment note
-          - script: echo "✓ Deployment complete. Committed Payload migrations run on startup."
+          - script: echo "✓ Deployment complete. Committed Payload migrations run before startup."
             displayName: 'Deployment Summary'
 
           # Warm-up: hit the site to ensure the container handles its first request
@@ -138,11 +142,13 @@ stages:
             displayName: 'Warm-up ping'
 
 # Note: 
-# 1. Environment variables (PAYLOAD_SECRET, DATABASE_URI, AZURE_STORAGE_* etc.) 
+# 1. Environment variables (PAYLOAD_SECRET, DATABASE_URI, AZURE_STORAGE_*,
+#    STOREFRONT_URL, and STOREFRONT_DEFAULT_COUNTRY)
 #    should be configured in Azure App Service → Configuration → Application settings
 #    Never commit these to source control.
 #
-# 2. Committed Payload migrations are bundled into the Next.js build and run on startup.
+# 2. Committed Payload migrations are included in the artifact and run before Next.js starts.
+#    This prevents App Service warm-up requests from racing database initialization.
 #    Oryx installs production dependencies during deployment.
 #
 # 3. After the first deployment, create the initial administrator at:

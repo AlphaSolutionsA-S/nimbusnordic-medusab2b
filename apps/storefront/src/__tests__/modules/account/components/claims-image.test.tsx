@@ -6,10 +6,8 @@ describe('ClaimsImage', () => {
   it('TC-5: Renders image with alt text', () => {
     const block: ClaimsImageBlock = {
       blockType: 'image',
-      image: {
-        url: 'https://myaccount.blob.core.windows.net/media/claims.jpg',
-        alt: 'Claims process diagram',
-      },
+      url: 'https://myaccount.blob.core.windows.net/media/claims.jpg',
+      alt: 'Claims process diagram',
     };
 
     render(<ClaimsImage block={block} />);
@@ -22,10 +20,8 @@ describe('ClaimsImage', () => {
   it('TC-5: Enforces Azure Blob host via Next.js image config', () => {
     const block: ClaimsImageBlock = {
       blockType: 'image',
-      image: {
-        url: 'https://myaccount.blob.core.windows.net/media/test.jpg',
-        alt: 'Test image',
-      },
+      url: 'https://myaccount.blob.core.windows.net/media/test.jpg',
+      alt: 'Test image',
     };
 
     render(<ClaimsImage block={block} />);
@@ -39,7 +35,8 @@ describe('ClaimsImage', () => {
   it('returns null when image is missing', () => {
     const block: ClaimsImageBlock = {
       blockType: 'image',
-      image: null,
+      url: '',
+      alt: 'Missing image',
     };
 
     const { container } = render(<ClaimsImage block={block} />);
@@ -49,10 +46,8 @@ describe('ClaimsImage', () => {
   it('returns null when alt text is missing', () => {
     const block: ClaimsImageBlock = {
       blockType: 'image',
-      image: {
-        url: 'https://myaccount.blob.core.windows.net/media/test.jpg',
-        alt: '',
-      },
+      url: 'https://myaccount.blob.core.windows.net/media/test.jpg',
+      alt: '',
     };
 
     const { container } = render(<ClaimsImage block={block} />);
@@ -62,10 +57,8 @@ describe('ClaimsImage', () => {
   it('returns null when image URL is missing', () => {
     const block: ClaimsImageBlock = {
       blockType: 'image',
-      image: {
-        url: '',
-        alt: 'Missing image',
-      },
+      url: '',
+      alt: 'Missing image',
     };
 
     const { container } = render(<ClaimsImage block={block} />);

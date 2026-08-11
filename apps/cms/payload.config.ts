@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { Users } from './src/collections/Users';
 import { Media } from './src/collections/Media';
 import { PortalPages } from './src/collections/PortalPages';
+import { getStorefrontOrigin } from './src/live-preview';
 import { migrations } from './src/migrations';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -17,6 +18,8 @@ export default buildConfig({
   },
   editor: lexicalEditor(),
   collections: [Users, Media, PortalPages],
+  cors: [getStorefrontOrigin()],
+  csrf: [getStorefrontOrigin()],
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),

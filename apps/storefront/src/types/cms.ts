@@ -35,10 +35,14 @@ export type ClaimsKnownBlock =
   | ClaimsCtaBlock
   | ClaimsFaqBlock;
 
-// Unknown blocks are preserved so the renderer can fail closed.
-export type ClaimsBlock = ClaimsKnownBlock | { blockType: string };
+export type ClaimsBlock = ClaimsKnownBlock | { blockType: 'unknown' };
 
 export type ClaimsPage = {
   title: string;
   layout: ReadonlyArray<ClaimsBlock>;
+};
+
+export type PayloadClaimsPage = {
+  title?: string;
+  layout?: ReadonlyArray<unknown>;
 };

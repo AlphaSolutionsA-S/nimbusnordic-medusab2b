@@ -1,4 +1,4 @@
-import { getClaimsPage } from '@/lib/data/cms';
+import { getClaimsPage, getPayloadLivePreviewURL } from '@/lib/data/cms';
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -34,6 +34,19 @@ describe('getClaimsPage', () => {
     const result = await getClaimsPage();
     expect(result).toBeNull();
     expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('uses the public Payload origin for browser live preview', () => {
+    process.env.PAYLOAD_API_URL = 'http://cms.internal:3001';
+    process.env.PAYLOAD_PUBLIC_URL = 'https://cms.example.com/admin';
+
+    expect(getPayloadLivePreviewURL()).toBe('https://cms.example.com');
+  });
+
+  it('disables browser live preview when PAYLOAD_PUBLIC_URL is missing', () => {
+    delete process.env.PAYLOAD_PUBLIC_URL;
+
+    expect(getPayloadLivePreviewURL()).toBeNull();
   });
 
   // TC-2: Published page mapped

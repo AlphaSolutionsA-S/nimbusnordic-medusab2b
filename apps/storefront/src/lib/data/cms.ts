@@ -1,12 +1,10 @@
 import 'server-only';
 
-import type { ClaimsPage } from '@/types/cms';
+import { mapPayloadClaimsPage } from '@/lib/util/map-claims-page';
+import type { ClaimsPage, PayloadClaimsPage } from '@/types/cms';
 
 type PayloadResponse = {
-  docs: Array<{
-    title: string;
-    layout: Array<unknown>;
-  }>;
+  docs: Array<PayloadClaimsPage>;
 };
 
 // Get config values - read at runtime to support testing
@@ -17,88 +15,21 @@ function getConfig() {
   };
 }
 
-function mapPayloadToClaimsPage(payload: PayloadResponse): ClaimsPage | null {
-  const doc = payload.docs[0];
-  if (!doc) {
+export function getPayloadLivePreviewURL(): string | null {
+  const configuredURL = process.env.PAYLOAD_PUBLIC_URL;
+
+  if (!configuredURL) {
     return null;
   }
 
-  return {
-    title: doc.title,
-    layout: doc.layout.map((block) => {
-      if (typeof block !== 'object' || block === null) {
-        return { blockType: 'unknown' };
-      }
-
-      const blockObj = block as Record<string, unknown>;
-      const blockType = blockObj.blockType as string | undefined;
-
-      if (!blockType) {
-        return { blockType: 'unknown' };
-      }
-
-      // Map known blocks
-      if (blockType === 'richText') {
-        return {
-          blockType: 'richText',
-          content: blockObj.content,
-        };
-      }
-
-      if (blockType === 'image') {
-        const imageBlock = blockObj.image as Record<string, unknown> | undefined;
-        if (imageBlock) {
-          return {
-            blockType: 'image',
-            url: (imageBlock.url as string) || '',
-            alt: (blockObj.alt as string) || '',
-            caption: (blockObj.caption as string) || undefined,
-          };
-        }
-      }
-
-      if (blockType === 'callout') {
-        return {
-          blockType: 'callout',
-          title: (blockObj.title as string) || '',
-          content: blockObj.content,
-          variant: (blockObj.variant as string) || '',
-        };
-      }
-
-      if (blockType === 'cta') {
-        return {
-          blockType: 'cta',
-          label: (blockObj.label as string) || '',
-          url: (blockObj.url as string) || '',
-        };
-      }
-
-      if (blockType === 'faq') {
-        const items = blockObj.items as Array<unknown> | undefined;
-        const rows = (items || []).map((item) => {
-          if (typeof item !== 'object' || item === null) {
-            return { question: '', answer: null };
-          }
-          const itemObj = item as Record<string, unknown>;
-          return {
-            question: (itemObj.question as string) || '',
-            answer: itemObj.answer,
-          };
-        });
-        return {
-          blockType: 'faq',
-          rows,
-        };
-      }
-
-      // Unknown block — preserve the type so renderer can fail closed
-      return { blockType };
-    }),
-  };
+  try {
+    return new URL(configuredURL).origin;
+  } catch {
+    return null;
+  }
 }
 
-export async function getClaimsPage(): Promise<ClaimsPage | null> {
+export async function getClaimsPageDocument(): Promise<PayloadClaimsPage | null> {
   const config = getConfig();
   if (!config.PAYLOAD_API_URL || !config.PAYLOAD_API_KEY) {
     return null;
@@ -128,9 +59,14 @@ export async function getClaimsPage(): Promise<ClaimsPage | null> {
     }
 
     const data = (await response.json()) as PayloadResponse;
-    return mapPayloadToClaimsPage(data);
+    return data.docs[0] ?? null;
   } catch {
-    // Network error, parse error, or other failure
     return null;
   }
+}
+
+export async function getClaimsPage(): Promise<ClaimsPage | null> {
+  const document = await getClaimsPageDocument();
+
+  return document ? mapPayloadClaimsPage(document) : null;
 }

@@ -252,3 +252,39 @@ Redeploy the CMS App Service for `NIMBUS-142`. Confirm the startup log reports m
 `20260811_104814_initial_schema`, then open `/admin/create-first-user` to create the initial
 administrator. Change the PostgreSQL connection string to `sslmode=verify-full`, and rotate
 the secrets exposed in the shared configuration screenshot before production use.
+
+## 2026-08-11 - Migration startup ordering corrected
+
+**Outcome:** Confirmed the deployed database migration eventually completed and the live
+`/admin` route now redirects to a working `/admin/create-first-user` form. The earlier
+`relation "users" does not exist` errors occurred while App Service warm-up requests raced
+Payload 3.8's asynchronous `prodMigrations` startup path. Updated the deployment artifact to
+include the Payload config and migration sources, and changed App Service startup to run
+`payload migrate` synchronously before starting Next.js.
+
+**Next owner:** deployment/release
+
+**Handover prompt:**
+
+Redeploy the CMS App Service for `NIMBUS-142`. Confirm the startup logs complete the Payload
+migration command before `next start`, then verify `/admin/create-first-user` returns HTTP
+200 without transient missing-table errors during warm-up.
+
+## 2026-08-11 - Payload Live Preview implemented
+
+**Outcome:** Enabled Payload Live Preview for the Claims page with mobile and desktop
+breakpoints. The storefront uses Payload's origin-validated React live-preview hook at the
+same relationship depth as its initial server request. Normal account traffic remains
+published-only, while `?livePreview=true` accepts in-memory document updates from the
+configured Payload origin. The Claims route was also moved from the incorrect `(main/)`
+directory into the authenticated `(main)` account route group.
+
+**Next owner:** deployment/release
+
+**Handover prompt:**
+
+Set `STOREFRONT_URL` and `STOREFRONT_DEFAULT_COUNTRY` on the Payload App Service. Set
+`PAYLOAD_PUBLIC_URL` to the browser-visible Payload Admin origin on the storefront while
+retaining its existing server-to-server `PAYLOAD_API_URL`, then redeploy both applications.
+Log into the storefront as a customer in the same browser before opening Payload Live
+Preview because the Claims route intentionally retains the Customer Portal account guard.

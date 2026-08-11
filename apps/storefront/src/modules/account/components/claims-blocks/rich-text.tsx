@@ -21,8 +21,9 @@ function serializeLexicalNode(node: unknown): React.ReactNode {
       );
 
     case 'heading':
-      const level = obj.tag || 'h2';
-      const HeadingTag = level as keyof JSX.IntrinsicElements;
+      const level =
+        obj.tag === 'h1' || obj.tag === 'h2' || obj.tag === 'h3' ? obj.tag : 'h2';
+      const HeadingTag = level;
       const headingClasses = {
         h1: 'text-xl font-bold mb-4',
         h2: 'text-lg font-bold mb-3',
@@ -39,7 +40,7 @@ function serializeLexicalNode(node: unknown): React.ReactNode {
 
     case 'list':
       const listTag = obj.tag === 'ol' ? 'ol' : 'ul';
-      const ListTag = listTag as keyof JSX.IntrinsicElements;
+      const ListTag = listTag;
       const listClasses = listTag === 'ol' ? 'list-decimal' : 'list-disc';
 
       return (

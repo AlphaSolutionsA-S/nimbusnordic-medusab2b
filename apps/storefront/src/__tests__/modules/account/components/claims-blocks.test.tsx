@@ -6,16 +6,25 @@ describe('ClaimsBlocks', () => {
   it('TC-1: Renders published blocks in order', () => {
     const blocks: ClaimsBlock[] = [
       { blockType: 'richText', content: { type: 'paragraph' } },
-      { blockType: 'image', image: { url: 'https://test.blob.core.windows.net/img.jpg', alt: 'Test' } },
-      { blockType: 'callout', message: 'Important notice', type: 'info' },
+      {
+        blockType: 'image',
+        url: 'https://test.blob.core.windows.net/img.jpg',
+        alt: 'Test',
+      },
+      {
+        blockType: 'callout',
+        title: 'Important notice',
+        content: { type: 'paragraph' },
+        variant: 'info',
+      },
       { blockType: 'cta', label: 'Learn more', url: 'https://example.com' },
-      { blockType: 'faq', questions: [{ question: 'Q1?', answer: 'A1' }] },
+      { blockType: 'faq', rows: [{ question: 'Q1?', answer: 'A1' }] },
     ];
 
     render(<ClaimsBlocks blocks={blocks} />);
 
     // Verify all block types are rendered
-    expect(screen.getByTestId('claims-rich-text-block')).toBeInTheDocument();
+    expect(screen.getAllByTestId('claims-rich-text-block')).toHaveLength(2);
     expect(screen.getByTestId('claims-image-block')).toBeInTheDocument();
     expect(screen.getByTestId('claims-callout-block')).toBeInTheDocument();
     expect(screen.getByTestId('claims-cta-block')).toBeInTheDocument();

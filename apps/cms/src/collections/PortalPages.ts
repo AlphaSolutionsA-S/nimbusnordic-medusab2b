@@ -1,8 +1,28 @@
 import type { CollectionConfig } from 'payload';
 import { PORTAL_PAGE_BLOCKS } from '../blocks';
+import { getClaimsPreviewURL } from '../live-preview';
 
 export const PortalPages: CollectionConfig = {
   slug: 'portal-pages',
+  admin: {
+    livePreview: {
+      url: () => getClaimsPreviewURL(),
+      breakpoints: [
+        {
+          name: 'mobile',
+          label: 'Mobile',
+          width: 390,
+          height: 844,
+        },
+        {
+          name: 'desktop',
+          label: 'Desktop',
+          width: 1440,
+          height: 900,
+        },
+      ],
+    },
+  },
   access: {
     read: ({ req }) => {
       // Admins see all; service user sees published only

@@ -2,6 +2,16 @@ const checkEnvVariables = require("./check-env-variables")
 
 checkEnvVariables()
 
+function getPayloadPreviewOrigin() {
+  try {
+    return process.env.PAYLOAD_PUBLIC_URL
+      ? new URL(process.env.PAYLOAD_PUBLIC_URL).origin
+      : null
+  } catch {
+    return null
+  }
+}
+
 /**
  * @type {import('next').NextConfig}
  */
@@ -14,6 +24,22 @@ const nextConfig = {
     fetches: {
       fullUrl: true,
     },
+  },
+  async headers() {
+    const payloadOrigin = getPayloadPreviewOrigin()
+    const frameAncestors = ["'self'", payloadOrigin].filter(Boolean).join(" ")
+
+    return [
+      {
+        source: "/:countryCode/account/claims",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors ${frameAncestors};`,
+          },
+        ],
+      },
+    ]
   },
   images: {
     unoptimized: true,

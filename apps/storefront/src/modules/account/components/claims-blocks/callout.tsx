@@ -1,8 +1,10 @@
 import type { ClaimsCalloutBlock } from '@/types/cms';
 import { clx } from '@medusajs/ui';
 
+import { ClaimsRichText } from './rich-text';
+
 export function ClaimsCallout({ block }: { block: ClaimsCalloutBlock }) {
-  if (!block.message) {
+  if (!block.title || !block.content) {
     return null;
   }
 
@@ -13,26 +15,16 @@ export function ClaimsCallout({ block }: { block: ClaimsCalloutBlock }) {
     success: 'bg-green-50 border-green-200 text-green-900',
   };
 
-  const typeIcon: Record<string, string> = {
-    info: 'ℹ️',
-    warning: '⚠️',
-    error: '❌',
-    success: '✅',
-  };
-
-  const type = block.type || 'info';
+  const type = block.variant || 'info';
   const styles = typeStyles[type] || typeStyles.info;
-  const icon = typeIcon[type] || typeIcon.info;
 
   return (
     <div
       data-testid="claims-callout-block"
       className={clx('border-l-4 p-4 my-4', styles)}
     >
-      <div className="flex gap-x-3">
-        <span className="text-xl flex-shrink-0 mt-0.5">{icon}</span>
-        <p className="text-sm">{block.message}</p>
-      </div>
+      <h2 className="text-base font-semibold mb-2">{block.title}</h2>
+      <ClaimsRichText block={{ blockType: 'richText', content: block.content }} />
     </div>
   );
 }
