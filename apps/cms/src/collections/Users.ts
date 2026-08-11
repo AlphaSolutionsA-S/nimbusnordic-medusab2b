@@ -9,7 +9,18 @@ export const Users: CollectionConfig = {
     useAsTitle: 'email',
   },
   access: {
-    create: ({ req }) => !!req.user,
+    create: async ({ req }) => {
+      if (req.user) {
+        return true;
+      }
+
+      const { totalDocs } = await req.payload.find({
+        collection: 'users',
+        limit: 1,
+      });
+
+      return totalDocs === 0;
+    },
     read: ({ req }) => !!req.user,
     update: ({ req }) => !!req.user,
     delete: ({ req }) => !!req.user,
