@@ -57,15 +57,17 @@ stages:
               cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
               # Tell Oryx which Node version to use
               echo "22" > "$DEST/.nvmrc"
-              # Disable Oryx build step (we pre-built in CI; only need npm install)
-              printf '[config]\nSCM_DO_BUILD_DURING_DEPLOYMENT=false\n' > "$DEST/.deployment"
-              # Generate a standalone package.json for npm ci on App Service
+              # Generate a package.json for App Service:
+              # - override "build" to no-op so Oryx only runs npm install (not next build)
+              # - keep "start" pointing to next start via full path (next may not be in PATH)
               node -e "
                 const fs = require('fs');
                 const pkg = JSON.parse(fs.readFileSync('apps/cms/package.json', 'utf8'));
                 delete pkg.scripts.dev;
                 delete pkg.scripts.test;
                 delete pkg.devDependencies;
+                pkg.scripts.build = 'echo Pre-built in CI, skipping build';
+                pkg.scripts.start = 'node node_modules/.bin/next start';
                 fs.writeFileSync('$DEST/package.json', JSON.stringify(pkg, null, 2));
               "
               # Generate package-lock.json so Oryx uses npm ci (fast, reproducible)
@@ -109,7 +111,7 @@ stages:
               appType: 'webAppLinux'
               appName: $(APP_SERVICE_NAME)
               runtimeStack: 'NODE|22-lts'
-              startupCommand: 'next start'
+              startupCommand: 'node node_modules/.bin/next start'
               package: '$(Pipeline.Workspace)/cms-app/cms.zip'
             displayName: 'Deploy to App Service'
 
