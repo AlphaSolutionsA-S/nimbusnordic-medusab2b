@@ -116,7 +116,7 @@ stages:
             displayName: 'Deploy to App Service'
 
           # Post-deployment note
-          - script: echo "✓ Deployment complete. Payload migrations run automatically on startup."
+          - script: echo "✓ Deployment complete. Committed Payload migrations run on startup."
             displayName: 'Deployment Summary'
 
           # Warm-up: hit the site to ensure the container handles its first request
@@ -124,7 +124,7 @@ stages:
               APP_URL="https://app-payload-ekhaedeqa9gugmfw.westeurope-01.azurewebsites.net/admin"
               echo "Warming up $APP_URL ..."
               for i in 1 2; do
-                STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL/admin")
+                STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL")
                 echo "Attempt $i: HTTP $STATUS"
                 if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ] || [ "$STATUS" = "301" ]; then
                   echo "✓ Site is up."
@@ -142,11 +142,10 @@ stages:
 #    should be configured in Azure App Service → Configuration → Application settings
 #    Never commit these to source control.
 #
-# 2. Payload CMS 3.x automatically runs migrations on startup.
-#    node_modules are bundled from the build agent — no runtime install required.
+# 2. Committed Payload migrations are bundled into the Next.js build and run on startup.
+#    Oryx installs production dependencies during deployment.
 #
-# 3. After first deployment, create admin user via App Service Console:
-#    cd /home/site/wwwroot/apps/cms
-#    pnpm exec payload createUser --collection users --email admin@example.com --password YourSecurePassword
+# 3. After the first deployment, create the initial administrator at:
+#    https://<app-service-url>/admin/create-first-user
 #
 # 4. Access the admin dashboard at: https://<app-service-url>/admin

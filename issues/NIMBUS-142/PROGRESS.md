@@ -234,3 +234,21 @@ the App Service with these files.
 Redeploy the CMS App Service for `NIMBUS-142` so the updated Payload route group reaches
 production. Then revisit `/admin`; it should load the real Payload admin instead of the
 placeholder loading screen.
+
+## 2026-08-11 - Initial Payload schema migration ready
+
+**Outcome:** Generated and committed the initial PostgreSQL schema migration, configured
+the Payload Postgres adapter to run committed migrations during production initialization,
+and replaced the remaining hand-written Admin layout with the Payload 3.8 scaffold wiring.
+Validation against an isolated empty PostgreSQL database confirmed that the migration runs
+once, creates the `users` and migration-ledger tables, remains idempotent on restart, and
+serves `/admin/create-first-user`. The CMS build and all 11 focused tests pass.
+
+**Next owner:** deployment/release
+
+**Handover prompt:**
+
+Redeploy the CMS App Service for `NIMBUS-142`. Confirm the startup log reports migration
+`20260811_104814_initial_schema`, then open `/admin/create-first-user` to create the initial
+administrator. Change the PostgreSQL connection string to `sslmode=verify-full`, and rotate
+the secrets exposed in the shared configuration screenshot before production use.
