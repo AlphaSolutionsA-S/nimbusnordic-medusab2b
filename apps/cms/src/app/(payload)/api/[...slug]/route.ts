@@ -1,21 +1,8 @@
-import type { NextRequest } from 'next/server';
+import { REST_DELETE, REST_GET, REST_OPTIONS, REST_PATCH, REST_POST } from '@payloadcms/next/routes';
+import config from '@payload-config';
 
-export async function GET(request: NextRequest) {
-  return new Response('Payload API - GET', { status: 200 });
-}
-
-export async function POST(request: NextRequest) {
-  return new Response('Payload API - POST', { status: 200 });
-}
-
-export async function PATCH(request: NextRequest) {
-  return new Response('Payload API - PATCH', { status: 200 });
-}
-
-export async function DELETE(request: NextRequest) {
-  return new Response('Payload API - DELETE', { status: 200 });
-}
-
-export async function OPTIONS(request: NextRequest) {
-  return new Response(null, { status: 204 });
-}
+export const GET = REST_GET(config);
+export const POST = REST_POST(config);
+export const PATCH = REST_PATCH(config);
+export const DELETE = REST_DELETE(config);
+export const OPTIONS = REST_OPTIONS(config);

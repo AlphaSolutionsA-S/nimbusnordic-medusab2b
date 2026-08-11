@@ -219,3 +219,18 @@ security, Payload, storefront integration, and draft/publish verification tasks.
   storefront). Never commit secrets. Do not add any commerce collection, SSO, another
   editable page, a claim form, or any customer mutation. Run lint/build/test for
   `apps/cms` and `apps/storefront` before marking tasks done.
+
+## 2026-08-11 - Payload route wiring restored
+
+**Outcome:** Replaced the placeholder Payload admin/API route stubs with the real
+`@payloadcms/next` handlers, added the admin `importMap`, and added the route-group layout
+plus GraphQL routes. The CMS build now passes locally, so the remaining step is to redeploy
+the App Service with these files.
+
+**Next owner:** deployment/release
+
+**Handover prompt:**
+
+Redeploy the CMS App Service for `NIMBUS-142` so the updated Payload route group reaches
+production. Then revisit `/admin`; it should load the real Payload admin instead of the
+placeholder loading screen.
