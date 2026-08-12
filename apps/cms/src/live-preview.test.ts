@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { getClaimsPreviewURL, getStorefrontOrigin } from './live-preview';
+import { getClaimsPreviewURL, getPayloadOrigin, getStorefrontOrigin } from './live-preview';
 
 const originalEnv = process.env;
 
@@ -30,6 +30,25 @@ describe('Payload live preview configuration', () => {
       'https://portal.example.com/dk/account/claims?livePreview=true',
     );
     expect(getStorefrontOrigin()).toBe('https://portal.example.com');
+  });
+
+  it('uses the configured CMS origin for admin CSRF requests', () => {
+    process.env = {
+      ...originalEnv,
+      PAYLOAD_PUBLIC_URL: 'https://cms.example.com/admin',
+    };
+
+    expect(getPayloadOrigin()).toBe('https://cms.example.com');
+  });
+
+  it('uses the Azure hostname when the CMS URL is not configured', () => {
+    process.env = {
+      ...originalEnv,
+      WEBSITE_HOSTNAME: 'cms.azurewebsites.net',
+    };
+    delete process.env.PAYLOAD_PUBLIC_URL;
+
+    expect(getPayloadOrigin()).toBe('https://cms.azurewebsites.net');
   });
 
   it('rejects unsafe URL protocols', () => {

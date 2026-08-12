@@ -11,7 +11,7 @@ export const Users: CollectionConfig = {
   access: {
     create: async ({ req }) => {
       if (req.user) {
-        return true;
+        return req.user.role === 'admin';
       }
 
       const { totalDocs } = await req.payload.find({
@@ -21,9 +21,9 @@ export const Users: CollectionConfig = {
 
       return totalDocs === 0;
     },
-    read: ({ req }) => !!req.user,
-    update: ({ req }) => !!req.user,
-    delete: ({ req }) => !!req.user,
+    read: ({ req }) => req.user?.role === 'admin',
+    update: ({ req }) => req.user?.role === 'admin',
+    delete: ({ req }) => req.user?.role === 'admin',
   },
   fields: [
     {

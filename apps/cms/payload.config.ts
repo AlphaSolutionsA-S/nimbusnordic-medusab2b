@@ -9,11 +9,12 @@ import { Users } from './src/collections/Users';
 import { Media } from './src/collections/Media';
 import { PortalPages } from './src/collections/PortalPages';
 import { getResendAdapterArgs } from './src/email';
-import { getStorefrontOrigin } from './src/live-preview';
+import { getPayloadOrigin, getStorefrontOrigin } from './src/live-preview';
 import { migrations } from './src/migrations';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const resendAdapterArgs = getResendAdapterArgs();
+const allowedOrigins = [getPayloadOrigin(), getStorefrontOrigin()];
 
 export default buildConfig({
   admin: {
@@ -21,8 +22,8 @@ export default buildConfig({
   },
   editor: lexicalEditor(),
   collections: [Users, Media, PortalPages],
-  cors: [getStorefrontOrigin()],
-  csrf: [getStorefrontOrigin()],
+  cors: allowedOrigins,
+  csrf: allowedOrigins,
   email: resendAdapterArgs ? resendAdapter(resendAdapterArgs) : undefined,
   secret: process.env.PAYLOAD_SECRET || '',
   typescript: {
