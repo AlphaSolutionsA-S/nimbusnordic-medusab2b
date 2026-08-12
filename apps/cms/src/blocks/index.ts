@@ -1,3 +1,4 @@
+import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import type { Block } from 'payload';
 import { isSafePortalUrl } from './validate-url';
 
@@ -8,6 +9,7 @@ export const RichTextBlock: Block = {
       name: 'content',
       type: 'richText',
       required: true,
+      editor: lexicalEditor(),
     },
   ],
 };
@@ -40,6 +42,7 @@ export const CalloutBlock: Block = {
       name: 'content',
       type: 'richText',
       required: true,
+      editor: lexicalEditor(),
     },
     {
       name: 'variant',
@@ -92,6 +95,7 @@ export const FaqBlock: Block = {
           name: 'answer',
           type: 'richText',
           required: true,
+          editor: lexicalEditor(),
         },
       ],
     },
