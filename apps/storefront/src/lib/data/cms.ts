@@ -68,5 +68,5 @@ export async function getClaimsPageDocument(): Promise<PayloadClaimsPage | null>
 export async function getClaimsPage(): Promise<ClaimsPage | null> {
   const document = await getClaimsPageDocument();
 
-  return document ? mapPayloadClaimsPage(document) : null;
+  return document ? mapPayloadClaimsPage(document, getPayloadLivePreviewURL() || undefined) : null;
 }

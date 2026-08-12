@@ -1,6 +1,21 @@
 import type { ClaimsPage, PayloadClaimsPage } from '@/types/cms';
 
-export function mapPayloadClaimsPage(document: PayloadClaimsPage): ClaimsPage {
+function resolveMediaURL(url: string, cmsURL?: string): string {
+  if (!cmsURL || /^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  try {
+    return new URL(url, cmsURL).toString();
+  } catch {
+    return url;
+  }
+}
+
+export function mapPayloadClaimsPage(
+  document: PayloadClaimsPage,
+  cmsURL?: string,
+): ClaimsPage {
   return {
     title: document.title || 'Claims',
     layout: (document.layout || []).map((block) => {
@@ -30,7 +45,10 @@ export function mapPayloadClaimsPage(document: PayloadClaimsPage): ClaimsPage {
 
           return {
             blockType,
-            url: typeof imageObject.url === 'string' ? imageObject.url : '',
+            url:
+              typeof imageObject.url === 'string'
+                ? resolveMediaURL(imageObject.url, cmsURL)
+                : '',
             alt: typeof imageObject.alt === 'string' ? imageObject.alt : '',
             caption:
               typeof blockObject.caption === 'string' ? blockObject.caption : undefined,

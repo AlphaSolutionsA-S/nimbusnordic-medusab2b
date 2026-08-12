@@ -8,7 +8,6 @@ export const RichTextBlock: Block = {
       name: 'content',
       type: 'richText',
       required: true,
-      editor: undefined, // Will use Lexical (configured in payload.config)
     },
   ],
 };

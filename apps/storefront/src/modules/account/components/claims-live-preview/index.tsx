@@ -22,5 +22,5 @@ export function ClaimsLivePreview({
     serverURL,
   });
 
-  return <ClaimsPageContent page={mapPayloadClaimsPage(data)} />;
+  return <ClaimsPageContent page={mapPayloadClaimsPage(data, serverURL)} />;
 }

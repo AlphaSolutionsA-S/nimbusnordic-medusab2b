@@ -53,6 +53,7 @@ describe('getClaimsPage', () => {
   it('maps a published claims page correctly', async () => {
     process.env.PAYLOAD_API_URL = 'http://localhost:3001';
     process.env.PAYLOAD_API_KEY = 'test-key-123';
+    process.env.PAYLOAD_PUBLIC_URL = 'https://cms.example.com';
 
     const mockPayload = {
       docs: [
@@ -67,6 +68,13 @@ describe('getClaimsPage', () => {
               blockType: 'cta',
               label: 'Submit a Claim',
               url: 'https://example.com/claims',
+            },
+            {
+              blockType: 'image',
+              image: {
+                url: '/api/media/file/claim.png',
+                alt: 'Claim',
+              },
             },
           ],
         },
@@ -91,6 +99,11 @@ describe('getClaimsPage', () => {
           blockType: 'cta',
           label: 'Submit a Claim',
           url: 'https://example.com/claims',
+        },
+        {
+          blockType: 'image',
+          url: 'https://cms.example.com/api/media/file/claim.png',
+          alt: 'Claim',
         },
       ],
     });
