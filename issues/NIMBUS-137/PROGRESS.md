@@ -17,3 +17,11 @@ You are the implementation-planner for `NIMBUS-137` in `D:\projects\Nimbus\nimbu
 **Next owner:** implementation-planner
 
 **Handover prompt:** Use the fixed sales-order-lines endpoint and query options in the implementation plan; verify only the response field mapping against the BC tenant during implementation.
+
+## 2026-08-14 — Implementation plan drafted
+
+**Outcome:** Created the implementation plan, manifest, and task breakdown for the read-only Business Central order detail story. Confirmed the route family as `/account/bcorders/[id]`, kept the backend lookup company-scoped and read-only, and included loading/not-found/error/populated storefront states.
+
+**Next owner:** implementor
+
+**Handover prompt:** Implement NIMBUS-137 from `issues/NIMBUS-137/manifest.md` and the task files in the same folder. Preserve the locked read-only scope, enforce company-scoped backend lookup with 404 on cross-company mismatch, add the storefront detail route and data helper, and wire the `Details` link into `BcOrderCard`.
