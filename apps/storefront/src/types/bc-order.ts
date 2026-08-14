@@ -1,10 +1,6 @@
 export type BCOrderStatus =
   | "Open"
-  | "Released"
-  | "Pending Approval"
-  | "Pending Prepayment"
-  | "Shipped"
-  | "Invoiced"
+  | "Draft"
 
 export type BCOrder = {
   id: string

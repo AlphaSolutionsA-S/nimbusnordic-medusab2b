@@ -3,15 +3,11 @@
 import Button from "@/modules/common/components/button"
 import type { BCOrderStatus } from "@/types/bc-order"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 
 const BC_ORDER_STATUSES: BCOrderStatus[] = [
   "Open",
-  "Released",
-  "Pending Approval",
-  "Pending Prepayment",
-  "Shipped",
-  "Invoiced",
+  "Draft",
 ]
 
 type BcOrderFiltersProps = {
@@ -31,6 +27,16 @@ const BcOrderFilters = ({
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [dateFrom, setDateFrom] = useState(currentDateFrom ?? "")
+  const [dateTo, setDateTo] = useState(currentDateTo ?? "")
+
+  useEffect(() => {
+    setDateFrom(currentDateFrom ?? "")
+  }, [currentDateFrom])
+
+  useEffect(() => {
+    setDateTo(currentDateTo ?? "")
+  }, [currentDateTo])
 
   const pushParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -94,10 +100,12 @@ const BcOrderFilters = ({
           id="bc-date-from-filter"
           type="date"
           className="text-sm border border-neutral-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
-          value={currentDateFrom ?? ""}
-          onChange={(e) =>
-            pushParams({ date_from: e.target.value || undefined })
-          }
+          value={dateFrom}
+          onChange={(e) => {
+            const value = e.target.value
+            setDateFrom(value)
+            pushParams({ date_from: value || undefined })
+          }}
         />
       </div>
 
@@ -113,10 +121,12 @@ const BcOrderFilters = ({
           id="bc-date-to-filter"
           type="date"
           className="text-sm border border-neutral-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
-          value={currentDateTo ?? ""}
-          onChange={(e) =>
-            pushParams({ date_to: e.target.value || undefined })
-          }
+          value={dateTo}
+          onChange={(e) => {
+            const value = e.target.value
+            setDateTo(value)
+            pushParams({ date_to: value || undefined })
+          }}
         />
       </div>
 

@@ -334,6 +334,30 @@ medusaIntegrationTestRunner({
         });
       });
 
+      it("TC-3a: preserves leading zeros in business_central_customer_number", async () => {
+        const createResponse = await api.post(
+          "/store/companies",
+          {
+            name: "BC Company With Leading Zeros",
+            email: "bc-leading-zeros@company.com",
+            currency_code: "USD",
+          },
+          storeHeaders
+        );
+        const company = createResponse.data.companies[0];
+
+        const updateResponse = await api.post(
+          `/store/companies/${company.id}`,
+          { business_central_customer_number: "00000051" },
+          storeHeaders
+        );
+
+        expect(updateResponse.status).toEqual(200);
+        expect(updateResponse.data.company).toMatchObject({
+          business_central_customer_number: "00000051",
+        });
+      });
+
       it("TC-4: rejects non-numeric business_central_customer_number on update", async () => {
         const createResponse = await api.post(
           "/store/companies",

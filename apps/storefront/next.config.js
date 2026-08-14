@@ -27,7 +27,13 @@ const nextConfig = {
   },
   async headers() {
     const payloadOrigin = getPayloadPreviewOrigin()
-    const frameAncestors = ["'self'", payloadOrigin].filter(Boolean).join(" ")
+    const localPreviewOrigins =
+      process.env.NODE_ENV === "production"
+        ? []
+        : ["http://localhost:3000", "http://localhost:3001"]
+    const frameAncestors = ["'self'", payloadOrigin, ...localPreviewOrigins]
+      .filter(Boolean)
+      .join(" ")
 
     return [
       {

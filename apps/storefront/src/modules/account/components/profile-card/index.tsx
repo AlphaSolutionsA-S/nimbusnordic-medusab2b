@@ -6,11 +6,13 @@ import Input from "@/modules/common/components/input"
 import { B2BCustomer } from "@/types/global"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Text, clx, toast } from "@medusajs/ui"
+import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const router = useRouter()
 
   const [isEditingPassword, setIsEditingPassword] = useState(false)
   const [isSavingPassword, setIsSavingPassword] = useState(false)
@@ -31,13 +33,16 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
 
   const handleSave = async () => {
     setIsSaving(true)
-    await updateCustomer(customerData).catch(() => {
+    try {
+      await updateCustomer(customerData)
+      router.refresh()
+      setIsEditing(false)
+      toast.success("Customer updated")
+    } catch {
       toast.error("Error updating customer")
-    })
-    setIsSaving(false)
-    setIsEditing(false)
-
-    toast.success("Customer updated")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const resetPasswordForm = () => {

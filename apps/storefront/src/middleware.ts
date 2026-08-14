@@ -111,6 +111,8 @@ async function setCacheId(request: NextRequest, response: NextResponse) {
  */
 export async function middleware(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.delete("x-payload-live-preview")
   const cartId = searchParams.get("cart_id")
   const checkoutStep = searchParams.get("step")
   const cacheIdCookie = request.cookies.get("_medusa_cache_id")
@@ -132,7 +134,24 @@ export async function middleware(request: NextRequest) {
 
   // check if one of the country codes is in the url
   if (urlHasCountryCode && (!cartId || cartIdCookie) && cacheIdCookie) {
-    return NextResponse.next()
+    if (
+      request.nextUrl.pathname.endsWith("/account/claims") &&
+      searchParams.get("livePreview") === "true"
+    ) {
+      requestHeaders.set("x-payload-live-preview", "true")
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      })
+    }
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
   }
 
   // check if the url is a static asset

@@ -39,13 +39,14 @@ Authenticated Customer Portal users can see a company-wide Business Central (BC)
 - `/account/bcorders` (NIMBUS-136, in progress on `feature/NIMBUS-136`) lists company-wide BC orders via a new protected `GET /store/bc-orders` backend route and `listBCOrders` storefront data helper. `BcOrderCard` explicitly renders **no** "Details" link yet — this story adds it.
 - Backend BC access pattern (`apps/backend/src/api/store/bc-orders/route.ts`, `apps/backend/src/modules/business-central/service.ts`) resolves the authenticated customer's company `business_central_customer_number` server-side via `query.graph` and calls the BC OData `salesOrders` endpoint — the same pattern should be reused for a single-order lookup, filtering by `customerNumber` (company scope) and the order `id`/`number` so a customer cannot fetch another company's order by guessing an ID.
 - `IBusinessCentralModuleService` currently only exposes `getOperations()` and `listOrders()`; a `getOrder`/`retrieveOrder`-style method and BC order-line lookup do not exist yet.
-- The BC `salesOrders` OData entity (Business Central API v2.0) exposes a `salesOrderLines` related collection with item/quantity/price fields; exact field names available in this tenant have not been verified against a live/sandboxed response (same caveat NIMBUS-136 flagged for its own field mapping).
+- Sales-order lines must be retrieved from the Business Central API v2.0 child resource `SalesOrders({salesOrderId})/salesOrderLines()` with `$expand=item` and `$orderby=sequence`, using the configured tenant/environment and the dynamically selected company and sales-order IDs. The supplied URL is the concrete endpoint pattern: `https://api.businesscentral.dynamics.com/v2.0/{{TenantId}}/{{Environment}}/api/v2.0/companies({companyId})/SalesOrders({salesOrderId})/salesOrderLines()?$expand=item&$orderby=sequence`.
+- The exact line response field names and availability in this tenant have not been verified against a live/sandboxed response (same caveat NIMBUS-136 flagged for its own field mapping).
 - Existing Medusa order detail pattern (`apps/storefront/src/app/[countryCode]/(main)/account/@dashboard/orders/details/[id]/page.tsx` + `OrderDetailsTemplate`) is a useful UI/structure reference (header, line items, addresses, totals) but is bound to Medusa's order shape and must not be reused directly for BC data.
 - Account nav currently only needs `BC Orders` pointing at the list (NIMBUS-136); this story does not add a new nav entry — it links from within the list.
 
 ## Proposed solution
 
-1. **Backend:** extend `IBusinessCentralModuleService` with an order-detail lookup (e.g. `getOrder(params: { customerNumber, orderId })`) that calls BC OData for a single `salesOrders` record filtered by `id` (or `number`) **and** `customerNumber`, expanding/including line items. Add a new protected store route (e.g. `GET /store/bc-orders/:id`) that:
+1. **Backend:** extend `IBusinessCentralModuleService` with an order-detail lookup (e.g. `getOrder(params: { customerNumber, orderId })`) that calls BC OData for a single `salesOrders` record filtered by `id` (or `number`) **and** `customerNumber`, then retrieves its lines from `SalesOrders({salesOrderId})/salesOrderLines()` with `$expand=item&$orderby=sequence`. Add a new protected store route (e.g. `GET /store/bc-orders/:id`) that:
    - Requires customer authentication (reuse existing `authenticate("customer", ...)` middleware pattern).
    - Resolves the authenticated customer's company `business_central_customer_number` server-side exactly as `bc-orders/route.ts` does.
    - Passes both the resolved `customerNumber` and the requested `id` to the BC service so the OData filter enforces company scope — return 404 if the order does not belong to that company (do not leak existence of other companies' orders).
@@ -70,7 +71,7 @@ Authenticated Customer Portal users can see a company-wide Business Central (BC)
 
 ## Data/API needs and auth constraints
 
-- **Source of truth:** Business Central order data only (single-order lookup + line items).
+- **Source of truth:** Business Central order data only (single-order lookup + line items). Line items must use the BC API v2.0 `SalesOrders({salesOrderId})/salesOrderLines()` endpoint with `$expand=item&$orderby=sequence`.
 - **Auth model:** customer-authenticated request mapped server-side to company scope, identical pattern to NIMBUS-136 — company scope and order identity must both be enforced server-side; the client only supplies the order `id` in the URL.
 - **Security:** no client-controlled authority fields for company/customer scope; a request for an order ID outside the caller's company must not succeed or leak existence.
 - **Required response fields (header):** order number, order date, status, currency code, totals (excl./incl. tax) — matching the fields already surfaced in the BC order list, plus whatever additional header fields (e.g. addresses) the BC tenant exposes.
@@ -141,12 +142,12 @@ Feature: Read-only Business Central order detail
 ## Risks and dependencies
 
 - Depends on `feature/NIMBUS-136` (BC order list, auth pattern, and module service) landing first or being available on the working branch, since this story reuses its backend auth pattern and extends `BcOrderCard`.
-- Exact BC `salesOrders`/`salesOrderLines` OData field names and availability (e.g. addresses, discounts) are not yet verified against a live/sandbox response — same class of risk NIMBUS-136 flagged for its own field mapping.
+- Exact BC `salesOrders`/`salesOrderLines` OData field names and availability (e.g. addresses, discounts) are not yet verified against a live/sandbox response — same class of risk NIMBUS-136 flagged for its own field mapping. The line endpoint and required query options are fixed by the supplied URL.
 - Must not regress NIMBUS-136's list behavior when adding the "Details" link to `BcOrderCard`.
 
 ## Open questions (remaining unresolved only)
 
-1. Exact BC field names/shape for `salesOrderLines` (and any header fields beyond what NIMBUS-136 already fetches, e.g. addresses) need verification against a live BC sandbox response during implementation.
+1. Exact BC field names/shape for the response from `SalesOrders({salesOrderId})/salesOrderLines()` (and any header fields beyond what NIMBUS-136 already fetches, e.g. addresses) need verification against a live BC sandbox response during implementation. The request must include `$expand=item&$orderby=sequence`.
 2. Exact detail route path segment (`/account/bcorders/[id]` vs. a `/details/[id]` sub-path mirroring the legacy Medusa orders route) — implementation-planner should confirm against Next.js routing conventions already in use.
 
 ## Scoping validation performed

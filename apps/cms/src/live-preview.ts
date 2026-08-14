@@ -1,5 +1,5 @@
 const DEFAULT_STOREFRONT_URL = 'http://localhost:8000';
-const DEFAULT_COUNTRY_CODE = 'us';
+const DEFAULT_COUNTRY_CODE = 'dk';
 const DEFAULT_CMS_URL = 'http://localhost:3000';
 
 function getStorefrontURL(): URL {

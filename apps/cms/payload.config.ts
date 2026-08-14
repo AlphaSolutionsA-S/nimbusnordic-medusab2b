@@ -14,7 +14,11 @@ import { migrations } from './src/migrations';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const resendAdapterArgs = getResendAdapterArgs();
-const allowedOrigins = [getPayloadOrigin(), getStorefrontOrigin()];
+const localOrigins =
+  process.env.NODE_ENV === 'production'
+    ? []
+    : ['http://localhost:3000', 'http://localhost:3001'];
+const allowedOrigins = [...new Set([getPayloadOrigin(), getStorefrontOrigin(), ...localOrigins])];
 
 export default buildConfig({
   admin: {

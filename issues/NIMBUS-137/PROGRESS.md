@@ -9,3 +9,11 @@
 **Handover prompt:**
 
 You are the implementation-planner for `NIMBUS-137` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-137\SCOPE.md` and produce an implementation plan for the read-only BC order detail story. This story depends on `feature/NIMBUS-136` (BC order list) — investigate its current state in the working tree: `apps\backend\src\api\store\bc-orders\route.ts`, `apps\backend\src\modules\business-central\types.ts`, `apps\backend\src\modules\business-central\service.ts`, `apps\storefront\src\lib\data\business-central.ts`, `apps\storefront\src\types\bc-order.ts`, and `apps\storefront\src\modules\account\components\bc-order-card\index.tsx`. Reuse the same company-scope-resolution auth pattern (see `apps\backend\src\api\store\approvals\route.ts` and `bc-orders\route.ts`) for a new single-order lookup that also enforces the requested order belongs to the caller's company (404, not 403, on mismatch — do not leak existence). Design a storefront detail route (e.g. `apps\storefront\src\app\[countryCode]\(main)\account\@dashboard\bcorders\[id]\page.tsx`) with loading/not-found/error/populated states, a read-only template rendering order header + line items, and a "Details" link added to `BcOrderCard`. Do not implement any reorder/cancel/tracking/invoice-download action — this story is strictly read-only. Keep Jira business-facing and write technical planning only under `issues\NIMBUS-137\`. Do not modify source code during planning.
+
+## 2026-08-14 — BC line endpoint clarified
+
+**Outcome:** Updated `SCOPE.md` to require the supplied Business Central API v2.0 `SalesOrders({salesOrderId})/salesOrderLines()` endpoint, including `$expand=item` and `$orderby=sequence`, with tenant, environment, company, and sales-order identifiers resolved dynamically.
+
+**Next owner:** implementation-planner
+
+**Handover prompt:** Use the fixed sales-order-lines endpoint and query options in the implementation plan; verify only the response field mapping against the BC tenant during implementation.

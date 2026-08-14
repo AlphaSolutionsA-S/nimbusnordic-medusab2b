@@ -24,6 +24,21 @@ type BusinessCentralTokenErrorResponse = {
   error_description?: string;
 };
 
+function requireBusinessCentralString(value: unknown, fieldName: string): string {
+  if (typeof value !== "string") {
+    throw new MedusaError(
+      MedusaError.Types.UNEXPECTED_STATE,
+      `Business Central response field ${fieldName} must be a string`
+    );
+  }
+
+  return value;
+}
+
+function escapeODataString(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
   private getDiscoveryUrl(): URL {
     const configuredUrl =
@@ -202,10 +217,10 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
 
     // Build OData $filter
     const filters: string[] = [
-      `customerNumber eq '${params.customerNumber}'`,
+      `customerNumber eq '${escapeODataString(params.customerNumber)}'`,
     ];
     if (params.status) {
-      filters.push(`status eq '${params.status}'`);
+      filters.push(`status eq '${escapeODataString(params.status)}'`);
     }
     if (params.date_from) {
       filters.push(`orderDate ge ${params.date_from}`);
@@ -214,13 +229,10 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       filters.push(`orderDate le ${params.date_to}`);
     }
     if (params.search) {
-      const s = params.search.replace(/'/g, "''");
-      filters.push(
-        `(contains(number,'${s}') or contains(customerName,'${s}'))`
-      );
+      filters.push(`contains(number,'${escapeODataString(params.search)}')`);
     }
 
-    const odataUrl = new URL(`${discoveryUrl.toString()}/salesOrders`);
+    const odataUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
     odataUrl.searchParams.set("$filter", filters.join(" and "));
     odataUrl.searchParams.set("$top", String(params.limit));
     odataUrl.searchParams.set("$skip", String(params.offset));
@@ -242,9 +254,11 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       );
     }
 
+    const responseText = await ordersResponse.text();
+
     type BCOrderRaw = {
       id: string;
-      number: string;
+      number: unknown;
       orderDate: string;
       customerNumber: string;
       customerName: string;
@@ -254,14 +268,14 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       totalAmountIncludingTax?: number;
     };
 
-    const body = (await ordersResponse.json()) as {
+    const body = JSON.parse(responseText) as {
       "@odata.count"?: number;
       value: BCOrderRaw[];
     };
 
     const orders: BCOrder[] = (body.value ?? []).map((item) => ({
       id: item.id,
-      number: item.number,
+      number: requireBusinessCentralString(item.number, "number"),
       orderDate: item.orderDate,
       customerNumber: item.customerNumber,
       customerName: item.customerName,

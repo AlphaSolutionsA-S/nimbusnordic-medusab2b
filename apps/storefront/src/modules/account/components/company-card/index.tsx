@@ -21,7 +21,13 @@ const CompanyCard = ({
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
-  const { updated_at, created_at, employees, ...companyUpdateData } = company
+  const {
+    updated_at,
+    created_at,
+    employees,
+    approval_settings,
+    ...companyUpdateData
+  } = company
 
   const [companyData, setCompanyData] = useState(
     companyUpdateData as StoreUpdateCompany
@@ -29,13 +35,15 @@ const CompanyCard = ({
 
   const handleSave = async () => {
     setIsSaving(true)
-    await updateCompany(companyData).catch(() => {
+    try {
+      await updateCompany(companyData)
+      setIsEditing(false)
+      toast.success("Company updated")
+    } catch {
       toast.error("Error updating company")
-    })
-    setIsSaving(false)
-    setIsEditing(false)
-
-    toast.success("Company updated")
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const currenciesInRegions = Array.from(
