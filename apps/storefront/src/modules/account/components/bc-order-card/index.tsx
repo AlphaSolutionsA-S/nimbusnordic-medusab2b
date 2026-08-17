@@ -1,5 +1,6 @@
 import CalendarIcon from "@/modules/common/icons/calendar"
 import DocumentIcon from "@/modules/common/icons/document"
+import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import type { BCOrder } from "@/types/bc-order"
 import { Container } from "@medusajs/ui"
 
@@ -53,6 +54,14 @@ const BcOrderCard = ({ order }: BcOrderCardProps) => {
             {formattedAmount}
           </span>
         </div>
+
+        <LocalizedClientLink
+          href={`/account/bcorders/${order.id}`}
+          className="flex items-center pl-4 text-small-regular text-ui-fg-base underline"
+          data-testid="bc-order-details-link"
+        >
+          Details
+        </LocalizedClientLink>
       </div>
     </Container>
   )

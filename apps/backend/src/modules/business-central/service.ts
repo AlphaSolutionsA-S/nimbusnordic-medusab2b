@@ -1,8 +1,11 @@
 import { MedusaError } from "@medusajs/framework/utils";
 import type {
+  BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
   BCOrder,
+  BCOrderDetail,
+  BCOrderLine,
   IBusinessCentralModuleService,
 } from "./types";
 
@@ -209,16 +212,65 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return operationsResponse.json();
   }
 
+  private async getCustomerId(
+    discoveryUrl: URL,
+    accessToken: string,
+    customerNumber: string
+  ): Promise<string | null> {
+    const customersUrl = new URL(`${discoveryUrl.toString()}/customers()`);
+    customersUrl.searchParams.set(
+      "$filter",
+      `number eq '${escapeODataString(customerNumber)}'`
+    );
+    customersUrl.searchParams.set("$top", "1");
+
+    const customersResponse = await fetch(customersUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!customersResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central customer request failed with status ${customersResponse.status}`
+      );
+    }
+
+    const customersBody = (await customersResponse.json()) as {
+      value?: Array<{ id?: string }>;
+    };
+    const customerId = customersBody.value?.[0]?.id;
+
+    return customerId ?? null;
+  }
+
   async listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult> {
     const discoveryUrl = this.getDiscoveryUrl();
     const tenantId = this.getTenantId(discoveryUrl);
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const customerId = await this.getCustomerId(
+      discoveryUrl,
+      accessToken,
+      params.customerNumber
+    );
+
+    if (!customerId) {
+      return {
+        orders: [],
+        count: 0,
+        offset: params.offset,
+        limit: params.limit,
+      };
+    }
 
     // Build OData $filter
-    const filters: string[] = [
-      `customerNumber eq '${escapeODataString(params.customerNumber)}'`,
-    ];
+    const filters: string[] = [];
+    filters.push(`customerId eq ${escapeODataString(customerId)}`);
+
     if (params.status) {
       filters.push(`status eq '${escapeODataString(params.status)}'`);
     }
@@ -232,7 +284,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       filters.push(`contains(number,'${escapeODataString(params.search)}')`);
     }
 
-    const odataUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
+    const odataUrl = new URL(`${discoveryUrl.toString()}/SalesOrders()`);
     odataUrl.searchParams.set("$filter", filters.join(" and "));
     odataUrl.searchParams.set("$top", String(params.limit));
     odataUrl.searchParams.set("$skip", String(params.offset));
@@ -290,6 +342,127 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       count: body["@odata.count"] ?? 0,
       offset: params.offset,
       limit: params.limit,
+    };
+  }
+
+  async getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const customerId = await this.getCustomerId(
+      discoveryUrl,
+      accessToken,
+      params.customerNumber
+    );
+
+    if (!customerId) {
+      return null;
+    }
+
+    const ordersUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
+    ordersUrl.searchParams.set(
+      "$filter",
+      [
+        `customerId eq ${escapeODataString(customerId)}`,
+        `id eq ${escapeODataString(params.orderId)}`,
+      ].join(" and ")
+    );
+    ordersUrl.searchParams.set("$top", "1");
+
+    const ordersResponse = await fetch(ordersUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!ordersResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central order request failed with status ${ordersResponse.status}`
+      );
+    }
+
+    type BCOrderRaw = {
+      id: string;
+      number: unknown;
+      orderDate: string;
+      customerNumber: string;
+      customerName: string;
+      status: string;
+      currencyCode: string;
+      totalAmountExcludingTax?: number;
+      totalAmountIncludingTax?: number;
+    };
+
+    const ordersBody = (await ordersResponse.json()) as {
+      value?: BCOrderRaw[];
+    };
+    const order = ordersBody.value?.[0];
+
+    if (!order) {
+      return null;
+    }
+
+    const linesUrl = new URL(
+      `${discoveryUrl.toString()}/SalesOrders(${order.id})/salesOrderLines()`
+    );
+    linesUrl.searchParams.set("$expand", "item");
+    linesUrl.searchParams.set("$orderby", "sequence");
+
+    const linesResponse = await fetch(linesUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!linesResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central order lines request failed with status ${linesResponse.status}`
+      );
+    }
+
+    type BCOrderLineRaw = {
+      id: string;
+      sequence: number;
+      itemId?: string;
+      item?: { number?: string };
+      description?: string;
+      quantity?: number;
+      unitPrice?: number;
+      lineAmount?: number;
+    };
+
+    const linesBody = (await linesResponse.json()) as {
+      value?: BCOrderLineRaw[];
+    };
+    const lines: BCOrderLine[] = (linesBody.value ?? []).map((line) => ({
+      id: line.id,
+      sequence: line.sequence,
+      itemId: line.itemId,
+      itemNumber: line.item?.number,
+      description: line.description ?? "",
+      quantity: line.quantity ?? 0,
+      unitPrice: line.unitPrice ?? 0,
+      lineAmount: line.lineAmount ?? 0,
+    }));
+
+    return {
+      id: order.id,
+      number: requireBusinessCentralString(order.number, "number"),
+      orderDate: order.orderDate,
+      customerNumber: order.customerNumber,
+      customerName: order.customerName,
+      status: order.status as BCOrder["status"],
+      currencyCode: order.currencyCode,
+      totalAmountExcludingTax: order.totalAmountExcludingTax ?? 0,
+      totalAmountIncludingTax: order.totalAmountIncludingTax ?? 0,
+      lines,
     };
   }
 }

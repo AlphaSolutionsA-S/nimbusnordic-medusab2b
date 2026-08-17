@@ -1,5 +1,7 @@
 # Implementation Task 03: Storefront BC Order Detail UI
 
+**Status:** Complete
+
 ## Project Environment
 
 - **App root:** `apps/storefront`

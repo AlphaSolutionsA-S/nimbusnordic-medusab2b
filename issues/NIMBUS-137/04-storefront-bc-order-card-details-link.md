@@ -1,5 +1,7 @@
 # Implementation Task 04: Adding BC Order Card Details Link
 
+**Status:** Complete
+
 ## Project Environment
 
 - **App root:** `apps/storefront`
