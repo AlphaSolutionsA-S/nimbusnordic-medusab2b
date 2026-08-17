@@ -106,7 +106,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
                 description: "Item description",
                 quantity: 2,
                 unitPrice: 50,
-                lineAmount: 100,
+                amountExcludingTax: 75,
               },
               {
                 id: "line-2",
@@ -157,7 +157,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
           description: "Item description",
           quantity: 2,
           unitPrice: 50,
-          lineAmount: 100,
+          lineAmount: 75,
         },
         {
           id: "line-2",

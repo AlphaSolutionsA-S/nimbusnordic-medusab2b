@@ -55,3 +55,23 @@ You are the implementation-planner for `NIMBUS-137` in `D:\projects\Nimbus\nimbu
 **Next owner:** reviewer
 
 **Handover prompt:** Verify the address field names and `lineType` values against a BC tenant response, including an item line and a comment line.
+
+## 2026-08-17 — BC order-line amount field corrected
+
+**Outcome:** Updated BC order-line mapping to use the tenant-provided `amountExcludingTax` field for the displayed line amount. The previous `lineAmount` field is absent from this tenant's sales-order-line response and caused item amounts to render as zero.
+
+**Validation:** Focused `BusinessCentralModuleService` Jest suite passed (3 tests), including a discounted item case confirming the returned `amountExcludingTax` is used instead of recalculating quantity times unit price.
+
+**Next owner:** reviewer
+
+**Handover prompt:** Verify whether the invoice should display `amountExcludingTax` (current behavior) or `amountIncludingTax` for individual lines in the BC tenant.
+
+## 2026-08-17 - Implementation closed
+
+**Outcome:** Completed and committed the read-only, company-scoped BC order detail flow, including the invoice-style order header, item/comment line handling, and tax-exclusive line and summary amounts.
+
+**Validation:** Focused Business Central service suite passed (3 tests). `pnpm --dir apps/backend build` completed successfully with 12 unrelated pre-existing lint warnings. `git diff --check` passed.
+
+**Next owner:** none
+
+**Handover prompt:** NIMBUS-137 is ready to merge into `develop`; verify the merged commit in the target branch and close the Jira story with its completion comment.

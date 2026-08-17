@@ -491,7 +491,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       description?: string;
       quantity?: number;
       unitPrice?: number;
-      lineAmount?: number;
+      amountExcludingTax?: number;
     };
 
     const linesBody = (await linesResponse.json()) as {
@@ -507,7 +507,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       description: line.description ?? "",
       quantity: line.quantity ?? 0,
       unitPrice: line.unitPrice ?? 0,
-      lineAmount: line.lineAmount ?? 0,
+      lineAmount: line.amountExcludingTax ?? 0,
     }));
 
     return {

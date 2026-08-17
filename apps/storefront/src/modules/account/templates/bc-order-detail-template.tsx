@@ -119,6 +119,16 @@ const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
                 )
               })}
             </tbody>
+            <tfoot className="border-t border-ui-border-strong">
+              <tr>
+                <th className="pt-3 pr-4 text-right font-medium text-ui-fg-base" colSpan={3}>
+                  Total excluding tax
+                </th>
+                <td className="pt-3 text-right font-medium text-ui-fg-base">
+                  {formattedAmount(order.totalAmountExcludingTax)}
+                </td>
+              </tr>
+            </tfoot>
           </table>
         </div>
       </Container>
