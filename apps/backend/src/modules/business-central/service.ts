@@ -42,6 +42,21 @@ function escapeODataString(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+function formatAddress(
+  name: string | undefined,
+  addressLine1: string | undefined,
+  addressLine2: string | undefined,
+  city: string | undefined,
+  postalCode: string | undefined,
+  country: string | undefined
+): string[] {
+  const cityLine = [postalCode, city].filter(Boolean).join(" ");
+
+  return [name, addressLine1, addressLine2, cityLine, country].filter(
+    (value): value is string => Boolean(value)
+  );
+}
+
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
   private getDiscoveryUrl(): URL {
     const configuredUrl =
@@ -314,6 +329,18 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       orderDate: string;
       customerNumber: string;
       customerName: string;
+      billToName?: string;
+      billToAddressLine1?: string;
+      billToAddressLine2?: string;
+      billToCity?: string;
+      billToPostalCode?: string;
+      billToCountry?: string;
+      shipToName?: string;
+      shipToAddressLine1?: string;
+      shipToAddressLine2?: string;
+      shipToCity?: string;
+      shipToPostalCode?: string;
+      shipToCountry?: string;
       status: string;
       currencyCode: string;
       totalAmountExcludingTax?: number;
@@ -331,6 +358,22 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       orderDate: item.orderDate,
       customerNumber: item.customerNumber,
       customerName: item.customerName,
+      billToAddress: formatAddress(
+        item.billToName,
+        item.billToAddressLine1,
+        item.billToAddressLine2,
+        item.billToCity,
+        item.billToPostalCode,
+        item.billToCountry
+      ),
+      shipToAddress: formatAddress(
+        item.shipToName,
+        item.shipToAddressLine1,
+        item.shipToAddressLine2,
+        item.shipToCity,
+        item.shipToPostalCode,
+        item.shipToCountry
+      ),
       status: item.status as BCOrder["status"],
       currencyCode: item.currencyCode,
       totalAmountExcludingTax: item.totalAmountExcludingTax ?? 0,
@@ -391,6 +434,18 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       orderDate: string;
       customerNumber: string;
       customerName: string;
+      billToName?: string;
+      billToAddressLine1?: string;
+      billToAddressLine2?: string;
+      billToCity?: string;
+      billToPostalCode?: string;
+      billToCountry?: string;
+      shipToName?: string;
+      shipToAddressLine1?: string;
+      shipToAddressLine2?: string;
+      shipToCity?: string;
+      shipToPostalCode?: string;
+      shipToCountry?: string;
       status: string;
       currencyCode: string;
       totalAmountExcludingTax?: number;
@@ -430,8 +485,9 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     type BCOrderLineRaw = {
       id: string;
       sequence: number;
+      lineType?: string;
       itemId?: string;
-      item?: { number?: string };
+      item?: { number?: string; displayName?: string };
       description?: string;
       quantity?: number;
       unitPrice?: number;
@@ -444,8 +500,10 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     const lines: BCOrderLine[] = (linesBody.value ?? []).map((line) => ({
       id: line.id,
       sequence: line.sequence,
+      lineType: line.lineType ?? "",
       itemId: line.itemId,
       itemNumber: line.item?.number,
+      itemDisplayName: line.item?.displayName,
       description: line.description ?? "",
       quantity: line.quantity ?? 0,
       unitPrice: line.unitPrice ?? 0,
@@ -458,6 +516,22 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       orderDate: order.orderDate,
       customerNumber: order.customerNumber,
       customerName: order.customerName,
+      billToAddress: formatAddress(
+        order.billToName,
+        order.billToAddressLine1,
+        order.billToAddressLine2,
+        order.billToCity,
+        order.billToPostalCode,
+        order.billToCountry
+      ),
+      shipToAddress: formatAddress(
+        order.shipToName,
+        order.shipToAddressLine1,
+        order.shipToAddressLine2,
+        order.shipToCity,
+        order.shipToPostalCode,
+        order.shipToCountry
+      ),
       status: order.status as BCOrder["status"],
       currencyCode: order.currencyCode,
       totalAmountExcludingTax: order.totalAmountExcludingTax ?? 0,

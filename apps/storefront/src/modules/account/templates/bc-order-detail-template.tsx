@@ -13,6 +13,9 @@ const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
       currency: order.currencyCode,
     }).format(amount)
 
+  const renderAddress = (address: string[]) =>
+    address.length > 0 ? address.map((line) => <div key={line}>{line}</div>) : "-"
+
   return (
     <div className="flex flex-col gap-y-4" data-testid="bc-order-detail">
       <LocalizedClientLink
@@ -30,7 +33,22 @@ const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
           </p>
         </div>
 
-        <dl className="grid grid-cols-1 small:grid-cols-2 gap-x-6 gap-y-3 text-small-regular">
+        <div className="grid grid-cols-1 small:grid-cols-2 gap-x-12 gap-y-6 text-small-regular">
+          <dl>
+            <dt className="text-ui-fg-subtle mb-1">Bill-to address</dt>
+            <dd className="text-ui-fg-base">{renderAddress(order.billToAddress)}</dd>
+          </dl>
+          <dl>
+            <dt className="text-ui-fg-subtle mb-1">Ship-to address</dt>
+            <dd className="text-ui-fg-base">{renderAddress(order.shipToAddress)}</dd>
+          </dl>
+        </div>
+
+        <dl className="grid grid-cols-1 small:grid-cols-2 gap-x-12 gap-y-3 border-t border-ui-border-base pt-4 text-small-regular">
+          <div>
+            <dt className="text-ui-fg-subtle">Customer</dt>
+            <dd className="text-ui-fg-base">{order.customerName}</dd>
+          </div>
           <div>
             <dt className="text-ui-fg-subtle">Status</dt>
             <dd className="text-ui-fg-base">{order.status}</dd>
@@ -69,20 +87,37 @@ const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
               </tr>
             </thead>
             <tbody>
-              {order.lines.map((line) => (
-                <tr key={line.id} className="border-b border-ui-border-base">
-                  <td className="py-3 pr-4 text-ui-fg-base">
-                    {line.description || line.itemNumber || "Item"}
-                  </td>
-                  <td className="py-3 pr-4 text-ui-fg-base">{line.quantity}</td>
-                  <td className="py-3 pr-4 text-ui-fg-base">
-                    {formattedAmount(line.unitPrice)}
-                  </td>
-                  <td className="py-3 text-right text-ui-fg-base">
-                    {formattedAmount(line.lineAmount)}
-                  </td>
-                </tr>
-              ))}
+              {order.lines.map((line) => {
+                if (line.lineType === "Comment") {
+                  return (
+                    <tr key={line.id} className="border-b border-ui-border-base">
+                      <td className="py-3 text-ui-fg-subtle" colSpan={4}>
+                        {line.description}
+                      </td>
+                    </tr>
+                  )
+                }
+
+                const description =
+                  line.lineType === "Item"
+                    ? [line.itemDisplayName, line.description].filter(Boolean).join(" ")
+                    : line.description
+
+                return (
+                  <tr key={line.id} className="border-b border-ui-border-base">
+                    <td className="py-3 pr-4 text-ui-fg-base">
+                      {description || line.itemNumber || "Item"}
+                    </td>
+                    <td className="py-3 pr-4 text-ui-fg-base">{line.quantity}</td>
+                    <td className="py-3 pr-4 text-ui-fg-base">
+                      {formattedAmount(line.unitPrice)}
+                    </td>
+                    <td className="py-3 text-right text-ui-fg-base">
+                      {formattedAmount(line.lineAmount)}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

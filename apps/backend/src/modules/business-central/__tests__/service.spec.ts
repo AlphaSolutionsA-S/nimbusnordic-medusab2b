@@ -45,7 +45,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
 
     const ordersRequest = (global.fetch as jest.Mock).mock.calls[2][0] as string;
     expect(ordersRequest).toContain(
-      "customerNumber+eq+%27customer-id-1%27+and+id+eq+%27order-1%27"
+      "customerId+eq+customer-id-1+and+id+eq+order-1"
     );
   });
 
@@ -73,6 +73,16 @@ describe("BusinessCentralModuleService.getOrder", () => {
                 orderDate: "2026-08-14",
                 customerNumber: "10000",
                 customerName: "Nimbus Nordic",
+                billToName: "Nimbus Nordic Billing",
+                billToAddressLine1: "Billing Street 1",
+                billToCity: "Copenhagen",
+                billToPostalCode: "2100",
+                billToCountry: "DK",
+                shipToName: "Nimbus Nordic Warehouse",
+                shipToAddressLine1: "Shipping Street 1",
+                shipToCity: "Aarhus",
+                shipToPostalCode: "8000",
+                shipToCountry: "DK",
                 status: "Open",
                 currencyCode: "DKK",
                 totalAmountExcludingTax: 100,
@@ -90,12 +100,19 @@ describe("BusinessCentralModuleService.getOrder", () => {
               {
                 id: "line-1",
                 sequence: 10000,
+                lineType: "Item",
                 itemId: "item-1",
-                item: { number: "ITEM-1" },
+                item: { number: "ITEM-1", displayName: "Widget" },
                 description: "Item description",
                 quantity: 2,
                 unitPrice: 50,
                 lineAmount: 100,
+              },
+              {
+                id: "line-2",
+                sequence: 20000,
+                lineType: "Comment",
+                description: "Delivered by appointment",
               },
             ],
           }),
@@ -113,6 +130,18 @@ describe("BusinessCentralModuleService.getOrder", () => {
       orderDate: "2026-08-14",
       customerNumber: "10000",
       customerName: "Nimbus Nordic",
+      billToAddress: [
+        "Nimbus Nordic Billing",
+        "Billing Street 1",
+        "2100 Copenhagen",
+        "DK",
+      ],
+      shipToAddress: [
+        "Nimbus Nordic Warehouse",
+        "Shipping Street 1",
+        "8000 Aarhus",
+        "DK",
+      ],
       status: "Open",
       currencyCode: "DKK",
       totalAmountExcludingTax: 100,
@@ -121,18 +150,29 @@ describe("BusinessCentralModuleService.getOrder", () => {
         {
           id: "line-1",
           sequence: 10000,
+          lineType: "Item",
           itemId: "item-1",
           itemNumber: "ITEM-1",
+          itemDisplayName: "Widget",
           description: "Item description",
           quantity: 2,
           unitPrice: 50,
           lineAmount: 100,
         },
+        {
+          id: "line-2",
+          sequence: 20000,
+          lineType: "Comment",
+          description: "Delivered by appointment",
+          quantity: 0,
+          unitPrice: 0,
+          lineAmount: 0,
+        },
       ],
     });
 
     const ordersRequest = (global.fetch as jest.Mock).mock.calls[2][0] as string;
-    expect(ordersRequest).toContain("customerNumber+eq+%27customer-id-1%27");
+    expect(ordersRequest).toContain("customerId+eq+customer-id-1");
 
     const linesRequest = (global.fetch as jest.Mock).mock.calls[3][0] as string;
     expect(linesRequest).toContain("SalesOrders(order-1)/salesOrderLines()");
@@ -189,6 +229,6 @@ describe("BusinessCentralModuleService.listOrders", () => {
     expect(customerRequest).toContain("number+eq+%2710000%27");
 
     const ordersRequest = (global.fetch as jest.Mock).mock.calls[2][0] as string;
-    expect(ordersRequest).toContain("customerNumber+eq+%27customer-id-1%27");
+    expect(ordersRequest).toContain("customerId+eq+customer-id-1");
   });
 });

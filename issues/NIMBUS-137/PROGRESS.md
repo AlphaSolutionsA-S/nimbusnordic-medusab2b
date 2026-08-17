@@ -45,3 +45,13 @@ You are the implementation-planner for `NIMBUS-137` in `D:\projects\Nimbus\nimbu
 **Next owner:** reviewer
 
 **Handover prompt:** Verify the `customers()` lookup and `salesOrders.customerNumber` filter against a BC sandbox or tenant. The latter must receive the BC Customer `id`, not the Medusa company’s stored BC customer `number`.
+
+## 2026-08-17 — BC order detail fields expanded
+
+**Outcome:** Added customer name, bill-to address, and ship-to address to the BC order detail response and header. Item lines now carry the expanded item `displayName` and render it with the line description; comment lines render their description across the full item table without quantity or price values.
+
+**Validation:** Focused `BusinessCentralModuleService` Jest suite passed (3 tests). Editor diagnostics are clean for all touched backend and storefront files.
+
+**Next owner:** reviewer
+
+**Handover prompt:** Verify the address field names and `lineType` values against a BC tenant response, including an item line and a comment line.

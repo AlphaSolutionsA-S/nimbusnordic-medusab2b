@@ -13,6 +13,8 @@ export type BCOrder = {
   orderDate: string
   customerNumber: string
   customerName: string
+  billToAddress: string[]
+  shipToAddress: string[]
   status: BCOrderStatus
   currencyCode: string
   totalAmountExcludingTax: number
@@ -22,8 +24,10 @@ export type BCOrder = {
 export type BCOrderLine = {
   id: string
   sequence: number
+  lineType: string
   itemId?: string
   itemNumber?: string
+  itemDisplayName?: string
   description: string
   quantity: number
   unitPrice: number
