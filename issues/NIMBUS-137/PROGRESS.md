@@ -75,3 +75,13 @@ You are the implementation-planner for `NIMBUS-137` in `D:\projects\Nimbus\nimbu
 **Next owner:** none
 
 **Handover prompt:** NIMBUS-137 is ready to merge into `develop`; verify the merged commit in the target branch and close the Jira story with its completion comment.
+
+## 2026-08-17 - Merged into local develop
+
+**Outcome:** Cherry-picked the NIMBUS-137 implementation commits into local `develop`, with the completed order detail work ending at commit `0567afd` before this progress update.
+
+**Validation:** The focused Business Central service suite passed (3 tests), backend build completed successfully with only 12 unrelated existing lint warnings, and the diff whitespace check passed.
+
+**Next owner:** release manager
+
+**Handover prompt:** Push local `develop`, add the required Jira completion comment referencing the merge commit, then transition NIMBUS-137 to Done.
