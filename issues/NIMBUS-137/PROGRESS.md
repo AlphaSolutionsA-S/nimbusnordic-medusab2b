@@ -25,3 +25,23 @@ You are the implementation-planner for `NIMBUS-137` in `D:\projects\Nimbus\nimbu
 **Next owner:** implementor
 
 **Handover prompt:** Implement NIMBUS-137 from `issues/NIMBUS-137/manifest.md` and the task files in the same folder. Preserve the locked read-only scope, enforce company-scoped backend lookup with 404 on cross-company mismatch, add the storefront detail route and data helper, and wire the `Details` link into `BcOrderCard`.
+
+## 2026-08-14 — Implementation complete, pending review
+
+**Outcome:** Completed all four NIMBUS-137 implementation tasks. Added a protected, company-scoped `GET /store/bc-orders/:id` endpoint, Business Central order and line-item retrieval, a typed storefront SDK helper that maps only 404 responses to a customer-safe not-found state, a read-only `/account/bcorders/[id]` page with loading/error/not-found/populated states, and a `Details` link from each BC order card. The backend service has focused automated coverage for scoped miss and successful order/line mapping.
+
+**Validation:** Backend focused Jest suite passed (2 tests). `pnpm --dir apps/backend build` completed successfully with 12 pre-existing warnings outside this task. Storefront editor diagnostics are clean for all touched files. Storefront build is blocked before compilation because `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` is absent. Direct storefront TypeScript validation reports 8 unrelated existing errors in account-nav tests, profile-card, and cart-drawer; no NIMBUS-137 diagnostics remain.
+
+**Next owner:** reviewer
+
+**Handover prompt:** Review NIMBUS-137 on this branch. Validate the BC line-item field mapping against a real tenant or sandbox response, provide `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`, then run `pnpm --dir apps/storefront build` and manually verify authenticated in-company access plus cross-company not-found behavior. Transition Jira NIMBUS-137 to Internal Review when the tracker action is available.
+
+## 2026-08-17 — BC customer identity mapping corrected
+
+**Outcome:** Corrected the Business Central customer identity mapping. The Medusa company `business_central_customer_number` is now used only to find the BC Customer record by its `number`; the resulting BC Customer `id` is used for all existing sales-order filters. Both list and detail lookups return no data when the matching BC Customer cannot be resolved.
+
+**Validation:** Focused `BusinessCentralModuleService` Jest suite passed (3 tests), including list and detail assertions that order filters use the resolved BC Customer ID. `pnpm --dir apps/backend build` completed successfully with 12 unrelated pre-existing warnings.
+
+**Next owner:** reviewer
+
+**Handover prompt:** Verify the `customers()` lookup and `salesOrders.customerNumber` filter against a BC sandbox or tenant. The latter must receive the BC Customer `id`, not the Medusa company’s stored BC customer `number`.

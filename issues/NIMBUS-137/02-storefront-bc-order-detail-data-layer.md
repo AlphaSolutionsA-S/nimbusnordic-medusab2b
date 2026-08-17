@@ -1,5 +1,7 @@
 # Implementation Task 02: Storefront BC Order Detail Data Layer
 
+**Status:** Complete
+
 ## Project Environment
 
 - **App root:** `apps/storefront`

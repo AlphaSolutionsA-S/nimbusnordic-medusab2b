@@ -1,5 +1,7 @@
 # Implementation Task 01: Backend BC Order Detail Endpoint
 
+**Status:** Complete
+
 ## Project Environment
 
 - **App root:** `apps/backend`

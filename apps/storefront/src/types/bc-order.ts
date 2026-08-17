@@ -1,6 +1,11 @@
 export type BCOrderStatus =
   | "Open"
   | "Draft"
+  | "Released"
+  | "Pending Approval"
+  | "Pending Prepayment"
+  | "Shipped"
+  | "Invoiced"
 
 export type BCOrder = {
   id: string
@@ -12,6 +17,21 @@ export type BCOrder = {
   currencyCode: string
   totalAmountExcludingTax: number
   totalAmountIncludingTax: number
+}
+
+export type BCOrderLine = {
+  id: string
+  sequence: number
+  itemId?: string
+  itemNumber?: string
+  description: string
+  quantity: number
+  unitPrice: number
+  lineAmount: number
+}
+
+export type BCOrderDetail = BCOrder & {
+  lines: BCOrderLine[]
 }
 
 export type BCOrderListParams = {

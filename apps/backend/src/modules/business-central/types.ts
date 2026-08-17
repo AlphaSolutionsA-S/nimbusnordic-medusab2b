@@ -18,6 +18,21 @@ export type BCOrder = {
   totalAmountIncludingTax: number;
 };
 
+export type BCOrderLine = {
+  id: string;
+  sequence: number;
+  itemId?: string;
+  itemNumber?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineAmount: number;
+};
+
+export type BCOrderDetail = BCOrder & {
+  lines: BCOrderLine[];
+};
+
 export type BCListOrdersParams = {
   customerNumber: string;
   limit: number;
@@ -26,6 +41,11 @@ export type BCListOrdersParams = {
   date_from?: string;
   date_to?: string;
   search?: string;
+};
+
+export type BCGetOrderParams = {
+  customerNumber: string;
+  orderId: string;
 };
 
 export type BCListOrdersResult = {
@@ -38,4 +58,5 @@ export type BCListOrdersResult = {
 export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
+  getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
 }
