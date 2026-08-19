@@ -26,9 +26,9 @@
 - [ ] Unauthenticated → 401; reasons GET happy path → 200; missing BC number → 400; strict-payload
   rejection → 400; cross-company source order → 404; create happy path → 200 (task 04).
 
-### Idempotency (stub-level)
-- [ ] Two identical create requests produce **one** `bc_return_request` record (same `request_id`)
-  and one logical return — asserted at the persistence + workflow level against the stub.
+### Idempotency (BC contract)
+- [ ] Two identical create requests generate the same deterministic `requestId`; the BC contract
+  guarantees one logical return for that key.
 
 ### Security / authorization
 - [ ] Company/customer scope is derived only from `req.auth_context` + the employee-company link;

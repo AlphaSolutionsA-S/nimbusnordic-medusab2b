@@ -1,5 +1,12 @@
 # Implementation Task 02: BC Return Request Persistence Module
 
+**Status:** Removed 2026-08-17
+
+> **Decision:** The storefront calls the protected backend API synchronously and the backend directly
+> invokes BC. BC's deterministic `requestId` is the idempotency key; the portal does not persist
+> requests or reconcile ambiguous outcomes locally. The module and its generated migration were
+> removed before commit, and its local migration was rolled back.
+
 > **Depends on task 01.** Records one row per logical portal return request plus its (stubbed, then
 > real) BC outcome, keyed by a server-generated deterministic idempotency key that doubles as the
 > `requestId` sent to BC. CRUD-only; all logic lives in the task 03 workflow.

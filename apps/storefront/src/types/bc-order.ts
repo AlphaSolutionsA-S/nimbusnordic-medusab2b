@@ -53,3 +53,33 @@ export type BCOrderListResponse = {
   offset: number
   limit: number
 }
+
+export type BCReturnReason = {
+  id: string
+  description: string
+}
+
+export type BCReturnLineInput = {
+  source_line_no: number
+  quantity: number
+  return_reason_code: string
+}
+
+export type BCReturnRequestBody = {
+  lines: BCReturnLineInput[]
+}
+
+export type BCReturnLine = {
+  sourceLineNo: number
+  quantityToReturn: number
+  returnReasonCode: string
+}
+
+export type BCReturnOrder = {
+  id: string
+  number: string
+  status: string
+  requestId: string
+  sourceOrderNo: string
+  lines: BCReturnLine[]
+}

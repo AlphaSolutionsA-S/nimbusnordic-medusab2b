@@ -6,6 +6,9 @@ import type {
   BCOrder,
   BCOrderDetail,
   BCOrderLine,
+  BCCreateReturnParams,
+  BCReturnOrder,
+  BCReturnReason,
   IBusinessCentralModuleService,
 } from "./types";
 
@@ -26,6 +29,16 @@ type BusinessCentralTokenErrorResponse = {
   error?: string;
   error_description?: string;
 };
+
+export class BusinessCentralAmbiguousOutcomeError extends Error {
+  constructor(
+    message: string,
+    readonly idempotencyKey: string
+  ) {
+    super(message);
+    this.name = "BusinessCentralAmbiguousOutcomeError";
+  }
+}
 
 function requireBusinessCentralString(value: unknown, fieldName: string): string {
   if (typeof value !== "string") {
@@ -225,6 +238,54 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     return operationsResponse.json();
+  }
+
+  // STUB (NIMBUS-138 task 09): replace with the real BC custom-action HTTP call.
+  async createReturnFromSalesOrder(
+    params: BCCreateReturnParams
+  ): Promise<BCReturnOrder> {
+    if (!params.requestId || !params.sourceOrderNo || params.lines.length === 0) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "A return request must include an ID, source order, and at least one line."
+      );
+    }
+
+    for (const line of params.lines) {
+      if (line.quantityToReturn <= 0 || !line.returnReasonCode) {
+        throw new MedusaError(
+          MedusaError.Types.INVALID_DATA,
+          "Each return line must have a positive quantity and return reason."
+        );
+      }
+    }
+
+    return {
+      id: `bcret_stub_${params.requestId}`,
+      number: params.requestId,
+      status: "Open",
+      requestId: params.requestId,
+      sourceOrderNo: params.sourceOrderNo,
+      lines: params.lines.map((line) => ({
+        sourceLineNo: line.sourceLineNo,
+        quantityToReturn: line.quantityToReturn,
+        returnReasonCode: line.returnReasonCode,
+      })),
+    };
+  }
+
+  // STUB (NIMBUS-138 task 09): replace with the verified BC return-reason source.
+  async listReturnReasons(): Promise<BCReturnReason[]> {
+    return [
+      { id: "DAMAGED", description: "Item arrived damaged or defective" },
+      { id: "WRONGITEM", description: "Wrong item was delivered" },
+      {
+        id: "NOTORDERED",
+        description: "Item was not ordered by the customer",
+      },
+      { id: "QUALITY", description: "Item does not meet expected quality" },
+      { id: "OTHER", description: "Other reason (specified separately)" },
+    ];
   }
 
   private async getCustomerId(

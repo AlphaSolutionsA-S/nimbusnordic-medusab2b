@@ -1,5 +1,7 @@
 # Implementation Task 01: BC Return Service Stub + Return-Reason Dummy Provider + Types
 
+**Status:** Completed 2026-08-17
+
 > **Not gated. This is the first task.** It ships a *stub* write seam and a *dummy* return-reason
 > provider on the BC module so the whole vertical slice (tasks 02–07) can be built and demoed
 > against fakes. The **real** BC HTTP call and the return-reason source are deferred to tasks 08–09.

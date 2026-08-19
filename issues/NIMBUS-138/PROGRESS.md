@@ -117,3 +117,39 @@ business-facing and technical plans only under `issues\NIMBUS-138\`.
   internals leaked). Run `pnpm test:integration:modules`, `pnpm test:integration:http`, and
   `pnpm build` (backend + storefront) before marking tasks done. Keep Jira business-facing; keep
   technical detail under `issues\NIMBUS-138\`.
+
+## 2026-08-17 - Direct synchronous BC flow selected
+
+- **Outcome:** The customer confirmed that the storefront should receive the backend's BC result
+  directly. The local `businessCentralReturn` persistence module, generated migration, and test
+  were removed; its one applied local migration was rolled back. The deterministic server-generated
+  `requestId` remains and is sent to BC as the idempotency key. A BC timeout or ambiguous outcome
+  must be returned immediately to the storefront as a customer-safe error, without local
+  reconciliation state or disclosure of BC internals.
+- **Next owner:** implementor
+- **Handover prompt:** Implement task 03 as a direct synchronous workflow. Validate the authenticated
+  company-owned source order and line selections server-side, derive the deterministic `requestId`,
+  and call the BC service once. Do not create a return-request module, migration, or database record.
+  Task 04 must map BC timeout/ambiguous errors to a customer-safe error the storefront displays
+  immediately. Task 08 must verify that the target BC action treats `requestId` as its idempotency
+  key before the real service is enabled.
+
+## 2026-08-17 - Stubbed direct-flow implementation
+
+- **Outcome:** Implemented the direct synchronous stubbed flow: typed BC return/reason service
+  seams; authenticated return-reasons and create-return store routes; strict return-line validation;
+  server-side company/order/line/reason validation in `createBcReturnWorkflow`; deterministic
+  `requestId`; and the storefront return-entry UI. The route returns BC ambiguous outcomes as an
+  immediate customer-safe `503` response. No return persistence module, migration, or database table
+  remains.
+- **Validation:** Backend build passed. Focused BC stub tests passed (3 tests). Storefront compiled
+  and linted successfully, then production page-data collection failed because the local backend was
+  unavailable (`ECONNREFUSED`). Storefront `tsc --noEmit` is blocked by pre-existing errors in
+  account-navigation tests, profile-card nullability, and cart-drawer timer typings. Backend
+  persistence/HTTP integration tests remain blocked by the local test PostgreSQL configuration
+  (`SASL: client password must be a string`).
+- **Next owner:** implementor
+- **Handover prompt:** Restore a valid test PostgreSQL configuration, add and run direct-workflow
+  and HTTP route integration coverage, then perform the storefront walkthrough with the backend
+  running. Before enabling real BC writes, task 08 must verify the custom BC action, including that
+  it deduplicates the deterministic `requestId`; task 09 must replace the offline stub.

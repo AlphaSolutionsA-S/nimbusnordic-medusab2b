@@ -59,8 +59,44 @@ export type BCListOrdersResult = {
   limit: number;
 };
 
+export type BCReturnLineInput = {
+  sourceLineNo: number;
+  quantityToReturn: number;
+  returnReasonCode: string;
+};
+
+export type BCCreateReturnParams = {
+  requestId: string;
+  sourceOrderNo: string;
+  lines: BCReturnLineInput[];
+};
+
+export type BCReturnLine = {
+  sourceLineNo: number;
+  quantityToReturn: number;
+  returnReasonCode: string;
+};
+
+export type BCReturnOrder = {
+  id: string;
+  number: string;
+  status: string;
+  requestId: string;
+  sourceOrderNo: string;
+  lines: BCReturnLine[];
+};
+
+export type BCReturnReason = {
+  id: string;
+  description: string;
+};
+
 export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
   getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
+  createReturnFromSalesOrder(
+    params: BCCreateReturnParams
+  ): Promise<BCReturnOrder>;
+  listReturnReasons(): Promise<BCReturnReason[]>;
 }

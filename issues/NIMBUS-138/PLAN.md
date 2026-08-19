@@ -11,7 +11,7 @@ any financial document.
 
 ## Strategy: stub-first vertical slice, real BC last
 
-The plan builds the **entire** flow (service seam → persistence → workflow → routes →
+The plan builds the **entire** flow (service seam → workflow → routes →
 storefront data layer → return-entry UI) against **stubs**, reaches a **demoable milestone**
 (task 07), and only then verifies the real BC contract (task 08) and swaps the stub for the
 real BC HTTP call (task 09).
@@ -55,9 +55,9 @@ Field mapping from NIMBUS-137 read data (`bcService.getOrder`):
   prerequisite (task 08 verifies it; task 09 binds it). A sales order or credit memo is not a
   substitute, and no public `salesReturnOrders` writer is assumed.
 - This is a financial/inventory mutation across an external system, so — even with a stub —
-  the plan bakes in strict server-derived authorization, strict input validation, persistent
-  idempotency keyed by a server-generated deterministic key, ambiguous-outcome reconciliation,
-  and redaction of BC internals from the start.
+  the plan bakes in strict server-derived authorization, strict input validation, a deterministic
+  request ID that BC uses for idempotency, immediate timeout propagation, and redaction of BC
+  internals from the start.
 
 ## Execution Plan (9 tasks, stub-first)
 
@@ -65,11 +65,11 @@ Field mapping from NIMBUS-137 read data (`bcService.getOrder`):
    (offline deterministic fake) and dummy `listReturnReasons()`; add the seam types and the
    `BusinessCentralAmbiguousOutcomeError` sentinel. Every stub carries a
    `// STUB (NIMBUS-138 task 09):` comment.
-2. **Task 02 — persistence module.** `businessCentralReturn` module + `BcReturnRequest` model
-   keyed by the idempotency `request_id`.
-3. **Task 03 — create-return workflow.** `createBcReturnWorkflow`: `getOrder` ownership +
-   quantity/reason validation, deterministic `requestId`, upsert-or-reuse record, invoke the
-   (stubbed) service, ambiguous-vs-definitive branching inside steps.
+2. **Task 02 — removed.** BC owns idempotency through the deterministic `requestId`; no local
+   return-request persistence module is used.
+3. **Task 03 — direct create-return workflow.** `createBcReturnWorkflow`: `getOrder` ownership +
+   quantity/reason validation, deterministic `requestId`, and synchronous invocation of the
+   (stubbed) service.
 4. **Task 04 — store routes.** `GET /store/bc-orders/return-reasons` and
    `POST /store/bc-orders/:id/returns` with strict Zod validation, server-derived company
    scope, and customer-safe error mapping.
@@ -97,12 +97,9 @@ Field mapping from NIMBUS-137 read data (`bcService.getOrder`):
   dimensions, tax, and application logic authoritative in BC; avoids a client-controllable
   `salesReturnOrders` writer.
 - **Server-generated deterministic idempotency key** (hash of customer + source order + sorted
-  lines) that **doubles as** the BC `requestId`, so retries collapse to one record and one BC
-  document.
-- **Ambiguous vs definitive error classification** so timeouts/5xx reconcile via the
-  idempotency key while business-rule rejections fail fast with a customer-safe message. Wired
-  into the workflow from task 03 even though the stub never throws it — task 09 is a pure
-  service swap.
+  lines) that **doubles as** the BC `requestId`, so BC collapses retries to one document.
+- **Immediate, customer-safe timeout propagation.** The backend maps ambiguous BC outcomes to an
+  error response for the storefront; it does not persist or reconcile return requests locally.
 - **Reuse NIMBUS-137's `getOrder`** for source verification and the `[id]` 404 pattern.
 - **Per-line reason in the UI** (`returnReasonCode` per line), matching the assumed BC body.
 
@@ -114,8 +111,7 @@ Field mapping from NIMBUS-137 read data (`bcService.getOrder`):
   (03).
 - [ ] HTTP tests: 401 unauth, reasons 200, 400 no-BC-number, 400 strict-payload, 404
   cross-company, 200 happy path (04).
-- [ ] Stub-level idempotency: two identical requests → one `bc_return_request` record / one
-  logical return.
+- [ ] Stub-level idempotency: two identical requests use the same deterministic `requestId`.
 - [ ] Manual storefront walkthrough of the return-entry UI against the stub (07).
 - [ ] `CONTRACT.md` answers every checklist item (08).
 - [ ] Real BC: exactly one return on ambiguous-then-retry; no credit memo/receipt/refund; no

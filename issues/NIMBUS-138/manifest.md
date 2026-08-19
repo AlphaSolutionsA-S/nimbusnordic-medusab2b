@@ -46,22 +46,30 @@ task 08, bound in task 09. No public `salesReturnOrders` writer is assumed.
 
 | # | Title | File | App | Depends On | Uses stub? | Status |
 |---|-------|------|-----|------------|------------|--------|
-| 01 | BC return service stub + reasons + types | `01-backend-bc-return-service-stub.md` | backend | None | ships stub | TODO |
-| 02 | BC return request persistence module | `02-backend-return-persistence-module.md` | backend | None | — | TODO |
-| 03 | Idempotent create-BC-return workflow | `03-backend-create-return-workflow.md` | backend | 01, 02 | stub | TODO |
-| 04 | Store return routes + validators + middlewares | `04-backend-store-return-routes.md` | backend | 01, 03 | stub | TODO |
-| 05 | Storefront return data layer + types | `05-storefront-return-data-layer.md` | storefront | 04 | stub | TODO |
-| 06 | Storefront return-entry UI | `06-storefront-return-ui.md` | storefront | 05 | stub | TODO |
-| 07 | Verification — stubbed end-to-end flow (demoable) | `07-verification-stubbed-flow.md` | both | 01–06 | stub | TODO |
+| 01 | BC return service stub + reasons + types | `01-backend-bc-return-service-stub.md` | backend | None | ships stub | DONE |
+| 02 | BC return request persistence module | `02-backend-return-persistence-module.md` | backend | None | — | REMOVED |
+| 03 | Direct create-BC-return workflow | `03-backend-create-return-workflow.md` | backend | 01 | stub | DONE (stub) |
+| 04 | Store return routes + validators + middlewares | `04-backend-store-return-routes.md` | backend | 01, 03 | stub | DONE (stub) |
+| 05 | Storefront return data layer + types | `05-storefront-return-data-layer.md` | storefront | 04 | stub | DONE (stub) |
+| 06 | Storefront return-entry UI | `06-storefront-return-ui.md` | storefront | 05 | stub | DONE (stub) |
+| 07 | Verification — stubbed end-to-end flow (demoable) | `07-verification-stubbed-flow.md` | both | 01–06 | stub | TODO (blocked) |
 | 08 | BC return contract verification (spike) | `08-bc-return-contract-verification.md` | backend (spike) | 07 | — | TODO |
 | 09 | Replace stubs with real BC implementation | `09-backend-bc-real-implementation.md` | backend | 08 | swaps stub | TODO |
 
 Notes:
-- Tasks 01 and 02 are independent and can run in parallel.
+- Task 02 was removed: Business Central owns idempotency through the deterministic `requestId`.
 - Task 08 (contract spike) has no code dependency on 01–07 and may run in parallel with them;
   it only blocks task 09.
 - **Every stub carries a `// STUB (NIMBUS-138 task 09):` comment** so the swap points are
   greppable.
+- **Status as of 2026-08-19:** Tasks 03–06 are implemented against the offline stub (verified
+  in the working tree on `develop`; `return-stub.spec.ts` passes 6/6). They are marked
+  `DONE (stub)` because the real BC call is still stubbed — task 09 must swap the stub before
+  they are fully complete. Task 07 is `TODO (blocked)`: the stubbed e2e walkthrough and HTTP
+  integration tests are pending a valid local test PostgreSQL configuration
+  (`SASL: client password must be a string`) and a running local backend for storefront
+  page-data collection. Tasks 08–09 are not started. Work is currently uncommitted on
+  `develop` rather than on the planned `feature/NIMBUS-138` branch.
 
 ## Test Strategy
 

@@ -6,6 +6,9 @@ import type {
   BCOrderDetail,
   BCOrderListParams,
   BCOrderListResponse,
+  BCReturnOrder,
+  BCReturnReason,
+  BCReturnRequestBody,
 } from "@/types/bc-order"
 import { FetchError } from "@medusajs/js-sdk"
 
@@ -81,3 +84,47 @@ export const retrieveBCOrder = async (
   }
 }
 
+type StoreBCReturnReasonsResponse = {
+  return_reasons: BCReturnReason[]
+}
+
+type StoreBCReturnResponse = {
+  return: BCReturnOrder
+}
+
+export const listBCReturnReasons = async (): Promise<BCReturnReason[]> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+  const response = await sdk.client.fetch<StoreBCReturnReasonsResponse>(
+    "/store/bc-orders/return-reasons",
+    {
+      method: "GET",
+      headers,
+      credentials: "include",
+      cache: "no-store",
+    }
+  )
+
+  return response.return_reasons
+}
+
+export const createBCReturn = async (
+  orderId: string,
+  body: BCReturnRequestBody
+): Promise<BCReturnOrder> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+  const response = await sdk.client.fetch<StoreBCReturnResponse>(
+    `/store/bc-orders/${orderId}/returns`,
+    {
+      method: "POST",
+      headers,
+      body,
+      credentials: "include",
+    }
+  )
+
+  return response.return
+}

@@ -1,4 +1,6 @@
 import { Container, Heading } from "@medusajs/ui"
+import { listBCReturnReasons } from "@/lib/data/business-central"
+import BcOrderReturn from "@/modules/account/components/bc-order-return"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import type { BCOrderDetail } from "@/types/bc-order"
 
@@ -6,7 +8,8 @@ type BcOrderDetailTemplateProps = {
   order: BCOrderDetail
 }
 
-const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
+const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
+  const returnReasons = await listBCReturnReasons()
   const formattedAmount = (amount: number) =>
     new Intl.NumberFormat("en-GB", {
       style: "currency",
@@ -17,13 +20,14 @@ const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
     address.length > 0 ? address.map((line) => <div key={line}>{line}</div>) : "-"
 
   return (
-    <div className="flex flex-col gap-y-4" data-testid="bc-order-detail">
-      <LocalizedClientLink
-        href="/account/bcorders"
-        className="text-small-regular text-ui-fg-subtle hover:text-ui-fg-base"
-      >
-        Back to BC orders
-      </LocalizedClientLink>
+    <BcOrderReturn order={order} reasons={returnReasons}>
+      <div className="flex flex-col gap-y-4" data-testid="bc-order-detail">
+        <LocalizedClientLink
+          href="/account/bcorders"
+          className="text-small-regular text-ui-fg-subtle hover:text-ui-fg-base"
+        >
+          Back to BC orders
+        </LocalizedClientLink>
 
       <Container className="flex flex-col gap-y-4">
         <div>
@@ -132,7 +136,9 @@ const BcOrderDetailTemplate = ({ order }: BcOrderDetailTemplateProps) => {
           </table>
         </div>
       </Container>
-    </div>
+
+      </div>
+    </BcOrderReturn>
   )
 }
 
