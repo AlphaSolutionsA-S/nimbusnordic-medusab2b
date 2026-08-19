@@ -473,6 +473,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       ].join(" and ")
     );
     ordersUrl.searchParams.set("$top", "1");
+    ordersUrl.searchParams.set("$expand", "salesOrderLines($expand=item)");
 
     const ordersResponse = await fetch(ordersUrl.toString(), {
       method: "GET",
@@ -488,6 +489,18 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
         `Business Central order request failed with status ${ordersResponse.status}`
       );
     }
+
+    type BCOrderLineRaw = {
+      id: string;
+      sequence: number;
+      lineType?: string;
+      itemId?: string;
+      item?: { number?: string; displayName?: string };
+      description?: string;
+      quantity?: number;
+      unitPrice?: number;
+      amountExcludingTax?: number;
+    };
 
     type BCOrderRaw = {
       id: string;
@@ -511,6 +524,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       currencyCode: string;
       totalAmountExcludingTax?: number;
       totalAmountIncludingTax?: number;
+      salesOrderLines?: BCOrderLineRaw[];
     };
 
     const ordersBody = (await ordersResponse.json()) as {
@@ -522,54 +536,20 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       return null;
     }
 
-    const linesUrl = new URL(
-      `${discoveryUrl.toString()}/SalesOrders(${order.id})/salesOrderLines()`
-    );
-    linesUrl.searchParams.set("$expand", "item");
-    linesUrl.searchParams.set("$orderby", "sequence");
-
-    const linesResponse = await fetch(linesUrl.toString(), {
-      method: "GET",
-      headers: {
-        authorization: `Bearer ${accessToken}`,
-        accept: "application/json",
-      },
-    });
-
-    if (!linesResponse.ok) {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        `Business Central order lines request failed with status ${linesResponse.status}`
-      );
-    }
-
-    type BCOrderLineRaw = {
-      id: string;
-      sequence: number;
-      lineType?: string;
-      itemId?: string;
-      item?: { number?: string; displayName?: string };
-      description?: string;
-      quantity?: number;
-      unitPrice?: number;
-      amountExcludingTax?: number;
-    };
-
-    const linesBody = (await linesResponse.json()) as {
-      value?: BCOrderLineRaw[];
-    };
-    const lines: BCOrderLine[] = (linesBody.value ?? []).map((line) => ({
-      id: line.id,
-      sequence: line.sequence,
-      lineType: line.lineType ?? "",
-      itemId: line.itemId,
-      itemNumber: line.item?.number,
-      itemDisplayName: line.item?.displayName,
-      description: line.description ?? "",
-      quantity: line.quantity ?? 0,
-      unitPrice: line.unitPrice ?? 0,
-      lineAmount: line.amountExcludingTax ?? 0,
-    }));
+    const lines: BCOrderLine[] = [...(order.salesOrderLines ?? [])]
+      .sort((left, right) => left.sequence - right.sequence)
+      .map((line) => ({
+        id: line.id,
+        sequence: line.sequence,
+        lineType: line.lineType ?? "",
+        itemId: line.itemId,
+        itemNumber: line.item?.number,
+        itemDisplayName: line.item?.displayName,
+        description: line.description ?? "",
+        quantity: line.quantity ?? 0,
+        unitPrice: line.unitPrice ?? 0,
+        lineAmount: line.amountExcludingTax ?? 0,
+      }));
 
     return {
       id: order.id,

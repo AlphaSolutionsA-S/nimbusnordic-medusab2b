@@ -87,32 +87,25 @@ describe("BusinessCentralModuleService.getOrder", () => {
                 currencyCode: "DKK",
                 totalAmountExcludingTax: 100,
                 totalAmountIncludingTax: 125,
-              },
-            ],
-          }),
-          { status: 200 }
-        )
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            value: [
-              {
-                id: "line-1",
-                sequence: 10000,
-                lineType: "Item",
-                itemId: "item-1",
-                item: { number: "ITEM-1", displayName: "Widget" },
-                description: "Item description",
-                quantity: 2,
-                unitPrice: 50,
-                amountExcludingTax: 75,
-              },
-              {
-                id: "line-2",
-                sequence: 20000,
-                lineType: "Comment",
-                description: "Delivered by appointment",
+                salesOrderLines: [
+                  {
+                    id: "line-2",
+                    sequence: 20000,
+                    lineType: "Comment",
+                    description: "Delivered by appointment",
+                  },
+                  {
+                    id: "line-1",
+                    sequence: 10000,
+                    lineType: "Item",
+                    itemId: "item-1",
+                    item: { number: "ITEM-1", displayName: "Widget" },
+                    description: "Item description",
+                    quantity: 2,
+                    unitPrice: 50,
+                    amountExcludingTax: 75,
+                  },
+                ],
               },
             ],
           }),
@@ -173,11 +166,10 @@ describe("BusinessCentralModuleService.getOrder", () => {
 
     const ordersRequest = (global.fetch as jest.Mock).mock.calls[2][0] as string;
     expect(ordersRequest).toContain("customerId+eq+customer-id-1");
-
-    const linesRequest = (global.fetch as jest.Mock).mock.calls[3][0] as string;
-    expect(linesRequest).toContain("SalesOrders(order-1)/salesOrderLines()");
-    expect(linesRequest).toContain("%24expand=item");
-    expect(linesRequest).toContain("%24orderby=sequence");
+    expect(ordersRequest).toContain(
+      "%24expand=salesOrderLines%28%24expand%3Ditem%29"
+    );
+    expect(global.fetch).toHaveBeenCalledTimes(3);
   });
 });
 
