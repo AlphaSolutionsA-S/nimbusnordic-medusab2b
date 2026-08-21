@@ -39,7 +39,7 @@ Confirms Task 05 helper coverage and the modified login data layer type-check.
 ### 5. Migration verification on a disposable DB
 - Apply the generated company migration (`npx medusa db:migrate` against a throwaway/test DB).
 - Verify on a pre-existing `company` row:
-  - `blocked = ''` (unblocked default),
+  - `blocked = 'not_blocked'` (unblocked default),
   - `credit_limit IS NULL` and `raw_credit_limit IS NULL` (unknown until first sync),
   - `vat_number IS NULL`.
 - Verify the migration `down` cleanly drops `blocked`, `credit_limit`, `raw_credit_limit`, and
@@ -49,7 +49,7 @@ Confirms Task 05 helper coverage and the modified login data layer type-check.
 Exercise a BC customer that has: two address lines, `blocked = "_x0020_"`, a decimal
 `creditLimit`, a `taxRegistrationNumber`, and an expanded `currency`. Confirm after login:
 - `address` is `"<line1>, <line2>"`,
-- `blocked` is `""`,
+- `blocked` is `"not_blocked"`,
 - `credit_limit` retains the exact decimal (no minor-unit/integer corruption),
 - `vat_number` is set,
 - `currency_code` equals the expanded `currency.code`,

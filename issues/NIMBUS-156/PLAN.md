@@ -25,14 +25,14 @@ https-only), derives the tenant, obtains a client-credentials token, escapes ODa
 filters, and resolves a customer by `number` — but its private `getCustomerId` returns only the
 GUID. We add a public, typed `getCustomer(customerNumber)` that queries `customers()` filtered by
 the escaped `number`, `$top=1`, and `$expand=currency`, then validates the response at the
-external boundary: it normalizes BC's raw `_x0020_` blocked value to `""`, rejects any unknown
+external boundary: it normalizes BC's empty/null/`_x0020_` blocked value to `"not_blocked"`, rejects any unknown
 blocked enum value (throws rather than coercing to unblocked), reads `currency.code` from the
 expanded navigation property (null when absent — no fallback), and returns a typed `BCCustomer`
 or `null` when no customer matches.
 
 ### Company model
 The `company` model has `currency_code` and `business_central_customer_number` but not
-`blocked`, `credit_limit`, or `vat_number`. We add these three fields (enum defaulting to `""`,
+`blocked`, `credit_limit`, or `vat_number`. We add these three fields (enum defaulting to `"not_blocked"`,
 nullable decimal, nullable text) and generate a company-module migration with
 `npx medusa db:generate company`. `ModuleCompany` gains the fields; `ModuleUpdateCompany`
 (a `Partial<ModuleCompany>`) and `QueryCompany` (extends `ModuleCompany`) inherit them
@@ -61,7 +61,7 @@ the storefront treats any failure from this secondary call as non-fatal.
 | `state` | `state` | copy |
 | `postalCode` | `zip` | copy |
 | `country` | `country` | copy |
-| `blocked` (normalized) | `blocked` | `_x0020_`→`""`; validate enum |
+| `blocked` (normalized) | `blocked` | empty/null/`_x0020_`→`"not_blocked"`; validate enum |
 | `creditLimit` | `credit_limit` | bare decimal, nullable |
 | `taxRegistrationNumber` | `vat_number` | copy |
 | `currency.code` | `currency_code` | from expanded nav; null if absent |
@@ -107,7 +107,7 @@ Preserved (never overwritten): `id`, `logo_url`, `business_central_customer_numb
 
 ## Verification
 - [ ] BC `getCustomer`: escaped `number` filter, `$top=1`, `$expand=currency`, full mapping,
-      `null` on no match, throw on non-OK response, `_x0020_`→`""` normalization, throw on unknown
+      `null` on no match, throw on non-OK response, `_x0020_`→`"not_blocked"` normalization, throw on unknown
       blocked value, `currency.code` extraction, null currency when nav absent.
 - [ ] Workflow: no linked company → `skipped`; no BC number → `skipped`; no BC match → `skipped`;
       valid customer → `updated` with exact mapping; unknown blocked/BC service error → `failed`
@@ -118,6 +118,6 @@ Preserved (never overwritten): `id`, `logo_url`, `business_central_customer_numb
 - [ ] Storefront: token persistence is awaited; exactly one sync attempt immediately follows a
       successful login; endpoint/transport failure is safely warned and does not fail the login
       action; customers cache tag revalidated after a successful request.
-- [ ] Migration applies to existing rows: `blocked` defaults to `""`, `credit_limit`/`vat_number`
+- [ ] Migration applies to existing rows: `blocked` defaults to `"not_blocked"`, `credit_limit`/`vat_number`
       remain null until first sync; reversible.
 - [ ] `pnpm --filter @b2b-starter/backend build` and storefront type/build pass.

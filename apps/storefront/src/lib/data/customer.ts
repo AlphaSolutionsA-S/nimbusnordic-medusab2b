@@ -78,6 +78,29 @@ export const updatePassword = async (body: {
     .catch(medusaError)
 }
 
+export const syncCompanyFromBusinessCentral = async (): Promise<void> => {
+  try {
+    const authHeaders = await getAuthHeaders()
+
+    if (!authHeaders || !("authorization" in authHeaders)) {
+      return
+    }
+
+    await sdk.client.fetch(
+      `/store/customers/me/company/sync-business-central`,
+      {
+        method: "POST",
+        headers: authHeaders,
+      }
+    )
+
+    const customerCacheTag = await getCacheTag("customers")
+    revalidateTag(customerCacheTag)
+  } catch {
+    console.warn("Business Central company sync request failed after login")
+  }
+}
+
 export async function signup(_currentState: unknown, formData: FormData) {
   const password = formData.get("password") as string
   const customerForm = {
@@ -157,7 +180,8 @@ export async function login(_currentState: unknown, formData: FormData) {
       .login("customer", "emailpass", { email, password })
       .then(async (token) => {
         track("customer_logged_in")
-        setAuthToken(token as string)
+        await setAuthToken(token as string)
+        await syncCompanyFromBusinessCentral()
 
         const [customerCacheTag, productsCacheTag, cartsCacheTag] =
           await Promise.all([

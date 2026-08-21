@@ -8,7 +8,7 @@
 Add a typed `BCCustomer` contract and a public `getCustomer(customerNumber)` method to the
 Business Central module. The method queries the BC `customers()` endpoint by escaped `number`,
 limits to one result, expands the `currency` navigation property, and validates the response at
-the external-service boundary — normalizing `_x0020_` to `""`, rejecting unknown blocked enum
+the external-service boundary — normalizing empty/null/`_x0020_` to `"not_blocked"`, rejecting unknown blocked enum
 values, and reading `currency.code` from the expanded navigation (null when absent, no fallback).
 
 ## Files
@@ -17,7 +17,7 @@ values, and reading `currency.code` from the expanded navigation (null when abse
 Add the blocked-state and customer types and extend the service interface.
 
 ```typescript
-export type BCCustomerBlockedState = "" | "Ship" | "Invoice" | "All";
+export type BCCustomerBlockedState = "not_blocked" | "Ship" | "Invoice" | "All";
 
 export type BCCustomer = {
   number: string;
@@ -58,7 +58,7 @@ HTTP client beyond what customer retrieval needs.
 // Add near the top-level helpers:
 const BC_BLOCKED_UNBLOCKED_WIRE_VALUE = "_x0020_";
 const BC_BLOCKED_STATES: readonly BCCustomerBlockedState[] = [
-  "",
+  "not_blocked",
   "Ship",
   "Invoice",
   "All",
@@ -66,10 +66,10 @@ const BC_BLOCKED_STATES: readonly BCCustomerBlockedState[] = [
 
 function normalizeBlockedState(value: unknown): BCCustomerBlockedState {
   // IMPLEMENT:
-  // - if value === BC_BLOCKED_UNBLOCKED_WIRE_VALUE OR value == null/"" -> return ""
+  // - if value === BC_BLOCKED_UNBLOCKED_WIRE_VALUE OR value == null/"" -> return "not_blocked"
   // - if value is one of BC_BLOCKED_STATES -> return it
   // - otherwise throw MedusaError(UNEXPECTED_STATE, "unsupported Business Central blocked value")
-  //   (do NOT coerce unknown values to "")
+  //   (do NOT coerce unknown values to "not_blocked")
 }
 
 function parseCreditLimit(value: unknown): number | null {
@@ -173,11 +173,11 @@ fetch-mock style (token response first, then the customers response).
 
 ### TC-5: `_x0020_` normalization
 - **Given** BC `blocked` is `"_x0020_"`
-- **Then** the returned `blocked` is `""`
+- **Then** the returned `blocked` is `"not_blocked"`
 
 ### TC-6: unknown blocked value throws
 - **Given** BC `blocked` is `"Frozen"`
-- **Then** `getCustomer` rejects (not coerced to `""`)
+- **Then** `getCustomer` rejects (not coerced to `"not_blocked"`)
 
 ### TC-7: missing expanded currency
 - **Given** the response has no `currency` object

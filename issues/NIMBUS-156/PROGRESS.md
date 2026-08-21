@@ -65,3 +65,44 @@
 	HTTP 200; those remain observable while the storefront treats the secondary request as
 	non-fatal. Do not add the new fields to any store/admin validator. Run the Task 06 validation
 	matrix before handing back.
+
+## 2026-08-21 - Implementation completed
+
+- **Updated by:** implementor agent
+- **Outcome:** Implemented Tasks 01-05 and ran the Task 06 matrix. Added the typed BC customer
+	lookup with currency expansion and strict blocked-state normalization, company integration
+	fields and generated migration, actor-scoped workflow mutation through `updateCompaniesStep`,
+	protected bodyless sync route, and awaited best-effort storefront post-login synchronization.
+- **Migration note:** Medusa 2.18 cannot generate GraphQL SDL for an enum containing the required
+	empty-string value. The model therefore uses defaulted text for `blocked`, while the BC boundary
+	and module DTO retain the exact `"" | "Ship" | "Invoice" | "All"` contract. The migration and
+	snapshot were generated with `medusa db:generate company`.
+- **Validation passed:** BC module tests (26/26 full module matrix), focused sync HTTP tests (6/6),
+	backend build, storefront tests (36/36), focused storefront sync tests (4/4), and disposable
+	PostgreSQL migration up/default/down verification.
+- **Baseline blockers:** The full pre-existing backend HTTP matrix fails in the existing company,
+	quote, and admin quote suites (20 failures; existing admin seeding receives HTTP 401); the new
+	sync suite passes. Storefront production compilation/lint succeeds, then static page collection
+	fails because no storefront backend is running (`ECONNREFUSED`). Standalone storefront
+	`tsc --noEmit` reports only pre-existing account/profile/cart type errors after the new test
+	errors were corrected.
+- **Sandbox BC:** Not run because no BC sandbox availability was provided.
+- **Handover to:** reviewer / pull-request owner
+- **Handover prompt:** Review NIMBUS-156 with emphasis on the typed BC failure boundary, guarded
+	`updateCompaniesStep`, actor-derived company authority, generated migration, and post-login
+	token-before-sync ordering. Treat the recorded full-suite HTTP and storefront environment
+	failures as baseline follow-up unless they reproduce specifically in the new focused tests.
+
+## 2026-08-21 - Blocked state enum revised
+
+- **Updated by:** implementor agent
+- **Decision:** Medusa stores the unblocked state as the explicit enum value `not_blocked`.
+	Business Central `""`, null, and `_x0020_` values normalize to `not_blocked`; unknown values
+	continue to be rejected.
+- **Outcome:** Replaced the text-backed field with
+	`model.enum(["not_blocked", "Ship", "Invoice", "All"])`, regenerated the company migration and
+	snapshot, and updated the BC and company contracts.
+- **Validation:** BC service tests passed (10/10), focused sync HTTP tests passed (6/6), backend
+	build passed, and disposable PostgreSQL verification confirmed the `not_blocked` default,
+	invalid-enum rejection, existing-row migration, and clean rollback.
+- **Handover to:** reviewer / pull-request owner

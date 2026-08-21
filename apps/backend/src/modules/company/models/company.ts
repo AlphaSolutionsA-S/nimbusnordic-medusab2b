@@ -17,6 +17,11 @@ export const Company = model.define("company", {
   logo_url: model.text().nullable(),
   currency_code: model.text().nullable(),
   business_central_customer_number: model.text().nullable(),
+  blocked: model
+    .enum(["not_blocked", "Ship", "Invoice", "All"])
+    .default("not_blocked"),
+  credit_limit: model.bigNumber().nullable(),
+  vat_number: model.text().nullable(),
   spending_limit_reset_frequency: model
     .enum(["never", "daily", "weekly", "monthly", "yearly"])
     .default("monthly"),

@@ -2,6 +2,141 @@ import BusinessCentralModuleService from "../service";
 
 const originalFetch = global.fetch;
 
+describe("BusinessCentralModuleService.getCustomer", () => {
+  beforeEach(() => {
+    process.env.BUSINESS_CENTRAL_DISCOVERY_URL =
+      "https://api.businesscentral.dynamics.com/v2.0/tenant-id/Sandbox/api/v2.0";
+    process.env.BUSINESS_CENTRAL_CLIENT_ID =
+      "00000000-0000-0000-0000-000000000001";
+    process.env.BUSINESS_CENTRAL_CLIENT_SECRET = "client-secret";
+  });
+
+  afterEach(() => {
+    global.fetch = originalFetch;
+  });
+
+  function mockCustomerResponse(
+    value: Record<string, unknown>[],
+    status = 200
+  ): void {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ access_token: "access-token" }), {
+          status: 200,
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ value }), { status })
+      );
+  }
+
+  it("requests and maps the customer with expanded currency", async () => {
+    mockCustomerResponse([
+      {
+        number: "00011551",
+        displayName: "Nimbus Nordic",
+        email: "customer@example.com",
+        phoneNumber: "12345678",
+        addressLine1: "Main Street 1",
+        addressLine2: "Building 2",
+        city: "Copenhagen",
+        state: "Capital",
+        postalCode: "2100",
+        country: "DK",
+        blocked: "Ship",
+        creditLimit: 12345.67,
+        taxRegistrationNumber: "DK12345678",
+        currency: { code: "SEK" },
+      },
+    ]);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).resolves.toEqual({
+      number: "00011551",
+      displayName: "Nimbus Nordic",
+      email: "customer@example.com",
+      phoneNumber: "12345678",
+      addressLine1: "Main Street 1",
+      addressLine2: "Building 2",
+      city: "Copenhagen",
+      state: "Capital",
+      postalCode: "2100",
+      country: "DK",
+      blocked: "Ship",
+      creditLimit: 12345.67,
+      taxRegistrationNumber: "DK12345678",
+      currencyCode: "SEK",
+    });
+
+    const customerRequest = (global.fetch as jest.Mock).mock.calls[1][0] as string;
+    expect(customerRequest).toContain("customers()");
+    expect(customerRequest).toContain("number+eq+%2700011551%27");
+    expect(customerRequest).toContain("%24top=1");
+    expect(customerRequest).toContain("%24expand=currency");
+  });
+
+  it("returns null when no customer matches", async () => {
+    mockCustomerResponse([]);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).resolves.toBeNull();
+  });
+
+  it("throws when the customer request fails", async () => {
+    mockCustomerResponse([], 500);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).rejects.toThrow(
+      "Business Central customer request failed with status 500"
+    );
+  });
+
+  it("normalizes the Business Central unblocked wire value", async () => {
+    mockCustomerResponse([{ blocked: "_x0020_" }]);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).resolves.toMatchObject({
+      blocked: "not_blocked",
+    });
+  });
+
+  it("rejects an unknown blocked value", async () => {
+    mockCustomerResponse([{ blocked: "Frozen" }]);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).rejects.toThrow(
+      "Unsupported Business Central blocked value"
+    );
+  });
+
+  it("returns null when expanded currency is absent", async () => {
+    mockCustomerResponse([{ blocked: "" }]);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).resolves.toMatchObject({
+      currencyCode: null,
+      blocked: "not_blocked",
+    });
+  });
+
+  it("preserves a decimal credit limit", async () => {
+    mockCustomerResponse([{ blocked: "", creditLimit: 12345.67 }]);
+
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.getCustomer("00011551")).resolves.toMatchObject({
+      creditLimit: 12345.67,
+    });
+  });
+});
+
 describe("BusinessCentralModuleService.getOrder", () => {
   beforeEach(() => {
     process.env.BUSINESS_CENTRAL_DISCOVERY_URL =

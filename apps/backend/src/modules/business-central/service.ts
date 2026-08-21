@@ -7,6 +7,8 @@ import type {
   BCOrderDetail,
   BCOrderLine,
   BCCreateReturnParams,
+  BCCustomer,
+  BCCustomerBlockedState,
   BCReturnOrder,
   BCReturnReason,
   IBusinessCentralModuleService,
@@ -18,6 +20,13 @@ const BUSINESS_CENTRAL_SCOPE =
   "https://api.businesscentral.dynamics.com/.default";
 const AZURE_GUID_PATTERN =
   /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+const BC_BLOCKED_UNBLOCKED_WIRE_VALUE = "_x0020_";
+const BC_BLOCKED_STATES: readonly BCCustomerBlockedState[] = [
+  "not_blocked",
+  "Ship",
+  "Invoice",
+  "All",
+];
 
 type BusinessCentralTokenResponse = {
   access_token: string;
@@ -51,6 +60,48 @@ function requireBusinessCentralString(value: unknown, fieldName: string): string
   return value;
 }
 
+function optionalString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function normalizeBlockedState(value: unknown): BCCustomerBlockedState {
+  if (
+    value === BC_BLOCKED_UNBLOCKED_WIRE_VALUE ||
+    value === null ||
+    value === undefined ||
+    value === ""
+  ) {
+    return "not_blocked";
+  }
+
+  if (
+    typeof value === "string" &&
+    BC_BLOCKED_STATES.includes(value as BCCustomerBlockedState)
+  ) {
+    return value as BCCustomerBlockedState;
+  }
+
+  throw new MedusaError(
+    MedusaError.Types.UNEXPECTED_STATE,
+    "Unsupported Business Central blocked value"
+  );
+}
+
+function parseCreditLimit(value: unknown): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  throw new MedusaError(
+    MedusaError.Types.UNEXPECTED_STATE,
+    "Malformed Business Central creditLimit"
+  );
+}
+
 function escapeODataString(value: string): string {
   return value.replace(/'/g, "''");
 }
@@ -75,7 +126,16 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     const configuredUrl =
       process.env.BUSINESS_CENTRAL_DISCOVERY_URL ??
       DEFAULT_BUSINESS_CENTRAL_DISCOVERY_URL;
-    const discoveryUrl = new URL(configuredUrl);
+    let discoveryUrl: URL;
+
+    try {
+      discoveryUrl = new URL(configuredUrl);
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "BUSINESS_CENTRAL_DISCOVERY_URL must be a valid URL"
+      );
+    }
 
     if (discoveryUrl.protocol !== "https:") {
       throw new MedusaError(
@@ -187,13 +247,22 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       scope: BUSINESS_CENTRAL_SCOPE,
     });
 
-    const tokenResponse = await fetch(tokenUrl, {
-      method: "POST",
-      headers: {
-        "content-type": "application/x-www-form-urlencoded",
-      },
-      body: tokenRequest.toString(),
-    });
+    let tokenResponse: Response;
+
+    try {
+      tokenResponse = await fetch(tokenUrl, {
+        method: "POST",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+        },
+        body: tokenRequest.toString(),
+      });
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central token request failed"
+      );
+    }
 
     if (!tokenResponse.ok) {
       throw new MedusaError(
@@ -238,6 +307,98 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     return operationsResponse.json();
+  }
+
+  async getCustomer(customerNumber: string): Promise<BCCustomer | null> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+
+    const customersUrl = new URL(`${discoveryUrl.toString()}/customers()`);
+    customersUrl.searchParams.set(
+      "$filter",
+      `number eq '${escapeODataString(customerNumber)}'`
+    );
+    customersUrl.searchParams.set("$top", "1");
+    customersUrl.searchParams.set("$expand", "currency");
+
+    let customersResponse: Response;
+
+    try {
+      customersResponse = await fetch(customersUrl.toString(), {
+        method: "GET",
+        headers: {
+          authorization: ["Bearer", accessToken].join(" "),
+          accept: "application/json",
+        },
+      });
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central customer request failed"
+      );
+    }
+
+    if (!customersResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central customer request failed with status ${customersResponse.status}`
+      );
+    }
+
+    type BCCustomerRaw = {
+      number?: unknown;
+      displayName?: unknown;
+      email?: unknown;
+      phoneNumber?: unknown;
+      addressLine1?: unknown;
+      addressLine2?: unknown;
+      city?: unknown;
+      state?: unknown;
+      postalCode?: unknown;
+      country?: unknown;
+      blocked?: unknown;
+      creditLimit?: unknown;
+      taxRegistrationNumber?: unknown;
+      currency?: { code?: unknown } | null;
+    };
+
+    let body: { value?: BCCustomerRaw[] };
+
+    try {
+      body = (await customersResponse.json()) as {
+        value?: BCCustomerRaw[];
+      };
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Malformed Business Central customer response"
+      );
+    }
+    const raw = body.value?.[0];
+
+    if (!raw) {
+      return null;
+    }
+
+    return {
+      number: optionalString(raw.number),
+      displayName: optionalString(raw.displayName),
+      email: optionalString(raw.email),
+      phoneNumber: optionalString(raw.phoneNumber),
+      addressLine1: optionalString(raw.addressLine1),
+      addressLine2: optionalString(raw.addressLine2),
+      city: optionalString(raw.city),
+      state: optionalString(raw.state),
+      postalCode: optionalString(raw.postalCode),
+      country: optionalString(raw.country),
+      blocked: normalizeBlockedState(raw.blocked),
+      creditLimit: parseCreditLimit(raw.creditLimit),
+      taxRegistrationNumber: optionalString(raw.taxRegistrationNumber),
+      currencyCode:
+        typeof raw.currency?.code === "string" ? raw.currency.code : null,
+    };
   }
 
   // STUB (NIMBUS-138 task 09): replace with the real BC custom-action HTTP call.
