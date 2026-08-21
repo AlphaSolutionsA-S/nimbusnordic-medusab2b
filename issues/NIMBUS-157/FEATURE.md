@@ -3,9 +3,9 @@
 - **Date:** 2026-08-21
 - **Status:** Feature captured
 - **Type:** Story
-- **Tracker:** JIRA — Not yet filed (Atlassian MCP unavailable during capture)
+- **Tracker:** JIRA — https://alphasolutionsdk.atlassian.net/browse/NIMBUS-157
 - **Priority:** Medium
-- **Project Folder:** issues/feat-20260821083006-company-information-read-only/
+- **Project Folder:** issues/NIMBUS-157/
 - **Size:** M
 - **Area:** Storefront company profile / Admin company view
 - **Base Branch:** develop
