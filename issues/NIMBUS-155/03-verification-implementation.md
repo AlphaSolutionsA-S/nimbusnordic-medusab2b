@@ -1,5 +1,7 @@
 # Implementation Task 03: Verification
 
+**Status:** Validation blocked - backend HTTP integration tests require a configured PostgreSQL password.
+
 ## Project Environment
 
 - **Repo root commands:** `pnpm lint`, `pnpm build`

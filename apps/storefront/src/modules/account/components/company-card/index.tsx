@@ -26,6 +26,7 @@ const CompanyCard = ({
     created_at,
     employees,
     approval_settings,
+    business_central_customer_number,
     ...companyUpdateData
   } = company
 
@@ -210,23 +211,16 @@ const CompanyCard = ({
               )}
             </Select>
           </div>
-          <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">
-              BC Customer Number
-            </Text>
-            <Input
-              label="BC Customer Number"
-              name="business_central_customer_number"
-              value={companyData.business_central_customer_number || ""}
-              onChange={(e) =>
-                setCompanyData({
-                  ...companyData,
-                  business_central_customer_number:
-                    e.target.value || null,
-                })
-              }
-            />
-          </div>
+          {company.business_central_customer_number && (
+            <div className="flex flex-col gap-y-2">
+              <Text className="font-medium text-neutral-950">
+                BC Customer Number
+              </Text>
+              <Text className="text-neutral-500">
+                {company.business_central_customer_number}
+              </Text>
+            </div>
+          )}
         </form>
         <div
           className={clx(

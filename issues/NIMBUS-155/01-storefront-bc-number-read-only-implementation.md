@@ -1,5 +1,7 @@
 # Implementation Task 01: Storefront read-only BC customer number
 
+**Status:** Complete
+
 ## Project Environment
 
 - **App root:** `apps/storefront`

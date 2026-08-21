@@ -275,22 +275,21 @@ medusaIntegrationTestRunner({
     });
 
     describe("Business Central customer number", () => {
-      it("TC-1: creates company with numeric business_central_customer_number", async () => {
-        const response = await api.post(
-          "/store/companies",
-          {
-            name: "BC Company",
-            email: "bc@company.com",
-            currency_code: "USD",
-            business_central_customer_number: "123456",
-          },
-          storeHeaders
-        );
+      it("TC-1: rejects business_central_customer_number on create", async () => {
+        const { response } = await api
+          .post(
+            "/store/companies",
+            {
+              name: "BC Company",
+              email: "bc@company.com",
+              currency_code: "USD",
+              business_central_customer_number: "123456",
+            },
+            storeHeaders
+          )
+          .catch((e) => e);
 
-        expect(response.status).toEqual(200);
-        expect(response.data.companies[0]).toMatchObject({
-          business_central_customer_number: "123456",
-        });
+        expect(response.status).toEqual(400);
       });
 
       it("TC-2: rejects non-numeric business_central_customer_number on create", async () => {
@@ -310,7 +309,7 @@ medusaIntegrationTestRunner({
         expect(response.status).toEqual(400);
       });
 
-      it("TC-3: updates company with numeric business_central_customer_number", async () => {
+      it("TC-3: rejects business_central_customer_number on update", async () => {
         const createResponse = await api.post(
           "/store/companies",
           {
@@ -322,40 +321,15 @@ medusaIntegrationTestRunner({
         );
         const company = createResponse.data.companies[0];
 
-        const updateResponse = await api.post(
-          `/store/companies/${company.id}`,
-          { business_central_customer_number: "98765" },
-          storeHeaders
-        );
+        const { response } = await api
+          .post(
+            `/store/companies/${company.id}`,
+            { business_central_customer_number: "98765" },
+            storeHeaders
+          )
+          .catch((e) => e);
 
-        expect(updateResponse.status).toEqual(200);
-        expect(updateResponse.data.company).toMatchObject({
-          business_central_customer_number: "98765",
-        });
-      });
-
-      it("TC-3a: preserves leading zeros in business_central_customer_number", async () => {
-        const createResponse = await api.post(
-          "/store/companies",
-          {
-            name: "BC Company With Leading Zeros",
-            email: "bc-leading-zeros@company.com",
-            currency_code: "USD",
-          },
-          storeHeaders
-        );
-        const company = createResponse.data.companies[0];
-
-        const updateResponse = await api.post(
-          `/store/companies/${company.id}`,
-          { business_central_customer_number: "00000051" },
-          storeHeaders
-        );
-
-        expect(updateResponse.status).toEqual(200);
-        expect(updateResponse.data.company).toMatchObject({
-          business_central_customer_number: "00000051",
-        });
+        expect(response.status).toEqual(400);
       });
 
       it("TC-4: rejects non-numeric business_central_customer_number on update", async () => {
@@ -365,7 +339,6 @@ medusaIntegrationTestRunner({
             name: "BC Company",
             email: "bc@company.com",
             currency_code: "USD",
-            business_central_customer_number: "11111",
           },
           storeHeaders
         );
@@ -386,7 +359,7 @@ medusaIntegrationTestRunner({
           storeHeaders
         );
         expect(getResponse.data.company.business_central_customer_number).toEqual(
-          "11111"
+          null
         );
       });
 

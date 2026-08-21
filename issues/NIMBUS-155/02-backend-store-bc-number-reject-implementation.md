@@ -1,5 +1,7 @@
 # Implementation Task 02: Store API rejects BC customer number
 
+**Status:** Validation blocked - the local PostgreSQL test database has no usable password.
+
 ## Project Environment
 
 - **App root:** `apps/backend`
