@@ -52,6 +52,29 @@ export type BCGetOrderParams = {
   orderId: string;
 };
 
+export type BCCustomerBlockedState =
+  | "not_blocked"
+  | "Ship"
+  | "Invoice"
+  | "All";
+
+export type BCCustomer = {
+  number: string;
+  displayName: string;
+  email: string;
+  phoneNumber: string;
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+  blocked: BCCustomerBlockedState;
+  creditLimit: number | null;
+  taxRegistrationNumber: string;
+  currencyCode: string | null;
+};
+
 export type BCListOrdersResult = {
   orders: BCOrder[];
   count: number;
@@ -95,6 +118,7 @@ export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
   getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
+  getCustomer(customerNumber: string): Promise<BCCustomer | null>;
   createReturnFromSalesOrder(
     params: BCCreateReturnParams
   ): Promise<BCReturnOrder>;

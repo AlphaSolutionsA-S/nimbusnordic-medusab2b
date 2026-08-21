@@ -12,12 +12,12 @@
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | BC module `getCustomer` + typed contract | `01-bc-get-customer-implementation.md` | backend | None | TODO |
-| 02 | Company model fields + migration | `02-company-model-migration-implementation.md` | backend | None | TODO |
-| 03 | Sync workflow + steps | `03-sync-company-workflow-implementation.md` | backend | 01, 02 | TODO |
-| 04 | Protected sync route + middleware | `04-sync-route-implementation.md` | backend | 03 | TODO |
-| 05 | Storefront login sync helper | `05-storefront-login-sync-implementation.md` | storefront | 04 | TODO |
-| 06 | Validation, tests & migration verification | `06-validation-implementation.md` | backend + storefront | 01, 02, 03, 04, 05 | TODO |
+| 01 | BC module `getCustomer` + typed contract | `01-bc-get-customer-implementation.md` | backend | None | DONE |
+| 02 | Company model fields + migration | `02-company-model-migration-implementation.md` | backend | None | DONE |
+| 03 | Sync workflow + steps | `03-sync-company-workflow-implementation.md` | backend | 01, 02 | DONE |
+| 04 | Protected sync route + middleware | `04-sync-route-implementation.md` | backend | 03 | DONE |
+| 05 | Storefront login sync helper | `05-storefront-login-sync-implementation.md` | storefront | 04 | DONE |
+| 06 | Validation, tests & migration verification | `06-validation-implementation.md` | backend + storefront | 01, 02, 03, 04, 05 | VALIDATED — BASELINE BLOCKERS |
 
 ## Dispatch order
 

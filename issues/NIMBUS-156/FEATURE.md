@@ -32,7 +32,7 @@ current state in BC without manual duplication, and surfaces financial/credit in
 - [ ] On login, the backend fetches the BC Customer by the stored `business_central_customer_number`
 - [ ] Direct field matches are written to the Medusa company: `name` (← `displayName`), `email`, `phone` (← `phoneNumber`), `city`, `state`, `zip` (← `postalCode`), `country`
 - [ ] `address` is set to `addressLine1 + ", " + addressLine2` when `addressLine2` is non-empty, otherwise just `addressLine1`
-- [ ] New fields are added to the Medusa company model: `blocked` (← BC `blocked` enum, mirrored as Medusa enum: `""`, `"Ship"`, `"Invoice"`, `"All"`), `credit_limit` (← BC `creditLimit`, bare decimal), `vat_number` (← BC `taxRegistrationNumber`)
+- [ ] New fields are added to the Medusa company model: `blocked` (← BC `blocked` enum, normalized as Medusa enum: `"not_blocked"`, `"Ship"`, `"Invoice"`, `"All"`), `credit_limit` (← BC `creditLimit`, bare decimal), `vat_number` (← BC `taxRegistrationNumber`)
 - [ ] `currency_code` is updated from the BC `currency` navigation property (expand `currency` on the BC Customer GET)
 - [ ] Fields not present in BC (`spending_limit_reset_frequency`, `employees`, `customer_group`, `logo_url`) are preserved and not overwritten
 - [ ] The sync is read-only from BC to Medusa; no data flows back to BC
@@ -53,7 +53,7 @@ current state in BC without manual duplication, and surfaces financial/credit in
 ## Resolved decisions
 
 - **Sync frequency:** Every login — no `lastModifiedDateTime` comparison.
-- **`blocked` representation:** Store as a Medusa enum mirroring the BC `customerBlocked` enum values: `""` (not blocked), `"Ship"`, `"Invoice"`, `"All"`.
+- **`blocked` representation:** Store as a Medusa enum using `"not_blocked"` for BC's empty/unblocked value, plus `"Ship"`, `"Invoice"`, and `"All"`.
 - **`credit_limit` storage:** Bare decimal — currency is already on the company via `currency_code`.
 - **`salespersonCode`:** Not synced (out of scope).
 - **`website`:** Not synced (out of scope).

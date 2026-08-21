@@ -22,9 +22,9 @@ must not invalidate an otherwise successful login.
 
 - Run the synchronization on every explicit Customer Portal login. Do not compare
   `lastModifiedDateTime` and do not add a freshness interval.
-- Store `blocked` as a Medusa enum mirroring BC values: `""`, `"Ship"`, `"Invoice"`,
+- Store `blocked` as a Medusa enum: `"not_blocked"`, `"Ship"`, `"Invoice"`,
   and `"All"`.
-- Normalize BC's `_x0020_` wire value for the unblocked state to `""` before persistence.
+- Normalize BC's empty, null, and `_x0020_` unblocked values to `"not_blocked"` before persistence.
 - Store `credit_limit` as a decimal value. Its currency is represented separately by
   `currency_code`.
 - Read `currency_code` from the expanded BC `currency` navigation property.
@@ -136,7 +136,7 @@ Address normalization has these outcomes:
 - both lines empty: an empty value, without a comma artifact.
 
 Blocked-state normalization accepts the declared BC states and maps `_x0020_` (the raw
-unblocked value observed in BC) to `""`. An unknown value must not be coerced to unblocked;
+unblocked value observed in BC) to `"not_blocked"`. An unknown value must not be coerced to unblocked;
 the synchronization attempt fails safely and preserves the previous Medusa company.
 
 The synchronization updates only the fields in the table. It must not spread the BC
@@ -149,7 +149,8 @@ payload into the company update. In particular, it preserves `id`, `logo_url`,
 Extend the company model and all internal/public DTOs that represent persisted company
 data with:
 
-- `blocked`: enum `"" | "Ship" | "Invoice" | "All"`, defaulting to `""` for existing
+- `blocked`: enum `"not_blocked" | "Ship" | "Invoice" | "All"`, defaulting to
+  `"not_blocked"` for existing
   companies;
 - `credit_limit`: nullable decimal so pre-sync rows distinguish unknown from a real zero;
 - `vat_number`: nullable text.
@@ -254,7 +255,7 @@ Feature: Synchronize a company from Business Central after login
   Scenario: The raw BC unblocked value is normalized
     Given BC blocked is "_x0020_"
     When synchronization succeeds
-    Then the Medusa company blocked value is the empty enum value
+    Then the Medusa company blocked value is "not_blocked"
 
   Scenario: Currency comes from the navigation property
     Given the expanded BC currency code is "SEK"

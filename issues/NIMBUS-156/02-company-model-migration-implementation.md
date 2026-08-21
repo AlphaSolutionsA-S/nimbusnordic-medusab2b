@@ -20,7 +20,7 @@ export const Company = model.define("company", {
   currency_code: model.text().nullable(),
   business_central_customer_number: model.text().nullable(),
   // NEW integration-owned fields:
-  blocked: model.enum(["", "Ship", "Invoice", "All"]).default(""),
+  blocked: model.enum(["not_blocked", "Ship", "Invoice", "All"]).default("not_blocked"),
   credit_limit: model.bigNumber().nullable(),
   vat_number: model.text().nullable(),
   spending_limit_reset_frequency: model
@@ -31,7 +31,7 @@ export const Company = model.define("company", {
 ```
 
 Notes:
-- `blocked` mirrors the BC `customerBlocked` enum; default `""` covers existing rows.
+- `blocked` normalizes BC's empty/unblocked value to `"not_blocked"`; that default covers existing rows.
 - `credit_limit` uses `model.bigNumber().nullable()` (consistent with `employee.spending_limit`)
   to preserve decimal precision. This causes the generated migration to also add a
   `raw_credit_limit` column — expected and correct. Nullable so pre-sync rows distinguish
@@ -44,7 +44,7 @@ Add a blocked-state type and the three fields to `ModuleCompany` only. `ModuleUp
 automatically — do not touch `ModuleCreateCompany`, `http.ts`, or any validator.
 
 ```typescript
-export type ModuleCompanyBlockedState = "" | "Ship" | "Invoice" | "All";
+export type ModuleCompanyBlockedState = "not_blocked" | "Ship" | "Invoice" | "All";
 
 export type ModuleCompany = {
   id: string;
@@ -80,7 +80,7 @@ npx medusa db:generate company
 ```
 
 Review the generated migration. It must:
-- add `blocked` (text/enum, NOT NULL, default `''`),
+- add `blocked` (text/enum, NOT NULL, default `'not_blocked'`),
 - add `credit_limit` (numeric, nullable) and `raw_credit_limit` (jsonb, nullable),
 - add `vat_number` (text, nullable),
 - preserve all existing rows,
@@ -94,7 +94,7 @@ hand-authoring.
 ### TC-1: existing rows migrate safely
 - **Given** an existing `company` row created before this change
 - **When** the migration is applied
-- **Then** `blocked = ''`, `credit_limit IS NULL`, `vat_number IS NULL`
+- **Then** `blocked = 'not_blocked'`, `credit_limit IS NULL`, `vat_number IS NULL`
 
 ### TC-2: reversibility
 - **When** the migration `down` runs

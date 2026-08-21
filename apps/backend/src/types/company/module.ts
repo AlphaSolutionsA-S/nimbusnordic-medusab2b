@@ -12,6 +12,12 @@ export enum ModuleCompanySpendingLimitResetFrequency {
   YEARLY = "yearly",
 }
 
+export type ModuleCompanyBlockedState =
+  | "not_blocked"
+  | "Ship"
+  | "Invoice"
+  | "All";
+
 export type ModuleCompany = {
   id: string;
   name: string;
@@ -25,6 +31,9 @@ export type ModuleCompany = {
   logo_url: string | null;
   currency_code: string | null;
   business_central_customer_number: string | null;
+  blocked: ModuleCompanyBlockedState;
+  credit_limit: number | null;
+  vat_number: string | null;
   spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency;
   created_at: Date;
   updated_at: Date;

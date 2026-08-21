@@ -11,4 +11,9 @@ export const storeCustomersMiddlewares: MiddlewareRoute[] = [
       validateAndTransformBody(StoreUpdatePassword),
     ],
   },
+  {
+    method: ["POST"],
+    matcher: "/store/customers/me/company/sync-business-central",
+    middlewares: [authenticate("customer", ["session", "bearer"])],
+  },
 ];
