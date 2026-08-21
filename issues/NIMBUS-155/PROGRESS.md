@@ -32,3 +32,10 @@
 - **Validation:** `cd apps/storefront && pnpm test` passed (9 suites, 32 tests); `pnpm lint` passed with existing unrelated warnings; `pnpm build` passed across all workspaces. The Windows-compatible backend integration invocation reached Jest but all cases failed during database initialization with `SASL: SCRAM-SERVER-FIRST-MESSAGE: client password must be a string`. The package script `pnpm test:integration:http` also cannot run unchanged on Windows because its POSIX inline environment assignments are not recognized.
 - **Handover to:** implementor agent after backend test environment configuration
 - **Handover prompt:** Configure the backend integration-test PostgreSQL credentials so `DATABASE_URL` includes a usable password, then run `cd apps/backend && $env:TEST_TYPE = 'integration:http'; $env:NODE_OPTIONS = '--experimental-vm-modules'; pnpm exec jest integration-tests/http/companies/companies.spec.ts --silent=false --runInBand --forceExit`. When it passes, mark Tasks 02 and 03 complete and transition NIMBUS-155 to Internal Review.
+
+## 2026-08-21 - Implementation completed and moved to Internal Review
+
+- **Updated by:** developer
+- **Outcome:** Implementation is complete and the story is now in Internal Review.
+- **Handover to:** reviewer
+- **Handover prompt:** Review the NIMBUS-155 storefront read-only BC customer number behavior and Store API validator enforcement, then proceed with normal review/approval flow.
