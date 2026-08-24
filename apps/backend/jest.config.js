@@ -1,5 +1,6 @@
 const { loadEnv } = require("@medusajs/framework/utils");
-loadEnv("test", process.cwd());
+// Load .env from this package dir so DATABASE_URL resolves regardless of invocation cwd.
+loadEnv("test", __dirname);
 
 module.exports = {
   transform: {

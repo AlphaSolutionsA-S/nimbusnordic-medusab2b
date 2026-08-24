@@ -31,6 +31,7 @@ export type ModuleCompany = {
   logo_url: string | null;
   currency_code: string | null;
   business_central_customer_number: string | null;
+  business_central_synced_at: Date | null;
   blocked: ModuleCompanyBlockedState;
   credit_limit: number | null;
   vat_number: string | null;

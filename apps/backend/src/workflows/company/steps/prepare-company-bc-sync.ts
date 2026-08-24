@@ -98,6 +98,7 @@ export const prepareCompanyBcSyncStep = createStep(
       credit_limit: bcCustomer.creditLimit,
       vat_number: bcCustomer.taxRegistrationNumber,
       currency_code: bcCustomer.currencyCode,
+      business_central_synced_at: new Date(),
     };
 
     return new StepResponse({ status: "ready", update });

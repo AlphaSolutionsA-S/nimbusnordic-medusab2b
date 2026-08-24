@@ -17,6 +17,7 @@ export const Company = model.define("company", {
   logo_url: model.text().nullable(),
   currency_code: model.text().nullable(),
   business_central_customer_number: model.text().nullable(),
+  business_central_synced_at: model.dateTime().nullable(),
   blocked: model
     .enum(["not_blocked", "Ship", "Invoice", "All"])
     .default("not_blocked"),

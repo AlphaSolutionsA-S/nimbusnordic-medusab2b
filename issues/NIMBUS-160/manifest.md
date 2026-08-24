@@ -12,11 +12,11 @@
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Company `business_central_synced_at` field + migration | `01-backend-company-synced-at-field.md` | backend | None | TODO |
-| 02 | Stamp timestamp on successful sync | `02-backend-set-sync-timestamp.md` | backend | 01 | TODO |
-| 03 | GET route freshness orchestration | `03-backend-company-get-freshness.md` | backend | 01, 02 | TODO |
-| 04 | Storefront company retrieve cache TTL | `04-storefront-company-cache-ttl.md` | storefront | 03 | TODO |
-| 05 | Backend freshness integration tests | `05-backend-freshness-integration-tests.md` | backend | 01, 02, 03 | TODO |
+| 01 | Company `business_central_synced_at` field + migration | `01-backend-company-synced-at-field.md` | backend | None | DONE |
+| 02 | Stamp timestamp on successful sync | `02-backend-set-sync-timestamp.md` | backend | 01 | DONE |
+| 03 | GET route freshness orchestration | `03-backend-company-get-freshness.md` | backend | 01, 02 | DONE |
+| 04 | Storefront company retrieve cache TTL | `04-storefront-company-cache-ttl.md` | storefront | 03 | DONE |
+| 05 | Backend freshness integration tests | `05-backend-freshness-integration-tests.md` | backend | 01, 02, 03 | BLOCKED - PostgreSQL is reachable with configured `DB_*` credentials, but Medusa startup cannot acquire a connection while creating throwaway databases (`Unable to acquire a connection`; PostgreSQL logs `terminating connection due to administrator command`); no freshness assertion executed |
 
 ## Dispatch order
 

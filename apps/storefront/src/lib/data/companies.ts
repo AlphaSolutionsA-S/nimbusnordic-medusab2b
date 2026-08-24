@@ -25,6 +25,7 @@ export const retrieveCompany = async (companyId: string) => {
 
   const next = {
     ...(await getCacheOptions("companies")),
+    revalidate: 120,
   }
 
   const { company } = await sdk.client.fetch<StoreCompanyResponse>(
