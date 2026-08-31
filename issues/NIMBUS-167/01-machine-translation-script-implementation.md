@@ -28,12 +28,20 @@ reads `apps/storefront/messages/en.json` and produces translated output for the 
 locales (da, sv, no, pl, it, fr, de), preserving the exact key structure and any ICU interpolation
 placeholders / rich-text tags (e.g. the `{br}` tag from NIMBUS-165's login heading) unchanged.
 
-**Translation provider choice:** this plan does not select a specific paid MT API (e.g. DeepL,
-Google Cloud Translate, Azure Translator) — that requires an API key/vendor decision which is a
-business/procurement choice, not a technical one this plan can make unilaterally. Flagging this as
-an **open question for the user** before implementation starts (see Risks). The script is written
-against a small `Translator` interface so swapping providers later doesn't require touching the
-catalog-walking logic.
+**Translation provider: DeepL API.** Chosen for this story specifically because all 7 target
+locales (Danish, Swedish, Norwegian, Polish, Italian, French, German) are European languages,
+where DeepL is generally regarded as the highest-quality MT engine available — a good fit given
+this story explicitly skips human review and ships MT output as-is. Uses the official `deepl-node`
+SDK and a `DEEPL_API_KEY` environment variable (DeepL's Free tier covers low-volume use cases like
+a single message catalog; upgrade to Pro if volume/rate limits become a problem — see Risks).
+
+**DeepL locale code mapping — do not assume 1:1 with this repo's locale codes.** DeepL's target
+language codes differ from ours for Norwegian: DeepL expects `NB` (Norwegian Bokmål), not `NO`. All
+others match directly: `DA`, `SV`, `PL`, `IT`, `FR`, `DE`. The script must map our `Locale` values
+to DeepL's codes before calling the API — see the `DEEPL_TARGET_LANG` map in the skeleton below.
+
+The script is written against a small `Translator` interface so the catalog-walking/placeholder-
+protection logic stays decoupled from the DeepL-specific HTTP/SDK details.
 
 The script must:
 1. Recursively walk `en.json`'s keys.
@@ -52,10 +60,22 @@ The script must:
 ```typescript
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
+import * as deepl from 'deepl-node'
 
 const MESSAGES_DIR = resolve(__dirname, '../messages')
 const SOURCE_LOCALE = 'en'
 const TARGET_LOCALES = ['da', 'sv', 'no', 'pl', 'it', 'fr', 'de'] as const
+
+// DeepL's target-language codes differ from ours for Norwegian (NB, not NO). All others match.
+const DEEPL_TARGET_LANG: Record<(typeof TARGET_LOCALES)[number], deepl.TargetLanguageCode> = {
+  da: 'da',
+  sv: 'sv',
+  no: 'nb',
+  pl: 'pl',
+  it: 'it',
+  fr: 'fr',
+  de: 'de',
+}
 
 type MessageTree = { [key: string]: string | MessageTree }
 
@@ -63,9 +83,31 @@ interface Translator {
   translate(text: string, targetLocale: string): Promise<string>
 }
 
-// IMPLEMENT: wire up the chosen MT provider's SDK/HTTP client here.
-// Must preserve ICU placeholders ({var}) and rich-text tags (<tag>...</tag>) verbatim.
-declare const translator: Translator
+class DeepLTranslator implements Translator {
+  private readonly client: deepl.Translator
+
+  constructor(apiKey: string) {
+    this.client = new deepl.Translator(apiKey)
+  }
+
+  async translate(text: string, targetLocale: string): Promise<string> {
+    const targetLang = DEEPL_TARGET_LANG[targetLocale as (typeof TARGET_LOCALES)[number]]
+    // DeepL does not know ICU `{var}` syntax natively — wrap placeholders in an <ignore> tag so
+    // DeepL's XML tag-handling leaves their contents untouched, then unwrap after translating.
+    const protectedText = text.replace(/\{([a-zA-Z0-9_]+)\}/g, '<ignore>{$1}</ignore>')
+    const result = await this.client.translateText(protectedText, 'en', targetLang, {
+      tagHandling: 'xml',
+      ignoreTags: ['ignore'],
+    })
+    return result.text.replace(/<ignore>(\{[a-zA-Z0-9_]+\})<\/ignore>/g, '$1')
+  }
+}
+
+const apiKey = process.env.DEEPL_API_KEY
+if (!apiKey) {
+  throw new Error('DEEPL_API_KEY environment variable is required to run this script.')
+}
+const translator: Translator = new DeepLTranslator(apiKey)
 
 async function translateTree(
   tree: MessageTree,
@@ -123,22 +165,25 @@ main().catch((error) => {
 })
 ```
 
-> **Worker note:** the `Translator` interface and its `declare const translator` are a deliberate
-> placeholder — the actual MT provider integration (API key handling via env var, HTTP client or
-> SDK, rate limiting/batching for ~hundreds of keys × 7 locales) must be filled in based on the
-> provider the user/team selects (see Risks). Do not hardcode an API key in source; read it from
-> an env var following this repo's existing `.env.template` convention.
+> **Worker note:** never hardcode the DeepL API key in source — it's read from `DEEPL_API_KEY` via
+> `process.env`, following this repo's existing `.env.template` convention. DeepL's Free tier has a
+> monthly character quota and per-request rate limits — batch translation calls where practical
+> (the `deepl-node` SDK's `translateText` accepts an array of strings in one call; consider
+> batching all leaf values in a locale's tree into one request instead of one call per key, to stay
+> within rate limits — adjust `translateTree` accordingly if the naive per-key-call approach above
+> proves too slow/rate-limited in practice).
 
 ## Impacted Files
 
 - New: `apps/storefront/scripts/translate-messages.ts`.
-- `apps/storefront/package.json`: add a script entry, e.g.
+- `apps/storefront/package.json`: add `deepl-node` as a dependency, and a script entry, e.g.
   `"translate-messages": "tsx scripts/translate-messages.ts"` (or `ts-node`, matching whichever
   TS execution tool is already a devDependency — check before adding a new one).
 - `apps/storefront/messages/{da,sv,no,pl,it,fr,de}.json`: overwritten with translated content when
   the script runs (not hand-written by the worker — generated output).
-- `apps/storefront/.env.template`: add the MT provider's API key env var (name depends on provider
-  chosen).
+- `apps/storefront/.env.template`: add `DEEPL_API_KEY` (comment: obtain from
+  https://www.deepl.com/pro-api — Free tier is sufficient for this catalog's volume; the user must
+  supply the actual key value, this plan cannot provision one).
 
 ## Test Cases
 
@@ -167,24 +212,26 @@ main().catch((error) => {
 
 ## Implementation Steps
 
-1. **Before writing provider-specific code:** confirm the MT provider/API with the user (see
-   Risks — this is an open question this plan cannot resolve unilaterally).
-2. Implement `translate-messages.ts` with the chosen provider wired into the `Translator`
-   interface.
-3. Add the `translate-messages` npm script and the API key env var to `.env.template`.
-4. Add tests for TC-1–TC-4 using a mocked `Translator` (do not call a real paid API in automated
-   tests).
-5. Run the script once against a real (or sandboxed/free-tier) MT provider to generate the 7
-   locale files.
+1. Obtain a DeepL API key (Free or Pro tier) and add it to the local `.env`/deployment secrets as
+   `DEEPL_API_KEY` — this is a manual credential-provisioning step the worker cannot automate.
+2. Add `deepl-node` as a dependency and implement `translate-messages.ts` per the skeleton above.
+3. Add the `translate-messages` npm script and the `DEEPL_API_KEY` entry to `.env.template`.
+4. Add tests for TC-1–TC-4 using a mocked `Translator` (do not call the real DeepL API in
+   automated tests — keep it isolated behind the `Translator` interface for testability).
+5. Run the script once against the real DeepL API to generate the 7 locale files, watching for
+   rate-limit/quota errors given ~hundreds of keys × 7 locales (batch requests via `deepl-node`'s
+   array-input support if the naive per-key-call loop hits limits).
 6. Run `pnpm lint`, `pnpm test`, `pnpm build`.
 
 ## Risks
 
-- **Open question, blocking:** which MT provider/API to use (DeepL, Google Cloud Translate, Azure
-  Translator, etc.) has not been decided — scope.md and the epic scope don't specify one. This is
-  a vendor/cost decision, not a purely technical one. Recommend surfacing this to the user before
-  implementation starts; the code skeleton above is provider-agnostic specifically so this
-  decision doesn't block writing the surrounding script logic.
-- Running MT against hundreds of keys × 7 locales may hit provider rate limits or per-character
-  costs — batch requests where the chosen provider's API supports it, and confirm cost expectations
-  with the user before running against a paid tier at full scale.
+- **DeepL Free tier has a monthly character quota** — hundreds of keys × 7 locales could approach
+  it depending on catalog size after NIMBUS-165's full extraction. If the Free tier's quota proves
+  insufficient, upgrading to Pro (usage-based billing) is a straightforward config change (same
+  SDK, different key) but is a cost decision — flag to the user if the Free tier limit is hit.
+- ICU placeholder protection relies on wrapping `{var}` in an `<ignore>` XML tag understood by
+  DeepL's `tagHandling: 'xml'` option — verify this round-trips correctly for all placeholder
+  patterns actually present in the catalog (not just the simple `{name}` case) before trusting it
+  at scale; the sanity check in Task 02 catches regressions here.
+- Norwegian requires the `nb` target code (not `no`) — verify this mapping doesn't drift if
+  `deepl-node`'s `TargetLanguageCode` type changes across SDK versions.

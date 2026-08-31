@@ -12,6 +12,6 @@
 
 - **Date:** 2026-08-31
 - **Updated by:** implementation-planner agent
-- **Outcome:** Implementation plan is ready but **not cleared for dispatch** — Task 01 needs an MT provider/API decision (DeepL, Google Cloud Translate, Azure Translator, etc.) that this plan doesn't make unilaterally. Depends on NIMBUS-165 being complete (English keys extracted).
-- **Handover to:** implementor agent (after the MT provider question is resolved with the user)
-- **Handover prompt:** Once an MT provider is chosen, implement `issues/NIMBUS-167/manifest.md`'s 2 tasks (01 translation script, 02 MT output sanity spot-check) per their implementation files in the same folder.
+- **Outcome:** Implementation plan is ready; implementation is the next stage. MT provider decided (DeepL, chosen for strength on European-language pairs covering all 7 targets). Depends on NIMBUS-165 being complete (English keys extracted) and a `DEEPL_API_KEY` being provisioned.
+- **Handover to:** implementor agent
+- **Handover prompt:** Implement `issues/NIMBUS-167/manifest.md`'s 2 tasks (01 DeepL translation script, 02 MT output sanity spot-check) per their implementation files in the same folder. Task 01 needs a `DEEPL_API_KEY` provisioned before it can run against the real API; Norwegian must map to DeepL's `nb` code, not `no`.

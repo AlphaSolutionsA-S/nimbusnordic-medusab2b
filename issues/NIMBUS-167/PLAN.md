@@ -13,11 +13,11 @@ locales and load them, with no formal human review step.
   next-intl rich-text tags (e.g. the `{br}` tag from NIMBUS-165's login heading extraction) from
   being mangled by MT — most providers support "do not translate" markup, and the script is
   designed to verify this mechanically (Task 02) rather than trust it blindly.
-- **The MT provider itself is an open decision** — scope.md doesn't name one, and picking a paid
-  translation API/vendor is a cost/procurement choice outside this plan's authority. The script is
-  written against a provider-agnostic `Translator` interface so the surrounding logic (catalog
-  walking, placeholder protection, idempotent re-runs) doesn't depend on that decision, but actual
-  dispatch of Task 01 should wait for it.
+- **MT provider: DeepL.** Scope.md didn't name one; DeepL was selected specifically because all 7
+  target locales (da, sv, no, pl, it, fr, de) are European languages, where DeepL is generally
+  regarded as the strongest MT engine — a good match for a story that ships MT output with no
+  human review. Norwegian requires DeepL's `nb` code, not `no` — handled via an explicit mapping in
+  the script.
 
 ## Execution Plan
 1. **Task 01:** build a re-runnable, idempotent translation script that walks `en.json` and
@@ -42,7 +42,3 @@ locales and load them, with no formal human review step.
 - [ ] Sanity check finds no suspiciously-untranslated values or broken placeholders (TC-1/TC-2,
       Task 02).
 - [ ] `pnpm lint`, `pnpm test`, `pnpm build` pass.
-
-## Open Question (Blocking)
-Which MT provider/API should the translation script use? This must be answered before Task 01 is
-dispatched — see `manifest.md`.
