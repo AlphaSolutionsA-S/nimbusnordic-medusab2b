@@ -1,6 +1,5 @@
 ---
 name: implementation-planner
-model: Claude Opus 4.8 (copilot)
 description: "Plans implementation for a scoped project. Explores the codebase in depth, designs the solution, generates test cases, writes implementation task files and a task manifest to the project folder."
 tools: [read, search, edit, agent, todo, medusa/*, atlassian/*]
 argument-hint: "Project folder path, e.g. issues/NIMBUS-150 or agent/wip/product-search"

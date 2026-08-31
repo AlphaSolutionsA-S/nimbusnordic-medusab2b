@@ -1,8 +1,5 @@
 ---
 name: implementor
-model:
-  - GPT-5.6 Terra (copilot)
-  - GPT-5.1-Codex (copilot)
 description: "Implements approved implementation-planner output from an issue or project folder, including manifest.md, task implementation files, PLAN.md, and PROGRESS.md."
 tools: [read, search, edit, execute, todo, medusa/*, atlassian/*]
 argument-hint: "Project folder path, e.g. issues/NIMBUS-150 or agent/wip/product-search"

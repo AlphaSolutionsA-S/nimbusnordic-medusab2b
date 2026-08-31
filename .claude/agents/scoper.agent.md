@@ -1,6 +1,5 @@
 ---
 name: scoper
-model: GPT-5.6 Terra (copilot)
 description: "Scopes a vague idea, feature request, bug report, or conversation into a structured scope document. Interviews the user, researches context, determines issue type, writes a scope document, optionally creates a Jira issue, and hands off to implementation-planner."
 tools: [read, search, web, edit, agent, com.atlassian/atlassian-mcp-server/*, medusa/*]
 argument-hint: "A feature idea, bug report, or conversation to scope"
