@@ -1,6 +1,6 @@
 # Task 02: Baseline Screenshots for Key Flows — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 02

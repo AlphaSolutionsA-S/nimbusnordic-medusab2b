@@ -23,13 +23,27 @@ const VIEWPORTS = {
 export default defineConfig({
   testDir: './e2e/visual',
   fullyParallel: true,
-  retries: process.env.CI ? 1 : 0,
+  // Task 02 baseline generation showed occasional (1-2 of 96) transient
+  // failures under full parallelism on a machine also running the backend +
+  // Postgres — each one passed cleanly re-run in isolation, confirming
+  // resource contention rather than a real diff. `workers` is capped and a
+  // retry is allowed to absorb that without masking genuine regressions
+  // (retries don't change what toHaveScreenshot compares against).
+  workers: 4,
+  retries: 1,
   reporter: [['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:8000',
   },
   webServer: {
-    command: 'pnpm dev',
+    // A production build+start, not `pnpm dev`: under the 16-project parallel
+    // matrix, `next dev`'s on-demand/single-flight route compilation became a
+    // bottleneck (many workers requesting distinct, not-yet-compiled routes
+    // at once), causing real (non-flaky) 30s navigation timeouts on the
+    // cart/checkout specs during Task 02 baseline generation. A dev server's
+    // on-demand compilation is also inherently non-deterministic timing-wise,
+    // which is a poor foundation for a pixel-diff baseline suite regardless.
+    command: 'pnpm build && pnpm start',
     // A static asset, not a locale route: the locale-redirect middleware
     // issues a self-redirect (e.g. `/no` -> `/no`) until a `_medusa_cache_id`
     // cookie is set, which Playwright's stateless webServer health-check
@@ -38,7 +52,7 @@ export default defineConfig({
     // affects the health check.
     url: 'http://127.0.0.1:8000/favicon.ico',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 300_000,
   },
   // 8 locales x 2 viewports = 16 projects. `countryCode` is not passed through
   // `use` (Playwright's `use` type doesn't support arbitrary custom keys) —
