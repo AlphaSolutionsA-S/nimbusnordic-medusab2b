@@ -14,7 +14,7 @@
 |---|-------|------|-----|------------|--------|
 | 01 | Playwright visual regression setup | `01-playwright-setup-implementation.md` | storefront | None | DONE |
 | 02 | Baseline screenshots for key flows | `02-baseline-screenshots-implementation.md` | storefront | Task 01 | DONE |
-| 03 | Functional checks (region switcher, locale links) | `03-functional-checks-implementation.md` | storefront | Task 01, NIMBUS-166 | TODO |
+| 03 | Functional checks (region switcher, locale links) | `03-functional-checks-implementation.md` | storefront | Task 01, NIMBUS-166 | DONE |
 | 04 | Triage and fix layout breaks | `04-triage-and-fix-layout-breaks-implementation.md` | storefront | Task 02, Task 03 | TODO |
 
 ## Cross-Project Dependency
