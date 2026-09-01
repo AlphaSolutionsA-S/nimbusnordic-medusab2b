@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Installera en sökleverantör för att aktivera produktsökning",
       "quoteLabel": "Offert"
     },
+    "regionSwitcher": {
+      "label": "Välj din region"
+    },
     "megaMenu": {
       "productsLabel": "Produkter"
     },

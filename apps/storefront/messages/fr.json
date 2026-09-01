@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Installez un fournisseur de recherche pour activer la recherche de produits",
       "quoteLabel": "Devis"
     },
+    "regionSwitcher": {
+      "label": "Sélectionnez votre région"
+    },
     "megaMenu": {
       "productsLabel": "Produits"
     },

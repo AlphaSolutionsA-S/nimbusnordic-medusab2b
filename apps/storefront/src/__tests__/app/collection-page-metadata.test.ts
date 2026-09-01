@@ -43,7 +43,7 @@ describe("Collection page generateMetadata", () => {
       searchParams: Promise.resolve({}),
     })
 
-    expect(metadata.title).toBe("Test Collection | Medusa Store")
+    expect(metadata.title).toBe("Test Collection | Nimbus Nordic")
   })
 
   it("falls back to the default locale suffix for an unmapped country (TC-2, Task 02)", async () => {
@@ -52,7 +52,7 @@ describe("Collection page generateMetadata", () => {
       searchParams: Promise.resolve({}),
     })
 
-    expect(metadata.title).toBe("Test Collection | Medusa Store")
+    expect(metadata.title).toBe("Test Collection | Nimbus Nordic")
   })
 
   it("includes hreflang alternates for all 8 locales (TC-2, Task 01)", async () => {

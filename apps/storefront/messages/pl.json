@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Zainstaluj dostawcę wyszukiwania, aby włączyć wyszukiwanie produktów",
       "quoteLabel": "Wycena"
     },
+    "regionSwitcher": {
+      "label": "Wybierz swój region"
+    },
     "megaMenu": {
       "productsLabel": "Produkty"
     },

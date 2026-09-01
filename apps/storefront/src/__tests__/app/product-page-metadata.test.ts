@@ -46,7 +46,7 @@ describe("Product page generateMetadata", () => {
       params: { countryCode: "dk", handle: "test-product" },
     })
 
-    expect(metadata.title).toBe("Test Product | Medusa Store")
+    expect(metadata.title).toBe("Test Product | Nimbus Nordic")
   })
 
   it("falls back to the default locale suffix for an unmapped country (TC-2, Task 02)", async () => {
@@ -54,7 +54,7 @@ describe("Product page generateMetadata", () => {
       params: { countryCode: "us", handle: "test-product" },
     })
 
-    expect(metadata.title).toBe("Test Product | Medusa Store")
+    expect(metadata.title).toBe("Test Product | Nimbus Nordic")
   })
 
   it("keeps the product content itself identical across locales (TC-3, Task 02)", async () => {

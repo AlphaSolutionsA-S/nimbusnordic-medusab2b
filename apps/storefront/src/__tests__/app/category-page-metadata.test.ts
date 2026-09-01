@@ -44,7 +44,7 @@ describe("Category page generateMetadata", () => {
       searchParams: Promise.resolve({}),
     })
 
-    expect(metadata?.title).toBe("Test Category | Medusa Store")
+    expect(metadata?.title).toBe("Test Category | Nimbus Nordic")
   })
 
   it("falls back to the default locale suffix for an unmapped country (TC-2, Task 02)", async () => {
@@ -53,7 +53,7 @@ describe("Category page generateMetadata", () => {
       searchParams: Promise.resolve({}),
     })
 
-    expect(metadata?.title).toBe("Test Category | Medusa Store")
+    expect(metadata?.title).toBe("Test Category | Nimbus Nordic")
   })
 
   it("keeps the existing canonical while adding hreflang alternates (TC-3, Task 01)", async () => {

@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Installieren Sie einen Suchanbieter, um die Produktsuche zu aktivieren",
       "quoteLabel": "Angebot"
     },
+    "regionSwitcher": {
+      "label": "Wählen Sie Ihre Region"
+    },
     "megaMenu": {
       "productsLabel": "Produkte"
     },

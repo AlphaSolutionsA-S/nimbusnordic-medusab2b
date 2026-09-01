@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Installer en søkeleverandør for å aktivere produktsøk",
       "quoteLabel": "Tilbud"
     },
+    "regionSwitcher": {
+      "label": "Velg din region"
+    },
     "megaMenu": {
       "productsLabel": "Produkter"
     },

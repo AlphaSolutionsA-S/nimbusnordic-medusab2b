@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Installa un provider di ricerca per abilitare la ricerca dei prodotti",
       "quoteLabel": "Preventivo"
     },
+    "regionSwitcher": {
+      "label": "Seleziona la tua regione"
+    },
     "megaMenu": {
       "productsLabel": "Prodotti"
     },
