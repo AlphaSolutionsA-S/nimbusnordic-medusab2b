@@ -31,6 +31,7 @@ export function RegionSwitcher({ options }: RegionSwitcherProps) {
   return (
     <NativeSelect
       aria-label={t("label")}
+      data-testid="region-switcher"
       value={countryCode}
       onChange={handleChange}
       className="min-w-0 max-w-[10rem] small:max-w-none"

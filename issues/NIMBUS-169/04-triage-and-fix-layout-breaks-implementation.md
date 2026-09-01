@@ -1,6 +1,6 @@
 # Task 04: Triage and Fix Layout Breaks — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 04

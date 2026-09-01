@@ -13,6 +13,8 @@
     "start": "next start -p 8000",
     "lint": "next lint",
     "test": "jest",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots",
     "clean": "rm -rf .next node_modules",
     "analyze": "ANALYZE=true next build"
   },
@@ -48,6 +50,7 @@
   "devDependencies": {
     "@babel/core": "^7.17.5",
     "@medusajs/ui-preset": "2.18.0",
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^16.0.0",
     "@testing-library/user-event": "^14.5.1",

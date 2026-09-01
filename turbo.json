@@ -28,6 +28,9 @@
     "test:integration:modules": {
       "cache": false
     },
+    "test:visual": {
+      "cache": false
+    },
     "test:unit": {
       "inputs": ["$TURBO_DEFAULT$", "jest.config.*"]
     },

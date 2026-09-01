@@ -1,6 +1,6 @@
 # Task 01: Playwright Visual Regression Setup — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 01
