@@ -2,6 +2,7 @@ import { NextIntlClientProvider } from "next-intl"
 import { getMessages, setRequestLocale } from "next-intl/server"
 
 import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
+import HtmlLangSync from "@/modules/common/components/html-lang-sync"
 
 export default async function CountryLocaleLayout({
   children,
@@ -23,6 +24,7 @@ export default async function CountryLocaleLayout({
 
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
+      <HtmlLangSync />
       {children}
     </NextIntlClientProvider>
   )
