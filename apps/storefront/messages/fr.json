@@ -718,5 +718,8 @@
     "heading": "Business Central API Operations",
     "errorLabel": "Error",
     "unknownErrorMessage": "Unknown error"
+  },
+  "MetaDescription": {
+    "storeSuffix": "| Medusa Store"
   }
 }
