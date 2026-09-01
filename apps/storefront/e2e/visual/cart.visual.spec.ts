@@ -14,8 +14,15 @@ async function addTestProductToCart(page: Page, countryCode: string) {
   await expect(page.getByTestId('add-product-button')).toHaveCount(1);
   await page.locator('table input[type="number"]').first().fill('1');
   await page.getByTestId('add-product-button').click();
-  // Wait for the add-to-cart server action to complete before navigating away.
-  await expect(page.getByTestId('add-product-button')).toBeEnabled();
+  // The button only emits an event onto an event bus (see
+  // product-variants-table/index.tsx's handleAddToCart) and re-enables
+  // itself immediately — the actual add-to-cart server action
+  // (addToCartBulk, in cart-context.tsx) runs asynchronously afterward.
+  // Waiting on the button's enabled state (as an earlier version of this
+  // helper did) doesn't wait for that request, so a `page.goto` right after
+  // could race ahead of it and abort it mid-flight, leaving the cart empty.
+  // Wait for the network to go idle so the request has actually completed.
+  await page.waitForLoadState('networkidle');
 }
 
 test('cart page renders correctly with an item added', async ({ page }, testInfo) => {
@@ -23,6 +30,9 @@ test('cart page renders correctly with an item added', async ({ page }, testInfo
   await addTestProductToCart(page, countryCode);
   await page.goto(`/${countryCode}/cart`);
   await expect(page.getByTestId('cart-container')).toBeVisible();
+  // Confirms the cart actually has the item (not the empty-cart state) —
+  // asserting container visibility alone doesn't distinguish the two.
+  await expect(page.getByTestId('cart-item-subtotal')).toBeVisible();
   await waitForImagesToLoad(page);
   await expect(page).toHaveScreenshot(`cart-${testInfo.project.name}.png`, {
     fullPage: true,
