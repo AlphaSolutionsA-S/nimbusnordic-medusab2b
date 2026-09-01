@@ -1,9 +1,12 @@
 import { getCollectionByHandle, listCollections } from "@/lib/data/collections"
 import { listRegions } from "@/lib/data/regions"
+import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
+import { buildLocaleAlternates } from "@/lib/seo/locale-alternates"
 import CollectionTemplate from "@/modules/collections/templates"
 import { SortOptions } from "@/modules/store/components/refinement-list/sort-products"
 import { StoreCollection, StoreRegion } from "@medusajs/types"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 
 export const dynamicParams = true
@@ -60,9 +63,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
+  const locale = getLocaleForCountry(params.countryCode)
+  const t = await getTranslations({ locale, namespace: "MetaDescription" })
+
   const metadata = {
-    title: `${collection.title} | Medusa Store`,
+    title: `${collection.title} ${t("storeSuffix")}`,
     description: `${collection.title} collection`,
+    alternates: {
+      languages: buildLocaleAlternates(`/collections/${params.handle}`),
+    },
   } as Metadata
 
   return metadata
