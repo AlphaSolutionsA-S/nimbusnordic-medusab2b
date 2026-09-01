@@ -57,3 +57,9 @@
 - **Outcome:** Fixed the `<html lang="en">` finding flagged above (minor, out-of-scope item from Task 04). Chose the client-side option: removed the hardcoded `lang="en"` from `apps/storefront/src/app/layout.tsx`'s root `<html>` tag, and added `HtmlLangSync` (`apps/storefront/src/modules/common/components/html-lang-sync/index.tsx`) — a small client component rendered inside `NextIntlClientProvider` in `[countryCode]/layout.tsx` that reads `useLocale()` and sets `document.documentElement.lang` in a `useEffect`. Avoids forcing the root layout into dynamic rendering (the tradeoff of reading the `X-NEXT-INTL-LOCALE` header directly in the server root layout). Added `__tests__/modules/common/components/html-lang-sync/index.test.tsx` (TC-1 sets lang on mount, TC-2 updates on locale change). `pnpm lint` clean (same 2 pre-existing unrelated warnings), `pnpm test` 135/135 suites, 246/246 tests. Committed as `5905d06` on `feature/NIMBUS-169`.
 - **Outstanding:** None new. Branch still not pushed, Jira still not transitioned.
 - **Handover to:** reviewer / whoever merges `feature/NIMBUS-169`.
+
+- **Date:** 2026-09-01
+- **Updated by:** main session (user request: "push and merge")
+- **Outcome:** Pushed `feature/NIMBUS-169` to origin, merged into `develop` with `--no-ff` (merge commit `656e3a7`, matching this repo's established pattern for prior NIMBUS feature branches — no conflicts), and pushed `develop`. Added closing comment to NIMBUS-169 and transitioned it to **Closed** (this project's Done-category status; the workflow has no separate Review/QA state between Estimation and Closed).
+- **Outstanding:** None. Story complete and merged.
+- **Handover to:** none — story closed.
