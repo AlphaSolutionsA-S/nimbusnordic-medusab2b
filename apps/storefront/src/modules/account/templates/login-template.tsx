@@ -6,6 +6,7 @@ import { HttpTypes } from "@medusajs/types"
 import { clx } from "@medusajs/ui"
 import Image from "next/image"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect, useState } from "react"
 
 export enum LOGIN_VIEW {
@@ -14,6 +15,7 @@ export enum LOGIN_VIEW {
 }
 
 const LoginTemplate = ({ regions }: { regions: HttpTypes.StoreRegion[] }) => {
+  const t = useTranslations("Account.login")
   const route = usePathname()
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -63,7 +65,7 @@ const LoginTemplate = ({ regions }: { regions: HttpTypes.StoreRegion[] }) => {
       <div className="relative">
         <Image
           src="/account-block.jpg"
-          alt="Login banner background"
+          alt={t("bannerAlt")}
           className={clx(
             "object-cover transition-opacity duration-300 w-full h-full",
             imageLoaded ? "opacity-100" : "opacity-0"

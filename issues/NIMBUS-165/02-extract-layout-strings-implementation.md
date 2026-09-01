@@ -98,7 +98,7 @@ export async function NavigationHeader() {
   the same pattern.
 - `apps/storefront/messages/{da,en,sv,no,pl,it,fr,de}.json`: add the `Layout` namespace with
   identical (English-content) keys to all 8 files.
-- `apps/storefront/src/lib/i18n/extraction-checklist.md`: check off `modules/layout`.
+- `issues/NIMBUS-165/extraction-checklist.md`: check off `modules/layout`.
 
 ## Test Cases
 

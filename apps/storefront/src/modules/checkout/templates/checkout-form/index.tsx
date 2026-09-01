@@ -12,6 +12,7 @@ import Button from "@/modules/common/components/button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import UTurnArrowRight from "@/modules/common/icons/u-turn-arrow-right"
 import { ApprovalStatusType, B2BCart, B2BCustomer } from "@/types"
+import { getTranslations } from "next-intl/server"
 
 export default async function CheckoutForm({
   cart,
@@ -23,6 +24,8 @@ export default async function CheckoutForm({
   if (!cart) {
     return null
   }
+
+  const t = await getTranslations("Checkout.checkoutForm")
 
   const shippingMethods = await listCartShippingMethods(cart.id)
   const paymentMethods = await listCartPaymentMethods(cart.region?.id ?? "")
@@ -43,7 +46,7 @@ export default async function CheckoutForm({
         >
           <Button variant="secondary">
             <UTurnArrowRight />
-            Back to shopping cart
+            {t("backToCartLabel")}
           </Button>
         </LocalizedClientLink>
 

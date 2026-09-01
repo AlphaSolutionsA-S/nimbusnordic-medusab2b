@@ -1,12 +1,17 @@
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import LogoIcon from "@/modules/common/icons/logo"
 import MedusaCTA from "@/modules/layout/components/medusa-cta"
+import { getTranslations } from "next-intl/server"
 
-export default function CheckoutLayout({
+export default async function CheckoutLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Reuses the identical brand name already extracted for
+  // `@/modules/layout/templates/nav`.
+  const tNav = await getTranslations("Layout.nav")
+
   return (
     <div className="mb-2 w-full bg-white relative small:min-h-screen">
       <div className="h-16 bg-white">
@@ -14,7 +19,7 @@ export default function CheckoutLayout({
           <LocalizedClientLink className="hover:text-ui-fg-base" href="/">
             <h1 className="text-base font-medium flex items-center">
               <LogoIcon className="inline mr-2" />
-              Medusa B2B Starter
+              {tNav("brandName")}
             </h1>
           </LocalizedClientLink>
         </nav>

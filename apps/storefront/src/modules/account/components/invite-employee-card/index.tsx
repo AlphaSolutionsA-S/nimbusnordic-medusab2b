@@ -5,9 +5,11 @@ import Button from "@/modules/common/components/button"
 import Input from "@/modules/common/components/input"
 import { QueryCompany } from "@/types"
 import { Container, Text, toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 const InviteEmployeeCard = ({ company }: { company: QueryCompany }) => {
+  const t = useTranslations("Account.inviteEmployeeCard")
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -28,10 +30,10 @@ const InviteEmployeeCard = ({ company }: { company: QueryCompany }) => {
         is_admin: false,
       })
 
-      toast.success("Employee invited")
+      toast.success(t("employeeInvitedToast"))
       form.reset()
     } catch (error) {
-      toast.error("Error inviting employee")
+      toast.error(t("employeeInviteErrorToast"))
     } finally {
       setIsLoading(false)
     }
@@ -42,23 +44,28 @@ const InviteEmployeeCard = ({ company }: { company: QueryCompany }) => {
       <form onSubmit={handleSubmit}>
         <div className="grid small:grid-cols-4 grid-cols-2 gap-4 p-4 border-b border-neutral-200">
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Name</Text>
-            <Input name="first_name" label="First name" required />
+            <Text className="font-medium text-neutral-950">{t("nameLabel")}</Text>
+            <Input name="first_name" label={t("firstNameLabel")} required />
           </div>
           <div className="flex flex-col gap-y-2 justify-end">
-            <Input name="last_name" label="Last name" required />
+            <Input name="last_name" label={t("lastNameLabel")} required />
           </div>
           <div className="flex flex-col col-span-2 gap-y-2">
-            <Text className="font-medium text-neutral-950">Email</Text>
-            <Input name="email" label="Enter an email" type="email" required />
+            <Text className="font-medium text-neutral-950">{t("emailLabel")}</Text>
+            <Input
+              name="email"
+              label={t("emailInputLabel")}
+              type="email"
+              required
+            />
           </div>
           <div className="flex flex-col col-span-2 gap-y-2">
             <Text className="font-medium text-neutral-950">
-              Initial password
+              {t("initialPasswordLabel")}
             </Text>
             <Input
               name="password"
-              label="Set an initial password"
+              label={t("setPasswordInputLabel")}
               type="password"
               autoComplete="new-password"
               minLength={8}
@@ -68,7 +75,7 @@ const InviteEmployeeCard = ({ company }: { company: QueryCompany }) => {
         </div>
         <div className="flex items-center justify-end gap-2 bg-neutral-50 p-4">
           <Button variant="primary" type="submit" isLoading={isLoading}>
-            Send Invite
+            {t("sendInviteLabel")}
           </Button>
         </div>
       </form>

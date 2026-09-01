@@ -4,6 +4,7 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import { StoreQuoteResponse } from "@/types"
 import { CalendarMini, DocumentText } from "@medusajs/icons"
 import { Button, clx, Container } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import { useMemo } from "react"
 
@@ -12,6 +13,10 @@ type QuoteCardProps = {
 }
 
 const QuoteCard = ({ quote }: QuoteCardProps) => {
+  const t = useTranslations("Account.quoteCard")
+  // Reuses the identical "{count} item(s)" pattern already extracted for
+  // `@/modules/account/components/order-card`.
+  const tOrderCard = useTranslations("Account.orderCard")
   const { draft_order: order } = quote
   const createdAt = new Date(order.created_at)
 
@@ -88,15 +93,17 @@ const QuoteCard = ({ quote }: QuoteCardProps) => {
             })}
           </span>
           {"·"}
-          <span className="pl-2">{`${numberOfLines} ${
-            numberOfLines > 1 ? "items" : "item"
-          }`}</span>
+          <span className="pl-2">
+            {numberOfLines > 1
+              ? tOrderCard("itemsCount", { count: numberOfLines })
+              : tOrderCard("itemCount", { count: numberOfLines })}
+          </span>
         </div>
 
         <div className="pl-4">
           <LocalizedClientLink href={`/account/quotes/details/${quote.id}`}>
             <Button variant="secondary" className="rounded-full text-xs">
-              See details
+              {t("seeDetailsLabel")}
             </Button>
           </LocalizedClientLink>
         </div>

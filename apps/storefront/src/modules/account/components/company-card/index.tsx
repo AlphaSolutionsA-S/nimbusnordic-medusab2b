@@ -12,12 +12,14 @@ import {
 } from "@/types"
 import { AdminRegionCountry, HttpTypes } from "@medusajs/types"
 import { Container, Text, clx, toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 const CompanyCard = ({
   company,
   regions,
 }: StoreCompanyResponse & { regions: HttpTypes.StoreRegion[] }) => {
+  const t = useTranslations("Account.companyCard")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -39,9 +41,9 @@ const CompanyCard = ({
     try {
       await updateCompany(companyData)
       setIsEditing(false)
-      toast.success("Company updated")
+      toast.success(t("companyUpdatedToast"))
     } catch {
-      toast.error("Error updating company")
+      toast.error(t("companyUpdateErrorToast"))
     } finally {
       setIsSaving(false)
     }
@@ -76,9 +78,9 @@ const CompanyCard = ({
           }}
         >
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Company Name</Text>
+            <Text className="font-medium text-neutral-950">{t("companyNameLabel")}</Text>
             <Input
-              label="Company Name"
+              label={t("companyNameLabel")}
               name="name"
               value={companyData.name || ""}
               onChange={(e) =>
@@ -87,9 +89,9 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Email</Text>
+            <Text className="font-medium text-neutral-950">{t("emailLabel")}</Text>
             <Input
-              label="Email"
+              label={t("emailLabel")}
               name="email"
               value={companyData.email || ""}
               onChange={(e) =>
@@ -98,9 +100,9 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Phone</Text>
+            <Text className="font-medium text-neutral-950">{t("phoneLabel")}</Text>
             <Input
-              label="Phone"
+              label={t("phoneLabel")}
               name="phone"
               value={companyData.phone || ""}
               onChange={(e) =>
@@ -109,9 +111,9 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Address</Text>
+            <Text className="font-medium text-neutral-950">{t("addressLabel")}</Text>
             <Input
-              label="Address"
+              label={t("addressLabel")}
               name="address"
               value={companyData.address || ""}
               onChange={(e) =>
@@ -120,9 +122,9 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">City</Text>
+            <Text className="font-medium text-neutral-950">{t("cityLabel")}</Text>
             <Input
-              label="City"
+              label={t("cityLabel")}
               name="city"
               value={companyData.city || ""}
               onChange={(e) =>
@@ -131,9 +133,9 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">State</Text>
+            <Text className="font-medium text-neutral-950">{t("stateLabel")}</Text>
             <Input
-              label="State"
+              label={t("stateLabel")}
               name="state"
               value={companyData.state || ""}
               onChange={(e) =>
@@ -142,9 +144,9 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Zip</Text>
+            <Text className="font-medium text-neutral-950">{t("zipLabel")}</Text>
             <Input
-              label="Zip"
+              label={t("zipLabel")}
               name="zip"
               value={companyData.zip || ""}
               onChange={(e) =>
@@ -153,7 +155,7 @@ const CompanyCard = ({
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Country</Text>
+            <Text className="font-medium text-neutral-950">{t("countryLabel")}</Text>
             <Select
               name="country"
               value={companyData.country || ""}
@@ -169,7 +171,7 @@ const CompanyCard = ({
             </Select>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Currency</Text>
+            <Text className="font-medium text-neutral-950">{t("currencyLabel")}</Text>
             <Select
               name="currency_code"
               value={companyData.currency_code || ""}
@@ -189,7 +191,7 @@ const CompanyCard = ({
           </div>
           <div className="flex flex-col gap-y-2">
             <Text className="font-medium text-neutral-950">
-              Spending Limit Reset Frequency
+              {t("spendingLimitResetFrequencyLabel")}
             </Text>
             <Select
               name="spending_limit_reset_frequency"
@@ -214,7 +216,7 @@ const CompanyCard = ({
           {company.business_central_customer_number && (
             <div className="flex flex-col gap-y-2">
               <Text className="font-medium text-neutral-950">
-                BC Customer Number
+                {t("bcCustomerNumberLabel")}
               </Text>
               <Text className="text-neutral-500">
                 {company.business_central_customer_number}
@@ -232,26 +234,26 @@ const CompanyCard = ({
           )}
         >
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Company Name</Text>
+            <Text className="font-medium text-neutral-950">{t("companyNameLabel")}</Text>
             <Text className=" text-neutral-500">{company.name}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Email</Text>
+            <Text className="font-medium text-neutral-950">{t("emailLabel")}</Text>
             <Text className=" text-neutral-500">{company.email}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Phone</Text>
+            <Text className="font-medium text-neutral-950">{t("phoneLabel")}</Text>
             <Text className=" text-neutral-500">{company.phone}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Address</Text>
+            <Text className="font-medium text-neutral-950">{t("addressLabel")}</Text>
             <Text className=" text-neutral-500">
               {company.address}, {company.city}, {company.state}, {company.zip},{" "}
               {company.country?.toUpperCase()}
             </Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Currency</Text>
+            <Text className="font-medium text-neutral-950">{t("currencyLabel")}</Text>
             <Text className=" text-neutral-500">
               {company.currency_code?.toUpperCase()} (
               {currencySymbolMap[company.currency_code!]})
@@ -259,7 +261,7 @@ const CompanyCard = ({
           </div>
           <div className="flex flex-col gap-y-2">
             <Text className="font-medium text-neutral-950">
-              Spending Limit Reset Frequency
+              {t("spendingLimitResetFrequencyLabel")}
             </Text>
             <Text className=" text-neutral-500">
               {company.spending_limit_reset_frequency?.charAt(0).toUpperCase() +
@@ -269,7 +271,7 @@ const CompanyCard = ({
           {company.business_central_customer_number && (
             <div className="flex flex-col gap-y-2">
               <Text className="font-medium text-neutral-950">
-                BC Customer Number
+                {t("bcCustomerNumberLabel")}
               </Text>
               <Text className=" text-neutral-500">
                 {company.business_central_customer_number}
@@ -286,19 +288,19 @@ const CompanyCard = ({
                 onClick={() => setIsEditing(false)}
                 disabled={isSaving}
               >
-                Cancel
+                {t("cancelLabel")}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSave}
                 isLoading={isSaving}
               >
-                Save
+                {t("saveLabel")}
               </Button>
             </>
           ) : (
             <Button variant="secondary" onClick={() => setIsEditing(true)}>
-              Edit
+              {t("editLabel")}
             </Button>
           )}
         </div>

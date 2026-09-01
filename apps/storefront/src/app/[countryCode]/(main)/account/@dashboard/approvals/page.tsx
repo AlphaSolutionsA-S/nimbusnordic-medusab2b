@@ -3,6 +3,7 @@ import PendingApprovalRequestsAdminList from "@/modules/account/components/appro
 import RejectedApprovalRequestsAdminList from "@/modules/account/components/approval-requests-admin-list/rejected-list"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 
 export const metadata: Metadata = {
@@ -15,30 +16,31 @@ export default async function Approvals({
 }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
+  const t = await getTranslations("Account.approvalsPage")
   const urlSearchParams = await searchParams
 
   return (
     <div className="w-full flex flex-col gap-y-4">
-      <Heading>Approvals</Heading>
+      <Heading>{t("heading")}</Heading>
 
       <Heading level="h2" className="text-neutral-700">
-        Pending
+        {t("pendingHeading")}
       </Heading>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>{t("loadingLabel")}</div>}>
         <PendingApprovalRequestsAdminList searchParams={urlSearchParams} />
       </Suspense>
 
       <Heading level="h2" className="text-neutral-700">
-        Approved
+        {t("approvedHeading")}
       </Heading>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>{t("loadingLabel")}</div>}>
         <ApprovedApprovalRequestsAdminList searchParams={urlSearchParams} />
       </Suspense>
 
       <Heading level="h2" className="text-neutral-700">
-        Rejected
+        {t("rejectedHeading")}
       </Heading>
-      <Suspense fallback={<div>Loading...</div>}>
+      <Suspense fallback={<div>{t("loadingLabel")}</div>}>
         <RejectedApprovalRequestsAdminList searchParams={urlSearchParams} />
       </Suspense>
     </div>

@@ -117,7 +117,7 @@ export function ContactDetailsForm(/* ...existing props... */) {
   hardcoded default (or keep the hardcoded English default as a true fallback only reached if no
   caller passes one — worker's discretion, document which was chosen).
 - `apps/storefront/messages/{da,en,sv,no,pl,it,fr,de}.json`: add `Checkout` namespace.
-- `apps/storefront/src/lib/i18n/extraction-checklist.md`: check off `modules/checkout` (partial —
+- `issues/NIMBUS-165/extraction-checklist.md`: check off `modules/checkout` (partial —
   this task covers contact details + address forms; payment/review steps may need a follow-up if
   found to have additional hardcoded strings not enumerated here).
 

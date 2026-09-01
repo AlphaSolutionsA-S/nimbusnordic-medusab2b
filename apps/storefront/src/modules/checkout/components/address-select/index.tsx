@@ -4,6 +4,7 @@ import { Listbox, Transition } from "@headlessui/react"
 import { ChevronUpDown } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { clx } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { Fragment, useMemo } from "react"
 
 type AddressSelectProps = {
@@ -20,6 +21,7 @@ const AddressSelect = ({
   addressInput,
   onSelect,
 }: AddressSelectProps) => {
+  const t = useTranslations("Checkout.addressSelect")
   const handleSelect = (id: string) => {
     const savedAddress = addresses.find((a) => a.id === id)
     if (savedAddress) {
@@ -43,7 +45,7 @@ const AddressSelect = ({
               <span className="block truncate">
                 {selectedAddress
                   ? selectedAddress.address_1
-                  : "Choose an address"}
+                  : t("choosePlaceholder")}
               </span>
               <ChevronUpDown
                 className={clx("transition-rotate duration-200", {

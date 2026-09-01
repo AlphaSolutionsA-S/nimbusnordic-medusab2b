@@ -3,12 +3,16 @@ import ApprovalCard from "@/modules/account/components/approval-card"
 import ResourcePagination from "@/modules/account/components/resource-pagination"
 import { ApprovalStatusType } from "@/types/approval"
 import { Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 
 export default async function PendingApprovalRequestsAdminList({
   searchParams,
 }: {
   searchParams: { [key: string]: string | string[] | undefined }
 }) {
+  // Shared with the approved/rejected admin-list variants (identical "No
+  // requests" empty state across all three).
+  const t = await getTranslations("Account.approvalRequestsAdminList")
   const pageParam = `pendingPage`
   const currentPage = Number(searchParams[pageParam]) || 1
   const limit = 5
@@ -45,5 +49,5 @@ export default async function PendingApprovalRequestsAdminList({
     )
   }
 
-  return <Text>No requests</Text>
+  return <Text>{t("noRequestsMessage")}</Text>
 }

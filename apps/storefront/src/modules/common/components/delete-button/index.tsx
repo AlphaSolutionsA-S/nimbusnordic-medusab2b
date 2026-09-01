@@ -1,6 +1,7 @@
 import { useCart } from "@/lib/context/cart-context"
 import { clx } from "@medusajs/ui"
 import Spinner from "@/modules/common/icons/spinner"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 const DeleteButton = ({
@@ -12,6 +13,7 @@ const DeleteButton = ({
   className?: string
   disabled?: boolean
 }) => {
+  const t = useTranslations("Common.deleteButton")
   const [isDeleting, setIsDeleting] = useState(false)
 
   const { handleDeleteItem } = useCart()
@@ -36,7 +38,7 @@ const DeleteButton = ({
         onClick={() => handleDelete(id)}
         disabled={disabled}
       >
-        {isDeleting ? <Spinner size={12} /> : "Remove"}
+        {isDeleting ? <Spinner size={12} /> : t("removeLabel")}
       </button>
     </div>
   )

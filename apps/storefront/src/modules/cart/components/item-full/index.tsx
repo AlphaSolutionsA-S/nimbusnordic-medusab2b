@@ -9,6 +9,7 @@ import Spinner from "@/modules/common/icons/spinner"
 import Thumbnail from "@/modules/products/components/thumbnail"
 import { HttpTypes } from "@medusajs/types"
 import { clx, Container, Input } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { startTransition, useEffect, useState } from "react"
 
 type ItemProps = {
@@ -24,6 +25,7 @@ const ItemFull = ({
   currencyCode,
   disabled,
 }: ItemProps) => {
+  const t = useTranslations("Cart.itemFull")
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -103,7 +105,9 @@ const ItemFull = ({
         </LocalizedClientLink>
         <div className="flex flex-col gap-y-2 justify-between min-h-full self-stretch">
           <div className="flex flex-col">
-            <span className="text-neutral-600 text-[0.6rem]">BRAND</span>
+            <span className="text-neutral-600 text-[0.6rem]">
+              {t("brandLabel")}
+            </span>
 
             <span className="txt-medium-plus text-neutral-950">
               {item.product?.title}

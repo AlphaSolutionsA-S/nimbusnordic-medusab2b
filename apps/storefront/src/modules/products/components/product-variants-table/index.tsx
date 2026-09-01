@@ -4,6 +4,7 @@ import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
 import { clx, Table } from "@medusajs/ui"
 import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 import BulkTableQuantity from "../bulk-table-quantity"
 
@@ -14,6 +15,7 @@ const ProductVariantsTable = ({
   product: HttpTypes.StoreProduct
   region: HttpTypes.StoreRegion
 }) => {
+  const t = useTranslations("Products.variantsTable")
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -77,7 +79,9 @@ const ProductVariantsTable = ({
         <Table className="w-full rounded-xl overflow-hidden shadow-borders-base border-none ">
           <Table.Header className="border-t-0">
             <Table.Row className="bg-neutral-100 border-none hover:!bg-neutral-100">
-              <Table.HeaderCell className="px-4">SKU</Table.HeaderCell>
+              <Table.HeaderCell className="px-4">
+                {t("skuHeader")}
+              </Table.HeaderCell>
               {product.options?.map((option) => {
                 if (option.title === "Default option") {
                   return null
@@ -89,9 +93,11 @@ const ProductVariantsTable = ({
                 )
               })}
               <Table.HeaderCell className="px-4 border-x">
-                Price
+                {t("priceHeader")}
               </Table.HeaderCell>
-              <Table.HeaderCell className="px-4">Quantity</Table.HeaderCell>
+              <Table.HeaderCell className="px-4">
+                {t("quantityHeader")}
+              </Table.HeaderCell>
             </Table.Row>
           </Table.Header>
           <Table.Body className="border-none">
@@ -147,8 +153,8 @@ const ProductVariantsTable = ({
           fill={totalQuantity === 0 ? "none" : "#fff"}
         />
         {totalQuantity === 0
-          ? "Choose product variant(s) above"
-          : "Add to cart"}
+          ? t("chooseVariantLabel")
+          : t("addToCartLabel")}
       </Button>
     </div>
   )

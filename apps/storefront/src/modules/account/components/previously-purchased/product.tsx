@@ -4,12 +4,14 @@ import Thumbnail from "@/modules/products/components/thumbnail"
 import { ArrowUturnLeft } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 
-const PreviouslyPurchasedProduct = ({
+const PreviouslyPurchasedProduct = async ({
   variant,
 }: {
   variant: HttpTypes.StoreOrderLineItem
 }) => {
+  const t = await getTranslations("Account.previouslyPurchased")
   const { thumbnail, product_title, product_handle, title } = variant
 
   return (
@@ -25,7 +27,7 @@ const PreviouslyPurchasedProduct = ({
       </div>
       <LocalizedClientLink href={`/products/${product_handle}`}>
         <Button variant="secondary" className="h-8 px-4 text-neutral-600">
-          Buy again
+          {t("buyAgainLabel")}
           <ArrowUturnLeft className="inline-block ml-1 " />
         </Button>
       </LocalizedClientLink>

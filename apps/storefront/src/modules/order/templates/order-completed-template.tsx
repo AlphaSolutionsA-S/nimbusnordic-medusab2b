@@ -6,6 +6,7 @@ import OrderDetails from "@/modules/order/components/order-details"
 import PaymentDetails from "@/modules/order/components/payment-details"
 import ShippingDetails from "@/modules/order/components/shipping-details"
 import { B2BOrder } from "@/types/global"
+import { getTranslations } from "next-intl/server"
 
 type OrderCompletedTemplateProps = {
   order: B2BOrder
@@ -14,6 +15,8 @@ type OrderCompletedTemplateProps = {
 export default async function OrderCompletedTemplate({
   order,
 }: OrderCompletedTemplateProps) {
+  const t = await getTranslations("Order.completedTemplate")
+
   return (
     <div className="py-6 min-h-[calc(100vh-64px)]">
       <div className="content-container flex flex-col justify-center items-center gap-y-10 max-w-4xl h-full w-full">
@@ -25,12 +28,12 @@ export default async function OrderCompletedTemplate({
             level="h1"
             className="flex flex-col gap-y-3 text-ui-fg-base text-3xl mb-4"
           >
-            <span>Thank you!</span>
-            <span>Your order was placed successfully.</span>
+            <span>{t("thankYouLabel")}</span>
+            <span>{t("orderPlacedMessage")}</span>
           </Heading>
           <OrderDetails order={order} />
           <Heading level="h2" className="flex flex-row text-3xl-regular">
-            Summary
+            {t("summaryHeading")}
           </Heading>
           <Items items={order.items} order={order} />
           <CheckoutTotals cartOrOrder={order} />

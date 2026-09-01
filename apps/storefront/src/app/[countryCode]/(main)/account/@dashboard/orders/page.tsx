@@ -7,6 +7,7 @@ import PendingCustomerApprovals from "@/modules/account/components/pending-custo
 import { ApprovalStatusType } from "@/types/approval"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
   title: "Orders",
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 }
 
 export default async function Orders() {
+  const t = await getTranslations("Account.ordersPage")
   const customer = await retrieveCustomer()
   const orders = await listOrders()
 
@@ -34,12 +36,12 @@ export default async function Orders() {
       data-testid="orders-page-wrapper"
     >
       <div className="mb-4">
-        <Heading>Orders</Heading>
+        <Heading>{t("heading")}</Heading>
       </div>
       {approval_required && (
         <div>
           <Heading level="h2" className="text-neutral-700 mb-4">
-            Pending Approvals
+            {t("pendingApprovalsHeading")}
           </Heading>
 
           <PendingCustomerApprovals cartsWithApprovals={carts_with_approvals} />
@@ -47,7 +49,7 @@ export default async function Orders() {
       )}
       <div>
         <Heading level="h2" className="text-neutral-700 mb-4">
-          Completed Orders
+          {t("completedOrdersHeading")}
         </Heading>
 
         <OrderOverview orders={orders} />

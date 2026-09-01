@@ -2,6 +2,7 @@ import useToggleState from "@/lib/hooks/use-toggle-state"
 import Button from "@/modules/common/components/button"
 import { Disclosure } from "@headlessui/react"
 import { Badge, clx } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useEffect } from "react"
 import { useFormStatus } from "react-dom"
 
@@ -16,16 +17,24 @@ type AccountInfoProps = {
   "data-testid"?: string
 }
 
+// NOTE: this component is not imported/used anywhere in the app (verified via
+// repo-wide search). Left in place per this project's dead-code policy
+// (flagged, not removed). It also relies on `useFormStatus`/`useEffect`
+// (client-only hooks) without a `"use client"` directive of its own — a
+// pre-existing issue unrelated to this string extraction, flagged here for
+// attention rather than fixed silently.
 const AccountInfo = ({
   label,
   currentInfo,
   isSuccess,
   isError,
   clearState,
-  errorMessage = "An error occurred, please try again",
+  errorMessage,
   children,
   "data-testid": dataTestid,
 }: AccountInfoProps) => {
+  const t = useTranslations("Account.accountInfo")
+  const resolvedErrorMessage = errorMessage ?? t("defaultErrorMessage")
   const { state, close, toggle } = useToggleState()
 
   const { pending } = useFormStatus()
@@ -65,7 +74,7 @@ const AccountInfo = ({
             data-testid="edit-button"
             data-active={state}
           >
-            {state ? "Cancel" : "Edit"}
+            {state ? t("cancelLabel") : t("editLabel")}
           </Button>
         </div>
       </div>
@@ -84,7 +93,7 @@ const AccountInfo = ({
           data-testid="success-message"
         >
           <Badge className="p-2 my-4" color="green">
-            <span>{label} updated succesfully</span>
+            <span>{t("updatedSuccessfullyMessage", { label })}</span>
           </Badge>
         </Disclosure.Panel>
       </Disclosure>
@@ -103,7 +112,7 @@ const AccountInfo = ({
           data-testid="error-message"
         >
           <Badge className="p-2 my-4" color="red">
-            <span>{errorMessage}</span>
+            <span>{resolvedErrorMessage}</span>
           </Badge>
         </Disclosure.Panel>
       </Disclosure>
@@ -128,7 +137,7 @@ const AccountInfo = ({
                 type="submit"
                 data-testid="save-button"
               >
-                Save changes
+                {t("saveChangesLabel")}
               </Button>
             </div>
           </div>

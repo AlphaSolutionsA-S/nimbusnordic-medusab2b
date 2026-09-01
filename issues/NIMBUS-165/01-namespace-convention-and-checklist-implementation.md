@@ -47,7 +47,7 @@ Keys within a namespace are nested by component/section, e.g. `Checkout.contactD
 
 ## Code Skeletons
 
-### New File: `apps/storefront/src/lib/i18n/extraction-checklist.md`
+### New File: `issues/NIMBUS-165/extraction-checklist.md`
 
 ```markdown
 # NIMBUS-165 String Extraction Checklist
@@ -74,7 +74,7 @@ new module folders are discovered.
 
 ## Impacted Files
 
-- New: `apps/storefront/src/lib/i18n/extraction-checklist.md`.
+- New: `issues/NIMBUS-165/extraction-checklist.md`.
 - No source code changes in this task — it's the convention/tracking groundwork for Tasks 02–05.
 
 ## Test Cases

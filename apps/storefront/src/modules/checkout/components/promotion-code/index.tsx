@@ -7,6 +7,7 @@ import Trash from "@/modules/common/icons/trash"
 import { B2BCart } from "@/types"
 import { ChevronDownMini, ChevronUpMini } from "@medusajs/icons"
 import { Badge, Heading, Input, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import React, { useActionState } from "react"
 import ErrorMessage from "../error-message"
@@ -17,6 +18,7 @@ type PromotionCodeProps = {
 }
 
 const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
+  const t = useTranslations("Checkout.promotionCode")
   const [isOpen, setIsOpen] = React.useState(false)
   const pathname = usePathname()
 
@@ -71,7 +73,7 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
               className="flex gap-x-1 my-2 items-center txt-medium text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
               data-testid="add-discount-button"
             >
-              Enter Promotion Code{" "}
+              {t("enterPromotionCodeLabel")}{" "}
               {isOpen ? <ChevronUpMini /> : <ChevronDownMini />}
             </button>
 
@@ -91,7 +93,7 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                     variant="secondary"
                     data-testid="discount-apply-button"
                   >
-                    Apply
+                    {t("applyLabel")}
                   </SubmitButton>
                 </div>
 
@@ -108,7 +110,9 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
           <div className="w-full flex items-center">
             <div className="flex flex-col w-full">
               <Heading className="txt-medium mb-2">
-                Promotion{promotions.length > 1 ? "s" : ""} applied:
+                {promotions.length > 1
+                  ? t("promotionAppliedOther")
+                  : t("promotionAppliedOne")}
               </Heading>
 
               {promotions.map((promotion) => {
@@ -159,7 +163,7 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                       >
                         <Trash size={14} />
                         <span className="sr-only">
-                          Remove discount code from order
+                          {t("removeDiscountSrLabel")}
                         </span>
                       </button>
                     )}

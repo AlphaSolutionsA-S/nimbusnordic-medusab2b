@@ -10,12 +10,14 @@ import { StoreFreeShippingPrice } from "@/types/shipping-option/http"
 import { ArrowUpRightMini, ExclamationCircleSolid } from "@medusajs/icons"
 import { StoreCart } from "@medusajs/types"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
   metadataBase: new URL(getBaseURL()),
 }
 
 export default async function PageLayout(props: { children: React.ReactNode }) {
+  const t = await getTranslations("Layout.promoBanner")
   const customer = await retrieveCustomer().catch(() => null)
   const cart = await retrieveCart()
   let freeShippingPrices: StoreFreeShippingPrice[] = []
@@ -31,7 +33,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
         <div className="flex flex-col small:flex-row small:gap-2 gap-1 items-center">
           <span className="flex items-center gap-1">
             <ExclamationCircleSolid className="inline" color="#A1A1AA" />
-            Build your own B2B store with this starter:
+            {t("buildYourOwnLabel")}
           </span>
 
           <a
@@ -39,7 +41,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
             href="https://cloud.medusajs.com"
             target="_blank"
           >
-            Deploy to Medusa Cloud
+            {t("deployToMedusaCloudLabel")}
             <ArrowUpRightMini className="group-hover:text-ui-fg-interactive-hover inline text-ui-fg-interactive" />
           </a>
         </div>

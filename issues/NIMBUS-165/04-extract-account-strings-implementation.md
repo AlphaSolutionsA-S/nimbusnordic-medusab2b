@@ -117,7 +117,7 @@ export function Login(/* ...existing props... */) {
   strings at lines 117–198 as shown, plus read the full file for any other hardcoded strings
   (submit button text, headings) not caught during exploration.
 - `apps/storefront/messages/{da,en,sv,no,pl,it,fr,de}.json`: add `Account` namespace.
-- `apps/storefront/src/lib/i18n/extraction-checklist.md`: check off `modules/account` (partial —
+- `issues/NIMBUS-165/extraction-checklist.md`: check off `modules/account` (partial —
   this task covers login/register only; dashboard/addresses/orders sub-areas are covered in
   Task 05's sweep).
 

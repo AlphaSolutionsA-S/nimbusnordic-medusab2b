@@ -89,7 +89,7 @@ export function SomeComponent() {
   volume.
 - `apps/storefront/messages/{da,en,sv,no,pl,it,fr,de}.json`: grows with each area's new namespace
   keys.
-- `apps/storefront/src/lib/i18n/extraction-checklist.md`: checked off as each area completes.
+- `issues/NIMBUS-165/extraction-checklist.md`: checked off as each area completes.
 
 ## Test Cases
 

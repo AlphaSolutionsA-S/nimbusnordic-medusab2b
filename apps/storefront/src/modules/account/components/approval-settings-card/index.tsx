@@ -13,6 +13,7 @@ import {
   clx,
   toast,
 } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 const ApprovalSettingsCard = ({
@@ -22,6 +23,7 @@ const ApprovalSettingsCard = ({
   company: QueryCompany
   customer: B2BCustomer
 }) => {
+  const t = useTranslations("Account.approvalSettingsCard")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
@@ -35,13 +37,13 @@ const ApprovalSettingsCard = ({
     setIsSaving(true)
     await updateApprovalSettings(company.id, requiresAdminApproval).catch(
       () => {
-        toast.error("Error updating approval settings")
+        toast.error(t("updateErrorToast"))
       }
     )
     setIsSaving(false)
     setIsEditing(false)
 
-    toast.success("Company updated")
+    toast.success(t("updatedToast"))
   }
 
   return (
@@ -61,8 +63,8 @@ const ApprovalSettingsCard = ({
           <TooltipProvider>
             <div className="flex flex-col gap-y-2">
               <Text className="flex items-center gap-x-2 font-medium text-neutral-950">
-                Requires Admin Approval
-                <Tooltip content="This setting determines whether orders require admin approval before being processed. If enabled, orders will be held until an admin approves them.">
+                {t("requiresAdminApprovalLabel")}
+                <Tooltip content={t("requiresAdminApprovalTooltip")}>
                   <InformationCircleSolid className="w-4 h-4" />
                 </Tooltip>
               </Text>
@@ -76,23 +78,23 @@ const ApprovalSettingsCard = ({
                   />
                 ) : (
                   <Text className="text-neutral-500">
-                    {requiresAdminApproval ? "Yes" : "No"}
+                    {requiresAdminApproval ? t("yesLabel") : t("noLabel")}
                   </Text>
                 )}
               </div>
             </div>
             <div className="flex flex-col gap-y-2">
               <Text className="flex items-center gap-x-2 font-medium text-neutral-950">
-                Requires Sales Manager Approval
-                <Tooltip content="This setting determines whether orders require sales manager approval before being processed. If enabled, orders will be held until a sales manager approves them.">
+                {t("requiresSalesManagerApprovalLabel")}
+                <Tooltip content={t("requiresSalesManagerApprovalTooltip")}>
                   <InformationCircleSolid className="w-4 h-4" />
                 </Tooltip>
               </Text>
               <div className="flex items-center gap-x-2 h-3">
                 <Text className="text-neutral-500">
                   {approval_settings?.requires_sales_manager_approval
-                    ? "Yes"
-                    : "No"}
+                    ? t("yesLabel")
+                    : t("noLabel")}
                 </Text>
               </div>
             </div>
@@ -108,19 +110,19 @@ const ApprovalSettingsCard = ({
                   onClick={() => setIsEditing(false)}
                   disabled={isSaving}
                 >
-                  Cancel
+                  {t("cancelLabel")}
                 </Button>
                 <Button
                   variant="primary"
                   onClick={handleSave}
                   isLoading={isSaving}
                 >
-                  Save
+                  {t("saveLabel")}
                 </Button>
               </>
             ) : (
               <Button variant="secondary" onClick={() => setIsEditing(true)}>
-                Edit
+                {t("editLabel")}
               </Button>
             )}
           </div>

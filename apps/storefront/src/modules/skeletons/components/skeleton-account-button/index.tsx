@@ -1,12 +1,15 @@
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import User from "@/modules/common/icons/user"
+import { getTranslations } from "next-intl/server"
 
-export default function SkeletonAccountButton() {
+export default async function SkeletonAccountButton() {
+  const t = await getTranslations("Account.accountButton")
+
   return (
     <LocalizedClientLink className="hover:text-ui-fg-base" href="/account">
       <button className="flex gap-1.5 items-center rounded-2xl bg-none shadow-none border-none hover:bg-neutral-100 px-2 py-1">
         <User />
-        <span className="hidden small:inline-block">Log in</span>
+        <span className="hidden small:inline-block">{t("loginLabel")}</span>
       </button>
     </LocalizedClientLink>
   )
