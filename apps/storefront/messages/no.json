@@ -1,725 +1,722 @@
 {
   "Common": {
-    "welcome": "Welcome",
+    "welcome": "Velkommen",
     "deleteButton": {
-      "removeLabel": "Remove"
+      "removeLabel": "Fjern"
     },
     "promptModal": {
-      "cancelLabel": "Cancel",
-      "continueLabel": "Continue"
+      "cancelLabel": "Avbryt",
+      "continueLabel": "Fortsett"
     },
     "thumbnail": {
       "altFallback": "test"
     },
     "notFound": {
-      "headingLabel": "Page not found",
-      "pageMessage": "The page you tried to access does not exist.",
-      "goToFrontpageLabel": "Go to frontpage"
+      "headingLabel": "Siden ble ikke funnet",
+      "pageMessage": "Siden du prøvde å besøke, finnes ikke.",
+      "goToFrontpageLabel": "Gå til forsiden"
     }
   },
   "Layout": {
     "nav": {
       "brandName": "Medusa B2B Starter",
-      "searchPlaceholder": "Search for products",
-      "searchDisabledTooltip": "Install a search provider to enable product search",
-      "quoteLabel": "Quote"
-    },
-    "regionSwitcher": {
-      "label": "Select your region"
+      "searchPlaceholder": "Søk etter produkter",
+      "searchDisabledTooltip": "Installer en søkeleverandør for å aktivere produktsøk",
+      "quoteLabel": "Tilbud"
     },
     "megaMenu": {
-      "productsLabel": "Products"
+      "productsLabel": "Produkter"
     },
     "footer": {
       "brandName": "Medusa Store",
-      "categoriesHeading": "Categories",
-      "collectionsHeading": "Collections",
+      "categoriesHeading": "Kategorier",
+      "collectionsHeading": "Kolleksjoner",
       "medusaHeading": "Medusa",
       "githubLabel": "GitHub",
-      "documentationLabel": "Documentation",
-      "sourceCodeLabel": "Source code",
-      "copyright": "© {year} Medusa Store. All rights reserved.",
-      "poweredByLabel": "Powered by"
+      "documentationLabel": "Dokumentasjon",
+      "sourceCodeLabel": "Kildekode",
+      "copyright": "© {year} Medusa Store. Med enerett.",
+      "poweredByLabel": "Drevet av"
     },
     "cartMismatchBanner": {
-      "message": "Cart is not connected to your account",
-      "connectLabel": "Connect cart",
-      "connectingLabel": "Connecting.."
+      "message": "Handlekurven er ikke koblet til kontoen din",
+      "connectLabel": "Koble til handlekurv",
+      "connectingLabel": "Kobler til.."
     },
     "promoBanner": {
-      "buildYourOwnLabel": "Build your own B2B store with this starter:",
-      "deployToMedusaCloudLabel": "Deploy to Medusa Cloud"
+      "buildYourOwnLabel": "Bygg din egen B2B-butikk med denne starteren:",
+      "deployToMedusaCloudLabel": "Distribuer til Medusa Cloud"
     }
   },
   "Checkout": {
     "contactDetails": {
-      "heading": "Contact Details",
-      "editLabel": "Edit",
-      "emailLabel": "Email",
-      "invoiceRecipientLabel": "Invoice recipient",
-      "costCenterLabel": "Cost center",
-      "requisitionNumberLabel": "Requisition number",
-      "doorCodeLabel": "Door code/goods mark",
-      "notesLabel": "Notes",
-      "notesHelpText": "The note will only appear on the invoice and order confirmation and will not be read by the merchant.",
-      "reviewOrderLabel": "Review order",
-      "nextStepLabel": "Next step",
-      "notePrefix": "Note: {notes}"
+      "heading": "Kontaktinformasjon",
+      "editLabel": "Rediger",
+      "emailLabel": "E-post",
+      "invoiceRecipientLabel": "Fakturamottaker",
+      "costCenterLabel": "Kostnadssted",
+      "requisitionNumberLabel": "Rekvisisjonsnummer",
+      "doorCodeLabel": "Portkode/varemerking",
+      "notesLabel": "Notater",
+      "notesHelpText": "Notatet vises kun på fakturaen og ordrebekreftelsen, og leses ikke av selgeren.",
+      "reviewOrderLabel": "Se gjennom bestilling",
+      "nextStepLabel": "Neste trinn",
+      "notePrefix": "Notat: {notes}"
     },
     "addressForm": {
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "phoneLabel": "Phone",
-      "companyNameLabel": "Company name",
-      "addressLabel": "Address",
-      "postalCodeLabel": "Postal code",
-      "cityLabel": "City",
-      "provinceLabel": "Province",
-      "countryPlaceholder": "Country",
-      "savedAddressPrompt": "Hi {name}, do you want to use one of your saved addresses?"
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Etternavn",
+      "phoneLabel": "Telefon",
+      "companyNameLabel": "Firmanavn",
+      "addressLabel": "Adresse",
+      "postalCodeLabel": "Postnummer",
+      "cityLabel": "By",
+      "provinceLabel": "Fylke",
+      "countryPlaceholder": "Land",
+      "savedAddressPrompt": "Hei {name}, vil du bruke en av dine lagrede adresser?"
     },
     "addressSelect": {
-      "choosePlaceholder": "Choose an address"
+      "choosePlaceholder": "Velg en adresse"
     },
     "billingAddress": {
-      "heading": "Billing Address",
-      "sameAsShippingLabel": "Same as shipping address",
-      "nextStepLabel": "Next step"
+      "heading": "Fakturaadresse",
+      "sameAsShippingLabel": "Samme som leveringsadresse",
+      "nextStepLabel": "Neste trinn"
     },
     "company": {
-      "heading": "Company"
+      "heading": "Bedrift"
     },
     "companyForm": {
-      "orderOnBehalfOf": "Order on behalf of {companyName}",
-      "customCheckoutLabel": "Custom checkout"
+      "orderOnBehalfOf": "Bestill på vegne av {companyName}",
+      "customCheckoutLabel": "Tilpasset kasse"
     },
     "paymentButton": {
-      "selectPaymentMethodLabel": "Select a payment method",
-      "approvalRequiredBoth": "This order requires approval by both a company admin and a sales manager.",
-      "approvalRequiredAdmin": "This order requires approval by a company admin.",
-      "approvalRequiredSalesManager": "This order requires approval by a sales manager.",
-      "approvalRequestedLabel": "Approval Requested",
-      "requestApprovalLabel": "Request Approval",
-      "placeOrderLabel": "Place order"
+      "selectPaymentMethodLabel": "Velg en betalingsmåte",
+      "approvalRequiredBoth": "Denne bestillingen krever godkjenning av både en bedriftsadministrator og en salgssjef.",
+      "approvalRequiredAdmin": "Denne bestillingen krever godkjenning av en bedriftsadministrator.",
+      "approvalRequiredSalesManager": "Denne bestillingen krever godkjenning av en salgssjef.",
+      "approvalRequestedLabel": "Godkjenning forespurt",
+      "requestApprovalLabel": "Be om godkjenning",
+      "placeOrderLabel": "Legg inn bestilling"
     },
     "paymentTest": {
-      "attentionLabel": "Attention:",
-      "testingOnlyMessage": "For testing purposes only."
+      "attentionLabel": "Obs:",
+      "testingOnlyMessage": "Kun til testformål."
     },
     "payment": {
-      "heading": "Payment Method",
-      "editLabel": "Edit",
-      "enterCardDetailsLabel": "Enter your card details:",
-      "enterCardDetailsButtonLabel": " Enter card details",
-      "nextStepLabel": "Next step",
-      "giftCardLabel": "Gift card",
-      "paymentMethodLabel": "Payment method"
+      "heading": "Betalingsmåte",
+      "editLabel": "Rediger",
+      "enterCardDetailsLabel": "Angi kortopplysningene dine:",
+      "enterCardDetailsButtonLabel": " Angi kortopplysninger",
+      "nextStepLabel": "Neste trinn",
+      "giftCardLabel": "Gavekort",
+      "paymentMethodLabel": "Betalingsmåte"
     },
     "promotionCode": {
-      "enterPromotionCodeLabel": "Enter Promotion Code",
-      "applyLabel": "Apply",
-      "promotionAppliedOne": "Promotion applied:",
-      "promotionAppliedOther": "Promotions applied:",
-      "removeDiscountSrLabel": "Remove discount code from order"
+      "enterPromotionCodeLabel": "Angi kampanjekode",
+      "applyLabel": "Bruk",
+      "promotionAppliedOne": "Kampanje anvendt:",
+      "promotionAppliedOther": "Kampanjer anvendt:",
+      "removeDiscountSrLabel": "Fjern rabattkode fra bestillingen"
     },
     "review": {
-      "agreementText": "By Completing this order, I agree to Medusa's <termsLink>Terms of Sale ↗</termsLink> and <privacyLink>Privacy Policy ↗</privacyLink>",
-      "placeOrderLabel": "Place Order"
+      "agreementText": "Ved å fullføre denne bestillingen godtar jeg Medusas <termsLink>salgsvilkår ↗</termsLink> og <privacyLink>personvernerklæring ↗</privacyLink>",
+      "placeOrderLabel": "Legg inn bestilling"
     },
     "shippingAddress": {
-      "heading": "Shipping Address",
-      "editLabel": "Edit",
-      "nextStepLabel": "Next step"
+      "heading": "Leveringsadresse",
+      "editLabel": "Rediger",
+      "nextStepLabel": "Neste trinn"
     },
     "shipping": {
-      "heading": "Delivery Method",
-      "editLabel": "Edit",
-      "nextStepLabel": "Next step"
+      "heading": "Leveringsmåte",
+      "editLabel": "Rediger",
+      "nextStepLabel": "Neste trinn"
     },
     "checkoutForm": {
-      "backToCartLabel": "Back to shopping cart"
+      "backToCartLabel": "Tilbake til handlekurven"
     }
   },
   "Account": {
     "login": {
-      "heading": "Log in for faster<br></br>checkout.",
-      "emailLabel": "Email",
-      "emailValidationMessage": "Enter a valid email address.",
-      "passwordLabel": "Password",
-      "rememberMeLabel": "Remember me",
-      "submitLabel": "Log in",
-      "registerLinkLabel": "Register",
-      "bannerAlt": "Login banner background"
+      "heading": "Logg inn for raskere<br></br>utsjekk.",
+      "emailLabel": "E-post",
+      "emailValidationMessage": "Angi en gyldig e-postadresse.",
+      "passwordLabel": "Passord",
+      "rememberMeLabel": "Husk meg",
+      "submitLabel": "Logg inn",
+      "registerLinkLabel": "Registrer deg",
+      "bannerAlt": "Bakgrunnsbilde for innloggingsbanner"
     },
     "register": {
-      "heading": "Create your<br></br>company account.",
-      "emailLabel": "Email",
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "companyNameLabel": "Company name",
-      "passwordLabel": "Password",
-      "companyAddressLabel": "Company address",
-      "companyCityLabel": "Company city",
-      "companyStateLabel": "Company state",
-      "companyZipLabel": "Company zip",
-      "countryPlaceholder": "Select a country",
-      "currencyPlaceholder": "Select a currency",
-      "termsLabel": "I agree to the terms and conditions.",
-      "submitLabel": "Register",
-      "alreadyMemberText": "Already a member?",
-      "loginLinkLabel": "Log in"
+      "heading": "Opprett<br></br>bedriftskontoen din.",
+      "emailLabel": "E-post",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Etternavn",
+      "companyNameLabel": "Firmanavn",
+      "passwordLabel": "Passord",
+      "companyAddressLabel": "Bedriftsadresse",
+      "companyCityLabel": "Bedriftens by",
+      "companyStateLabel": "Bedriftens fylke",
+      "companyZipLabel": "Bedriftens postnummer",
+      "countryPlaceholder": "Velg et land",
+      "currencyPlaceholder": "Velg en valuta",
+      "termsLabel": "Jeg godtar vilkårene og betingelsene.",
+      "submitLabel": "Registrer deg",
+      "alreadyMemberText": "Allerede medlem?",
+      "loginLinkLabel": "Logg inn"
     },
     "accountButton": {
-      "loginLabel": "Log in"
+      "loginLabel": "Logg inn"
     },
     "nav": {
-      "accountLabel": "Account",
-      "helloLabel": "Hello {name}",
-      "profileLabel": "Profile",
-      "companyLabel": "Company",
-      "addressesLabel": "Addresses",
-      "ordersLabel": "Orders",
-      "bcOrdersLabel": "BC Orders",
-      "claimsLabel": "Claims",
-      "approvalsLabel": "Approvals",
-      "quotesLabel": "Quotes",
-      "logoutLabel": "Log out",
-      "overviewLabel": "Overview"
+      "accountLabel": "Konto",
+      "helloLabel": "Hei {name}",
+      "profileLabel": "Profil",
+      "companyLabel": "Bedrift",
+      "addressesLabel": "Adresser",
+      "ordersLabel": "Bestillinger",
+      "bcOrdersLabel": "BC-bestillinger",
+      "claimsLabel": "Reklamasjoner",
+      "approvalsLabel": "Godkjenninger",
+      "quotesLabel": "Tilbud",
+      "logoutLabel": "Logg ut",
+      "overviewLabel": "Oversikt"
     },
     "overview": {
-      "helloLabel": "Hello {name}",
-      "signedInAsLabel": "Signed in as:",
-      "profileHeading": "Profile",
-      "completedLabel": "Completed",
-      "addressesHeading": "Addresses",
-      "savedLabel": "Saved",
-      "recentOrdersHeading": "Recent orders",
-      "noRecentOrdersMessage": "No recent orders",
-      "previouslyPurchasedHeading": "Previously purchased items",
-      "noPreviouslyPurchasedMessage": "No previously purchased items"
+      "helloLabel": "Hei {name}",
+      "signedInAsLabel": "Logget inn som:",
+      "profileHeading": "Profil",
+      "completedLabel": "Fullført",
+      "addressesHeading": "Adresser",
+      "savedLabel": "Lagret",
+      "recentOrdersHeading": "Nylige bestillinger",
+      "noRecentOrdersMessage": "Ingen nylige bestillinger",
+      "previouslyPurchasedHeading": "Tidligere kjøpte varer",
+      "noPreviouslyPurchasedMessage": "Ingen tidligere kjøpte varer"
     },
     "orderCard": {
-      "itemsCount": "{count} items",
-      "itemCount": "{count} item",
-      "detailsLabel": "Details"
+      "itemsCount": "{count} varer",
+      "itemCount": "{count} vare",
+      "detailsLabel": "Detaljer"
     },
     "previouslyPurchased": {
-      "buyAgainLabel": "Buy again"
+      "buyAgainLabel": "Kjøp igjen"
     },
     "profileCard": {
-      "firstNameLabel": "First Name",
-      "lastNameLabel": "Last Name",
-      "emailLabel": "Email",
-      "phoneLabel": "Phone",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "currentPasswordLabel": "Current Password",
-      "newPasswordLabel": "New Password",
-      "confirmPasswordLabel": "Confirm Password",
-      "passwordLabel": "Password",
-      "changePasswordLabel": "Change Password",
-      "customerUpdatedToast": "Customer updated",
-      "customerUpdateErrorToast": "Error updating customer",
-      "passwordMismatchToast": "New passwords do not match",
-      "passwordTooShortToast": "Password must be at least 8 characters",
-      "passwordUpdatedToast": "Password updated",
-      "passwordUpdateErrorToast": "Error updating password"
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Etternavn",
+      "emailLabel": "E-post",
+      "phoneLabel": "Telefon",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Lagre",
+      "editLabel": "Rediger",
+      "currentPasswordLabel": "Nåværende passord",
+      "newPasswordLabel": "Nytt passord",
+      "confirmPasswordLabel": "Bekreft passord",
+      "passwordLabel": "Passord",
+      "changePasswordLabel": "Endre passord",
+      "customerUpdatedToast": "Kunde oppdatert",
+      "customerUpdateErrorToast": "Feil ved oppdatering av kunde",
+      "passwordMismatchToast": "De nye passordene stemmer ikke overens",
+      "passwordTooShortToast": "Passordet må være minst 8 tegn",
+      "passwordUpdatedToast": "Passord oppdatert",
+      "passwordUpdateErrorToast": "Feil ved oppdatering av passord"
     },
     "companyCard": {
-      "companyNameLabel": "Company Name",
-      "emailLabel": "Email",
-      "phoneLabel": "Phone",
-      "addressLabel": "Address",
-      "cityLabel": "City",
-      "stateLabel": "State",
-      "zipLabel": "Zip",
-      "countryLabel": "Country",
-      "currencyLabel": "Currency",
-      "spendingLimitResetFrequencyLabel": "Spending Limit Reset Frequency",
-      "bcCustomerNumberLabel": "BC Customer Number",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "companyUpdatedToast": "Company updated",
-      "companyUpdateErrorToast": "Error updating company"
+      "companyNameLabel": "Firmanavn",
+      "emailLabel": "E-post",
+      "phoneLabel": "Telefon",
+      "addressLabel": "Adresse",
+      "cityLabel": "By",
+      "stateLabel": "Fylke",
+      "zipLabel": "Postnummer",
+      "countryLabel": "Land",
+      "currencyLabel": "Valuta",
+      "spendingLimitResetFrequencyLabel": "Tilbakestillingsfrekvens for forbruksgrense",
+      "bcCustomerNumberLabel": "BC-kundenummer",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Lagre",
+      "editLabel": "Rediger",
+      "companyUpdatedToast": "Bedrift oppdatert",
+      "companyUpdateErrorToast": "Feil ved oppdatering av bedrift"
     },
     "securityCard": {
-      "passwordLabel": "Password",
-      "editLabel": "Edit",
-      "notImplementedToast": "Not implemented"
+      "passwordLabel": "Passord",
+      "editLabel": "Rediger",
+      "notImplementedToast": "Ikke implementert"
     },
     "accountInfo": {
-      "defaultErrorMessage": "An error occurred, please try again",
-      "cancelLabel": "Cancel",
-      "editLabel": "Edit",
-      "updatedSuccessfullyMessage": "{label} updated succesfully",
-      "saveChangesLabel": "Save changes"
+      "defaultErrorMessage": "Det oppstod en feil, prøv igjen",
+      "cancelLabel": "Avbryt",
+      "editLabel": "Rediger",
+      "updatedSuccessfullyMessage": "{label} oppdatert",
+      "saveChangesLabel": "Lagre endringer"
     },
     "quoteCard": {
-      "seeDetailsLabel": "See details"
+      "seeDetailsLabel": "Se detaljer"
     },
     "claimsPageContent": {
-      "defaultTitle": "Claims"
+      "defaultTitle": "Reklamasjoner"
     },
     "claimsUnavailable": {
-      "message": "The claims information is temporarily unavailable. Please try again later."
+      "message": "Reklamasjonsinformasjonen er midlertidig utilgjengelig. Prøv igjen senere."
     },
     "addressCard": {
-      "newAddressLabel": "New address",
-      "addAddressHeading": "Add address",
-      "editAddressHeading": "Edit address",
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "companyLabel": "Company",
-      "addressLabel": "Address",
-      "apartmentLabel": "Apartment, suite, etc.",
-      "postalCodeLabel": "Postal code",
-      "cityLabel": "City",
-      "provinceLabel": "Province / State",
-      "phoneLabel": "Phone",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "removeLabel": "Remove"
+      "newAddressLabel": "Ny adresse",
+      "addAddressHeading": "Legg til adresse",
+      "editAddressHeading": "Rediger adresse",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Etternavn",
+      "companyLabel": "Bedrift",
+      "addressLabel": "Adresse",
+      "apartmentLabel": "Leilighet, suite, osv.",
+      "postalCodeLabel": "Postnummer",
+      "cityLabel": "By",
+      "provinceLabel": "Fylke / Delstat",
+      "phoneLabel": "Telefon",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Lagre",
+      "editLabel": "Rediger",
+      "removeLabel": "Fjern"
     },
     "employeeCard": {
-      "employeeDeletedToast": "Employee deleted",
-      "employeeDeleteErrorToast": "Error deleting employee",
-      "employeeUpdatedToast": "Employee updated",
-      "employeeUpdateErrorToast": "Error updating employee",
-      "removeLabel": "Remove",
-      "removeEmployeeHeading": "Remove Employee",
-      "removeConfirmMessage": "Are you sure you want to remove <email></email> from your team? They will no longer be able to purchase on behalf of your company.",
-      "deleteCustomerAccountLabel": "Also delete the linked customer account and login",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "youSuffixLabel": "(You)",
-      "adminBadgeLabel": "Admin",
-      "amountSpentMessage": "{amountSpent} / {limit} spent",
-      "noLimitLabel": "No limit",
-      "spendingLimitLabel": "Spending Limit",
-      "permissionsLabel": "Permissions",
-      "adminOptionLabel": "Admin",
-      "employeeOptionLabel": "Employee"
+      "employeeDeletedToast": "Ansatt slettet",
+      "employeeDeleteErrorToast": "Feil ved sletting av ansatt",
+      "employeeUpdatedToast": "Ansatt oppdatert",
+      "employeeUpdateErrorToast": "Feil ved oppdatering av ansatt",
+      "removeLabel": "Fjern",
+      "removeEmployeeHeading": "Fjern ansatt",
+      "removeConfirmMessage": "Er du sikker på at du vil fjerne <email></email> fra teamet ditt? De vil ikke lenger kunne handle på vegne av bedriften din.",
+      "deleteCustomerAccountLabel": "Slett også den tilknyttede kundekontoen og innloggingen",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Lagre",
+      "editLabel": "Rediger",
+      "youSuffixLabel": "(Deg)",
+      "adminBadgeLabel": "Administrator",
+      "amountSpentMessage": "{amountSpent} / {limit} brukt",
+      "noLimitLabel": "Ingen grense",
+      "spendingLimitLabel": "Forbruksgrense",
+      "permissionsLabel": "Tillatelser",
+      "adminOptionLabel": "Administrator",
+      "employeeOptionLabel": "Ansatt"
     },
     "inviteEmployeeCard": {
-      "employeeInvitedToast": "Employee invited",
-      "employeeInviteErrorToast": "Error inviting employee",
-      "nameLabel": "Name",
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "emailLabel": "Email",
-      "emailInputLabel": "Enter an email",
-      "initialPasswordLabel": "Initial password",
-      "setPasswordInputLabel": "Set an initial password",
-      "sendInviteLabel": "Send Invite"
+      "employeeInvitedToast": "Ansatt invitert",
+      "employeeInviteErrorToast": "Feil ved invitasjon av ansatt",
+      "nameLabel": "Navn",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Etternavn",
+      "emailLabel": "E-post",
+      "emailInputLabel": "Angi en e-post",
+      "initialPasswordLabel": "Startpassord",
+      "setPasswordInputLabel": "Angi et startpassord",
+      "sendInviteLabel": "Send invitasjon"
     },
     "approvalCard": {
-      "orderCompletedAtLabel": "Order completed at",
-      "approvedAtLabel": "Approved at",
-      "rejectedAtLabel": "Rejected at"
+      "orderCompletedAtLabel": "Bestilling fullført den",
+      "approvedAtLabel": "Godkjent den",
+      "rejectedAtLabel": "Avvist den"
     },
     "approvalCardActions": {
-      "confirmApproveTitle": "Are you sure you want to approve this cart?",
-      "confirmRejectTitle": "Are you sure you want to reject this cart?",
-      "confirmActionDescription": "This action cannot be undone.",
-      "rejectLabel": "Reject",
-      "approveLabel": "Approve",
-      "awaitingExternalApprovalLabel": "Awaiting External Approval",
-      "placeOrderLabel": "Place Order"
+      "confirmApproveTitle": "Er du sikker på at du vil godkjenne denne handlekurven?",
+      "confirmRejectTitle": "Er du sikker på at du vil avvise denne handlekurven?",
+      "confirmActionDescription": "Denne handlingen kan ikke angres.",
+      "rejectLabel": "Avvis",
+      "approveLabel": "Godkjenn",
+      "awaitingExternalApprovalLabel": "Venter på ekstern godkjenning",
+      "placeOrderLabel": "Legg inn bestilling"
     },
     "pendingCustomerApprovals": {
-      "emptyHeading": "Nothing to see here",
-      "emptyMessage": "You don't have any approvals yet."
+      "emptyHeading": "Ingenting å se her",
+      "emptyMessage": "Du har ingen godkjenninger ennå."
     },
     "approvalRequestsAdminList": {
-      "noRequestsMessage": "No requests"
+      "noRequestsMessage": "Ingen forespørsler"
     },
     "approvalSettingsCard": {
-      "requiresAdminApprovalLabel": "Requires Admin Approval",
-      "requiresAdminApprovalTooltip": "This setting determines whether orders require admin approval before being processed. If enabled, orders will be held until an admin approves them.",
-      "requiresSalesManagerApprovalLabel": "Requires Sales Manager Approval",
-      "requiresSalesManagerApprovalTooltip": "This setting determines whether orders require sales manager approval before being processed. If enabled, orders will be held until a sales manager approves them.",
-      "yesLabel": "Yes",
-      "noLabel": "No",
-      "updateErrorToast": "Error updating approval settings",
-      "updatedToast": "Company updated",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit"
+      "requiresAdminApprovalLabel": "Krever godkjenning fra administrator",
+      "requiresAdminApprovalTooltip": "Denne innstillingen bestemmer om bestillinger krever godkjenning fra administrator før de behandles. Hvis aktivert, holdes bestillinger tilbake til en administrator godkjenner dem.",
+      "requiresSalesManagerApprovalLabel": "Krever godkjenning fra salgssjef",
+      "requiresSalesManagerApprovalTooltip": "Denne innstillingen bestemmer om bestillinger krever godkjenning fra salgssjef før de behandles. Hvis aktivert, holdes bestillinger tilbake til en salgssjef godkjenner dem.",
+      "yesLabel": "Ja",
+      "noLabel": "Nei",
+      "updateErrorToast": "Feil ved oppdatering av godkjenningsinnstillinger",
+      "updatedToast": "Bedrift oppdatert",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Lagre",
+      "editLabel": "Rediger"
     },
     "bcOrderCard": {
-      "detailsLabel": "Details"
+      "detailsLabel": "Detaljer"
     },
     "bcOrderOverview": {
-      "errorHeading": "Something went wrong",
-      "errorMessage": "We were unable to load your company orders. Please try again.",
-      "tryAgainLabel": "Try again",
-      "emptyHeading": "No company orders found",
-      "emptyMessage": "Try adjusting your filters to see more results."
+      "errorHeading": "Noe gikk galt",
+      "errorMessage": "Vi kunne ikke laste inn bedriftens bestillinger. Prøv igjen.",
+      "tryAgainLabel": "Prøv igjen",
+      "emptyHeading": "Ingen bedriftsbestillinger funnet",
+      "emptyMessage": "Prøv å justere filtrene for å se flere resultater."
     },
     "bcOrderFilters": {
       "statusLabel": "Status",
-      "allStatusesOption": "All statuses",
-      "fromLabel": "From",
-      "toLabel": "To",
-      "searchLabel": "Search",
-      "searchPlaceholder": "Order number…",
-      "clearLabel": "Clear"
+      "allStatusesOption": "Alle statuser",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "searchLabel": "Søk",
+      "searchPlaceholder": "Bestillingsnummer…",
+      "clearLabel": "Fjern"
     },
     "bcOrderReturn": {
-      "orderUnavailableError": "This order is no longer available for a return.",
-      "returnUnconfirmedError": "We could not confirm the return request. Please try again shortly.",
-      "genericReturnError": "Please review the selected lines and try again.",
-      "requestReturnLabel": "Request a return",
-      "returnRequestedHeading": "Return requested",
-      "returnCreatedMessage": "Return {number} created - status {status}.",
-      "backToOrderDetailsLabel": "Back to order details",
-      "orderNumberLabel": "Order number",
-      "billToAddressLabel": "Bill-to address",
-      "shipToAddressLabel": "Ship-to address",
-      "itemColumnLabel": "Item",
-      "orderedQuantityColumnLabel": "Ordered quantity",
-      "unitPriceColumnLabel": "Unit price",
-      "returnQuantityColumnLabel": "Return quantity",
-      "returnReasonColumnLabel": "Return reason",
-      "itemFallbackLabel": "Item",
-      "returnQuantityAriaLabel": "Return quantity for {item}",
-      "itemLowercaseFallbackLabel": "item",
-      "selectReasonPlaceholder": "Select a reason",
-      "cancelLabel": "Cancel",
-      "submitReturnRequestLabel": "Submit return request"
+      "orderUnavailableError": "Denne bestillingen kan ikke lenger returneres.",
+      "returnUnconfirmedError": "Vi kunne ikke bekrefte returforespørselen. Vennligst prøv igjen om litt.",
+      "genericReturnError": "Vennligst se gjennom de valgte linjene og prøv igjen.",
+      "requestReturnLabel": "Be om en retur",
+      "returnRequestedHeading": "Retur forespurt",
+      "returnCreatedMessage": "Retur {number} opprettet - status {status}.",
+      "backToOrderDetailsLabel": "Tilbake til bestillingsdetaljer",
+      "orderNumberLabel": "Bestillingsnummer",
+      "billToAddressLabel": "Fakturaadresse",
+      "shipToAddressLabel": "Leveringsadresse",
+      "itemColumnLabel": "Vare",
+      "orderedQuantityColumnLabel": "Bestilt antall",
+      "unitPriceColumnLabel": "Enhetspris",
+      "returnQuantityColumnLabel": "Returantall",
+      "returnReasonColumnLabel": "Returårsak",
+      "itemFallbackLabel": "Vare",
+      "returnQuantityAriaLabel": "Returantall for {item}",
+      "itemLowercaseFallbackLabel": "vare",
+      "selectReasonPlaceholder": "Velg en årsak",
+      "cancelLabel": "Avbryt",
+      "submitReturnRequestLabel": "Send returforespørsel"
     },
     "orderOverview": {
-      "emptyMessage": "You don't have any orders yet, let us change that :)",
-      "continueShoppingLabel": "Continue shopping"
+      "emptyMessage": "Du har ingen bestillinger ennå, la oss endre på det :)",
+      "continueShoppingLabel": "Fortsett å handle"
     },
     "bcOrderDetailTemplate": {
-      "backToBcOrdersLabel": "Back to BC orders",
-      "orderNumberHeading": "Order #{number}",
-      "customerLabel": "Customer",
+      "backToBcOrdersLabel": "Tilbake til BC-bestillinger",
+      "orderNumberHeading": "Bestilling #{number}",
+      "customerLabel": "Kunde",
       "statusLabel": "Status",
-      "currencyLabel": "Currency",
-      "totalExcludingTaxLabel": "Total excluding tax",
-      "totalIncludingTaxLabel": "Total including tax",
-      "itemsHeading": "Items",
-      "descriptionColumnLabel": "Description",
-      "quantityColumnLabel": "Quantity",
-      "amountColumnLabel": "Amount"
+      "currencyLabel": "Valuta",
+      "totalExcludingTaxLabel": "Total eksklusiv mva",
+      "totalIncludingTaxLabel": "Total inklusiv mva",
+      "itemsHeading": "Varer",
+      "descriptionColumnLabel": "Beskrivelse",
+      "quantityColumnLabel": "Antall",
+      "amountColumnLabel": "Beløp"
     },
     "bcOrderNotFound": {
-      "headingLabel": "Order not found",
-      "message": "This order is unavailable."
+      "headingLabel": "Bestilling ikke funnet",
+      "message": "Denne bestillingen er ikke tilgjengelig."
     },
     "addressesPage": {
-      "heading": "Shipping Addresses",
-      "description": "View and update your shipping addresses, you can add as many as you like. Saving your addresses will make them available during checkout."
+      "heading": "Leveringsadresser",
+      "description": "Se og oppdater leveringsadressene dine, du kan legge til så mange du vil. Ved å lagre adressene dine blir de tilgjengelige i kassen."
     },
     "approvalsPage": {
-      "heading": "Approvals",
-      "pendingHeading": "Pending",
-      "approvedHeading": "Approved",
-      "rejectedHeading": "Rejected",
-      "loadingLabel": "Loading..."
+      "heading": "Godkjenninger",
+      "pendingHeading": "Venter",
+      "approvedHeading": "Godkjent",
+      "rejectedHeading": "Avvist",
+      "loadingLabel": "Laster..."
     },
     "companyPage": {
-      "companyDetailsHeading": "Company Details",
-      "approvalSettingsHeading": "Approval Settings",
-      "employeesHeading": "Employees",
-      "inviteEmployeesHeading": "Invite Employees"
+      "companyDetailsHeading": "Bedriftsdetaljer",
+      "approvalSettingsHeading": "Godkjenningsinnstillinger",
+      "employeesHeading": "Ansatte",
+      "inviteEmployeesHeading": "Inviter ansatte"
     },
     "profilePage": {
-      "detailsHeading": "Details",
-      "securityHeading": "Security"
+      "detailsHeading": "Detaljer",
+      "securityHeading": "Sikkerhet"
     },
     "ordersPage": {
-      "heading": "Orders",
-      "pendingApprovalsHeading": "Pending Approvals",
-      "completedOrdersHeading": "Completed Orders"
+      "heading": "Bestillinger",
+      "pendingApprovalsHeading": "Ventende godkjenninger",
+      "completedOrdersHeading": "Fullførte bestillinger"
     },
     "quotesPage": {
-      "heading": "Quotes"
+      "heading": "Tilbud"
     },
     "quotesOverview": {
-      "emptyMessage": "You don't have any quotes yet"
+      "emptyMessage": "Du har ingen tilbud ennå"
     },
     "quoteStatusBadge": {
-      "acceptedLabel": "Accepted",
-      "customerRejectedLabel": "Customer Rejected",
-      "merchantRejectedLabel": "Merchant Rejected",
-      "pendingMerchantLabel": "Pending Merchant",
-      "pendingCustomerLabel": "Pending Customer"
+      "acceptedLabel": "Akseptert",
+      "customerRejectedLabel": "Avvist av kunde",
+      "merchantRejectedLabel": "Avvist av selger",
+      "pendingMerchantLabel": "Venter på selger",
+      "pendingCustomerLabel": "Venter på kunde"
     },
     "quoteMessages": {
-      "messagesHeading": "Messages",
-      "pickQuoteItemLabel": "Pick Quote Item",
-      "pickQuoteItemDescription": "Select a quote item to write a message around",
-      "selectItemPlaceholder": "Select Item",
+      "messagesHeading": "Meldinger",
+      "pickQuoteItemLabel": "Velg tilbudsvare",
+      "pickQuoteItemDescription": "Velg en tilbudsvare å skrive en melding om",
+      "selectItemPlaceholder": "Velg vare",
       "sendLabel": "Send"
     },
     "quoteTable": {
-      "newLabel": "New",
-      "removedLabel": "Removed",
-      "modifiedLabel": "Modified"
+      "newLabel": "Ny",
+      "removedLabel": "Fjernet",
+      "modifiedLabel": "Endret"
     },
     "quoteDetails": {
-      "backLabel": "Back",
-      "acceptedNoticeMessage": "Quote accepted by customer. Order is ready for processing.",
-      "viewOrderLabel": "View Order",
-      "currentTotalLabel": "Current Total",
-      "newTotalLabel": "New Total",
-      "rejectQuoteConfirmTitle": "Reject Quote?",
-      "rejectQuoteConfirmDescription": "Are you sure you want to reject quote? This action is irreversible.",
-      "rejectQuoteLabel": "Reject Quote",
-      "acceptQuoteConfirmTitle": "Accept Quote?",
-      "acceptQuoteConfirmDescription": "Are you sure you want to accept quote? This action is irreversible.",
-      "acceptQuoteLabel": "Accept Quote",
-      "quoteIdLabel": "Quote ID:",
-      "customerHeading": "Customer",
-      "emailLabel": "Email",
-      "phoneLabel": "Phone",
-      "spendLimitLabel": "Spend Limit",
-      "companyHeading": "Company",
-      "nameLabel": "Name"
+      "backLabel": "Tilbake",
+      "acceptedNoticeMessage": "Tilbud akseptert av kunde. Bestillingen er klar for behandling.",
+      "viewOrderLabel": "Se bestilling",
+      "currentTotalLabel": "Nåværende total",
+      "newTotalLabel": "Ny total",
+      "rejectQuoteConfirmTitle": "Avvis tilbud?",
+      "rejectQuoteConfirmDescription": "Er du sikker på at du vil avvise tilbudet? Denne handlingen kan ikke angres.",
+      "rejectQuoteLabel": "Avvis tilbud",
+      "acceptQuoteConfirmTitle": "Godta tilbud?",
+      "acceptQuoteConfirmDescription": "Er du sikker på at du vil godta tilbudet? Denne handlingen kan ikke angres.",
+      "acceptQuoteLabel": "Godta tilbud",
+      "quoteIdLabel": "Tilbuds-ID:",
+      "customerHeading": "Kunde",
+      "emailLabel": "E-post",
+      "phoneLabel": "Telefon",
+      "spendLimitLabel": "Forbruksgrense",
+      "companyHeading": "Bedrift",
+      "nameLabel": "Navn"
     },
     "bcOrderDetailPage": {
-      "errorMessage": "We were unable to load this order. Please try again."
+      "errorMessage": "Vi kunne ikke laste inn denne bestillingen. Prøv igjen."
     },
     "bcOrdersPage": {
-      "heading": "BC Orders"
+      "heading": "BC-bestillinger"
     }
   },
   "Cart": {
     "addNoteButton": {
-      "addNoteLabel": "Add note",
-      "noteLabel": "Note:"
+      "addNoteLabel": "Legg til notat",
+      "noteLabel": "Notat:"
     },
     "appliedPromotions": {
-      "label": "Promotions applied:"
+      "label": "Kampanjer anvendt:"
     },
     "approvalStatusBanner": {
-      "pendingMessage": "This cart is locked for approval.",
-      "rejectedMessage": "This cart has been rejected. You can re-request approval from the <link>checkout page</link>.",
-      "approvedMessage": "This cart has been approved and can now be completed."
+      "pendingMessage": "Denne handlekurven er låst for godkjenning.",
+      "rejectedMessage": "Denne handlekurven er avvist. Du kan be om godkjenning på nytt fra <link>kassesiden</link>.",
+      "approvedMessage": "Denne handlekurven er godkjent og kan nå fullføres."
     },
     "cartToCsvButton": {
-      "exportLabel": "Export Cart (.csv)"
+      "exportLabel": "Eksporter handlekurv (.csv)"
     },
     "emptyCartMessage": {
-      "heading": "Cart",
-      "message": "You don't have anything in your cart. Let's change that, use the link below to start browsing our products.",
-      "exploreProductsLabel": "Explore products"
+      "heading": "Handlekurv",
+      "message": "Du har ikke noe i handlekurven. La oss endre på det, bruk lenken nedenfor for å begynne å utforske produktene våre.",
+      "exploreProductsLabel": "Utforsk produkter"
     },
     "itemFull": {
-      "brandLabel": "BRAND"
+      "brandLabel": "MERKE"
     },
     "itemPreview": {
-      "noteLabel": "Note:"
+      "noteLabel": "Notat:"
     },
     "cartDrawer": {
-      "cartLabel": "Cart",
-      "itemsInCartTitle": "You have {count} items in your cart",
-      "emptyCartTitle": "Your cart is empty",
-      "subtotalLabel": "Subtotal",
-      "viewCartLabel": "View Cart",
-      "spendingLimitExceededLabel": "Spending Limit Exceeded",
-      "secureCheckoutLabel": "Secure Checkout",
-      "loginToCheckoutLabel": "Log in to checkout",
-      "spendingLimitMessage": "This order exceeds your spending limit. Please contact your manager for approval."
+      "cartLabel": "Handlekurv",
+      "itemsInCartTitle": "Du har {count} varer i handlekurven",
+      "emptyCartTitle": "Handlekurven din er tom",
+      "subtotalLabel": "Delsum",
+      "viewCartLabel": "Se handlekurv",
+      "spendingLimitExceededLabel": "Forbruksgrense overskredet",
+      "secureCheckoutLabel": "Sikker utsjekk",
+      "loginToCheckoutLabel": "Logg inn for å gå til kassen",
+      "spendingLimitMessage": "Denne bestillingen overskrider forbruksgrensen din. Kontakt lederen din for godkjenning."
     },
     "cartTotals": {
-      "subtotalLabel": "Subtotal (excl. shipping and taxes)",
-      "discountLabel": "Discount",
-      "shippingLabel": "Shipping",
-      "taxesLabel": "Taxes",
-      "giftCardLabel": "Gift card",
-      "totalLabel": "Total"
+      "subtotalLabel": "Delsum (ekskl. frakt og avgifter)",
+      "discountLabel": "Rabatt",
+      "shippingLabel": "Frakt",
+      "taxesLabel": "Avgifter",
+      "giftCardLabel": "Gavekort",
+      "totalLabel": "Totalt"
     },
     "signInPrompt": {
-      "bannerAlt": "Login banner background",
-      "heading": "Log in for<br></br>faster checkout.",
-      "registerLabel": "Register",
-      "loginLabel": "Log in"
+      "bannerAlt": "Bakgrunnsbilde for innloggingsbanner",
+      "heading": "Logg inn for<br></br>raskere utsjekk.",
+      "registerLabel": "Registrer deg",
+      "loginLabel": "Logg inn"
     },
     "template": {
-      "itemsInCartHeading": "You have {count} items in your cart"
+      "itemsInCartHeading": "Du har {count} varer i handlekurven"
     },
     "items": {
-      "totalItemsLabel": "Total: {count} items"
+      "totalItemsLabel": "Totalt: {count} varer"
     },
     "summary": {
-      "spendingLimitMessage": "This order exceeds your spending limit.<br></br>Please contact your manager for approval.",
-      "spendingLimitExceededLabel": "Spending Limit Exceeded",
-      "checkoutLabel": "Checkout",
-      "loginToCheckoutLabel": "Log in to Checkout",
-      "requestQuoteLabel": "Request Quote",
-      "emptyCartLabel": "Empty Cart"
+      "spendingLimitMessage": "Denne bestillingen overskrider forbruksgrensen din.<br></br>Kontakt lederen din for godkjenning.",
+      "spendingLimitExceededLabel": "Forbruksgrense overskredet",
+      "checkoutLabel": "Kasse",
+      "loginToCheckoutLabel": "Logg inn for å gå til kassen",
+      "requestQuoteLabel": "Be om tilbud",
+      "emptyCartLabel": "Tom handlekurv"
     },
     "notFound": {
-      "cartMessage": "The cart you tried to access does not exist. Clear your cookies and try again."
+      "cartMessage": "Handlekurven du prøvde å besøke, finnes ikke. Fjern informasjonskapslene dine og prøv igjen."
     }
   },
   "Products": {
     "facts": {
-      "inStockMessage": "Can be shipped immediately ({count} in stock)",
-      "limitedStockMessage": "Limited quantity available ({count} in stock)",
+      "inStockMessage": "Kan sendes umiddelbart ({count} på lager)",
+      "limitedStockMessage": "Begrenset antall tilgjengelig ({count} på lager)",
       "midLabel": "MID: {code}"
     },
     "preview": {
-      "brandLabel": "BRAND",
-      "exclVatLabel": "Excl. VAT",
-      "leftLabel": "{count} left"
+      "brandLabel": "MERKE",
+      "exclVatLabel": "Eksl. mva.",
+      "leftLabel": "{count} igjen"
     },
     "price": {
-      "fromLabel": "From {price}",
-      "exclVatLabel": "Excl. VAT"
+      "fromLabel": "Fra {price}",
+      "exclVatLabel": "Eksl. mva."
     },
     "mobileActions": {
-      "selectOptionsLabel": "Select Options",
-      "selectVariantLabel": "Select variant",
-      "outOfStockLabel": "Out of stock",
-      "addToCartLabel": "Add to cart"
+      "selectOptionsLabel": "Velg alternativer",
+      "selectVariantLabel": "Velg variant",
+      "outOfStockLabel": "Utsolgt",
+      "addToCartLabel": "Legg i handlekurv"
     },
     "optionSelect": {
-      "selectLabel": "Select {title}"
+      "selectLabel": "Velg {title}"
     },
     "tabs": {
-      "descriptionLabel": "Description",
-      "specificationsLabel": "Specifications",
-      "weightLabel": "Weight",
-      "weightValue": "{weight} grams",
-      "dimensionsLabel": "Dimensions (HxWxL)",
+      "descriptionLabel": "Beskrivelse",
+      "specificationsLabel": "Spesifikasjoner",
+      "weightLabel": "Vekt",
+      "weightValue": "{weight} gram",
+      "dimensionsLabel": "Mål (HxBxL)",
       "dimensionsValue": "{height}mm x {width}mm x {length}mm"
     },
     "variantsTable": {
       "skuHeader": "SKU",
-      "priceHeader": "Price",
-      "quantityHeader": "Quantity",
-      "chooseVariantLabel": "Choose product variant(s) above",
-      "addToCartLabel": "Add to cart"
+      "priceHeader": "Pris",
+      "quantityHeader": "Antall",
+      "chooseVariantLabel": "Velg produktvariant(er) ovenfor",
+      "addToCartLabel": "Legg i handlekurv"
     },
     "relatedProducts": {
-      "heading": "Other customers also viewed"
+      "heading": "Andre kunder har også sett på"
     }
   },
   "Catalog": {
     "breadcrumb": {
-      "productsLabel": "Products",
-      "allProductsLabel": "All products"
+      "productsLabel": "Produkter",
+      "allProductsLabel": "Alle produkter"
     },
     "categoryList": {
-      "heading": "Categories",
-      "clearLabel": "Clear"
+      "heading": "Kategorier",
+      "clearLabel": "Fjern"
     },
     "searchInResults": {
-      "searchInListPlaceholder": "Search in {listName}",
-      "searchProductsPlaceholder": "Search in products",
-      "searchDisabledTooltip": "Install a search provider to enable product search"
+      "searchInListPlaceholder": "Søk i {listName}",
+      "searchProductsPlaceholder": "Søk i produkter",
+      "searchDisabledTooltip": "Installer en søkeleverandør for å aktivere produktsøk"
     },
     "sortProducts": {
-      "sortByLabel": "Sort by:",
-      "sortByTooltip": "Sort by",
-      "latestArrivalsLabel": "Latest Arrivals",
-      "priceLowToHighLabel": "Price: Low -> High",
-      "priceHighToLowLabel": "Price: High -> Low"
+      "sortByLabel": "Sorter etter:",
+      "sortByTooltip": "Sorter etter",
+      "latestArrivalsLabel": "Nyeste varer",
+      "priceLowToHighLabel": "Pris: Lav -> Høy",
+      "priceHighToLowLabel": "Pris: Høy -> Lav"
     },
-    "noProductsFoundMessage": "No products found for this category.",
+    "noProductsFoundMessage": "Ingen produkter funnet for denne kategorien.",
     "categoryTemplate": {
-      "backToAllProductsLabel": "Back to all products"
+      "backToAllProductsLabel": "Tilbake til alle produkter"
     }
   },
   "Home": {
     "productRail": {
-      "viewAllLabel": "View all"
+      "viewAllLabel": "Se alle"
     },
     "hero": {
-      "bannerAlt": "Hero background",
-      "eyebrow": "Be light on your feet",
-      "heading": "Portable Bestsellers",
-      "subheading": "See our widest selection of electronics",
-      "githubRepoLabel": "Github Repository"
+      "bannerAlt": "Hero-bakgrunn",
+      "eyebrow": "Reis lett",
+      "heading": "Bærbare bestselgere",
+      "subheading": "Se vårt bredeste utvalg av elektronikk",
+      "githubRepoLabel": "Github-repositorium"
     }
   },
   "Shipping": {
     "freeShippingNudge": {
-      "unlockedLabel": "Free Shipping unlocked!",
-      "unlockPrompt": "Unlock Free Shipping",
-      "remainingMessage": "Only <amount></amount> away",
-      "viewCartLabel": "View cart",
-      "viewProductsLabel": "View Products"
+      "unlockedLabel": "Fri frakt låst opp!",
+      "unlockPrompt": "Lås opp fri frakt",
+      "remainingMessage": "Kun <amount></amount> igjen",
+      "viewCartLabel": "Se handlekurv",
+      "viewProductsLabel": "Se produkter"
     }
   },
   "Quotes": {
     "requestQuoteConfirmation": {
-      "title": "Submit request for quote",
-      "description": "You are about to request a quote for the cart. If you confirm, the cart will be converted to a quote.",
-      "cancelLabel": "Cancel",
-      "submitLabel": "Submit",
-      "errorToast": "Failed to create quote request"
+      "title": "Send forespørsel om tilbud",
+      "description": "Du er i ferd med å be om et tilbud for handlekurven. Hvis du bekrefter, vil handlekurven konverteres til et tilbud.",
+      "cancelLabel": "Avbryt",
+      "submitLabel": "Send inn",
+      "errorToast": "Kunne ikke opprette tilbudsforespørsel"
     },
     "requestQuotePrompt": {
-      "title": "Request a quote",
-      "loginLabel": "Log in",
-      "orLabel": " or ",
-      "createAccountLabel": "create an account",
-      "addProductsStep": "Add products to your cart",
-      "openCartStep": "Open cart & click \"Request a quote\"",
-      "followUpMessage": "We will then get back to you as soon as possible over email"
+      "title": "Be om et tilbud",
+      "loginLabel": "Logg inn",
+      "orLabel": "eller",
+      "createAccountLabel": "opprett en konto",
+      "addProductsStep": "Legg produkter i handlekurven",
+      "openCartStep": "Åpne handlekurven og klikk på «Be om tilbud»",
+      "followUpMessage": "Vi vil deretter kontakte deg så snart som mulig via e-post"
     }
   },
   "Order": {
     "billingDetails": {
-      "heading": "Billing Address"
+      "heading": "Fakturaadresse"
     },
     "help": {
-      "heading": "Need help?",
-      "contactLabel": "Contact",
-      "returnsExchangesLabel": "Returns & Exchanges"
+      "heading": "Trenger du hjelp?",
+      "contactLabel": "Kontakt",
+      "returnsExchangesLabel": "Retur og bytte"
     },
     "item": {
       "originalLabel": "Original: "
     },
     "orderDetails": {
-      "heading": "Details",
-      "orderNumberLabel": "Order Number",
-      "orderDateLabel": "Order Date",
-      "confirmationSentMessage": "We have sent the order confirmation details to <email></email>."
+      "heading": "Detaljer",
+      "orderNumberLabel": "Bestillingsnummer",
+      "orderDateLabel": "Bestillingsdato",
+      "confirmationSentMessage": "Vi har sendt ordrebekreftelsen til <email></email>."
     },
     "summary": {
-      "heading": "Order Summary",
-      "subtotalLabel": "Subtotal",
-      "discountLabel": "Discount",
-      "shippingLabel": "Shipping",
-      "taxesLabel": "Taxes",
-      "totalLabel": "Total"
+      "heading": "Bestillingssammendrag",
+      "subtotalLabel": "Delsum",
+      "discountLabel": "Rabatt",
+      "shippingLabel": "Frakt",
+      "taxesLabel": "Avgifter",
+      "totalLabel": "Totalt"
     },
     "paymentDetails": {
-      "heading": "Payment",
-      "paymentMethodLabel": "Payment method",
-      "paymentDetailsLabel": "Payment details",
+      "heading": "Betaling",
+      "paymentMethodLabel": "Betalingsmåte",
+      "paymentDetailsLabel": "Betalingsdetaljer",
       "maskedCardNumber": "**** **** **** {last4}",
-      "paidAtMessage": "{amount} paid at {date}"
+      "paidAtMessage": "{amount} betalt den {date}"
     },
     "shippingDetails": {
-      "heading": "Delivery Address"
+      "heading": "Leveringsadresse"
     },
     "completedTemplate": {
-      "thankYouLabel": "Thank you!",
-      "orderPlacedMessage": "Your order was placed successfully.",
-      "summaryHeading": "Summary"
+      "thankYouLabel": "Takk!",
+      "orderPlacedMessage": "Bestillingen din ble lagt inn.",
+      "summaryHeading": "Sammendrag"
     },
     "detailsTemplate": {
-      "backLabel": "Back"
+      "backLabel": "Tilbake"
     }
   },
   "BcTest": {
-    "heading": "Business Central API Operations",
-    "errorLabel": "Error",
-    "unknownErrorMessage": "Unknown error"
+    "heading": "Business Central API-operasjoner",
+    "errorLabel": "Feil",
+    "unknownErrorMessage": "Ukjent feil"
   },
   "MetaDescription": {
-    "storeSuffix": "| Medusa Store"
+    "storeSuffix": "| Nimbus Nordic"
   }
 }

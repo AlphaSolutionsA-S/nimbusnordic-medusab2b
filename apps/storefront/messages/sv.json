@@ -1,725 +1,722 @@
 {
   "Common": {
-    "welcome": "Welcome",
+    "welcome": "Välkommen",
     "deleteButton": {
-      "removeLabel": "Remove"
+      "removeLabel": "Ta bort"
     },
     "promptModal": {
-      "cancelLabel": "Cancel",
-      "continueLabel": "Continue"
+      "cancelLabel": "Avbryt",
+      "continueLabel": "Fortsätt"
     },
     "thumbnail": {
       "altFallback": "test"
     },
     "notFound": {
-      "headingLabel": "Page not found",
-      "pageMessage": "The page you tried to access does not exist.",
-      "goToFrontpageLabel": "Go to frontpage"
+      "headingLabel": "Sidan hittades inte",
+      "pageMessage": "Sidan du försökte nå finns inte.",
+      "goToFrontpageLabel": "Gå till startsidan"
     }
   },
   "Layout": {
     "nav": {
       "brandName": "Medusa B2B Starter",
-      "searchPlaceholder": "Search for products",
-      "searchDisabledTooltip": "Install a search provider to enable product search",
-      "quoteLabel": "Quote"
-    },
-    "regionSwitcher": {
-      "label": "Select your region"
+      "searchPlaceholder": "Sök efter produkter",
+      "searchDisabledTooltip": "Installera en sökleverantör för att aktivera produktsökning",
+      "quoteLabel": "Offert"
     },
     "megaMenu": {
-      "productsLabel": "Products"
+      "productsLabel": "Produkter"
     },
     "footer": {
       "brandName": "Medusa Store",
-      "categoriesHeading": "Categories",
-      "collectionsHeading": "Collections",
+      "categoriesHeading": "Kategorier",
+      "collectionsHeading": "Kollektioner",
       "medusaHeading": "Medusa",
       "githubLabel": "GitHub",
-      "documentationLabel": "Documentation",
-      "sourceCodeLabel": "Source code",
-      "copyright": "© {year} Medusa Store. All rights reserved.",
-      "poweredByLabel": "Powered by"
+      "documentationLabel": "Dokumentation",
+      "sourceCodeLabel": "Källkod",
+      "copyright": "© {year} Medusa Store. Alla rättigheter förbehållna.",
+      "poweredByLabel": "Drivs av"
     },
     "cartMismatchBanner": {
-      "message": "Cart is not connected to your account",
-      "connectLabel": "Connect cart",
-      "connectingLabel": "Connecting.."
+      "message": "Varukorgen är inte kopplad till ditt konto",
+      "connectLabel": "Anslut varukorg",
+      "connectingLabel": "Ansluter.."
     },
     "promoBanner": {
-      "buildYourOwnLabel": "Build your own B2B store with this starter:",
-      "deployToMedusaCloudLabel": "Deploy to Medusa Cloud"
+      "buildYourOwnLabel": "Bygg din egen B2B-butik med denna starter:",
+      "deployToMedusaCloudLabel": "Distribuera till Medusa Cloud"
     }
   },
   "Checkout": {
     "contactDetails": {
-      "heading": "Contact Details",
-      "editLabel": "Edit",
-      "emailLabel": "Email",
-      "invoiceRecipientLabel": "Invoice recipient",
-      "costCenterLabel": "Cost center",
-      "requisitionNumberLabel": "Requisition number",
-      "doorCodeLabel": "Door code/goods mark",
-      "notesLabel": "Notes",
-      "notesHelpText": "The note will only appear on the invoice and order confirmation and will not be read by the merchant.",
-      "reviewOrderLabel": "Review order",
-      "nextStepLabel": "Next step",
-      "notePrefix": "Note: {notes}"
+      "heading": "Kontaktuppgifter",
+      "editLabel": "Redigera",
+      "emailLabel": "E-post",
+      "invoiceRecipientLabel": "Fakturamottagare",
+      "costCenterLabel": "Kostnadsställe",
+      "requisitionNumberLabel": "Rekvisitionsnummer",
+      "doorCodeLabel": "Portkod/varumärkning",
+      "notesLabel": "Anteckningar",
+      "notesHelpText": "Anteckningen visas endast på fakturan och orderbekräftelsen och läses inte av säljaren.",
+      "reviewOrderLabel": "Granska order",
+      "nextStepLabel": "Nästa steg",
+      "notePrefix": "Anteckning: {notes}"
     },
     "addressForm": {
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "phoneLabel": "Phone",
-      "companyNameLabel": "Company name",
-      "addressLabel": "Address",
-      "postalCodeLabel": "Postal code",
-      "cityLabel": "City",
-      "provinceLabel": "Province",
-      "countryPlaceholder": "Country",
-      "savedAddressPrompt": "Hi {name}, do you want to use one of your saved addresses?"
+      "firstNameLabel": "Förnamn",
+      "lastNameLabel": "Efternamn",
+      "phoneLabel": "Telefon",
+      "companyNameLabel": "Företagsnamn",
+      "addressLabel": "Adress",
+      "postalCodeLabel": "Postnummer",
+      "cityLabel": "Ort",
+      "provinceLabel": "Region",
+      "countryPlaceholder": "Land",
+      "savedAddressPrompt": "Hej {name}, vill du använda en av dina sparade adresser?"
     },
     "addressSelect": {
-      "choosePlaceholder": "Choose an address"
+      "choosePlaceholder": "Välj en adress"
     },
     "billingAddress": {
-      "heading": "Billing Address",
-      "sameAsShippingLabel": "Same as shipping address",
-      "nextStepLabel": "Next step"
+      "heading": "Fakturaadress",
+      "sameAsShippingLabel": "Samma som leveransadress",
+      "nextStepLabel": "Nästa steg"
     },
     "company": {
-      "heading": "Company"
+      "heading": "Företag"
     },
     "companyForm": {
-      "orderOnBehalfOf": "Order on behalf of {companyName}",
-      "customCheckoutLabel": "Custom checkout"
+      "orderOnBehalfOf": "Beställ på uppdrag av {companyName}",
+      "customCheckoutLabel": "Anpassad utcheckning"
     },
     "paymentButton": {
-      "selectPaymentMethodLabel": "Select a payment method",
-      "approvalRequiredBoth": "This order requires approval by both a company admin and a sales manager.",
-      "approvalRequiredAdmin": "This order requires approval by a company admin.",
-      "approvalRequiredSalesManager": "This order requires approval by a sales manager.",
-      "approvalRequestedLabel": "Approval Requested",
-      "requestApprovalLabel": "Request Approval",
-      "placeOrderLabel": "Place order"
+      "selectPaymentMethodLabel": "Välj en betalningsmetod",
+      "approvalRequiredBoth": "Denna order kräver godkännande av både en företagsadministratör och en försäljningschef.",
+      "approvalRequiredAdmin": "Denna order kräver godkännande av en företagsadministratör.",
+      "approvalRequiredSalesManager": "Denna order kräver godkännande av en försäljningschef.",
+      "approvalRequestedLabel": "Godkännande begärt",
+      "requestApprovalLabel": "Begär godkännande",
+      "placeOrderLabel": "Lägg order"
     },
     "paymentTest": {
-      "attentionLabel": "Attention:",
-      "testingOnlyMessage": "For testing purposes only."
+      "attentionLabel": "Obs:",
+      "testingOnlyMessage": "Endast för teständamål."
     },
     "payment": {
-      "heading": "Payment Method",
-      "editLabel": "Edit",
-      "enterCardDetailsLabel": "Enter your card details:",
-      "enterCardDetailsButtonLabel": " Enter card details",
-      "nextStepLabel": "Next step",
-      "giftCardLabel": "Gift card",
-      "paymentMethodLabel": "Payment method"
+      "heading": "Betalningsmetod",
+      "editLabel": "Redigera",
+      "enterCardDetailsLabel": "Ange dina kortuppgifter:",
+      "enterCardDetailsButtonLabel": " Ange kortuppgifter",
+      "nextStepLabel": "Nästa steg",
+      "giftCardLabel": "Presentkort",
+      "paymentMethodLabel": "Betalningsmetod"
     },
     "promotionCode": {
-      "enterPromotionCodeLabel": "Enter Promotion Code",
-      "applyLabel": "Apply",
-      "promotionAppliedOne": "Promotion applied:",
-      "promotionAppliedOther": "Promotions applied:",
-      "removeDiscountSrLabel": "Remove discount code from order"
+      "enterPromotionCodeLabel": "Ange kampanjkod",
+      "applyLabel": "Tillämpa",
+      "promotionAppliedOne": "Kampanj tillämpad:",
+      "promotionAppliedOther": "Kampanjer tillämpade:",
+      "removeDiscountSrLabel": "Ta bort rabattkod från order"
     },
     "review": {
-      "agreementText": "By Completing this order, I agree to Medusa's <termsLink>Terms of Sale ↗</termsLink> and <privacyLink>Privacy Policy ↗</privacyLink>",
-      "placeOrderLabel": "Place Order"
+      "agreementText": "Genom att slutföra denna order godkänner jag Medusas <termsLink>försäljningsvillkor ↗</termsLink> och <privacyLink>integritetspolicy ↗</privacyLink>",
+      "placeOrderLabel": "Lägg order"
     },
     "shippingAddress": {
-      "heading": "Shipping Address",
-      "editLabel": "Edit",
-      "nextStepLabel": "Next step"
+      "heading": "Leveransadress",
+      "editLabel": "Redigera",
+      "nextStepLabel": "Nästa steg"
     },
     "shipping": {
-      "heading": "Delivery Method",
-      "editLabel": "Edit",
-      "nextStepLabel": "Next step"
+      "heading": "Leveranssätt",
+      "editLabel": "Redigera",
+      "nextStepLabel": "Nästa steg"
     },
     "checkoutForm": {
-      "backToCartLabel": "Back to shopping cart"
+      "backToCartLabel": "Tillbaka till varukorgen"
     }
   },
   "Account": {
     "login": {
-      "heading": "Log in for faster<br></br>checkout.",
-      "emailLabel": "Email",
-      "emailValidationMessage": "Enter a valid email address.",
-      "passwordLabel": "Password",
-      "rememberMeLabel": "Remember me",
-      "submitLabel": "Log in",
-      "registerLinkLabel": "Register",
-      "bannerAlt": "Login banner background"
+      "heading": "Logga in för snabbare<br></br>utcheckning.",
+      "emailLabel": "E-post",
+      "emailValidationMessage": "Ange en giltig e-postadress.",
+      "passwordLabel": "Lösenord",
+      "rememberMeLabel": "Kom ihåg mig",
+      "submitLabel": "Logga in",
+      "registerLinkLabel": "Registrera dig",
+      "bannerAlt": "Bakgrundsbild för inloggningsbanner"
     },
     "register": {
-      "heading": "Create your<br></br>company account.",
-      "emailLabel": "Email",
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "companyNameLabel": "Company name",
-      "passwordLabel": "Password",
-      "companyAddressLabel": "Company address",
-      "companyCityLabel": "Company city",
-      "companyStateLabel": "Company state",
-      "companyZipLabel": "Company zip",
-      "countryPlaceholder": "Select a country",
-      "currencyPlaceholder": "Select a currency",
-      "termsLabel": "I agree to the terms and conditions.",
-      "submitLabel": "Register",
-      "alreadyMemberText": "Already a member?",
-      "loginLinkLabel": "Log in"
+      "heading": "Skapa ditt<br></br>företagskonto.",
+      "emailLabel": "E-post",
+      "firstNameLabel": "Förnamn",
+      "lastNameLabel": "Efternamn",
+      "companyNameLabel": "Företagsnamn",
+      "passwordLabel": "Lösenord",
+      "companyAddressLabel": "Företagsadress",
+      "companyCityLabel": "Företagets ort",
+      "companyStateLabel": "Företagets region",
+      "companyZipLabel": "Företagets postnummer",
+      "countryPlaceholder": "Välj ett land",
+      "currencyPlaceholder": "Välj en valuta",
+      "termsLabel": "Jag godkänner villkoren.",
+      "submitLabel": "Registrera dig",
+      "alreadyMemberText": "Redan medlem?",
+      "loginLinkLabel": "Logga in"
     },
     "accountButton": {
-      "loginLabel": "Log in"
+      "loginLabel": "Logga in"
     },
     "nav": {
-      "accountLabel": "Account",
-      "helloLabel": "Hello {name}",
-      "profileLabel": "Profile",
-      "companyLabel": "Company",
-      "addressesLabel": "Addresses",
-      "ordersLabel": "Orders",
-      "bcOrdersLabel": "BC Orders",
-      "claimsLabel": "Claims",
-      "approvalsLabel": "Approvals",
-      "quotesLabel": "Quotes",
-      "logoutLabel": "Log out",
-      "overviewLabel": "Overview"
+      "accountLabel": "Konto",
+      "helloLabel": "Hej {name}",
+      "profileLabel": "Profil",
+      "companyLabel": "Företag",
+      "addressesLabel": "Adresser",
+      "ordersLabel": "Beställningar",
+      "bcOrdersLabel": "BC-beställningar",
+      "claimsLabel": "Reklamationer",
+      "approvalsLabel": "Godkännanden",
+      "quotesLabel": "Offerter",
+      "logoutLabel": "Logga ut",
+      "overviewLabel": "Översikt"
     },
     "overview": {
-      "helloLabel": "Hello {name}",
-      "signedInAsLabel": "Signed in as:",
-      "profileHeading": "Profile",
-      "completedLabel": "Completed",
-      "addressesHeading": "Addresses",
-      "savedLabel": "Saved",
-      "recentOrdersHeading": "Recent orders",
-      "noRecentOrdersMessage": "No recent orders",
-      "previouslyPurchasedHeading": "Previously purchased items",
-      "noPreviouslyPurchasedMessage": "No previously purchased items"
+      "helloLabel": "Hej {name}",
+      "signedInAsLabel": "Inloggad som:",
+      "profileHeading": "Profil",
+      "completedLabel": "Slutförd",
+      "addressesHeading": "Adresser",
+      "savedLabel": "Sparad",
+      "recentOrdersHeading": "Senaste beställningar",
+      "noRecentOrdersMessage": "Inga senaste beställningar",
+      "previouslyPurchasedHeading": "Tidigare köpta varor",
+      "noPreviouslyPurchasedMessage": "Inga tidigare köpta varor"
     },
     "orderCard": {
-      "itemsCount": "{count} items",
-      "itemCount": "{count} item",
-      "detailsLabel": "Details"
+      "itemsCount": "{count} varor",
+      "itemCount": "{count} vara",
+      "detailsLabel": "Detaljer"
     },
     "previouslyPurchased": {
-      "buyAgainLabel": "Buy again"
+      "buyAgainLabel": "Köp igen"
     },
     "profileCard": {
-      "firstNameLabel": "First Name",
-      "lastNameLabel": "Last Name",
-      "emailLabel": "Email",
-      "phoneLabel": "Phone",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "currentPasswordLabel": "Current Password",
-      "newPasswordLabel": "New Password",
-      "confirmPasswordLabel": "Confirm Password",
-      "passwordLabel": "Password",
-      "changePasswordLabel": "Change Password",
-      "customerUpdatedToast": "Customer updated",
-      "customerUpdateErrorToast": "Error updating customer",
-      "passwordMismatchToast": "New passwords do not match",
-      "passwordTooShortToast": "Password must be at least 8 characters",
-      "passwordUpdatedToast": "Password updated",
-      "passwordUpdateErrorToast": "Error updating password"
+      "firstNameLabel": "Förnamn",
+      "lastNameLabel": "Efternamn",
+      "emailLabel": "E-post",
+      "phoneLabel": "Telefon",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Spara",
+      "editLabel": "Redigera",
+      "currentPasswordLabel": "Nuvarande lösenord",
+      "newPasswordLabel": "Nytt lösenord",
+      "confirmPasswordLabel": "Bekräfta lösenord",
+      "passwordLabel": "Lösenord",
+      "changePasswordLabel": "Byt lösenord",
+      "customerUpdatedToast": "Kund uppdaterad",
+      "customerUpdateErrorToast": "Fel vid uppdatering av kund",
+      "passwordMismatchToast": "De nya lösenorden matchar inte",
+      "passwordTooShortToast": "Lösenordet måste vara minst 8 tecken",
+      "passwordUpdatedToast": "Lösenord uppdaterat",
+      "passwordUpdateErrorToast": "Fel vid uppdatering av lösenord"
     },
     "companyCard": {
-      "companyNameLabel": "Company Name",
-      "emailLabel": "Email",
-      "phoneLabel": "Phone",
-      "addressLabel": "Address",
-      "cityLabel": "City",
-      "stateLabel": "State",
-      "zipLabel": "Zip",
-      "countryLabel": "Country",
-      "currencyLabel": "Currency",
-      "spendingLimitResetFrequencyLabel": "Spending Limit Reset Frequency",
-      "bcCustomerNumberLabel": "BC Customer Number",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "companyUpdatedToast": "Company updated",
-      "companyUpdateErrorToast": "Error updating company"
+      "companyNameLabel": "Företagsnamn",
+      "emailLabel": "E-post",
+      "phoneLabel": "Telefon",
+      "addressLabel": "Adress",
+      "cityLabel": "Ort",
+      "stateLabel": "Region",
+      "zipLabel": "Postnummer",
+      "countryLabel": "Land",
+      "currencyLabel": "Valuta",
+      "spendingLimitResetFrequencyLabel": "Återställningsfrekvens för utgiftsgräns",
+      "bcCustomerNumberLabel": "BC-kundnummer",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Spara",
+      "editLabel": "Redigera",
+      "companyUpdatedToast": "Företag uppdaterat",
+      "companyUpdateErrorToast": "Fel vid uppdatering av företag"
     },
     "securityCard": {
-      "passwordLabel": "Password",
-      "editLabel": "Edit",
-      "notImplementedToast": "Not implemented"
+      "passwordLabel": "Lösenord",
+      "editLabel": "Redigera",
+      "notImplementedToast": "Ej implementerat"
     },
     "accountInfo": {
-      "defaultErrorMessage": "An error occurred, please try again",
-      "cancelLabel": "Cancel",
-      "editLabel": "Edit",
-      "updatedSuccessfullyMessage": "{label} updated succesfully",
-      "saveChangesLabel": "Save changes"
+      "defaultErrorMessage": "Ett fel uppstod, försök igen",
+      "cancelLabel": "Avbryt",
+      "editLabel": "Redigera",
+      "updatedSuccessfullyMessage": "{label} uppdaterades",
+      "saveChangesLabel": "Spara ändringar"
     },
     "quoteCard": {
-      "seeDetailsLabel": "See details"
+      "seeDetailsLabel": "Se detaljer"
     },
     "claimsPageContent": {
-      "defaultTitle": "Claims"
+      "defaultTitle": "Reklamationer"
     },
     "claimsUnavailable": {
-      "message": "The claims information is temporarily unavailable. Please try again later."
+      "message": "Reklamationsinformationen är tillfälligt otillgänglig. Försök igen senare."
     },
     "addressCard": {
-      "newAddressLabel": "New address",
-      "addAddressHeading": "Add address",
-      "editAddressHeading": "Edit address",
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "companyLabel": "Company",
-      "addressLabel": "Address",
-      "apartmentLabel": "Apartment, suite, etc.",
-      "postalCodeLabel": "Postal code",
-      "cityLabel": "City",
-      "provinceLabel": "Province / State",
-      "phoneLabel": "Phone",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "removeLabel": "Remove"
+      "newAddressLabel": "Ny adress",
+      "addAddressHeading": "Lägg till adress",
+      "editAddressHeading": "Redigera adress",
+      "firstNameLabel": "Förnamn",
+      "lastNameLabel": "Efternamn",
+      "companyLabel": "Företag",
+      "addressLabel": "Adress",
+      "apartmentLabel": "Lägenhet, suite, etc.",
+      "postalCodeLabel": "Postnummer",
+      "cityLabel": "Ort",
+      "provinceLabel": "Region / delstat",
+      "phoneLabel": "Telefon",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Spara",
+      "editLabel": "Redigera",
+      "removeLabel": "Ta bort"
     },
     "employeeCard": {
-      "employeeDeletedToast": "Employee deleted",
-      "employeeDeleteErrorToast": "Error deleting employee",
-      "employeeUpdatedToast": "Employee updated",
-      "employeeUpdateErrorToast": "Error updating employee",
-      "removeLabel": "Remove",
-      "removeEmployeeHeading": "Remove Employee",
-      "removeConfirmMessage": "Are you sure you want to remove <email></email> from your team? They will no longer be able to purchase on behalf of your company.",
-      "deleteCustomerAccountLabel": "Also delete the linked customer account and login",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit",
-      "youSuffixLabel": "(You)",
-      "adminBadgeLabel": "Admin",
-      "amountSpentMessage": "{amountSpent} / {limit} spent",
-      "noLimitLabel": "No limit",
-      "spendingLimitLabel": "Spending Limit",
-      "permissionsLabel": "Permissions",
-      "adminOptionLabel": "Admin",
-      "employeeOptionLabel": "Employee"
+      "employeeDeletedToast": "Anställd borttagen",
+      "employeeDeleteErrorToast": "Fel vid borttagning av anställd",
+      "employeeUpdatedToast": "Anställd uppdaterad",
+      "employeeUpdateErrorToast": "Fel vid uppdatering av anställd",
+      "removeLabel": "Ta bort",
+      "removeEmployeeHeading": "Ta bort anställd",
+      "removeConfirmMessage": "Är du säker på att du vill ta bort <email></email> från ditt team? Personen kommer inte längre kunna handla för ditt företags räkning.",
+      "deleteCustomerAccountLabel": "Ta även bort det kopplade kundkontot och inloggningen",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Spara",
+      "editLabel": "Redigera",
+      "youSuffixLabel": "(Du)",
+      "adminBadgeLabel": "Administratör",
+      "amountSpentMessage": "{amountSpent} / {limit} spenderat",
+      "noLimitLabel": "Ingen gräns",
+      "spendingLimitLabel": "Utgiftsgräns",
+      "permissionsLabel": "Behörigheter",
+      "adminOptionLabel": "Administratör",
+      "employeeOptionLabel": "Anställd"
     },
     "inviteEmployeeCard": {
-      "employeeInvitedToast": "Employee invited",
-      "employeeInviteErrorToast": "Error inviting employee",
-      "nameLabel": "Name",
-      "firstNameLabel": "First name",
-      "lastNameLabel": "Last name",
-      "emailLabel": "Email",
-      "emailInputLabel": "Enter an email",
-      "initialPasswordLabel": "Initial password",
-      "setPasswordInputLabel": "Set an initial password",
-      "sendInviteLabel": "Send Invite"
+      "employeeInvitedToast": "Anställd inbjuden",
+      "employeeInviteErrorToast": "Fel vid inbjudan av anställd",
+      "nameLabel": "Namn",
+      "firstNameLabel": "Förnamn",
+      "lastNameLabel": "Efternamn",
+      "emailLabel": "E-post",
+      "emailInputLabel": "Ange en e-postadress",
+      "initialPasswordLabel": "Initialt lösenord",
+      "setPasswordInputLabel": "Ange ett initialt lösenord",
+      "sendInviteLabel": "Skicka inbjudan"
     },
     "approvalCard": {
-      "orderCompletedAtLabel": "Order completed at",
-      "approvedAtLabel": "Approved at",
-      "rejectedAtLabel": "Rejected at"
+      "orderCompletedAtLabel": "Order slutförd den",
+      "approvedAtLabel": "Godkänd den",
+      "rejectedAtLabel": "Avvisad den"
     },
     "approvalCardActions": {
-      "confirmApproveTitle": "Are you sure you want to approve this cart?",
-      "confirmRejectTitle": "Are you sure you want to reject this cart?",
-      "confirmActionDescription": "This action cannot be undone.",
-      "rejectLabel": "Reject",
-      "approveLabel": "Approve",
-      "awaitingExternalApprovalLabel": "Awaiting External Approval",
-      "placeOrderLabel": "Place Order"
+      "confirmApproveTitle": "Är du säker på att du vill godkänna denna varukorg?",
+      "confirmRejectTitle": "Är du säker på att du vill avvisa denna varukorg?",
+      "confirmActionDescription": "Denna åtgärd kan inte ångras.",
+      "rejectLabel": "Avvisa",
+      "approveLabel": "Godkänn",
+      "awaitingExternalApprovalLabel": "Väntar på externt godkännande",
+      "placeOrderLabel": "Lägg order"
     },
     "pendingCustomerApprovals": {
-      "emptyHeading": "Nothing to see here",
-      "emptyMessage": "You don't have any approvals yet."
+      "emptyHeading": "Inget att se här",
+      "emptyMessage": "Du har inga godkännanden ännu."
     },
     "approvalRequestsAdminList": {
-      "noRequestsMessage": "No requests"
+      "noRequestsMessage": "Inga förfrågningar"
     },
     "approvalSettingsCard": {
-      "requiresAdminApprovalLabel": "Requires Admin Approval",
-      "requiresAdminApprovalTooltip": "This setting determines whether orders require admin approval before being processed. If enabled, orders will be held until an admin approves them.",
-      "requiresSalesManagerApprovalLabel": "Requires Sales Manager Approval",
-      "requiresSalesManagerApprovalTooltip": "This setting determines whether orders require sales manager approval before being processed. If enabled, orders will be held until a sales manager approves them.",
-      "yesLabel": "Yes",
-      "noLabel": "No",
-      "updateErrorToast": "Error updating approval settings",
-      "updatedToast": "Company updated",
-      "cancelLabel": "Cancel",
-      "saveLabel": "Save",
-      "editLabel": "Edit"
+      "requiresAdminApprovalLabel": "Kräver godkännande av administratör",
+      "requiresAdminApprovalTooltip": "Denna inställning avgör om beställningar kräver godkännande av administratör innan de behandlas. Om aktiverat hålls beställningar tillbaka tills en administratör godkänner dem.",
+      "requiresSalesManagerApprovalLabel": "Kräver godkännande av försäljningschef",
+      "requiresSalesManagerApprovalTooltip": "Denna inställning avgör om beställningar kräver godkännande av försäljningschef innan de behandlas. Om aktiverat hålls beställningar tillbaka tills en försäljningschef godkänner dem.",
+      "yesLabel": "Ja",
+      "noLabel": "Nej",
+      "updateErrorToast": "Fel vid uppdatering av godkännandeinställningar",
+      "updatedToast": "Företag uppdaterat",
+      "cancelLabel": "Avbryt",
+      "saveLabel": "Spara",
+      "editLabel": "Redigera"
     },
     "bcOrderCard": {
-      "detailsLabel": "Details"
+      "detailsLabel": "Detaljer"
     },
     "bcOrderOverview": {
-      "errorHeading": "Something went wrong",
-      "errorMessage": "We were unable to load your company orders. Please try again.",
-      "tryAgainLabel": "Try again",
-      "emptyHeading": "No company orders found",
-      "emptyMessage": "Try adjusting your filters to see more results."
+      "errorHeading": "Något gick fel",
+      "errorMessage": "Vi kunde inte läsa in ditt företags beställningar. Försök igen.",
+      "tryAgainLabel": "Försök igen",
+      "emptyHeading": "Inga företagsbeställningar hittades",
+      "emptyMessage": "Försök justera dina filter för att se fler resultat."
     },
     "bcOrderFilters": {
       "statusLabel": "Status",
-      "allStatusesOption": "All statuses",
-      "fromLabel": "From",
-      "toLabel": "To",
-      "searchLabel": "Search",
-      "searchPlaceholder": "Order number…",
-      "clearLabel": "Clear"
+      "allStatusesOption": "Alla statusar",
+      "fromLabel": "Från",
+      "toLabel": "Till",
+      "searchLabel": "Sök",
+      "searchPlaceholder": "Ordernummer…",
+      "clearLabel": "Rensa"
     },
     "bcOrderReturn": {
-      "orderUnavailableError": "This order is no longer available for a return.",
-      "returnUnconfirmedError": "We could not confirm the return request. Please try again shortly.",
-      "genericReturnError": "Please review the selected lines and try again.",
-      "requestReturnLabel": "Request a return",
-      "returnRequestedHeading": "Return requested",
-      "returnCreatedMessage": "Return {number} created - status {status}.",
-      "backToOrderDetailsLabel": "Back to order details",
-      "orderNumberLabel": "Order number",
-      "billToAddressLabel": "Bill-to address",
-      "shipToAddressLabel": "Ship-to address",
-      "itemColumnLabel": "Item",
-      "orderedQuantityColumnLabel": "Ordered quantity",
-      "unitPriceColumnLabel": "Unit price",
-      "returnQuantityColumnLabel": "Return quantity",
-      "returnReasonColumnLabel": "Return reason",
-      "itemFallbackLabel": "Item",
-      "returnQuantityAriaLabel": "Return quantity for {item}",
-      "itemLowercaseFallbackLabel": "item",
-      "selectReasonPlaceholder": "Select a reason",
-      "cancelLabel": "Cancel",
-      "submitReturnRequestLabel": "Submit return request"
+      "orderUnavailableError": "Denna order kan inte längre returneras.",
+      "returnUnconfirmedError": "Vi kunde inte bekräfta returförfrågan. Försök igen inom kort.",
+      "genericReturnError": "Granska de valda raderna och försök igen.",
+      "requestReturnLabel": "Begär en retur",
+      "returnRequestedHeading": "Retur begärd",
+      "returnCreatedMessage": "Retur {number} skapad - status {status}.",
+      "backToOrderDetailsLabel": "Tillbaka till orderdetaljer",
+      "orderNumberLabel": "Ordernummer",
+      "billToAddressLabel": "Fakturaadress",
+      "shipToAddressLabel": "Leveransadress",
+      "itemColumnLabel": "Artikel",
+      "orderedQuantityColumnLabel": "Beställd kvantitet",
+      "unitPriceColumnLabel": "Enhetspris",
+      "returnQuantityColumnLabel": "Returkvantitet",
+      "returnReasonColumnLabel": "Returorsak",
+      "itemFallbackLabel": "Artikel",
+      "returnQuantityAriaLabel": "Returkvantitet för {item}",
+      "itemLowercaseFallbackLabel": "artikel",
+      "selectReasonPlaceholder": "Välj en orsak",
+      "cancelLabel": "Avbryt",
+      "submitReturnRequestLabel": "Skicka returförfrågan"
     },
     "orderOverview": {
-      "emptyMessage": "You don't have any orders yet, let us change that :)",
-      "continueShoppingLabel": "Continue shopping"
+      "emptyMessage": "Du har inga beställningar ännu, låt oss ändra på det :)",
+      "continueShoppingLabel": "Fortsätt handla"
     },
     "bcOrderDetailTemplate": {
-      "backToBcOrdersLabel": "Back to BC orders",
+      "backToBcOrdersLabel": "Tillbaka till BC-beställningar",
       "orderNumberHeading": "Order #{number}",
-      "customerLabel": "Customer",
+      "customerLabel": "Kund",
       "statusLabel": "Status",
-      "currencyLabel": "Currency",
-      "totalExcludingTaxLabel": "Total excluding tax",
-      "totalIncludingTaxLabel": "Total including tax",
-      "itemsHeading": "Items",
-      "descriptionColumnLabel": "Description",
-      "quantityColumnLabel": "Quantity",
-      "amountColumnLabel": "Amount"
+      "currencyLabel": "Valuta",
+      "totalExcludingTaxLabel": "Totalt exklusive moms",
+      "totalIncludingTaxLabel": "Totalt inklusive moms",
+      "itemsHeading": "Varor",
+      "descriptionColumnLabel": "Beskrivning",
+      "quantityColumnLabel": "Antal",
+      "amountColumnLabel": "Belopp"
     },
     "bcOrderNotFound": {
-      "headingLabel": "Order not found",
-      "message": "This order is unavailable."
+      "headingLabel": "Order hittades inte",
+      "message": "Denna order är inte tillgänglig."
     },
     "addressesPage": {
-      "heading": "Shipping Addresses",
-      "description": "View and update your shipping addresses, you can add as many as you like. Saving your addresses will make them available during checkout."
+      "heading": "Leveransadresser",
+      "description": "Visa och uppdatera dina leveransadresser, du kan lägga till så många du vill. Om du sparar dina adresser blir de tillgängliga vid utcheckning."
     },
     "approvalsPage": {
-      "heading": "Approvals",
-      "pendingHeading": "Pending",
-      "approvedHeading": "Approved",
-      "rejectedHeading": "Rejected",
-      "loadingLabel": "Loading..."
+      "heading": "Godkännanden",
+      "pendingHeading": "Väntande",
+      "approvedHeading": "Godkänd",
+      "rejectedHeading": "Avvisad",
+      "loadingLabel": "Läser in..."
     },
     "companyPage": {
-      "companyDetailsHeading": "Company Details",
-      "approvalSettingsHeading": "Approval Settings",
-      "employeesHeading": "Employees",
-      "inviteEmployeesHeading": "Invite Employees"
+      "companyDetailsHeading": "Företagsdetaljer",
+      "approvalSettingsHeading": "Godkännandeinställningar",
+      "employeesHeading": "Anställda",
+      "inviteEmployeesHeading": "Bjud in anställda"
     },
     "profilePage": {
-      "detailsHeading": "Details",
-      "securityHeading": "Security"
+      "detailsHeading": "Detaljer",
+      "securityHeading": "Säkerhet"
     },
     "ordersPage": {
-      "heading": "Orders",
-      "pendingApprovalsHeading": "Pending Approvals",
-      "completedOrdersHeading": "Completed Orders"
+      "heading": "Beställningar",
+      "pendingApprovalsHeading": "Väntande godkännanden",
+      "completedOrdersHeading": "Slutförda beställningar"
     },
     "quotesPage": {
-      "heading": "Quotes"
+      "heading": "Offerter"
     },
     "quotesOverview": {
-      "emptyMessage": "You don't have any quotes yet"
+      "emptyMessage": "Du har inga offerter ännu"
     },
     "quoteStatusBadge": {
-      "acceptedLabel": "Accepted",
-      "customerRejectedLabel": "Customer Rejected",
-      "merchantRejectedLabel": "Merchant Rejected",
-      "pendingMerchantLabel": "Pending Merchant",
-      "pendingCustomerLabel": "Pending Customer"
+      "acceptedLabel": "Accepterad",
+      "customerRejectedLabel": "Avvisad av kund",
+      "merchantRejectedLabel": "Avvisad av säljare",
+      "pendingMerchantLabel": "Väntar på säljare",
+      "pendingCustomerLabel": "Väntar på kund"
     },
     "quoteMessages": {
-      "messagesHeading": "Messages",
-      "pickQuoteItemLabel": "Pick Quote Item",
-      "pickQuoteItemDescription": "Select a quote item to write a message around",
-      "selectItemPlaceholder": "Select Item",
-      "sendLabel": "Send"
+      "messagesHeading": "Meddelanden",
+      "pickQuoteItemLabel": "Välj offertartikel",
+      "pickQuoteItemDescription": "Välj en offertartikel att skriva ett meddelande om",
+      "selectItemPlaceholder": "Välj artikel",
+      "sendLabel": "Skicka"
     },
     "quoteTable": {
-      "newLabel": "New",
-      "removedLabel": "Removed",
-      "modifiedLabel": "Modified"
+      "newLabel": "Ny",
+      "removedLabel": "Borttagen",
+      "modifiedLabel": "Ändrad"
     },
     "quoteDetails": {
-      "backLabel": "Back",
-      "acceptedNoticeMessage": "Quote accepted by customer. Order is ready for processing.",
-      "viewOrderLabel": "View Order",
-      "currentTotalLabel": "Current Total",
-      "newTotalLabel": "New Total",
-      "rejectQuoteConfirmTitle": "Reject Quote?",
-      "rejectQuoteConfirmDescription": "Are you sure you want to reject quote? This action is irreversible.",
-      "rejectQuoteLabel": "Reject Quote",
-      "acceptQuoteConfirmTitle": "Accept Quote?",
-      "acceptQuoteConfirmDescription": "Are you sure you want to accept quote? This action is irreversible.",
-      "acceptQuoteLabel": "Accept Quote",
-      "quoteIdLabel": "Quote ID:",
-      "customerHeading": "Customer",
-      "emailLabel": "Email",
-      "phoneLabel": "Phone",
-      "spendLimitLabel": "Spend Limit",
-      "companyHeading": "Company",
-      "nameLabel": "Name"
+      "backLabel": "Tillbaka",
+      "acceptedNoticeMessage": "Offert accepterad av kund. Ordern är redo för behandling.",
+      "viewOrderLabel": "Visa order",
+      "currentTotalLabel": "Nuvarande totalsumma",
+      "newTotalLabel": "Ny totalsumma",
+      "rejectQuoteConfirmTitle": "Avvisa offert?",
+      "rejectQuoteConfirmDescription": "Är du säker på att du vill avvisa offerten? Denna åtgärd kan inte ångras.",
+      "rejectQuoteLabel": "Avvisa offert",
+      "acceptQuoteConfirmTitle": "Acceptera offert?",
+      "acceptQuoteConfirmDescription": "Är du säker på att du vill acceptera offerten? Denna åtgärd kan inte ångras.",
+      "acceptQuoteLabel": "Acceptera offert",
+      "quoteIdLabel": "Offert-ID:",
+      "customerHeading": "Kund",
+      "emailLabel": "E-post",
+      "phoneLabel": "Telefon",
+      "spendLimitLabel": "Utgiftsgräns",
+      "companyHeading": "Företag",
+      "nameLabel": "Namn"
     },
     "bcOrderDetailPage": {
-      "errorMessage": "We were unable to load this order. Please try again."
+      "errorMessage": "Vi kunde inte läsa in denna order. Försök igen."
     },
     "bcOrdersPage": {
-      "heading": "BC Orders"
+      "heading": "BC-beställningar"
     }
   },
   "Cart": {
     "addNoteButton": {
-      "addNoteLabel": "Add note",
-      "noteLabel": "Note:"
+      "addNoteLabel": "Lägg till anteckning",
+      "noteLabel": "Anteckning:"
     },
     "appliedPromotions": {
-      "label": "Promotions applied:"
+      "label": "Kampanjer tillämpade:"
     },
     "approvalStatusBanner": {
-      "pendingMessage": "This cart is locked for approval.",
-      "rejectedMessage": "This cart has been rejected. You can re-request approval from the <link>checkout page</link>.",
-      "approvedMessage": "This cart has been approved and can now be completed."
+      "pendingMessage": "Denna varukorg är låst i väntan på godkännande.",
+      "rejectedMessage": "Denna varukorg har avvisats. Du kan begära godkännande igen från <link>utcheckningssidan</link>.",
+      "approvedMessage": "Denna varukorg har godkänts och kan nu slutföras."
     },
     "cartToCsvButton": {
-      "exportLabel": "Export Cart (.csv)"
+      "exportLabel": "Exportera varukorg (.csv)"
     },
     "emptyCartMessage": {
-      "heading": "Cart",
-      "message": "You don't have anything in your cart. Let's change that, use the link below to start browsing our products.",
-      "exploreProductsLabel": "Explore products"
+      "heading": "Varukorg",
+      "message": "Din varukorg är tom. Låt oss ändra på det, använd länken nedan för att börja bläddra bland våra produkter.",
+      "exploreProductsLabel": "Utforska produkter"
     },
     "itemFull": {
-      "brandLabel": "BRAND"
+      "brandLabel": "MÄRKE"
     },
     "itemPreview": {
-      "noteLabel": "Note:"
+      "noteLabel": "Anteckning:"
     },
     "cartDrawer": {
-      "cartLabel": "Cart",
-      "itemsInCartTitle": "You have {count} items in your cart",
-      "emptyCartTitle": "Your cart is empty",
-      "subtotalLabel": "Subtotal",
-      "viewCartLabel": "View Cart",
-      "spendingLimitExceededLabel": "Spending Limit Exceeded",
-      "secureCheckoutLabel": "Secure Checkout",
-      "loginToCheckoutLabel": "Log in to checkout",
-      "spendingLimitMessage": "This order exceeds your spending limit. Please contact your manager for approval."
+      "cartLabel": "Varukorg",
+      "itemsInCartTitle": "Du har {count} varor i din varukorg",
+      "emptyCartTitle": "Din varukorg är tom",
+      "subtotalLabel": "Delsumma",
+      "viewCartLabel": "Visa varukorg",
+      "spendingLimitExceededLabel": "Utgiftsgräns överskriden",
+      "secureCheckoutLabel": "Säker utcheckning",
+      "loginToCheckoutLabel": "Logga in för att checka ut",
+      "spendingLimitMessage": "Denna order överskrider din utgiftsgräns. Kontakta din chef för godkännande."
     },
     "cartTotals": {
-      "subtotalLabel": "Subtotal (excl. shipping and taxes)",
-      "discountLabel": "Discount",
-      "shippingLabel": "Shipping",
-      "taxesLabel": "Taxes",
-      "giftCardLabel": "Gift card",
-      "totalLabel": "Total"
+      "subtotalLabel": "Delsumma (exkl. frakt och moms)",
+      "discountLabel": "Rabatt",
+      "shippingLabel": "Frakt",
+      "taxesLabel": "Moms",
+      "giftCardLabel": "Presentkort",
+      "totalLabel": "Totalt"
     },
     "signInPrompt": {
-      "bannerAlt": "Login banner background",
-      "heading": "Log in for<br></br>faster checkout.",
-      "registerLabel": "Register",
-      "loginLabel": "Log in"
+      "bannerAlt": "Bakgrundsbild för inloggningsbanner",
+      "heading": "Logga in för<br></br>snabbare utcheckning.",
+      "registerLabel": "Registrera dig",
+      "loginLabel": "Logga in"
     },
     "template": {
-      "itemsInCartHeading": "You have {count} items in your cart"
+      "itemsInCartHeading": "Du har {count} varor i din varukorg"
     },
     "items": {
-      "totalItemsLabel": "Total: {count} items"
+      "totalItemsLabel": "Totalt: {count} varor"
     },
     "summary": {
-      "spendingLimitMessage": "This order exceeds your spending limit.<br></br>Please contact your manager for approval.",
-      "spendingLimitExceededLabel": "Spending Limit Exceeded",
-      "checkoutLabel": "Checkout",
-      "loginToCheckoutLabel": "Log in to Checkout",
-      "requestQuoteLabel": "Request Quote",
-      "emptyCartLabel": "Empty Cart"
+      "spendingLimitMessage": "Denna order överskrider din utgiftsgräns.<br></br>Kontakta din chef för godkännande.",
+      "spendingLimitExceededLabel": "Utgiftsgräns överskriden",
+      "checkoutLabel": "Kassa",
+      "loginToCheckoutLabel": "Logga in för att checka ut",
+      "requestQuoteLabel": "Begär offert",
+      "emptyCartLabel": "Töm varukorg"
     },
     "notFound": {
-      "cartMessage": "The cart you tried to access does not exist. Clear your cookies and try again."
+      "cartMessage": "Varukorgen du försökte nå finns inte. Rensa dina cookies och försök igen."
     }
   },
   "Products": {
     "facts": {
-      "inStockMessage": "Can be shipped immediately ({count} in stock)",
-      "limitedStockMessage": "Limited quantity available ({count} in stock)",
+      "inStockMessage": "Kan skickas omgående ({count} i lager)",
+      "limitedStockMessage": "Begränsat antal tillgängligt ({count} i lager)",
       "midLabel": "MID: {code}"
     },
     "preview": {
-      "brandLabel": "BRAND",
-      "exclVatLabel": "Excl. VAT",
-      "leftLabel": "{count} left"
+      "brandLabel": "MÄRKE",
+      "exclVatLabel": "Exkl. moms",
+      "leftLabel": "{count} kvar"
     },
     "price": {
-      "fromLabel": "From {price}",
-      "exclVatLabel": "Excl. VAT"
+      "fromLabel": "Från {price}",
+      "exclVatLabel": "Exkl. moms"
     },
     "mobileActions": {
-      "selectOptionsLabel": "Select Options",
-      "selectVariantLabel": "Select variant",
-      "outOfStockLabel": "Out of stock",
-      "addToCartLabel": "Add to cart"
+      "selectOptionsLabel": "Välj alternativ",
+      "selectVariantLabel": "Välj variant",
+      "outOfStockLabel": "Slut i lager",
+      "addToCartLabel": "Lägg i varukorg"
     },
     "optionSelect": {
-      "selectLabel": "Select {title}"
+      "selectLabel": "Välj {title}"
     },
     "tabs": {
-      "descriptionLabel": "Description",
-      "specificationsLabel": "Specifications",
-      "weightLabel": "Weight",
-      "weightValue": "{weight} grams",
-      "dimensionsLabel": "Dimensions (HxWxL)",
+      "descriptionLabel": "Beskrivning",
+      "specificationsLabel": "Specifikationer",
+      "weightLabel": "Vikt",
+      "weightValue": "{weight} gram",
+      "dimensionsLabel": "Mått (HxBxL)",
       "dimensionsValue": "{height}mm x {width}mm x {length}mm"
     },
     "variantsTable": {
       "skuHeader": "SKU",
-      "priceHeader": "Price",
-      "quantityHeader": "Quantity",
-      "chooseVariantLabel": "Choose product variant(s) above",
-      "addToCartLabel": "Add to cart"
+      "priceHeader": "Pris",
+      "quantityHeader": "Antal",
+      "chooseVariantLabel": "Välj produktvariant(er) ovan",
+      "addToCartLabel": "Lägg i varukorg"
     },
     "relatedProducts": {
-      "heading": "Other customers also viewed"
+      "heading": "Andra kunder har också tittat på"
     }
   },
   "Catalog": {
     "breadcrumb": {
-      "productsLabel": "Products",
-      "allProductsLabel": "All products"
+      "productsLabel": "Produkter",
+      "allProductsLabel": "Alla produkter"
     },
     "categoryList": {
-      "heading": "Categories",
-      "clearLabel": "Clear"
+      "heading": "Kategorier",
+      "clearLabel": "Rensa"
     },
     "searchInResults": {
-      "searchInListPlaceholder": "Search in {listName}",
-      "searchProductsPlaceholder": "Search in products",
-      "searchDisabledTooltip": "Install a search provider to enable product search"
+      "searchInListPlaceholder": "Sök i {listName}",
+      "searchProductsPlaceholder": "Sök i produkter",
+      "searchDisabledTooltip": "Installera en sökleverantör för att aktivera produktsökning"
     },
     "sortProducts": {
-      "sortByLabel": "Sort by:",
-      "sortByTooltip": "Sort by",
-      "latestArrivalsLabel": "Latest Arrivals",
-      "priceLowToHighLabel": "Price: Low -> High",
-      "priceHighToLowLabel": "Price: High -> Low"
+      "sortByLabel": "Sortera efter:",
+      "sortByTooltip": "Sortera efter",
+      "latestArrivalsLabel": "Senaste nyheter",
+      "priceLowToHighLabel": "Pris: Lågt -> Högt",
+      "priceHighToLowLabel": "Pris: Högt -> Lågt"
     },
-    "noProductsFoundMessage": "No products found for this category.",
+    "noProductsFoundMessage": "Inga produkter hittades för denna kategori.",
     "categoryTemplate": {
-      "backToAllProductsLabel": "Back to all products"
+      "backToAllProductsLabel": "Tillbaka till alla produkter"
     }
   },
   "Home": {
     "productRail": {
-      "viewAllLabel": "View all"
+      "viewAllLabel": "Visa alla"
     },
     "hero": {
-      "bannerAlt": "Hero background",
-      "eyebrow": "Be light on your feet",
-      "heading": "Portable Bestsellers",
-      "subheading": "See our widest selection of electronics",
-      "githubRepoLabel": "Github Repository"
+      "bannerAlt": "Hero-bakgrund",
+      "eyebrow": "Res lätt",
+      "heading": "Bärbara bästsäljare",
+      "subheading": "Se vårt bredaste sortiment av elektronik",
+      "githubRepoLabel": "Github-repository"
     }
   },
   "Shipping": {
     "freeShippingNudge": {
-      "unlockedLabel": "Free Shipping unlocked!",
-      "unlockPrompt": "Unlock Free Shipping",
-      "remainingMessage": "Only <amount></amount> away",
-      "viewCartLabel": "View cart",
-      "viewProductsLabel": "View Products"
+      "unlockedLabel": "Fri frakt upplåst!",
+      "unlockPrompt": "Lås upp fri frakt",
+      "remainingMessage": "Endast <amount></amount> kvar",
+      "viewCartLabel": "Visa varukorg",
+      "viewProductsLabel": "Visa produkter"
     }
   },
   "Quotes": {
     "requestQuoteConfirmation": {
-      "title": "Submit request for quote",
-      "description": "You are about to request a quote for the cart. If you confirm, the cart will be converted to a quote.",
-      "cancelLabel": "Cancel",
-      "submitLabel": "Submit",
-      "errorToast": "Failed to create quote request"
+      "title": "Skicka offertförfrågan",
+      "description": "Du är på väg att begära en offert för varukorgen. Om du bekräftar kommer varukorgen att omvandlas till en offert.",
+      "cancelLabel": "Avbryt",
+      "submitLabel": "Skicka",
+      "errorToast": "Det gick inte att skapa offertförfrågan"
     },
     "requestQuotePrompt": {
-      "title": "Request a quote",
-      "loginLabel": "Log in",
-      "orLabel": " or ",
-      "createAccountLabel": "create an account",
-      "addProductsStep": "Add products to your cart",
-      "openCartStep": "Open cart & click \"Request a quote\"",
-      "followUpMessage": "We will then get back to you as soon as possible over email"
+      "title": "Begär en offert",
+      "loginLabel": "Logga in",
+      "orLabel": "eller",
+      "createAccountLabel": "skapa ett konto",
+      "addProductsStep": "Lägg produkter i din varukorg",
+      "openCartStep": "Öppna varukorgen och klicka på \"Begär offert\"",
+      "followUpMessage": "Vi återkommer sedan till dig så snart som möjligt via e-post"
     }
   },
   "Order": {
     "billingDetails": {
-      "heading": "Billing Address"
+      "heading": "Fakturaadress"
     },
     "help": {
-      "heading": "Need help?",
-      "contactLabel": "Contact",
-      "returnsExchangesLabel": "Returns & Exchanges"
+      "heading": "Behöver du hjälp?",
+      "contactLabel": "Kontakt",
+      "returnsExchangesLabel": "Returer och byten"
     },
     "item": {
       "originalLabel": "Original: "
     },
     "orderDetails": {
-      "heading": "Details",
-      "orderNumberLabel": "Order Number",
-      "orderDateLabel": "Order Date",
-      "confirmationSentMessage": "We have sent the order confirmation details to <email></email>."
+      "heading": "Detaljer",
+      "orderNumberLabel": "Ordernummer",
+      "orderDateLabel": "Orderdatum",
+      "confirmationSentMessage": "Vi har skickat orderbekräftelsens detaljer till <email></email>."
     },
     "summary": {
-      "heading": "Order Summary",
-      "subtotalLabel": "Subtotal",
-      "discountLabel": "Discount",
-      "shippingLabel": "Shipping",
-      "taxesLabel": "Taxes",
-      "totalLabel": "Total"
+      "heading": "Ordersammanfattning",
+      "subtotalLabel": "Delsumma",
+      "discountLabel": "Rabatt",
+      "shippingLabel": "Frakt",
+      "taxesLabel": "Moms",
+      "totalLabel": "Totalt"
     },
     "paymentDetails": {
-      "heading": "Payment",
-      "paymentMethodLabel": "Payment method",
-      "paymentDetailsLabel": "Payment details",
+      "heading": "Betalning",
+      "paymentMethodLabel": "Betalningsmetod",
+      "paymentDetailsLabel": "Betalningsdetaljer",
       "maskedCardNumber": "**** **** **** {last4}",
-      "paidAtMessage": "{amount} paid at {date}"
+      "paidAtMessage": "{amount} betalades {date}"
     },
     "shippingDetails": {
-      "heading": "Delivery Address"
+      "heading": "Leveransadress"
     },
     "completedTemplate": {
-      "thankYouLabel": "Thank you!",
-      "orderPlacedMessage": "Your order was placed successfully.",
-      "summaryHeading": "Summary"
+      "thankYouLabel": "Tack!",
+      "orderPlacedMessage": "Din order har lagts framgångsrikt.",
+      "summaryHeading": "Sammanfattning"
     },
     "detailsTemplate": {
-      "backLabel": "Back"
+      "backLabel": "Tillbaka"
     }
   },
   "BcTest": {
-    "heading": "Business Central API Operations",
-    "errorLabel": "Error",
-    "unknownErrorMessage": "Unknown error"
+    "heading": "Business Central API-åtgärder",
+    "errorLabel": "Fel",
+    "unknownErrorMessage": "Okänt fel"
   },
   "MetaDescription": {
-    "storeSuffix": "| Medusa Store"
+    "storeSuffix": "| Nimbus Nordic"
   }
 }
