@@ -10,6 +10,7 @@ import { StoreQuoteResponse } from "@/types/quote"
 import { ArrowUturnLeft, CheckCircleSolid } from "@medusajs/icons"
 import { AdminOrderLineItem, AdminOrderPreview } from "@medusajs/types"
 import { Container, Heading, Text, toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import React, { useMemo, useState } from "react"
 import QuoteMessages from "../quote-messages"
@@ -29,6 +30,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
   preview,
   countryCode,
 }) => {
+  const t = useTranslations("Account.quoteDetails")
   const order = quote.draft_order
   const originalItemsMap = useMemo(() => {
     return new Map<string, AdminOrderLineItem>(
@@ -48,7 +50,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
           data-testid="back-to-overview-button"
         >
           <Button variant="secondary">
-            <ArrowUturnLeft /> Back
+            <ArrowUturnLeft /> {t("backLabel")}
           </Button>
         </LocalizedClientLink>
       </div>
@@ -60,7 +62,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
               <div className="flex items-center justify-between px-6 py-4">
                 <Text className="txt-compact-small">
                   <CheckCircleSolid className="inline-block mr-2 text-green-500 text-lg" />
-                  Quote accepted by customer. Order is ready for processing.
+                  {t("acceptedNoticeMessage")}
                 </Text>
 
                 <Button
@@ -71,7 +73,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                     )
                   }
                 >
-                  View Order
+                  {t("viewOrderLabel")}
                 </Button>
               </div>
             </Container>
@@ -92,7 +94,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
             <div className="py-4">
               <div className="flex items-center justify-between mb-2 px-6">
                 <span className="txt-small text-ui-fg-subtle font-semibold">
-                  Current Total
+                  {t("currentTotalLabel")}
                 </span>
 
                 <span className="txt-small text-ui-fg-subtle">
@@ -102,7 +104,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
 
               <div className="flex items-center justify-between px-6">
                 <span className="txt-small text-ui-fg-subtle font-semibold">
-                  New Total
+                  {t("newTotalLabel")}
                 </span>
 
                 <span className="txt-small text-ui-fg-subtle">
@@ -115,8 +117,8 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
           {quote.status === "pending_customer" && (
             <div className="flex gap-x-3 justify-end my-4">
               <PromptModal
-                title="Reject Quote?"
-                description="Are you sure you want to reject quote? This action is irreversible."
+                title={t("rejectQuoteConfirmTitle")}
+                description={t("rejectQuoteConfirmDescription")}
                 handleAction={() => {
                   setIsRejecting(true)
 
@@ -127,13 +129,13 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                 isLoading={isRejecting}
               >
                 <Button size="small" variant="secondary">
-                  Reject Quote
+                  {t("rejectQuoteLabel")}
                 </Button>
               </PromptModal>
 
               <PromptModal
-                title="Accept Quote?"
-                description="Are you sure you want to accept quote? This action is irreversible."
+                title={t("acceptQuoteConfirmTitle")}
+                description={t("acceptQuoteConfirmDescription")}
                 handleAction={() => {
                   setIsAccepting(true)
 
@@ -144,7 +146,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                 isLoading={isAccepting}
               >
                 <Button size="small" variant="primary">
-                  Accept Quote
+                  {t("acceptQuoteLabel")}
                 </Button>
               </PromptModal>
             </div>
@@ -156,7 +158,9 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
         <div className="col-span-2 flex flex-col gap-y-2">
           <Container className="flex gap-x-3 justify-between">
             <div className="text-sm">
-              <span className="font-semibold text-ui-fg-subtle">Quote ID:</span>{" "}
+              <span className="font-semibold text-ui-fg-subtle">
+                {t("quoteIdLabel")}
+              </span>{" "}
               #<span>{quote.draft_order.display_id}</span>
             </div>
 
@@ -165,22 +169,22 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
 
           <Container>
             <Heading level="h3" className="mb-2">
-              Customer
+              {t("customerHeading")}
             </Heading>
 
             <div className="text-sm text-ui-fg-subtle">
               <div className="flex justify-between">
-                <Text>Email</Text>
+                <Text>{t("emailLabel")}</Text>
                 <Text>{quote.customer?.email || "-"}</Text>
               </div>
 
               <div className="flex justify-between">
-                <Text>Phone</Text>
+                <Text>{t("phoneLabel")}</Text>
                 <Text>{quote.customer?.phone || "-"}</Text>
               </div>
 
               <div className="flex justify-between">
-                <Text>Spend Limit</Text>
+                <Text>{t("spendLimitLabel")}</Text>
                 <Text>
                   {(quote.customer?.employee?.spending_limit &&
                     formatAmount(
@@ -195,12 +199,12 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
 
           <Container>
             <Heading level="h3" className="mb-2">
-              Company
+              {t("companyHeading")}
             </Heading>
 
             <div className="text-sm text-ui-fg-subtle">
               <div className="flex justify-between">
-                <Text>Name</Text>
+                <Text>{t("nameLabel")}</Text>
                 <Text>{quote.customer?.employee?.company?.name || "-"}</Text>
               </div>
             </div>

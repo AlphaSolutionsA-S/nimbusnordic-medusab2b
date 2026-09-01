@@ -11,6 +11,7 @@ import { RadioGroup, Radio as RadioGroupOption } from "@headlessui/react"
 import { CheckCircleSolid } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Heading, Text, clx } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -23,6 +24,7 @@ const Shipping: React.FC<ShippingProps> = ({
   cart,
   availableShippingMethods,
 }) => {
+  const t = useTranslations("Checkout.shipping")
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -74,7 +76,7 @@ const Shipping: React.FC<ShippingProps> = ({
                 !isOpen && cart.shipping_methods?.length === 0,
             })}
           >
-            Delivery Method
+            {t("heading")}
             {!isOpen && (cart.shipping_methods?.length ?? 0) > 0 && (
               <CheckCircleSolid />
             )}
@@ -90,7 +92,7 @@ const Shipping: React.FC<ShippingProps> = ({
                   className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
                   data-testid="edit-delivery-button"
                 >
-                  Edit
+                  {t("editLabel")}
                 </button>
               </Text>
             )}
@@ -148,7 +150,7 @@ const Shipping: React.FC<ShippingProps> = ({
               disabled={!cart.shipping_methods?.[0]}
               data-testid="submit-delivery-option-button"
             >
-              Next step
+              {t("nextStepLabel")}
             </Button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import { Text } from "@medusajs/ui"
 
 import InteractiveLink from "@/modules/common/components/interactive-link"
 import ProductPreview from "@/modules/products/components/product-preview"
+import { getTranslations } from "next-intl/server"
 
 export default async function ProductRail({
   collection,
@@ -12,6 +13,7 @@ export default async function ProductRail({
   collection: HttpTypes.StoreCollection
   region: HttpTypes.StoreRegion
 }) {
+  const t = await getTranslations("Home.productRail")
   const { products } = collection
 
   if (!products) {
@@ -28,7 +30,7 @@ export default async function ProductRail({
       <div className="flex justify-between mb-8">
         <Text className="text-base">{collection.title}</Text>
         <InteractiveLink href={`/collections/${collection.handle}`}>
-          View all
+          {t("viewAllLabel")}
         </InteractiveLink>
       </div>
       <ul className="grid grid-cols-1 small:grid-cols-4 gap-x-3 gap-y-3 small:gap-y-36">

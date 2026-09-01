@@ -11,9 +11,11 @@ import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-pr
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
+import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 
 export async function NavigationHeader() {
+  const t = await getTranslations("Layout.nav")
   const customer = await retrieveCustomer().catch(() => null)
   const cart = await retrieveCart()
 
@@ -28,7 +30,7 @@ export async function NavigationHeader() {
             >
               <h1 className="small:text-base text-sm font-medium flex items-center">
                 <LogoIcon className="inline mr-2" />
-                Medusa B2B Starter
+                {t("brandName")}
               </h1>
             </LocalizedClientLink>
 
@@ -47,9 +49,9 @@ export async function NavigationHeader() {
               <input
                 disabled
                 type="text"
-                placeholder="Search for products"
+                placeholder={t("searchPlaceholder")}
                 className="bg-gray-100 text-zinc-900 px-4 py-2 rounded-full pr-10 shadow-borders-base hidden small:inline-block hover:cursor-not-allowed"
-                title="Install a search provider to enable product search"
+                title={t("searchDisabledTooltip")}
               />
             </div>
 
@@ -62,14 +64,14 @@ export async function NavigationHeader() {
                   // disabled={isPendingApproval}
                 >
                   <FilePlus />
-                  <span className="hidden small:inline-block">Quote</span>
+                  <span className="hidden small:inline-block">{t("quoteLabel")}</span>
                 </button>
               </RequestQuoteConfirmation>
             ) : (
               <RequestQuotePrompt>
                 <button className="flex gap-1.5 items-center rounded-2xl bg-none shadow-none border-none hover:bg-neutral-100 px-2 py-1">
                   <FilePlus />
-                  <span className="hidden small:inline-block">Quote</span>
+                  <span className="hidden small:inline-block">{t("quoteLabel")}</span>
                 </button>
               </RequestQuotePrompt>
             )}

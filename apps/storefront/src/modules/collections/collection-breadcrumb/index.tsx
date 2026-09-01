@@ -1,5 +1,6 @@
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
+import { getTranslations } from "next-intl/server"
 
 const CollectionBreadcrumbItem = ({
   title,
@@ -20,14 +21,16 @@ const CollectionBreadcrumbItem = ({
   )
 }
 
-const CollectionBreadcrumb = ({
+const CollectionBreadcrumb = async ({
   collection,
 }: {
   collection: HttpTypes.StoreCollection
 }) => {
+  const t = await getTranslations("Catalog.breadcrumb")
+
   return (
     <ul className="flex items-center gap-x-3 text-sm">
-      <CollectionBreadcrumbItem title="Products" key="base" />
+      <CollectionBreadcrumbItem title={t("productsLabel")} key="base" />
       <span className="text-neutral-500">{">"}</span>
       <CollectionBreadcrumbItem
         title={collection.title}

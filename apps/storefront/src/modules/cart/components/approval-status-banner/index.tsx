@@ -3,8 +3,10 @@ import { B2BCart } from "@/types"
 import { ApprovalStatusType } from "@/types/approval"
 import { CheckMini, LockClosedSolid, XMarkMini } from "@medusajs/icons"
 import { Container, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 
 const ApprovalStatusBanner = ({ cart }: { cart: B2BCart }) => {
+  const t = useTranslations("Cart.approvalStatusBanner")
   const cartApprovalStatus = cart.approval_status?.status
 
   if (!cartApprovalStatus) {
@@ -16,7 +18,7 @@ const ApprovalStatusBanner = ({ cart }: { cart: B2BCart }) => {
       {cartApprovalStatus === ApprovalStatusType.PENDING && (
         <>
           <LockClosedSolid className="w-4 h-4" />
-          <Text className="text-left">This cart is locked for approval.</Text>
+          <Text className="text-left">{t("pendingMessage")}</Text>
         </>
       )}
 
@@ -24,14 +26,16 @@ const ApprovalStatusBanner = ({ cart }: { cart: B2BCart }) => {
         <>
           <XMarkMini className="w-4 h-4" />
           <Text className="text-left">
-            This cart has been rejected. You can re-request approval from the{" "}
-            <LocalizedClientLink
-              href="/checkout"
-              className="text-ui-bg-interactive hover:text-ui-fg-interactive-hover"
-            >
-              checkout page
-            </LocalizedClientLink>
-            .
+            {t.rich("rejectedMessage", {
+              link: (chunks) => (
+                <LocalizedClientLink
+                  href="/checkout"
+                  className="text-ui-bg-interactive hover:text-ui-fg-interactive-hover"
+                >
+                  {chunks}
+                </LocalizedClientLink>
+              ),
+            })}
           </Text>
         </>
       )}
@@ -39,9 +43,7 @@ const ApprovalStatusBanner = ({ cart }: { cart: B2BCart }) => {
       {cartApprovalStatus === ApprovalStatusType.APPROVED && (
         <>
           <CheckMini className="w-4 h-4" />
-          <Text className="text-left">
-            This cart has been approved and can now be completed.
-          </Text>
+          <Text className="text-left">{t("approvedMessage")}</Text>
         </>
       )}
     </Container>

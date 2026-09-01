@@ -3,12 +3,14 @@ import DocumentIcon from "@/modules/common/icons/document"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import type { BCOrder } from "@/types/bc-order"
 import { Container } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 
 type BcOrderCardProps = {
   order: BCOrder
 }
 
-const BcOrderCard = ({ order }: BcOrderCardProps) => {
+const BcOrderCard = async ({ order }: BcOrderCardProps) => {
+  const t = await getTranslations("Account.bcOrderCard")
   const orderDate = new Date(order.orderDate)
 
   const formattedAmount = new Intl.NumberFormat("en-GB", {
@@ -60,7 +62,7 @@ const BcOrderCard = ({ order }: BcOrderCardProps) => {
           className="flex items-center pl-4 text-small-regular text-ui-fg-base underline"
           data-testid="bc-order-details-link"
         >
-          Details
+          {t("detailsLabel")}
         </LocalizedClientLink>
       </div>
     </Container>

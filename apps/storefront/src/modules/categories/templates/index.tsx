@@ -8,10 +8,11 @@ import PaginatedProducts from "@/modules/store/templates/paginated-products"
 import { ArrowUturnLeft } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
-export default function CategoryTemplate({
+export default async function CategoryTemplate({
   categories,
   currentCategory,
   sortBy,
@@ -24,6 +25,7 @@ export default function CategoryTemplate({
   page?: string
   countryCode: string
 }) {
+  const t = await getTranslations("Catalog")
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
 
@@ -52,14 +54,14 @@ export default function CategoryTemplate({
             {currentCategory.products?.length === 0 ? (
               <Container className="flex flex-col gap-2 justify-center text-center items-center text-sm text-neutral-500">
                 <Text className="font-medium">
-                  No products found for this category.
+                  {t("noProductsFoundMessage")}
                 </Text>
                 <LocalizedClientLink
                   href="/store"
                   className="flex gap-2 items-center"
                 >
                   <Button variant="secondary">
-                    Back to all products
+                    {t("categoryTemplate.backToAllProductsLabel")}
                     <ArrowUturnLeft className="w-4 h-4" />
                   </Button>
                 </LocalizedClientLink>

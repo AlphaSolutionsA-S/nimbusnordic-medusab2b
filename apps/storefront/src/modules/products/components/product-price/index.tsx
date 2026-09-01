@@ -1,12 +1,14 @@
 import { clx, Text } from "@medusajs/ui"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
+import { useTranslations } from "next-intl"
 
 export default function ProductPrice({
   product,
 }: {
   product: HttpTypes.StoreProduct
 }) {
+  const t = useTranslations("Products.price")
   const { cheapestPrice } = getProductPrice({
     product,
   })
@@ -27,9 +29,11 @@ export default function ProductPrice({
           data-testid="product-price"
           data-value={cheapestPrice.calculated_price_number}
         >
-          From {cheapestPrice.calculated_price}
+          {t("fromLabel", { price: cheapestPrice.calculated_price })}
         </Text>
-        <Text className="text-neutral-600 text-[0.6rem]">Excl. VAT</Text>
+        <Text className="text-neutral-600 text-[0.6rem]">
+          {t("exclVatLabel")}
+        </Text>
       </span>
       {cheapestPrice.price_type === "sale" && (
         <p

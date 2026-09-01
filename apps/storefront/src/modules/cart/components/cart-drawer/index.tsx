@@ -17,6 +17,7 @@ import { ExclamationCircle, LockClosedSolidMini } from "@medusajs/icons"
 import { StoreCart } from "@medusajs/types"
 import { Drawer, Text } from "@medusajs/ui"
 import { usePathname } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 type CartDrawerProps = {
@@ -29,6 +30,7 @@ const CartDrawer = ({
   freeShippingPrices,
   ...props
 }: CartDrawerProps) => {
+  const t = useTranslations("Cart.cartDrawer")
   const [activeTimer, setActiveTimer] = useState<NodeJS.Timer | undefined>(
     undefined
   )
@@ -132,7 +134,7 @@ const CartDrawer = ({
                     amount: subtotal,
                     currency_code: cart.currency_code,
                   })
-                : "Cart"}
+                : t("cartLabel")}
             </span>
             <div className="bg-blue-500 text-white text-xs px-1.5 py-px rounded-full">
               {totalItems}
@@ -146,8 +148,8 @@ const CartDrawer = ({
           <Drawer.Header className="flex self-center">
             <Drawer.Title>
               {totalItems > 0
-                ? `You have ${totalItems} items in your cart`
-                : "Your cart is empty"}
+                ? t("itemsInCartTitle", { count: totalItems })
+                : t("emptyCartTitle")}
             </Drawer.Title>
           </Drawer.Header>
           {cart?.approvals && cart.approvals.length > 0 && (
@@ -177,7 +179,7 @@ const CartDrawer = ({
                     />
                   )}
                   <div className="flex justify-between">
-                    <Text>Subtotal</Text>
+                    <Text>{t("subtotalLabel")}</Text>
                     <Text>
                       {convertToLocale({
                         amount: subtotal,
@@ -192,7 +194,7 @@ const CartDrawer = ({
                         className="w-full"
                         size="large"
                       >
-                        View Cart
+                        {t("viewCartLabel")}
                       </Button>
                     </LocalizedClientLink>
                     <LocalizedClientLink href={checkoutPath}>
@@ -204,17 +206,16 @@ const CartDrawer = ({
                         <LockClosedSolidMini />
                         {customer
                           ? spendLimitExceeded
-                            ? "Spending Limit Exceeded"
-                            : "Secure Checkout"
-                          : "Log in to checkout"}
+                            ? t("spendingLimitExceededLabel")
+                            : t("secureCheckoutLabel")
+                          : t("loginToCheckoutLabel")}
                       </Button>
                     </LocalizedClientLink>
                     {spendLimitExceeded && (
                       <div className="flex items-center gap-x-2 bg-neutral-100 p-3 rounded-md shadow-borders-base">
                         <ExclamationCircle className="text-orange-500 w-fit overflow-visible" />
                         <p className="text-neutral-950 text-xs">
-                          This order exceeds your spending limit. Please contact
-                          your manager for approval.
+                          {t("spendingLimitMessage")}
                         </p>
                       </div>
                     )}

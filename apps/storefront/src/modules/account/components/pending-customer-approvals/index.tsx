@@ -1,11 +1,14 @@
 import ApprovalCard from "@/modules/account/components/approval-card"
 import { Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 
-const PendingCustomerApprovals = ({
+const PendingCustomerApprovals = async ({
   cartsWithApprovals,
 }: {
   cartsWithApprovals: any[]
 }) => {
+  const t = await getTranslations("Account.pendingCustomerApprovals")
+
   if (cartsWithApprovals.length) {
     return (
       <div className="flex flex-col gap-y-2 w-full">
@@ -25,10 +28,8 @@ const PendingCustomerApprovals = ({
       className="w-full flex flex-col items-center gap-y-4"
       data-testid="no-approvals-container"
     >
-      <Text className="text-large-semi">Nothing to see here</Text>
-      <Text className="text-base-regular">
-        You don&apos;t have any approvals yet.
-      </Text>
+      <Text className="text-large-semi">{t("emptyHeading")}</Text>
+      <Text className="text-base-regular">{t("emptyMessage")}</Text>
     </div>
   )
 }

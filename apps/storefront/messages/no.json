@@ -1,5 +1,719 @@
 {
   "Common": {
-    "welcome": "Welcome"
+    "welcome": "Welcome",
+    "deleteButton": {
+      "removeLabel": "Remove"
+    },
+    "promptModal": {
+      "cancelLabel": "Cancel",
+      "continueLabel": "Continue"
+    },
+    "thumbnail": {
+      "altFallback": "test"
+    },
+    "notFound": {
+      "headingLabel": "Page not found",
+      "pageMessage": "The page you tried to access does not exist.",
+      "goToFrontpageLabel": "Go to frontpage"
+    }
+  },
+  "Layout": {
+    "nav": {
+      "brandName": "Medusa B2B Starter",
+      "searchPlaceholder": "Search for products",
+      "searchDisabledTooltip": "Install a search provider to enable product search",
+      "quoteLabel": "Quote"
+    },
+    "megaMenu": {
+      "productsLabel": "Products"
+    },
+    "footer": {
+      "brandName": "Medusa Store",
+      "categoriesHeading": "Categories",
+      "collectionsHeading": "Collections",
+      "medusaHeading": "Medusa",
+      "githubLabel": "GitHub",
+      "documentationLabel": "Documentation",
+      "sourceCodeLabel": "Source code",
+      "copyright": "© {year} Medusa Store. All rights reserved.",
+      "poweredByLabel": "Powered by"
+    },
+    "cartMismatchBanner": {
+      "message": "Cart is not connected to your account",
+      "connectLabel": "Connect cart",
+      "connectingLabel": "Connecting.."
+    },
+    "promoBanner": {
+      "buildYourOwnLabel": "Build your own B2B store with this starter:",
+      "deployToMedusaCloudLabel": "Deploy to Medusa Cloud"
+    }
+  },
+  "Checkout": {
+    "contactDetails": {
+      "heading": "Contact Details",
+      "editLabel": "Edit",
+      "emailLabel": "Email",
+      "invoiceRecipientLabel": "Invoice recipient",
+      "costCenterLabel": "Cost center",
+      "requisitionNumberLabel": "Requisition number",
+      "doorCodeLabel": "Door code/goods mark",
+      "notesLabel": "Notes",
+      "notesHelpText": "The note will only appear on the invoice and order confirmation and will not be read by the merchant.",
+      "reviewOrderLabel": "Review order",
+      "nextStepLabel": "Next step",
+      "notePrefix": "Note: {notes}"
+    },
+    "addressForm": {
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "phoneLabel": "Phone",
+      "companyNameLabel": "Company name",
+      "addressLabel": "Address",
+      "postalCodeLabel": "Postal code",
+      "cityLabel": "City",
+      "provinceLabel": "Province",
+      "countryPlaceholder": "Country",
+      "savedAddressPrompt": "Hi {name}, do you want to use one of your saved addresses?"
+    },
+    "addressSelect": {
+      "choosePlaceholder": "Choose an address"
+    },
+    "billingAddress": {
+      "heading": "Billing Address",
+      "sameAsShippingLabel": "Same as shipping address",
+      "nextStepLabel": "Next step"
+    },
+    "company": {
+      "heading": "Company"
+    },
+    "companyForm": {
+      "orderOnBehalfOf": "Order on behalf of {companyName}",
+      "customCheckoutLabel": "Custom checkout"
+    },
+    "paymentButton": {
+      "selectPaymentMethodLabel": "Select a payment method",
+      "approvalRequiredBoth": "This order requires approval by both a company admin and a sales manager.",
+      "approvalRequiredAdmin": "This order requires approval by a company admin.",
+      "approvalRequiredSalesManager": "This order requires approval by a sales manager.",
+      "approvalRequestedLabel": "Approval Requested",
+      "requestApprovalLabel": "Request Approval",
+      "placeOrderLabel": "Place order"
+    },
+    "paymentTest": {
+      "attentionLabel": "Attention:",
+      "testingOnlyMessage": "For testing purposes only."
+    },
+    "payment": {
+      "heading": "Payment Method",
+      "editLabel": "Edit",
+      "enterCardDetailsLabel": "Enter your card details:",
+      "enterCardDetailsButtonLabel": " Enter card details",
+      "nextStepLabel": "Next step",
+      "giftCardLabel": "Gift card",
+      "paymentMethodLabel": "Payment method"
+    },
+    "promotionCode": {
+      "enterPromotionCodeLabel": "Enter Promotion Code",
+      "applyLabel": "Apply",
+      "promotionAppliedOne": "Promotion applied:",
+      "promotionAppliedOther": "Promotions applied:",
+      "removeDiscountSrLabel": "Remove discount code from order"
+    },
+    "review": {
+      "agreementText": "By Completing this order, I agree to Medusa's <termsLink>Terms of Sale ↗</termsLink> and <privacyLink>Privacy Policy ↗</privacyLink>",
+      "placeOrderLabel": "Place Order"
+    },
+    "shippingAddress": {
+      "heading": "Shipping Address",
+      "editLabel": "Edit",
+      "nextStepLabel": "Next step"
+    },
+    "shipping": {
+      "heading": "Delivery Method",
+      "editLabel": "Edit",
+      "nextStepLabel": "Next step"
+    },
+    "checkoutForm": {
+      "backToCartLabel": "Back to shopping cart"
+    }
+  },
+  "Account": {
+    "login": {
+      "heading": "Log in for faster<br></br>checkout.",
+      "emailLabel": "Email",
+      "emailValidationMessage": "Enter a valid email address.",
+      "passwordLabel": "Password",
+      "rememberMeLabel": "Remember me",
+      "submitLabel": "Log in",
+      "registerLinkLabel": "Register",
+      "bannerAlt": "Login banner background"
+    },
+    "register": {
+      "heading": "Create your<br></br>company account.",
+      "emailLabel": "Email",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "companyNameLabel": "Company name",
+      "passwordLabel": "Password",
+      "companyAddressLabel": "Company address",
+      "companyCityLabel": "Company city",
+      "companyStateLabel": "Company state",
+      "companyZipLabel": "Company zip",
+      "countryPlaceholder": "Select a country",
+      "currencyPlaceholder": "Select a currency",
+      "termsLabel": "I agree to the terms and conditions.",
+      "submitLabel": "Register",
+      "alreadyMemberText": "Already a member?",
+      "loginLinkLabel": "Log in"
+    },
+    "accountButton": {
+      "loginLabel": "Log in"
+    },
+    "nav": {
+      "accountLabel": "Account",
+      "helloLabel": "Hello {name}",
+      "profileLabel": "Profile",
+      "companyLabel": "Company",
+      "addressesLabel": "Addresses",
+      "ordersLabel": "Orders",
+      "bcOrdersLabel": "BC Orders",
+      "claimsLabel": "Claims",
+      "approvalsLabel": "Approvals",
+      "quotesLabel": "Quotes",
+      "logoutLabel": "Log out",
+      "overviewLabel": "Overview"
+    },
+    "overview": {
+      "helloLabel": "Hello {name}",
+      "signedInAsLabel": "Signed in as:",
+      "profileHeading": "Profile",
+      "completedLabel": "Completed",
+      "addressesHeading": "Addresses",
+      "savedLabel": "Saved",
+      "recentOrdersHeading": "Recent orders",
+      "noRecentOrdersMessage": "No recent orders",
+      "previouslyPurchasedHeading": "Previously purchased items",
+      "noPreviouslyPurchasedMessage": "No previously purchased items"
+    },
+    "orderCard": {
+      "itemsCount": "{count} items",
+      "itemCount": "{count} item",
+      "detailsLabel": "Details"
+    },
+    "previouslyPurchased": {
+      "buyAgainLabel": "Buy again"
+    },
+    "profileCard": {
+      "firstNameLabel": "First Name",
+      "lastNameLabel": "Last Name",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone",
+      "cancelLabel": "Cancel",
+      "saveLabel": "Save",
+      "editLabel": "Edit",
+      "currentPasswordLabel": "Current Password",
+      "newPasswordLabel": "New Password",
+      "confirmPasswordLabel": "Confirm Password",
+      "passwordLabel": "Password",
+      "changePasswordLabel": "Change Password",
+      "customerUpdatedToast": "Customer updated",
+      "customerUpdateErrorToast": "Error updating customer",
+      "passwordMismatchToast": "New passwords do not match",
+      "passwordTooShortToast": "Password must be at least 8 characters",
+      "passwordUpdatedToast": "Password updated",
+      "passwordUpdateErrorToast": "Error updating password"
+    },
+    "companyCard": {
+      "companyNameLabel": "Company Name",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone",
+      "addressLabel": "Address",
+      "cityLabel": "City",
+      "stateLabel": "State",
+      "zipLabel": "Zip",
+      "countryLabel": "Country",
+      "currencyLabel": "Currency",
+      "spendingLimitResetFrequencyLabel": "Spending Limit Reset Frequency",
+      "bcCustomerNumberLabel": "BC Customer Number",
+      "cancelLabel": "Cancel",
+      "saveLabel": "Save",
+      "editLabel": "Edit",
+      "companyUpdatedToast": "Company updated",
+      "companyUpdateErrorToast": "Error updating company"
+    },
+    "securityCard": {
+      "passwordLabel": "Password",
+      "editLabel": "Edit",
+      "notImplementedToast": "Not implemented"
+    },
+    "accountInfo": {
+      "defaultErrorMessage": "An error occurred, please try again",
+      "cancelLabel": "Cancel",
+      "editLabel": "Edit",
+      "updatedSuccessfullyMessage": "{label} updated succesfully",
+      "saveChangesLabel": "Save changes"
+    },
+    "quoteCard": {
+      "seeDetailsLabel": "See details"
+    },
+    "claimsPageContent": {
+      "defaultTitle": "Claims"
+    },
+    "claimsUnavailable": {
+      "message": "The claims information is temporarily unavailable. Please try again later."
+    },
+    "addressCard": {
+      "newAddressLabel": "New address",
+      "addAddressHeading": "Add address",
+      "editAddressHeading": "Edit address",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "companyLabel": "Company",
+      "addressLabel": "Address",
+      "apartmentLabel": "Apartment, suite, etc.",
+      "postalCodeLabel": "Postal code",
+      "cityLabel": "City",
+      "provinceLabel": "Province / State",
+      "phoneLabel": "Phone",
+      "cancelLabel": "Cancel",
+      "saveLabel": "Save",
+      "editLabel": "Edit",
+      "removeLabel": "Remove"
+    },
+    "employeeCard": {
+      "employeeDeletedToast": "Employee deleted",
+      "employeeDeleteErrorToast": "Error deleting employee",
+      "employeeUpdatedToast": "Employee updated",
+      "employeeUpdateErrorToast": "Error updating employee",
+      "removeLabel": "Remove",
+      "removeEmployeeHeading": "Remove Employee",
+      "removeConfirmMessage": "Are you sure you want to remove <email></email> from your team? They will no longer be able to purchase on behalf of your company.",
+      "deleteCustomerAccountLabel": "Also delete the linked customer account and login",
+      "cancelLabel": "Cancel",
+      "saveLabel": "Save",
+      "editLabel": "Edit",
+      "youSuffixLabel": "(You)",
+      "adminBadgeLabel": "Admin",
+      "amountSpentMessage": "{amountSpent} / {limit} spent",
+      "noLimitLabel": "No limit",
+      "spendingLimitLabel": "Spending Limit",
+      "permissionsLabel": "Permissions",
+      "adminOptionLabel": "Admin",
+      "employeeOptionLabel": "Employee"
+    },
+    "inviteEmployeeCard": {
+      "employeeInvitedToast": "Employee invited",
+      "employeeInviteErrorToast": "Error inviting employee",
+      "nameLabel": "Name",
+      "firstNameLabel": "First name",
+      "lastNameLabel": "Last name",
+      "emailLabel": "Email",
+      "emailInputLabel": "Enter an email",
+      "initialPasswordLabel": "Initial password",
+      "setPasswordInputLabel": "Set an initial password",
+      "sendInviteLabel": "Send Invite"
+    },
+    "approvalCard": {
+      "orderCompletedAtLabel": "Order completed at",
+      "approvedAtLabel": "Approved at",
+      "rejectedAtLabel": "Rejected at"
+    },
+    "approvalCardActions": {
+      "confirmApproveTitle": "Are you sure you want to approve this cart?",
+      "confirmRejectTitle": "Are you sure you want to reject this cart?",
+      "confirmActionDescription": "This action cannot be undone.",
+      "rejectLabel": "Reject",
+      "approveLabel": "Approve",
+      "awaitingExternalApprovalLabel": "Awaiting External Approval",
+      "placeOrderLabel": "Place Order"
+    },
+    "pendingCustomerApprovals": {
+      "emptyHeading": "Nothing to see here",
+      "emptyMessage": "You don't have any approvals yet."
+    },
+    "approvalRequestsAdminList": {
+      "noRequestsMessage": "No requests"
+    },
+    "approvalSettingsCard": {
+      "requiresAdminApprovalLabel": "Requires Admin Approval",
+      "requiresAdminApprovalTooltip": "This setting determines whether orders require admin approval before being processed. If enabled, orders will be held until an admin approves them.",
+      "requiresSalesManagerApprovalLabel": "Requires Sales Manager Approval",
+      "requiresSalesManagerApprovalTooltip": "This setting determines whether orders require sales manager approval before being processed. If enabled, orders will be held until a sales manager approves them.",
+      "yesLabel": "Yes",
+      "noLabel": "No",
+      "updateErrorToast": "Error updating approval settings",
+      "updatedToast": "Company updated",
+      "cancelLabel": "Cancel",
+      "saveLabel": "Save",
+      "editLabel": "Edit"
+    },
+    "bcOrderCard": {
+      "detailsLabel": "Details"
+    },
+    "bcOrderOverview": {
+      "errorHeading": "Something went wrong",
+      "errorMessage": "We were unable to load your company orders. Please try again.",
+      "tryAgainLabel": "Try again",
+      "emptyHeading": "No company orders found",
+      "emptyMessage": "Try adjusting your filters to see more results."
+    },
+    "bcOrderFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "All statuses",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Order number…",
+      "clearLabel": "Clear"
+    },
+    "bcOrderReturn": {
+      "orderUnavailableError": "This order is no longer available for a return.",
+      "returnUnconfirmedError": "We could not confirm the return request. Please try again shortly.",
+      "genericReturnError": "Please review the selected lines and try again.",
+      "requestReturnLabel": "Request a return",
+      "returnRequestedHeading": "Return requested",
+      "returnCreatedMessage": "Return {number} created - status {status}.",
+      "backToOrderDetailsLabel": "Back to order details",
+      "orderNumberLabel": "Order number",
+      "billToAddressLabel": "Bill-to address",
+      "shipToAddressLabel": "Ship-to address",
+      "itemColumnLabel": "Item",
+      "orderedQuantityColumnLabel": "Ordered quantity",
+      "unitPriceColumnLabel": "Unit price",
+      "returnQuantityColumnLabel": "Return quantity",
+      "returnReasonColumnLabel": "Return reason",
+      "itemFallbackLabel": "Item",
+      "returnQuantityAriaLabel": "Return quantity for {item}",
+      "itemLowercaseFallbackLabel": "item",
+      "selectReasonPlaceholder": "Select a reason",
+      "cancelLabel": "Cancel",
+      "submitReturnRequestLabel": "Submit return request"
+    },
+    "orderOverview": {
+      "emptyMessage": "You don't have any orders yet, let us change that :)",
+      "continueShoppingLabel": "Continue shopping"
+    },
+    "bcOrderDetailTemplate": {
+      "backToBcOrdersLabel": "Back to BC orders",
+      "orderNumberHeading": "Order #{number}",
+      "customerLabel": "Customer",
+      "statusLabel": "Status",
+      "currencyLabel": "Currency",
+      "totalExcludingTaxLabel": "Total excluding tax",
+      "totalIncludingTaxLabel": "Total including tax",
+      "itemsHeading": "Items",
+      "descriptionColumnLabel": "Description",
+      "quantityColumnLabel": "Quantity",
+      "amountColumnLabel": "Amount"
+    },
+    "bcOrderNotFound": {
+      "headingLabel": "Order not found",
+      "message": "This order is unavailable."
+    },
+    "addressesPage": {
+      "heading": "Shipping Addresses",
+      "description": "View and update your shipping addresses, you can add as many as you like. Saving your addresses will make them available during checkout."
+    },
+    "approvalsPage": {
+      "heading": "Approvals",
+      "pendingHeading": "Pending",
+      "approvedHeading": "Approved",
+      "rejectedHeading": "Rejected",
+      "loadingLabel": "Loading..."
+    },
+    "companyPage": {
+      "companyDetailsHeading": "Company Details",
+      "approvalSettingsHeading": "Approval Settings",
+      "employeesHeading": "Employees",
+      "inviteEmployeesHeading": "Invite Employees"
+    },
+    "profilePage": {
+      "detailsHeading": "Details",
+      "securityHeading": "Security"
+    },
+    "ordersPage": {
+      "heading": "Orders",
+      "pendingApprovalsHeading": "Pending Approvals",
+      "completedOrdersHeading": "Completed Orders"
+    },
+    "quotesPage": {
+      "heading": "Quotes"
+    },
+    "quotesOverview": {
+      "emptyMessage": "You don't have any quotes yet"
+    },
+    "quoteStatusBadge": {
+      "acceptedLabel": "Accepted",
+      "customerRejectedLabel": "Customer Rejected",
+      "merchantRejectedLabel": "Merchant Rejected",
+      "pendingMerchantLabel": "Pending Merchant",
+      "pendingCustomerLabel": "Pending Customer"
+    },
+    "quoteMessages": {
+      "messagesHeading": "Messages",
+      "pickQuoteItemLabel": "Pick Quote Item",
+      "pickQuoteItemDescription": "Select a quote item to write a message around",
+      "selectItemPlaceholder": "Select Item",
+      "sendLabel": "Send"
+    },
+    "quoteTable": {
+      "newLabel": "New",
+      "removedLabel": "Removed",
+      "modifiedLabel": "Modified"
+    },
+    "quoteDetails": {
+      "backLabel": "Back",
+      "acceptedNoticeMessage": "Quote accepted by customer. Order is ready for processing.",
+      "viewOrderLabel": "View Order",
+      "currentTotalLabel": "Current Total",
+      "newTotalLabel": "New Total",
+      "rejectQuoteConfirmTitle": "Reject Quote?",
+      "rejectQuoteConfirmDescription": "Are you sure you want to reject quote? This action is irreversible.",
+      "rejectQuoteLabel": "Reject Quote",
+      "acceptQuoteConfirmTitle": "Accept Quote?",
+      "acceptQuoteConfirmDescription": "Are you sure you want to accept quote? This action is irreversible.",
+      "acceptQuoteLabel": "Accept Quote",
+      "quoteIdLabel": "Quote ID:",
+      "customerHeading": "Customer",
+      "emailLabel": "Email",
+      "phoneLabel": "Phone",
+      "spendLimitLabel": "Spend Limit",
+      "companyHeading": "Company",
+      "nameLabel": "Name"
+    },
+    "bcOrderDetailPage": {
+      "errorMessage": "We were unable to load this order. Please try again."
+    },
+    "bcOrdersPage": {
+      "heading": "BC Orders"
+    }
+  },
+  "Cart": {
+    "addNoteButton": {
+      "addNoteLabel": "Add note",
+      "noteLabel": "Note:"
+    },
+    "appliedPromotions": {
+      "label": "Promotions applied:"
+    },
+    "approvalStatusBanner": {
+      "pendingMessage": "This cart is locked for approval.",
+      "rejectedMessage": "This cart has been rejected. You can re-request approval from the <link>checkout page</link>.",
+      "approvedMessage": "This cart has been approved and can now be completed."
+    },
+    "cartToCsvButton": {
+      "exportLabel": "Export Cart (.csv)"
+    },
+    "emptyCartMessage": {
+      "heading": "Cart",
+      "message": "You don't have anything in your cart. Let's change that, use the link below to start browsing our products.",
+      "exploreProductsLabel": "Explore products"
+    },
+    "itemFull": {
+      "brandLabel": "BRAND"
+    },
+    "itemPreview": {
+      "noteLabel": "Note:"
+    },
+    "cartDrawer": {
+      "cartLabel": "Cart",
+      "itemsInCartTitle": "You have {count} items in your cart",
+      "emptyCartTitle": "Your cart is empty",
+      "subtotalLabel": "Subtotal",
+      "viewCartLabel": "View Cart",
+      "spendingLimitExceededLabel": "Spending Limit Exceeded",
+      "secureCheckoutLabel": "Secure Checkout",
+      "loginToCheckoutLabel": "Log in to checkout",
+      "spendingLimitMessage": "This order exceeds your spending limit. Please contact your manager for approval."
+    },
+    "cartTotals": {
+      "subtotalLabel": "Subtotal (excl. shipping and taxes)",
+      "discountLabel": "Discount",
+      "shippingLabel": "Shipping",
+      "taxesLabel": "Taxes",
+      "giftCardLabel": "Gift card",
+      "totalLabel": "Total"
+    },
+    "signInPrompt": {
+      "bannerAlt": "Login banner background",
+      "heading": "Log in for<br></br>faster checkout.",
+      "registerLabel": "Register",
+      "loginLabel": "Log in"
+    },
+    "template": {
+      "itemsInCartHeading": "You have {count} items in your cart"
+    },
+    "items": {
+      "totalItemsLabel": "Total: {count} items"
+    },
+    "summary": {
+      "spendingLimitMessage": "This order exceeds your spending limit.<br></br>Please contact your manager for approval.",
+      "spendingLimitExceededLabel": "Spending Limit Exceeded",
+      "checkoutLabel": "Checkout",
+      "loginToCheckoutLabel": "Log in to Checkout",
+      "requestQuoteLabel": "Request Quote",
+      "emptyCartLabel": "Empty Cart"
+    },
+    "notFound": {
+      "cartMessage": "The cart you tried to access does not exist. Clear your cookies and try again."
+    }
+  },
+  "Products": {
+    "facts": {
+      "inStockMessage": "Can be shipped immediately ({count} in stock)",
+      "limitedStockMessage": "Limited quantity available ({count} in stock)",
+      "midLabel": "MID: {code}"
+    },
+    "preview": {
+      "brandLabel": "BRAND",
+      "exclVatLabel": "Excl. VAT",
+      "leftLabel": "{count} left"
+    },
+    "price": {
+      "fromLabel": "From {price}",
+      "exclVatLabel": "Excl. VAT"
+    },
+    "mobileActions": {
+      "selectOptionsLabel": "Select Options",
+      "selectVariantLabel": "Select variant",
+      "outOfStockLabel": "Out of stock",
+      "addToCartLabel": "Add to cart"
+    },
+    "optionSelect": {
+      "selectLabel": "Select {title}"
+    },
+    "tabs": {
+      "descriptionLabel": "Description",
+      "specificationsLabel": "Specifications",
+      "weightLabel": "Weight",
+      "weightValue": "{weight} grams",
+      "dimensionsLabel": "Dimensions (HxWxL)",
+      "dimensionsValue": "{height}mm x {width}mm x {length}mm"
+    },
+    "variantsTable": {
+      "skuHeader": "SKU",
+      "priceHeader": "Price",
+      "quantityHeader": "Quantity",
+      "chooseVariantLabel": "Choose product variant(s) above",
+      "addToCartLabel": "Add to cart"
+    },
+    "relatedProducts": {
+      "heading": "Other customers also viewed"
+    }
+  },
+  "Catalog": {
+    "breadcrumb": {
+      "productsLabel": "Products",
+      "allProductsLabel": "All products"
+    },
+    "categoryList": {
+      "heading": "Categories",
+      "clearLabel": "Clear"
+    },
+    "searchInResults": {
+      "searchInListPlaceholder": "Search in {listName}",
+      "searchProductsPlaceholder": "Search in products",
+      "searchDisabledTooltip": "Install a search provider to enable product search"
+    },
+    "sortProducts": {
+      "sortByLabel": "Sort by:",
+      "sortByTooltip": "Sort by",
+      "latestArrivalsLabel": "Latest Arrivals",
+      "priceLowToHighLabel": "Price: Low -> High",
+      "priceHighToLowLabel": "Price: High -> Low"
+    },
+    "noProductsFoundMessage": "No products found for this category.",
+    "categoryTemplate": {
+      "backToAllProductsLabel": "Back to all products"
+    }
+  },
+  "Home": {
+    "productRail": {
+      "viewAllLabel": "View all"
+    },
+    "hero": {
+      "bannerAlt": "Hero background",
+      "eyebrow": "Be light on your feet",
+      "heading": "Portable Bestsellers",
+      "subheading": "See our widest selection of electronics",
+      "githubRepoLabel": "Github Repository"
+    }
+  },
+  "Shipping": {
+    "freeShippingNudge": {
+      "unlockedLabel": "Free Shipping unlocked!",
+      "unlockPrompt": "Unlock Free Shipping",
+      "remainingMessage": "Only <amount></amount> away",
+      "viewCartLabel": "View cart",
+      "viewProductsLabel": "View Products"
+    }
+  },
+  "Quotes": {
+    "requestQuoteConfirmation": {
+      "title": "Submit request for quote",
+      "description": "You are about to request a quote for the cart. If you confirm, the cart will be converted to a quote.",
+      "cancelLabel": "Cancel",
+      "submitLabel": "Submit",
+      "errorToast": "Failed to create quote request"
+    },
+    "requestQuotePrompt": {
+      "title": "Request a quote",
+      "loginLabel": "Log in",
+      "orLabel": " or ",
+      "createAccountLabel": "create an account",
+      "addProductsStep": "Add products to your cart",
+      "openCartStep": "Open cart & click \"Request a quote\"",
+      "followUpMessage": "We will then get back to you as soon as possible over email"
+    }
+  },
+  "Order": {
+    "billingDetails": {
+      "heading": "Billing Address"
+    },
+    "help": {
+      "heading": "Need help?",
+      "contactLabel": "Contact",
+      "returnsExchangesLabel": "Returns & Exchanges"
+    },
+    "item": {
+      "originalLabel": "Original: "
+    },
+    "orderDetails": {
+      "heading": "Details",
+      "orderNumberLabel": "Order Number",
+      "orderDateLabel": "Order Date",
+      "confirmationSentMessage": "We have sent the order confirmation details to <email></email>."
+    },
+    "summary": {
+      "heading": "Order Summary",
+      "subtotalLabel": "Subtotal",
+      "discountLabel": "Discount",
+      "shippingLabel": "Shipping",
+      "taxesLabel": "Taxes",
+      "totalLabel": "Total"
+    },
+    "paymentDetails": {
+      "heading": "Payment",
+      "paymentMethodLabel": "Payment method",
+      "paymentDetailsLabel": "Payment details",
+      "maskedCardNumber": "**** **** **** {last4}",
+      "paidAtMessage": "{amount} paid at {date}"
+    },
+    "shippingDetails": {
+      "heading": "Delivery Address"
+    },
+    "completedTemplate": {
+      "thankYouLabel": "Thank you!",
+      "orderPlacedMessage": "Your order was placed successfully.",
+      "summaryHeading": "Summary"
+    },
+    "detailsTemplate": {
+      "backLabel": "Back"
+    }
+  },
+  "BcTest": {
+    "heading": "Business Central API Operations",
+    "errorLabel": "Error",
+    "unknownErrorMessage": "Unknown error"
   }
 }

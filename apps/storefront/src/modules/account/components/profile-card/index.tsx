@@ -6,10 +6,12 @@ import Input from "@/modules/common/components/input"
 import { B2BCustomer } from "@/types/global"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Text, clx, toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
 const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
+  const t = useTranslations("Account.profileCard")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const router = useRouter()
@@ -37,9 +39,9 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
       await updateCustomer(customerData)
       router.refresh()
       setIsEditing(false)
-      toast.success("Customer updated")
+      toast.success(t("customerUpdatedToast"))
     } catch {
-      toast.error("Error updating customer")
+      toast.error(t("customerUpdateErrorToast"))
     } finally {
       setIsSaving(false)
     }
@@ -55,12 +57,12 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
 
   const handleSavePassword = async () => {
     if (passwordData.new_password !== passwordData.confirm_password) {
-      toast.error("New passwords do not match")
+      toast.error(t("passwordMismatchToast"))
       return
     }
 
     if (passwordData.new_password.length < 8) {
-      toast.error("Password must be at least 8 characters")
+      toast.error(t("passwordTooShortToast"))
       return
     }
 
@@ -73,10 +75,10 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
       })
       setIsEditingPassword(false)
       resetPasswordForm()
-      toast.success("Password updated")
+      toast.success(t("passwordUpdatedToast"))
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Error updating password"
+        error instanceof Error ? error.message : t("passwordUpdateErrorToast")
       )
     } finally {
       setIsSavingPassword(false)
@@ -102,9 +104,9 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
           }}
         >
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">First Name</Text>
+            <Text className="font-medium text-neutral-950">{t("firstNameLabel")}</Text>
             <Input
-              label="First Name"
+              label={t("firstNameLabel")}
               name="first_name"
               value={customerData.first_name}
               onChange={(e) =>
@@ -116,9 +118,9 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Last Name</Text>
+            <Text className="font-medium text-neutral-950">{t("lastNameLabel")}</Text>
             <Input
-              label="Last Name"
+              label={t("lastNameLabel")}
               name="last_name"
               value={customerData.last_name}
               onChange={(e) =>
@@ -130,13 +132,13 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Email</Text>
+            <Text className="font-medium text-neutral-950">{t("emailLabel")}</Text>
             <Text className=" text-neutral-500">{customer.email}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Phone</Text>
+            <Text className="font-medium text-neutral-950">{t("phoneLabel")}</Text>
             <Input
-              label="Phone"
+              label={t("phoneLabel")}
               name="phone"
               value={customerData.phone}
               onChange={(e) =>
@@ -155,19 +157,19 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
           )}
         >
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">First Name</Text>
+            <Text className="font-medium text-neutral-950">{t("firstNameLabel")}</Text>
             <Text className=" text-neutral-500">{customer.first_name}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Last Name</Text>
+            <Text className="font-medium text-neutral-950">{t("lastNameLabel")}</Text>
             <Text className=" text-neutral-500">{customer.last_name}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Email</Text>
+            <Text className="font-medium text-neutral-950">{t("emailLabel")}</Text>
             <Text className=" text-neutral-500">{customer.email}</Text>
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Phone</Text>
+            <Text className="font-medium text-neutral-950">{t("phoneLabel")}</Text>
             <Text className=" text-neutral-500">{customer.phone}</Text>
           </div>
         </div>
@@ -180,19 +182,19 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
                 onClick={() => setIsEditing(false)}
                 disabled={isSaving}
               >
-                Cancel
+                {t("cancelLabel")}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSave}
                 isLoading={isSaving}
               >
-                Save
+                {t("saveLabel")}
               </Button>
             </>
           ) : (
             <Button variant="secondary" onClick={() => setIsEditing(true)}>
-              Edit
+              {t("editLabel")}
             </Button>
           )}
         </div>
@@ -216,10 +218,10 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
         >
           <div className="flex flex-col gap-y-2 col-span-2">
             <Text className="font-medium text-neutral-950">
-              Current Password
+              {t("currentPasswordLabel")}
             </Text>
             <Input
-              label="Current Password"
+              label={t("currentPasswordLabel")}
               name="old_password"
               type="password"
               autoComplete="current-password"
@@ -233,9 +235,11 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
             />
           </div>
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">New Password</Text>
+            <Text className="font-medium text-neutral-950">
+              {t("newPasswordLabel")}
+            </Text>
             <Input
-              label="New Password"
+              label={t("newPasswordLabel")}
               name="new_password"
               type="password"
               autoComplete="new-password"
@@ -251,10 +255,10 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
           </div>
           <div className="flex flex-col gap-y-2">
             <Text className="font-medium text-neutral-950">
-              Confirm Password
+              {t("confirmPasswordLabel")}
             </Text>
             <Input
-              label="Confirm Password"
+              label={t("confirmPasswordLabel")}
               name="confirm_password"
               type="password"
               autoComplete="new-password"
@@ -279,7 +283,9 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
           )}
         >
           <div className="flex flex-col gap-y-2">
-            <Text className="font-medium text-neutral-950">Password</Text>
+            <Text className="font-medium text-neutral-950">
+              {t("passwordLabel")}
+            </Text>
             <Text className=" text-neutral-500">••••••••</Text>
           </div>
         </div>
@@ -295,14 +301,14 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
                 }}
                 disabled={isSavingPassword}
               >
-                Cancel
+                {t("cancelLabel")}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSavePassword}
                 isLoading={isSavingPassword}
               >
-                Save
+                {t("saveLabel")}
               </Button>
             </>
           ) : (
@@ -310,7 +316,7 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
               variant="secondary"
               onClick={() => setIsEditingPassword(true)}
             >
-              Change Password
+              {t("changePasswordLabel")}
             </Button>
           )}
         </div>

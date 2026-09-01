@@ -5,6 +5,7 @@ import { StoreCreateQuoteMessage, StoreQuoteResponse } from "@/types/quote"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { AdminOrderLineItem, AdminOrderPreview } from "@medusajs/types"
 import { Button, clx, Container, Heading, Select, Textarea } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useMemo, useState } from "react"
 import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
@@ -27,6 +28,7 @@ const QuoteMessages = ({
   quote: StoreQuoteResponse["quote"]
   preview: AdminOrderPreview
 }) => {
+  const t = useTranslations("Account.quoteMessages")
   const {
     register,
     handleSubmit,
@@ -65,7 +67,7 @@ const QuoteMessages = ({
   return (
     <Container className="divide-y divide-dashed p-0 ">
       <div className="flex items-center justify-between px-6 py-4">
-        <Heading level="h3">Messages</Heading>
+        <Heading level="h3">{t("messagesHeading")}</Heading>
       </div>
 
       <div>
@@ -109,14 +111,14 @@ const QuoteMessages = ({
             <div className="flex-1">
               <div className="flex items-center gap-x-1">
                 <label className="font-sans txt-compact-small font-medium">
-                  Pick Quote Item
+                  {t("pickQuoteItemLabel")}
                 </label>
               </div>
               <span
                 className="txt-small text-ui-fg-subtle"
                 id=":r10:-form-item-description"
               >
-                Select a quote item to write a message around
+                {t("pickQuoteItemDescription")}
               </span>
             </div>
             <div className="flex-1">
@@ -127,7 +129,7 @@ const QuoteMessages = ({
                   <Select {...field} onValueChange={onChange} value={value}>
                     <Select.Trigger className="bg-ui-bg-base" ref={ref}>
                       <Select.Value />
-                      {value ? <Select.Value /> : "Select Item"}
+                      {value ? <Select.Value /> : t("selectItemPlaceholder")}
                     </Select.Trigger>
 
                     <Select.Content>
@@ -153,7 +155,7 @@ const QuoteMessages = ({
             className="self-end"
             disabled={isCreatingMessage}
           >
-            Send
+            {t("sendLabel")}
           </Button>
         </form>
       </div>

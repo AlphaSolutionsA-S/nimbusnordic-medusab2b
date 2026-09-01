@@ -3,6 +3,7 @@
 import { type ReactNode, useState } from "react"
 import { FetchError } from "@medusajs/js-sdk"
 import { Button, Container, Heading, Input, Select, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { createBCReturn } from "@/lib/data/business-central"
 import type {
   BCOrderDetail,
@@ -25,6 +26,7 @@ type LineDraft = {
 type ReturnDraft = Record<number, LineDraft>
 
 const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
+  const t = useTranslations("Account.bcOrderReturn")
   const eligibleLines = order.lines.filter(
     (line) => line.lineType === "Item" && line.quantity > 0
   )
@@ -105,13 +107,11 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
       setResult(returnOrder)
     } catch (error) {
       if (error instanceof FetchError && error.status === 404) {
-        setError("This order is no longer available for a return.")
+        setError(t("orderUnavailableError"))
       } else if (error instanceof FetchError && error.status === 503) {
-        setError(
-          "We could not confirm the return request. Please try again shortly."
-        )
+        setError(t("returnUnconfirmedError"))
       } else {
-        setError("Please review the selected lines and try again.")
+        setError(t("genericReturnError"))
       }
     } finally {
       setSubmitting(false)
@@ -125,7 +125,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
         {eligibleLines.length > 0 && (
           <Container data-testid="bc-order-return">
             <Button type="button" onClick={() => setIsReturnFlow(true)}>
-              Request a return
+              {t("requestReturnLabel")}
             </Button>
           </Container>
         )}
@@ -136,13 +136,16 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
   if (result) {
     return (
       <Container className="flex flex-col gap-y-2" data-testid="bc-order-return">
-        <Heading level="h2">Return requested</Heading>
+        <Heading level="h2">{t("returnRequestedHeading")}</Heading>
         <Text>
-          Return {result.number} created - status {result.status}.
+          {t("returnCreatedMessage", {
+            number: result.number,
+            status: result.status,
+          })}
         </Text>
         <div>
           <Button type="button" onClick={closeReturnFlow}>
-            Back to order details
+            {t("backToOrderDetailsLabel")}
           </Button>
         </div>
       </Container>
@@ -151,18 +154,18 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
 
   return (
     <Container className="flex flex-col gap-y-4" data-testid="bc-order-return">
-      <Heading level="h2">Request a return</Heading>
+      <Heading level="h2">{t("requestReturnLabel")}</Heading>
       <div className="grid grid-cols-1 gap-x-12 gap-y-6 border-y border-ui-border-base py-4 text-small-regular small:grid-cols-2">
         <div className="small:col-span-2">
-          <Text className="text-ui-fg-subtle">Order number</Text>
+          <Text className="text-ui-fg-subtle">{t("orderNumberLabel")}</Text>
           <Text>#{order.number}</Text>
         </div>
         <dl>
-          <dt className="mb-1 text-ui-fg-subtle">Bill-to address</dt>
+          <dt className="mb-1 text-ui-fg-subtle">{t("billToAddressLabel")}</dt>
           <dd>{renderAddress(order.billToAddress)}</dd>
         </dl>
         <dl>
-          <dt className="mb-1 text-ui-fg-subtle">Ship-to address</dt>
+          <dt className="mb-1 text-ui-fg-subtle">{t("shipToAddressLabel")}</dt>
           <dd>{renderAddress(order.shipToAddress)}</dd>
         </dl>
       </div>
@@ -171,11 +174,17 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
           <table className="w-full text-left text-small-regular">
             <thead className="border-b border-ui-border-base text-ui-fg-subtle">
               <tr>
-                <th className="pb-2 pr-4 font-normal">Item</th>
-                <th className="pb-2 pr-4 font-normal">Ordered quantity</th>
-                <th className="pb-2 pr-4 font-normal">Unit price</th>
-                <th className="pb-2 pr-4 font-normal">Return quantity</th>
-                <th className="pb-2 font-normal">Return reason</th>
+                <th className="pb-2 pr-4 font-normal">{t("itemColumnLabel")}</th>
+                <th className="pb-2 pr-4 font-normal">
+                  {t("orderedQuantityColumnLabel")}
+                </th>
+                <th className="pb-2 pr-4 font-normal">
+                  {t("unitPriceColumnLabel")}
+                </th>
+                <th className="pb-2 pr-4 font-normal">
+                  {t("returnQuantityColumnLabel")}
+                </th>
+                <th className="pb-2 font-normal">{t("returnReasonColumnLabel")}</th>
               </tr>
             </thead>
             <tbody>
@@ -185,7 +194,10 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                 return (
                   <tr key={line.id} className="border-b border-ui-border-base">
                     <td className="py-3 pr-4">
-                      {line.itemDisplayName || line.description || line.itemNumber || "Item"}
+                      {line.itemDisplayName ||
+                        line.description ||
+                        line.itemNumber ||
+                        t("itemFallbackLabel")}
                     </td>
                     <td className="py-3 pr-4">{line.quantity}</td>
                     <td className="py-3 pr-4">{formattedUnitPrice(line.unitPrice)}</td>
@@ -203,7 +215,12 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                             line.quantity
                           )
                         }
-                        aria-label={`Return quantity for ${line.description || line.itemNumber || "item"}`}
+                        aria-label={t("returnQuantityAriaLabel", {
+                          item:
+                            line.description ||
+                            line.itemNumber ||
+                            t("itemLowercaseFallbackLabel"),
+                        })}
                       />
                     </td>
                     <td className="py-3">
@@ -214,7 +231,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                         }
                       >
                         <Select.Trigger>
-                          <Select.Value placeholder="Select a reason" />
+                          <Select.Value placeholder={t("selectReasonPlaceholder")} />
                         </Select.Trigger>
                         <Select.Content>
                           {reasons.map((reason) => (
@@ -234,10 +251,10 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
         {error && <Text className="text-ui-fg-error">{error}</Text>}
         <div className="flex gap-x-2">
           <Button type="button" onClick={closeReturnFlow} disabled={submitting}>
-            Cancel
+            {t("cancelLabel")}
           </Button>
           <Button type="submit" disabled={!canSubmit} isLoading={submitting}>
-            Submit return request
+            {t("submitReturnRequestLabel")}
           </Button>
         </div>
       </form>

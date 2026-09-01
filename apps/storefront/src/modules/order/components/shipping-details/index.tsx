@@ -1,11 +1,13 @@
 import { HttpTypes } from "@medusajs/types"
 import { Heading, Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 
 type ShippingDetailsProps = {
   order: HttpTypes.StoreOrder
 }
 
-const ShippingDetails = ({ order }: ShippingDetailsProps) => {
+const ShippingDetails = async ({ order }: ShippingDetailsProps) => {
+  const t = await getTranslations("Order.shippingDetails")
   // order.shipping_address = {
   //   first_name: "Riqwan",
   //   last_name: "Thamir",
@@ -35,7 +37,7 @@ const ShippingDetails = ({ order }: ShippingDetailsProps) => {
     !!order.shipping_address && (
       <>
         <Heading level="h3" className="mb-2">
-          Delivery Address
+          {t("heading")}
         </Heading>
 
         {!!order.shipping_address && (

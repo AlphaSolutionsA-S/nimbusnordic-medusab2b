@@ -1,9 +1,11 @@
 import CountrySelect from "@/modules/checkout/components/country-select"
 import Input from "@/modules/common/components/input"
 import { B2BCart } from "@/types"
+import { useTranslations } from "next-intl"
 import React, { useEffect, useState } from "react"
 
 const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
+  const t = useTranslations("Checkout.addressForm")
   const [formData, setFormData] = useState<Record<string, any>>({
     "billing_address.first_name": "",
     "billing_address.last_name": "",
@@ -47,7 +49,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
     <>
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="First name"
+          label={t("firstNameLabel")}
           name="billing_address.first_name"
           autoComplete="given-name"
           value={formData["billing_address.first_name"]}
@@ -56,7 +58,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
           data-testid="billing-first-name-input"
         />
         <Input
-          label="Last name"
+          label={t("lastNameLabel")}
           name="billing_address.last_name"
           autoComplete="family-name"
           value={formData["billing_address.last_name"]}
@@ -65,7 +67,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
           data-testid="billing-last-name-input"
         />
         <Input
-          label="Phone"
+          label={t("phoneLabel")}
           name="billing_address.phone"
           autoComplete="tel"
           value={formData["billing_address.phone"]}
@@ -74,7 +76,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
           data-testid="billing-phone-input"
         />
         <Input
-          label="Company name"
+          label={t("companyNameLabel")}
           name="billing_address.company"
           value={formData["billing_address.company"]}
           onChange={handleChange}
@@ -83,7 +85,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
           colSpan={2}
         />
         <Input
-          label="Address"
+          label={t("addressLabel")}
           name="billing_address.address_1"
           autoComplete="address-line1"
           value={formData["billing_address.address_1"]}
@@ -93,7 +95,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
           colSpan={2}
         />
         <Input
-          label="Postal code"
+          label={t("postalCodeLabel")}
           name="billing_address.postal_code"
           autoComplete="postal-code"
           value={formData["billing_address.postal_code"]}
@@ -104,7 +106,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
         />
         <div className="grid small:grid-cols-3 grid-cols-2 gap-4 col-span-2">
           <Input
-            label="City"
+            label={t("cityLabel")}
             name="billing_address.city"
             autoComplete="address-level2"
             value={formData["billing_address.city"]}
@@ -113,7 +115,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
             data-testid="billing-city-input"
           />
           <Input
-            label="Province"
+            label={t("provinceLabel")}
             name="billing_address.province"
             autoComplete="address-level1"
             value={formData["billing_address.province"]}
@@ -128,6 +130,7 @@ const BillingAddressForm = ({ cart }: { cart: B2BCart | null }) => {
             value={formData["billing_address.country_code"]}
             onChange={handleChange}
             required
+            placeholder={t("countryPlaceholder")}
             data-testid="billing-country-select"
           />
         </div>

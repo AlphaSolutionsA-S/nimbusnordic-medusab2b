@@ -6,6 +6,7 @@ import { clx } from "@medusajs/ui"
 import Button from "@/modules/common/components/button"
 import ChevronDown from "@/modules/common/icons/chevron-down"
 import X from "@/modules/common/icons/x"
+import { useTranslations } from "next-intl"
 import React, { Fragment, useMemo } from "react"
 import OptionSelect from "./option-select"
 
@@ -32,6 +33,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   show,
   optionsDisabled,
 }) => {
+  const t = useTranslations("Products.mobileActions")
   const { state, open, close } = useToggleState()
 
   const price = getProductPrice({
@@ -105,7 +107,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                   <span>
                     {variant
                       ? Object.values(options).join(" / ")
-                      : "Select Options"}
+                      : t("selectOptionsLabel")}
                   </span>
                   <ChevronDown />
                 </div>
@@ -118,10 +120,10 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                 data-testid="mobile-cart-button"
               >
                 {!variant
-                  ? "Select variant"
+                  ? t("selectVariantLabel")
                   : !inStock
-                  ? "Out of stock"
-                  : "Add to cart"}
+                  ? t("outOfStockLabel")
+                  : t("addToCartLabel")}
               </Button>
             </div>
           </div>

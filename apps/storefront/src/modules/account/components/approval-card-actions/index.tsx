@@ -12,6 +12,7 @@ import {
   XMarkMini,
 } from "@medusajs/icons"
 import { usePrompt } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useParams, useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -20,6 +21,7 @@ const ApprovalCardActions = ({
 }: {
   cartWithApprovals: B2BCart
 }) => {
+  const t = useTranslations("Account.approvalCardActions")
   const [approving, setApproving] = useState(false)
   const [rejecting, setRejecting] = useState(false)
   const [isRedirecting, setIsRedirecting] = useState(false)
@@ -42,8 +44,8 @@ const ApprovalCardActions = ({
     if (!pendingAdminApproval) return
 
     const confirmed = await dialog({
-      title: "Are you sure you want to approve this cart?",
-      description: "This action cannot be undone.",
+      title: t("confirmApproveTitle"),
+      description: t("confirmActionDescription"),
     })
 
     if (!confirmed) return
@@ -57,8 +59,8 @@ const ApprovalCardActions = ({
     if (!pendingAdminApproval) return
 
     const confirmed = await dialog({
-      title: "Are you sure you want to reject this cart?",
-      description: "This action cannot be undone.",
+      title: t("confirmRejectTitle"),
+      description: t("confirmActionDescription"),
     })
 
     if (!confirmed) return
@@ -89,7 +91,7 @@ const ApprovalCardActions = ({
             isLoading={rejecting}
           >
             <XMarkMini className="inline-block" />
-            Reject
+            {t("rejectLabel")}
           </Button>
           <Button
             size="small"
@@ -100,7 +102,7 @@ const ApprovalCardActions = ({
             isLoading={approving}
           >
             <CheckMini className="inline-block" />
-            Approve
+            {t("approveLabel")}
           </Button>
         </>
       ) : cartWithApprovals.approval_status?.status ===
@@ -109,7 +111,7 @@ const ApprovalCardActions = ({
           {"·"}
           <Button variant="primary" disabled>
             <LockClosedSolidMini className="inline-block" />
-            Awaiting External Approval
+            {t("awaitingExternalApprovalLabel")}
           </Button>
         </>
       ) : cartWithApprovals.approval_status?.status ===
@@ -127,7 +129,7 @@ const ApprovalCardActions = ({
               <LocalizedClientLink
                 href={`/checkout?cart_id=${cartWithApprovals.id}&step=payment`}
               >
-                Place Order
+                {t("placeOrderLabel")}
                 <ArrowRightMini className="inline-block" />
               </LocalizedClientLink>
             </Button>

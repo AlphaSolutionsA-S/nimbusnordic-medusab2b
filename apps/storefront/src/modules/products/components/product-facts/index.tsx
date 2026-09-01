@@ -4,8 +4,10 @@ import {
   InformationCircleSolid,
 } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
+import { getTranslations } from "next-intl/server"
 
-const ProductFacts = ({ product }: { product: HttpTypes.StoreProduct }) => {
+const ProductFacts = async ({ product }: { product: HttpTypes.StoreProduct }) => {
+  const t = await getTranslations("Products.facts")
   const managedVariants = product.variants?.filter(
     (variant) => variant.manage_inventory !== false
   )
@@ -22,20 +24,20 @@ const ProductFacts = ({ product }: { product: HttpTypes.StoreProduct }) => {
     <div className="flex flex-col gap-y-2 w-full">
       {hasManageInventory && (inventoryQuantity > 10 ? (
         <span className="flex items-center gap-x-2 text-neutral-600 text-sm">
-          <CheckCircleSolid className="text-green-500" /> Can be shipped
-          immediately ({inventoryQuantity} in stock)
+          <CheckCircleSolid className="text-green-500" />{" "}
+          {t("inStockMessage", { count: inventoryQuantity })}
         </span>
       ) : (
         <span className="flex items-center gap-x-2 text-neutral-600 text-sm ">
           <ExclamationCircleSolid className="text-orange-500" />
-          Limited quantity available ({inventoryQuantity} in stock)
+          {t("limitedStockMessage", { count: inventoryQuantity })}
         </span>
       ))}
       <span className="flex items-center gap-x-2 text-neutral-600 text-sm">
         {product.mid_code && (
           <>
             <InformationCircleSolid />
-            MID: {product.mid_code}
+            {t("midLabel", { code: product.mid_code })}
           </>
         )}
       </span>

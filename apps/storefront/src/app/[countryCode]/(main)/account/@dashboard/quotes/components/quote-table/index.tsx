@@ -2,6 +2,7 @@ import { AmountCell } from "@/modules/common/components/amount-cell"
 import Thumbnail from "@/modules/products/components/thumbnail"
 import { AdminOrderLineItem, AdminOrderPreview } from "@medusajs/types"
 import { Badge, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
 export const QuoteTableItem = ({
@@ -13,6 +14,7 @@ export const QuoteTableItem = ({
   originalItem?: AdminOrderLineItem
   currencyCode: string
 }) => {
+  const t = useTranslations("Account.quoteTable")
   const isAddedItem = useMemo(
     () => !!item.actions?.find((a) => a.action === "ITEM_ADD"),
     [item]
@@ -76,13 +78,13 @@ export const QuoteTableItem = ({
                 color="blue"
                 className="mr-1"
               >
-                New
+                {t("newLabel")}
               </Badge>
             )}
 
             {isItemRemoved ? (
               <Badge size="2xsmall" rounded="full" color="red" className="mr-1">
-                Removed
+                {t("removedLabel")}
               </Badge>
             ) : (
               isItemUpdated && (
@@ -92,7 +94,7 @@ export const QuoteTableItem = ({
                   color="orange"
                   className="mr-1"
                 >
-                  Modified
+                  {t("modifiedLabel")}
                 </Badge>
               )
             )}

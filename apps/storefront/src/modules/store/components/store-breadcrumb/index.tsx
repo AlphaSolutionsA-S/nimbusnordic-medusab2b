@@ -1,4 +1,5 @@
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
+import { getTranslations } from "next-intl/server"
 
 const StoreBreadcrumbItem = ({
   title,
@@ -19,12 +20,14 @@ const StoreBreadcrumbItem = ({
   )
 }
 
-const StoreBreadcrumb = () => {
+const StoreBreadcrumb = async () => {
+  const t = await getTranslations("Catalog.breadcrumb")
+
   return (
     <ul className="flex items-center gap-x-3 text-sm">
-      <StoreBreadcrumbItem title="Products" key="base" />
+      <StoreBreadcrumbItem title={t("productsLabel")} key="base" />
       <span className="text-neutral-500">{">"}</span>
-      <StoreBreadcrumbItem title="All products" handle="/store" />
+      <StoreBreadcrumbItem title={t("allProductsLabel")} handle="/store" />
     </ul>
   )
 }
