@@ -24,6 +24,9 @@
       "searchDisabledTooltip": "Install a search provider to enable product search",
       "quoteLabel": "Quote"
     },
+    "regionSwitcher": {
+      "label": "Select your region"
+    },
     "megaMenu": {
       "productsLabel": "Products"
     },

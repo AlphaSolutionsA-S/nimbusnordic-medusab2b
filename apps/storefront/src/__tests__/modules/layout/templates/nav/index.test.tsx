@@ -13,10 +13,17 @@ jest.mock("@/lib/data/customer", () => ({
   retrieveCustomer: jest.fn(async () => null),
 }))
 
+jest.mock("@/lib/data/regions", () => ({
+  listRegions: jest.fn(async () => []),
+}))
+
 // Sub-trees below are not under test here (own extraction areas) — stubbed to
 // keep this test focused on NavigationHeader's own extracted strings.
 jest.mock("@/modules/layout/components/mega-menu", () => ({
   MegaMenuWrapper: () => <div data-testid="mega-menu-stub" />,
+}))
+jest.mock("@/modules/layout/components/region-switcher", () => ({
+  RegionSwitcher: () => <div data-testid="region-switcher-stub" />,
 }))
 jest.mock("@/modules/account/components/account-button", () => ({
   __esModule: true,
