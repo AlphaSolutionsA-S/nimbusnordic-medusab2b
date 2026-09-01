@@ -1,11 +1,13 @@
 import { retrieveCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
+import { listRegions } from "@/lib/data/regions"
 import AccountButton from "@/modules/account/components/account-button"
 import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import FilePlus from "@/modules/common/icons/file-plus"
 import LogoIcon from "@/modules/common/icons/logo"
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
+import { RegionSwitcher } from "@/modules/layout/components/region-switcher"
 import { RequestQuoteConfirmation } from "@/modules/quotes/components/request-quote-confirmation"
 import { RequestQuotePrompt } from "@/modules/quotes/components/request-quote-prompt"
 import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-account-button"
@@ -18,6 +20,13 @@ export async function NavigationHeader() {
   const t = await getTranslations("Layout.nav")
   const customer = await retrieveCustomer().catch(() => null)
   const cart = await retrieveCart()
+  const regions = await listRegions()
+  const regionOptions = regions.flatMap((region) =>
+    (region.countries ?? []).map((country) => ({
+      countryCode: country.iso_2 ?? "",
+      countryName: country.display_name ?? country.iso_2 ?? "",
+    }))
+  )
 
   return (
     <div className="sticky top-0 inset-x-0 group bg-white text-zinc-900 small:p-4 p-2 text-sm border-b duration-200 border-ui-border-base z-50">
@@ -45,6 +54,8 @@ export async function NavigationHeader() {
             </nav>
           </div>
           <div className="flex justify-end items-center gap-2">
+            <RegionSwitcher options={regionOptions} />
+
             <div className="relative mr-2 hidden small:inline-flex">
               <input
                 disabled
