@@ -44,3 +44,14 @@
 - This worktree had no `node_modules` and no `.env` on pickup; ran `pnpm install` at the repo root, and created a local (gitignored) `apps/storefront/.env` copied from `.env.template` with a dummy `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` — needed only to get `next.config.js`'s `checkEnvVariables()` to stop blocking Jest/lint from loading. Neither is part of the diff.
 
 **Nothing left to do for this story's own tasks** — both manifest tasks (01, 02) are complete per their test-case lists. Outstanding item is the live manual hreflang check noted above, which needs a running backend this environment doesn't have.
+
+- **Date:** 2026-09-01
+- **Updated by:** implementation-planner (main session), closing the outstanding manual verification and merging into `develop`.
+- **Outcome:** Manual view-source check complete — no regressions found. Merged into `develop` (`e4252e0..239cd56`) alongside NIMBUS-166, no conflicts.
+  - Started `apps/backend` (`medusa develop`) and `apps/storefront` (`next dev -p 8000`) against the real Postgres instance used throughout this epic's verification.
+  - Fetched a real product handle via the Store API and viewed the rendered `/gb/products/<handle>` page: `<title>` correctly shows `"...Audio | Medusa Store"` (localized suffix via `MetaDescription.storeSuffix`), and all 8 `<link rel="alternate" hreflang="...">` tags render with correct per-locale URLs (`da`, `en`, `sv`, `no`, `pl`, `it`, `fr`, `de`).
+  - Checked a category page (`/gb/categories/laptops`): existing `<link rel="canonical">` preserved unchanged, plus all 8 hreflang alternates now present. Note: the canonical URL itself is a bare relative path missing the `/gb` locale segment — this is pre-existing behavior from before this story (not something NIMBUS-168 introduced or was asked to fix), flagging for visibility only.
+  - Confirmed NIMBUS-166's region switcher (`aria-label`-driven `<select>`) still renders correctly on the product page alongside this story's metadata changes — no conflict between the two stories' changes to the same shared header/page tree.
+  - Also independently verified the "1 pre-existing unrelated test failure" claim (`product-tabs`): confirmed it passes cleanly on `develop`, then reproduced it failing in the story's worktree even with the entire diff stashed out (both tracked and untracked changes) — proving it's an artifact of that worktree's own `pnpm install`, not a regression from this story's code. No action needed.
+  - Dev servers stopped via `taskkill` after verification; confirmed both ports free afterward.
+- **Handover to:** none — story complete and merged.
