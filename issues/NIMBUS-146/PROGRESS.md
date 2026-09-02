@@ -85,3 +85,13 @@
   the implementor agent with: "Implement NIMBUS-146's Logic App plan from
   issues/NIMBUS-146/manifest.md, in task order 01 through 03. This produces reference artifacts
   under issues/NIMBUS-146/artifacts/ only — no apps/backend or apps/storefront code changes."
+
+- **Date:** 2026-09-02
+- **Updated by:** main session
+- **Outcome:** At the user's request to advance all planned NIMBUS-129 children, Jira planning
+  status was approved and NIMBUS-146 moved from **Estimation** to **To Do** using the
+  `Estimate approved` transition. The revised manifest remains dispatch-ready.
+- **Handover to:** implementor agent, on request.
+- **Handover prompt:** Implement NIMBUS-146's Logic App plan from
+  `issues/NIMBUS-146/manifest.md`, in task order 01 through 03. This produces reference artifacts
+  under `issues/NIMBUS-146/artifacts/` only — no `apps/backend` or `apps/storefront` code changes.

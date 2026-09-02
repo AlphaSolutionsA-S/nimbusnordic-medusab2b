@@ -99,3 +99,13 @@
 - **Handover prompt:** See `issues/NIMBUS-129/PROGRESS.md`'s latest entry for the full dispatch
   prompt — this story is implemented as part of that combined NIMBUS-129 dispatch, not
   standalone.
+
+- **Date:** 2026-09-02
+- **Updated by:** main session
+- **Outcome:** Jira planning stage completed: NIMBUS-144 was assigned to Klaus Petersen and moved
+  from **Estimation** to **To Do** using the `Estimate approved` transition. The approved combined
+  NIMBUS-144/NIMBUS-147 implementation plan remains dispatch-ready under `issues/NIMBUS-129/`.
+- **Handover to:** implementor agent, on request.
+- **Handover prompt:** Implement NIMBUS-129's combined NIMBUS-144/NIMBUS-147 plan from
+  `issues/NIMBUS-129/manifest.md` in dependency order, following the full latest handover in
+  `issues/NIMBUS-129/PROGRESS.md`.
