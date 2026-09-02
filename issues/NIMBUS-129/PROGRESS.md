@@ -40,3 +40,121 @@
 - **Handover to:** implementation-planner agent, once the user is ready to plan NIMBUS-144
   and/or NIMBUS-147 (146/148/149/158 remain unscoped locally, with corrective Jira comments/
   description fixes in place for when they are scoped).
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** Planned NIMBUS-144 and NIMBUS-147 together (explicitly excluding NIMBUS-145,
+  146, 148, 149, 158, which remain unscoped). Produced a combined implementation plan covering:
+  a new `orderIngestion` Medusa module (`IncomingOrder` data model as the async-processing state
+  machine), the canonical order contract as two zod schemas (loose envelope for NIMBUS-144,
+  strict canonical for NIMBUS-147), a `receiveOrderWorkflow` (NIMBUS-144's fast/shallow
+  idempotency check), a `processIncomingOrderWorkflow` (NIMBUS-147's deep validation/company
+  matching/duplicate check), and the `POST /orderapi/orders` route wiring them together with a
+  custom API-key middleware. The async hand-off from 144 to 147 is a plain non-awaited workflow
+  invocation from route-handler code (no event bus/subscriber — none exists in this repo).
+  Several previously-open questions were resolved and flagged explicitly rather than guessed
+  silently: the endpoint path, the auth mechanism, the idempotency scoping, and — most
+  importantly — that the 201 response's "Medusa order reference" is necessarily this project's
+  own `IncomingOrder.id` (not a Medusa core Order id), since NIMBUS-149 doesn't exist yet; this
+  needs reconciliation whenever NIMBUS-149 is scoped. Full detail in
+  `issues/NIMBUS-129/PLAN.md`, task files `01`–`05`, and `manifest.md`. Base branch confirmed as
+  `develop` (already recorded in both stories' SCOPE.md). Backend test infrastructure already
+  exists — no scaffolding gate was needed. Plan is awaiting user approval before dispatch.
+- **Handover to:** user, for plan approval, then implementor agent for execution.
+- **Handover prompt:** Review `issues/NIMBUS-129/PLAN.md` and the five task files
+  (`01-order-ingestion-module-implementation.md` through
+  `05-order-api-route-implementation.md`) plus `manifest.md`. Once approved, invoke the
+  implementor agent with: "Implement NIMBUS-129's order-ingestion plan (NIMBUS-144 +
+  NIMBUS-147) from issues/NIMBUS-129/manifest.md, in task order 01 through 05." NIMBUS-145,
+  146, 148, 149, and 158 remain out of scope for this dispatch and should not be touched.
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** Reversed Task 05's auth mechanism after user review, before final approval. The
+  bespoke `x-orderapi-key` header + `ORDER_INGESTION_API_KEY` env-var middleware is replaced
+  with Medusa's built-in secret API key (`authenticate("user", ["api-key"])`, HTTP Basic auth,
+  managed via `/admin/api-keys`). The original recommendation was based on that strategy
+  hard-coding to `actor_type: "user"` (full admin scope, verified against
+  `@medusajs/framework`'s `authenticate-middleware.js`); the user's accepted counter-argument is
+  that this key is used exclusively by the Logic App (NIMBUS-146) — an internal Azure credential
+  never distributed to external customer systems — so the "leaked to an untrusted third party"
+  concern doesn't apply, making Medusa's native, already-built secret key preferable to a second
+  bespoke mechanism. Updated `issues/NIMBUS-129/05-order-api-route-implementation.md` (full
+  auth section, middleware/route skeletons, all HTTP test cases), `PLAN.md` (Decision #1
+  rewritten to preserve both sides of the reasoning, not just the final answer), and
+  `manifest.md` (env/config changes section). No other task or design element was changed. Full
+  detail, including verified mechanics of Medusa's secret-API-key middleware (HTTP Basic auth
+  requirement, why `/orderapi` outside `/admin` has no CORS implications), is in Task 05's doc.
+- **Handover to:** user, for a final approval pass on this revision, then implementor agent.
+- **Handover prompt:** Same as the previous entry — re-read `issues/NIMBUS-129/PLAN.md` and
+  `05-order-api-route-implementation.md` for the revised auth design before approving dispatch.
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** Major architectural redesign, requested by the user after reviewing the plan a
+  second time — bigger than the auth change, and holds dispatch pending re-approval. Canonical
+  validation, company matching, the per-company duplicate check, and real Medusa order creation
+  (header-only, no `OrderLineItem` records) now all happen **synchronously** inside the request,
+  replacing the earlier fully-async design. The response now returns the real Medusa order id (or
+  a structured `404`/`422`/`400` error with nothing created) instead of the earlier design's
+  explicitly-flagged placeholder `IncomingOrder.id` stopgap — that flagged issue is now fully
+  resolved rather than needing future reconciliation. Post-creation processing (enrichment, and
+  the future NIMBUS-148 hand-off) is now driven by genuine Medusa domain events
+  (`emitEventStep` + a `src/subscribers/*.ts` file, verified against this repo's actual installed
+  Medusa v2.18.0 packages) rather than a single fire-and-forget workflow call — this is a
+  deliberate, explicit user directive, not something this plan second-guessed despite an earlier
+  pass correctly finding zero event/subscriber precedent in this repo. This redesign pulls a
+  synchronous, header-only slice of NIMBUS-149 ("Create and persist the Medusa order") into this
+  plan — explicitly flagged: NIMBUS-149 as a story still has unaddressed requirements
+  (traceability, NIMBUS-158's integration-state fields) that its future scoping needs to
+  reconcile with what actually got built here. Task 01 shrank (the old `IncomingOrder`
+  audit/state table collapsed to a minimal `OrderExternalReference` dedupe-index model, since
+  rejected submissions are no longer persisted at all). Task 02 shrank (the old two-schema
+  envelope/canonical split collapsed to one schema, since there's no longer a fast/deferred-deep
+  split to serve). Tasks 03 and 04 are new content, not edits, of the previous 03/04 (old files
+  deleted, new files with different names and content created) — see
+  `issues/NIMBUS-129/manifest.md`'s "Task file renames" note. Full reasoning recorded in
+  `issues/NIMBUS-129/PLAN.md`'s "Decisions & Trade-offs" (the redesign section), preserving both
+  what changed and why, same treatment as the earlier auth reversal.
+- **Handover to:** user, for a fresh approval pass on this redesign (not assumed approved), then
+  implementor agent.
+- **Handover prompt:** Re-read `issues/NIMBUS-129/PLAN.md` and all five task files
+  (`01`–`05`) in full — this is a genuine architectural change, not an incremental diff from the
+  previously-presented plan. Once approved, invoke the implementor agent with: "Implement
+  NIMBUS-129's order-ingestion plan (NIMBUS-144 + NIMBUS-147) from
+  issues/NIMBUS-129/manifest.md, in task order 01 through 05." NIMBUS-145, 146, 148, 149, and 158
+  remain out of scope for this dispatch and should not be touched.
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** Redesigned plan approved by the user (synchronous canonical validation + company
+  matching + duplicate check + header-only order creation in Task 03; async event-driven
+  post-processing chain in Task 04 via `emitEventStep` + a `src/subscribers/*.ts` file; the
+  NIMBUS-149 scope-crossing explicitly recorded in `issues/NIMBUS-129/PLAN.md`'s "Decisions &
+  Trade-offs"). Implementation planning for NIMBUS-144 + NIMBUS-147 is complete:
+  `issues/NIMBUS-129/PLAN.md`, `manifest.md`, and task files `01-order-ingestion-module-implementation.md`
+  through `05-order-api-route-implementation.md` are the approved, current state — do not treat
+  any earlier PROGRESS.md entry's design description as current; only this plan's latest files
+  reflect what should be built. **Implementor dispatch is intentionally held — pending, on user
+  request** — not triggered automatically as part of this approval.
+- **Handover to:** implementor agent, on request (not yet triggered).
+- **Handover prompt:** Implement NIMBUS-129's order-ingestion plan (NIMBUS-144 + NIMBUS-147) from
+  `issues/NIMBUS-129/manifest.md`, executing tasks in dependency order: 01 (Order Ingestion
+  Module — canonical contract + `OrderExternalReference` dedupe-index model), 02 (Canonical Order
+  Contract — single `CanonicalOrderSchema`), 03 (Synchronous Validate + Create Order Workflow —
+  company matching, per-company duplicate check, header-only Medusa order creation via
+  `Modules.ORDER` directly, replicating the existing order-created hook's link-creation logic),
+  04 (Post-Creation Async Event Chain — `emitEventStep`-based event emission, the
+  `order-ingestion-created` subscriber, `enrichOrderWorkflow`, and the
+  `order_ingestion.ready_for_business_central` boundary event left without a subscriber for a
+  future NIMBUS-148), then 05 (the `POST /orderapi/orders` route itself — Medusa secret-API-key
+  auth, synchronous response with the real order id or a `404`/`422`/`400` error). Each task file
+  contains verbatim code skeletons and full test skeletons — follow them exactly rather than
+  inventing alternative type shapes or import paths. Flagged, not-fully-specified items to
+  respect rather than silently resolve during implementation: Task 04's enrichment step content
+  (`// IMPLEMENT:` block in `enrich-order.ts`) and the residual uncertainty around whether a
+  thrown `MedusaError` survives Task 03's workflow engine unwrapped (verify via the tests, adjust
+  only if a test actually fails). NIMBUS-145, 146, 148, 149, and 158 remain out of scope — do not
+  touch them or attempt to build their internals. After implementation, update this PROGRESS.md
+  with the outcome and hand over per this repo's normal Definition of Done / code-review /
+  commit-message conventions.

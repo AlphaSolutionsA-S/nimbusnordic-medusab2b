@@ -89,3 +89,50 @@
   prompt from the previous entry is now doubly stale — both the two-tier structure and this
   round's field-level corrections need to be re-read against the current SCOPE.md before planning
   starts).
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** Planned together with NIMBUS-144 (see `issues/NIMBUS-129/PLAN.md` and task files
+  `issues/NIMBUS-129/01-*.md` through `05-*.md`). The canonical contract from the corrected
+  SCOPE.md was implemented as `CanonicalOrderSchema` (Task 02) — one flat schema, `billTo`/
+  `shipTo` optional, no computed totals, `eanNo` on lines. Resolved the open
+  required/optional-per-field question using the two real EDI sample files. Company/customer
+  matching (Task 04) reads `Company.business_central_customer_number` against the
+  `customer_number` value carried through NIMBUS-144's async hand-off, per the confirmed
+  query-string transport. Duplicate-submission validation (Task 04) is scoped per-`company_id`
+  using `externalOrderNumber`, confirmed non-duplicate across different companies. Did not
+  implement NIMBUS-149 (Medusa order creation) — Task 04 only writes a `status: 'validated'` +
+  `company_id` row and documents the hand-off contract a future NIMBUS-149 should consume.
+- **Handover to:** user for plan approval (see `issues/NIMBUS-129/PLAN.md`), then implementor
+  agent.
+- **Handover prompt:** See `issues/NIMBUS-129/PROGRESS.md`'s 2026-09-02 entry — this story is
+  implemented as part of that combined NIMBUS-129 dispatch, not standalone.
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** Correction to the entry above: this story's validation/matching/duplicate-check
+  logic no longer runs as an asynchronous hand-off target — it now runs synchronously, as part of
+  the same request NIMBUS-144's endpoint handles, immediately followed (still synchronously) by
+  real Medusa order creation. The canonical contract itself (`CanonicalOrderSchema`) is
+  unaffected in content, but is now a single schema rather than split across two validation
+  depths, since there's no longer a fast/deferred-deep split to serve. Company/customer matching
+  and the per-company duplicate check logic are otherwise unchanged in substance (still against
+  `Company.business_central_customer_number`, still per-`company_id` on `externalOrderNumber`) —
+  only the timing (synchronous, not async) and the surrounding workflow structure changed. See
+  `issues/NIMBUS-129/PLAN.md`'s redesign section for full reasoning.
+- **Handover to:** user for plan approval (see `issues/NIMBUS-129/PLAN.md`), then implementor
+  agent.
+- **Handover prompt:** See `issues/NIMBUS-129/PROGRESS.md`'s latest entry.
+
+- **Date:** 2026-09-02
+- **Updated by:** implementation-planner agent
+- **Outcome:** User approved the redesigned plan (synchronous canonical validation + company
+  matching + duplicate check, feeding directly into header-only order creation; async
+  event-driven post-processing; NIMBUS-149 scope-crossing recorded in
+  `issues/NIMBUS-129/PLAN.md`). Implementation planning for this story is complete.
+  **Implementor dispatch is intentionally held — pending, on user request** — not triggered
+  automatically.
+- **Handover to:** implementor agent, on request (not yet triggered).
+- **Handover prompt:** See `issues/NIMBUS-129/PROGRESS.md`'s latest entry for the full dispatch
+  prompt — this story is implemented as part of that combined NIMBUS-129 dispatch, not
+  standalone.
