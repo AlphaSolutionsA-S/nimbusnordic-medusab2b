@@ -63,6 +63,12 @@ is stale and is being corrected alongside the ownership fix above.
   customer token present as a URL path element).
 - Validate the token against the extended token-list store (list-fetch-and-match pattern from the
   existing example Logic App), resolving a valid token to its associated customer number.
+- If the token matches a list entry but that entry's customer number is missing, null, or empty,
+  treat the request as unauthorized: return a "not allowed" rejection and do **not** forward the
+  order onward. A known token with no resolvable customer number must never result in a call to
+  NIMBUS-144 with a blank `customerNumber`. This is a distinct failure mode from an unmatched
+  token, and its response must be distinguishable from the "token not recognized" rejection
+  (exact status code and message a planner decision).
 - On a valid token: forward the order to NIMBUS-144's Medusa receiving endpoint
   (`POST /orderapi/orders`), with the resolved customer number passed as a query-string parameter
   (per NIMBUS-144's established contract, e.g. `?customerNumber=...`) and the canonical JSON body

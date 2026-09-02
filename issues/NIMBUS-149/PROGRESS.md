@@ -40,3 +40,32 @@
   do NOT implement NIMBUS-148's actual Business Central delivery/API call — this story only
   initializes the integration-state object that NIMBUS-148 will later update. If SCOPE.md needs
   adjustment during planning, update it in place rather than creating a new scope document.
+
+---
+
+## 2026-09-02 — Implementation Planning Complete
+
+- **Updated by:** implementation-planner agent
+- **Outcome:** Implementation plan produced. PLAN.md, manifest.md, and three task files created.
+  Plan is ready for dispatch but conditional on NIMBUS-129 Task 03's implementation status — this
+  story modifies the files Task 03 plans to create.
+- **Key insight:** NIMBUS-129 Task 03 already pulled a minimal slice of NIMBUS-149 into its
+  synchronous workflow (bare `createOrders` with `currency_code`, `email`, and metadata
+  containing `company_id`, `canonical_order`, `order_ingestion_state`). This story completes the
+  remaining requirements: address mapping, phone mapping, BC integration-state metadata,
+  idempotency verification, and failure-handling verification.
+- **Key decisions:**
+  - Modify the existing `createOrderAndReferenceStep` from NIMBUS-129 Task 03 — do not create a
+    parallel workflow.
+  - Map `billTo`/`shipTo` as inline `CreateOrderAddressDTO` objects in `createOrders`.
+  - Map `name` → `first_name` (no split), `country` → `country_code` (lowercase),
+    `phoneNumber` → `shipping_address.phone`.
+  - BC integration-state: `{ bc_order_id: null, status: 'pending', timestamp, retry_count: 0 }`
+    under `metadata.bc_integration_state`.
+  - Idempotency: rely on existing `OrderExternalReference` dedupe check (no new code).
+  - Failure handling: rely on existing compensation function (no new code).
+- **Handover to:** implementor agent (once NIMBUS-129 Task 03 is implemented or in progress)
+- **Handover prompt:** Implement NIMBUS-149 from the approved plan in issues/NIMBUS-149/. Start
+  with Task 01 (header mapping + BC state), then Task 02 (verification), then Task 03 (tests).
+  Before starting, check NIMBUS-129 Task 03's implementation status and complete the
+  reconciliation checklist in manifest.md.
