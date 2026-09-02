@@ -48,9 +48,12 @@ retry action when delivery fails.
   another Medusa or Business Central order.
 - Send the persisted Medusa order to Business Central and retain the Business Central order
   identifier on successful delivery.
-- Return a synchronous response containing the Business Central order identifier when the
-  order is created successfully.
-- Return a clear validation or integration error when processing fails.
+- Return an immediate response containing a Medusa order reference when the submission is
+  accepted (see NIMBUS-144). Business Central delivery happens asynchronously afterward — its
+  identifier is never returned to the calling system, only surfaced to internal operations via
+  the Medusa Admin order-page widget (NIMBUS-158). **Confirmed 2026-09-02**, superseding the
+  earlier synchronous-BC-identifier assumption.
+- Return a clear validation or integration error when the initial request fails.
 - If Business Central delivery fails after Medusa order creation, retain the Medusa order in
   a visible failed or pending-integration state.
 - Add a widget to the Medusa Admin order page that displays Business Central integration
@@ -115,7 +118,10 @@ retry action when delivery fails.
    - Return the synchronous Business Central identifier or a clear integration error.
 
 6. **NIMBUS-149 - Create and persist the Medusa order**
-   - Replace raw-XML-only storage with a real Medusa order and order lines.
+   - Replace raw-XML-only storage with a real Medusa order — **header fields only, no
+     `OrderLineItem` records** (Medusa has no product catalog behind these items). The
+     validated canonical order's line data is retained (mechanism TBD, likely order
+     `metadata`) for NIMBUS-148 to consume when building the Business Central order lines.
    - Associate the order with the matched company and customer context.
    - Store its initial Business Central integration state and normalized source information
      needed for traceability.

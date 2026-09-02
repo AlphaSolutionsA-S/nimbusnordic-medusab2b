@@ -4,7 +4,7 @@ Repository URL: https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b
 Default branch: develop
 Harnesses: github-copilot-vscode, codex, claude
 
-## Installed Skills (Codex paths)
+## Installed Skills (claude paths)
 
 ### Workflow & process
 
