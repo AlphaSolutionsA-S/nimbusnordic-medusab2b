@@ -26,3 +26,29 @@
   definition and versioning, exact JSON Schema/XSD artifact format for APIM's `validate-content`,
   and content-type-branching behavior for missing/unsupported `Content-Type` headers. If SCOPE.md
   needs adjustment during planning, update it in place rather than creating a new scope document.
+
+---
+
+## 2026-09-02 — Implementation Planning Complete
+
+- **Updated by:** implementation-planner agent
+- **Outcome:** Implementation plan produced. PLAN.md, manifest.md, and three task files created.
+  Plan is ready for dispatch but conditional on NIMBUS-147's finalized XML representation and
+  NIMBUS-146's Logic App deployment (backend URL is a placeholder).
+- **Key decisions:**
+  - Two separate schemas (JSON Schema draft 7 + XSD) derived from NIMBUS-147's canonical contract.
+  - Content-type branching via `choose` on `Content-Type` header (JSON / XML / unsupported → 415).
+  - `validate-content` with `action="prevent"` for both branches (rejects invalid payloads with 400).
+  - `xml-to-json` with `kind="javascript-friendly"`, `always-array-child-elements="true"` for XML
+    normalization (ensures single `<line>` becomes a JSON array).
+  - `on-error` policy returns safe, structured 400 error (no raw payload, no internal details).
+  - HTTPS enforcement via APIM's built-in HTTPS-only endpoints (no explicit policy needed).
+  - Forwarding via `set-backend-service` to NIMBUS-146's Logic App (placeholder URL).
+  - No code changes to `apps/backend` or `apps/storefront` — reference artifacts only.
+  - Manual test payloads (no automated APIM test infrastructure in this repo).
+- **Handover to:** implementor agent (once NIMBUS-147's XML representation is finalized and
+  NIMBUS-146's Logic App trigger URL is available)
+- **Handover prompt:** Implement NIMBUS-145 from the approved plan in issues/NIMBUS-145/. Start
+  with Task 01 (schemas), then Task 02 (APIM policy), then Task 03 (test payloads). Before
+  starting, complete the reconciliation checklist in manifest.md against NIMBUS-147's finalized
+  XML representation and NIMBUS-146's deployed Logic App trigger URL.
