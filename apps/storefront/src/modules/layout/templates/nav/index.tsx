@@ -29,15 +29,15 @@ export async function NavigationHeader() {
   )
 
   return (
-    <div className="sticky top-0 inset-x-0 group bg-white text-zinc-900 small:p-4 p-2 text-sm border-b duration-200 border-ui-border-base z-50">
+    <div className="sticky inset-x-0 top-0 z-50 group border-b border-zinc-300 bg-[#f5f4ef] py-3 text-sm text-zinc-900 duration-200 small:py-5">
       <header className="flex w-full content-container relative small:mx-auto justify-between">
         <div className="small:mx-auto flex justify-between items-center min-w-full">
           <div className="flex items-center small:space-x-4">
             <LocalizedClientLink
-              className="hover:text-ui-fg-base flex items-center w-fit"
+              className="flex w-fit items-center hover:text-ui-fg-base"
               href="/"
             >
-              <h1 className="small:text-base text-sm font-medium flex items-center">
+              <h1 className="flex items-center text-sm font-medium uppercase tracking-[0.14em] small:text-base">
                 <LogoIcon className="inline mr-2" />
                 {t("brandName")}
               </h1>
@@ -61,7 +61,7 @@ export async function NavigationHeader() {
                 disabled
                 type="text"
                 placeholder={t("searchPlaceholder")}
-                className="bg-gray-100 text-zinc-900 px-4 py-2 rounded-full pr-10 shadow-borders-base hidden small:inline-block hover:cursor-not-allowed"
+                className="hidden border border-zinc-300 bg-transparent px-4 py-2 pr-10 text-zinc-900 shadow-none hover:cursor-not-allowed small:inline-block"
                 title={t("searchDisabledTooltip")}
               />
             </div>
@@ -71,18 +71,22 @@ export async function NavigationHeader() {
             {customer && cart?.items && cart.items.length > 0 ? (
               <RequestQuoteConfirmation>
                 <button
-                  className="flex gap-1.5 items-center rounded-2xl bg-none shadow-none border-none hover:bg-neutral-100 px-2 py-1"
+                  className="flex items-center gap-1.5 border border-transparent px-2 py-1 uppercase tracking-[0.1em] hover:border-zinc-300"
                   // disabled={isPendingApproval}
                 >
                   <FilePlus />
-                  <span className="hidden small:inline-block">{t("quoteLabel")}</span>
+                  <span className="hidden small:inline-block">
+                    {t("quoteLabel")}
+                  </span>
                 </button>
               </RequestQuoteConfirmation>
             ) : (
               <RequestQuotePrompt>
-                <button className="flex gap-1.5 items-center rounded-2xl bg-none shadow-none border-none hover:bg-neutral-100 px-2 py-1">
+                <button className="flex items-center gap-1.5 border border-transparent px-2 py-1 uppercase tracking-[0.1em] hover:border-zinc-300">
                   <FilePlus />
-                  <span className="hidden small:inline-block">{t("quoteLabel")}</span>
+                  <span className="hidden small:inline-block">
+                    {t("quoteLabel")}
+                  </span>
                 </button>
               </RequestQuotePrompt>
             )}

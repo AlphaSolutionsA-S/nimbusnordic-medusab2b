@@ -2,6 +2,36 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+@layer base {
+  :root {
+    --storefront-ink: #1d211d;
+    --storefront-paper: #f5f4ef;
+    --storefront-line: #d9d8d1;
+  }
+
+  html {
+    background-color: var(--storefront-paper);
+  }
+
+  body {
+    min-height: 100vh;
+    background-color: var(--storefront-paper);
+    color: var(--storefront-ink);
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 0.01em;
+  }
+
+  ::selection {
+    background-color: #29352c;
+    color: #fff;
+  }
+
+  :focus-visible {
+    outline: 2px solid #29352c;
+    outline-offset: 3px;
+  }
+}
+
 @layer utilities {
   /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
@@ -51,11 +81,11 @@
 
 @layer components {
   .content-container {
-    @apply max-w-[1440px] w-full mx-auto px-6;
+    @apply max-w-[1600px] w-full mx-auto px-5 small:px-8;
   }
 
   .contrast-btn {
-    @apply px-4 py-2 border border-black rounded-full hover:bg-black hover:text-white transition-colors duration-200 ease-in;
+    @apply px-4 py-2 border border-zinc-900 rounded-none hover:bg-zinc-900 hover:text-white transition-colors duration-200 ease-in;
   }
 
   .text-xsmall-regular {
@@ -108,5 +138,28 @@
 
   .text-3xl-semi {
     @apply text-[32px] leading-[44px] font-semibold;
+  }
+}
+
+@layer components {
+  .storefront-hero::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    content: "";
+    background: linear-gradient(
+      90deg,
+      rgba(16, 23, 18, 0.68),
+      rgba(16, 23, 18, 0.18) 62%,
+      rgba(16, 23, 18, 0.04)
+    );
+  }
+
+  .storefront-footer a {
+    color: inherit;
+  }
+
+  .storefront-footer a:hover {
+    color: #d6e0d5;
   }
 }

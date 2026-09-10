@@ -26,14 +26,16 @@ export default async function ProductRail({
   })
 
   return (
-    <div className="content-container py-12 small:py-24 bg-neutral-100">
-      <div className="flex justify-between mb-8">
-        <Text className="text-base">{collection.title}</Text>
+    <div className="content-container py-16 small:py-28">
+      <div className="mb-10 flex items-end justify-between border-b border-zinc-300 pb-4">
+        <Text className="text-xl tracking-[-0.03em] small:text-2xl">
+          {collection.title}
+        </Text>
         <InteractiveLink href={`/collections/${collection.handle}`}>
           {t("viewAllLabel")}
         </InteractiveLink>
       </div>
-      <ul className="grid grid-cols-1 small:grid-cols-4 gap-x-3 gap-y-3 small:gap-y-36">
+      <ul className="grid grid-cols-1 gap-x-4 gap-y-6 xsmall:grid-cols-2 small:grid-cols-4">
         {productsWithPrices &&
           productsWithPrices.map((product) => (
             <li key={product.id}>
