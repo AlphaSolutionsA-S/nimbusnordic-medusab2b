@@ -21,6 +21,10 @@
     letter-spacing: 0.01em;
   }
 
+  .featurehidden {
+    display:none;
+  }
+
   ::selection {
     background-color: #29352c;
     color: #fff;

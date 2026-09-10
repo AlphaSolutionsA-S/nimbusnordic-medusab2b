@@ -67,7 +67,7 @@ describe("NavigationHeader", () => {
     const element = await NavigationHeader()
     render(element)
 
-    expect(screen.getByText("Medusa B2B Starter")).toBeInTheDocument()
+    expect(screen.getByAltText("Nimbus")).toBeInTheDocument()
     expect(
       screen.getByPlaceholderText("Search for products")
     ).toBeInTheDocument()

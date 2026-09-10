@@ -29,23 +29,6 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   return (
     <>
       <NavigationHeader />
-      <div className="flex items-center justify-center gap-1 bg-[#29352c] p-2 text-center text-xs uppercase tracking-[0.08em] text-neutral-50 small:gap-2 small:p-3">
-        <div className="flex flex-col small:flex-row small:gap-2 gap-1 items-center">
-          <span className="flex items-center gap-1">
-            <ExclamationCircleSolid className="inline" color="#A1A1AA" />
-            {t("buildYourOwnLabel")}
-          </span>
-
-          <a
-            className="group hover:text-ui-fg-interactive-hover text-ui-fg-interactive self-end small:self-auto"
-            href="https://cloud.medusajs.com"
-            target="_blank"
-          >
-            {t("deployToMedusaCloudLabel")}
-            <ArrowUpRightMini className="group-hover:text-ui-fg-interactive-hover inline text-ui-fg-interactive" />
-          </a>
-        </div>
-      </div>
 
       {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />

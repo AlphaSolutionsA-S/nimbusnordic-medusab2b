@@ -5,7 +5,6 @@ import AccountButton from "@/modules/account/components/account-button"
 import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import FilePlus from "@/modules/common/icons/file-plus"
-import LogoIcon from "@/modules/common/icons/logo"
 import { MegaMenuWrapper } from "@/modules/layout/components/mega-menu"
 import { RegionSwitcher } from "@/modules/layout/components/region-switcher"
 import { RequestQuoteConfirmation } from "@/modules/quotes/components/request-quote-confirmation"
@@ -14,6 +13,7 @@ import SkeletonAccountButton from "@/modules/skeletons/components/skeleton-accou
 import SkeletonCartButton from "@/modules/skeletons/components/skeleton-cart-button"
 import SkeletonMegaMenu from "@/modules/skeletons/components/skeleton-mega-menu"
 import { getTranslations } from "next-intl/server"
+import Image from "next/image"
 import { Suspense } from "react"
 
 export async function NavigationHeader() {
@@ -37,9 +37,15 @@ export async function NavigationHeader() {
               className="flex w-fit items-center hover:text-ui-fg-base"
               href="/"
             >
-              <h1 className="flex items-center text-sm font-medium uppercase tracking-[0.14em] small:text-base">
-                <LogoIcon className="inline mr-2" />
-                {t("brandName")}
+              <h1 className="flex items-center">
+                <Image
+                  src="/nimbus-logo.png"
+                  alt="Nimbus"
+                  width={572}
+                  height={487}
+                  className="h-10 w-auto small:h-12"
+                  priority
+                />
               </h1>
             </LocalizedClientLink>
 
