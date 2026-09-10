@@ -4,6 +4,7 @@ import { cartToCsv } from "@/lib/util/convert-cart-to-csv"
 import Button from "@/modules/common/components/button"
 import { B2BCart } from "@/types"
 import { Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 type CartToCsvButtonProps = {
@@ -11,6 +12,7 @@ type CartToCsvButtonProps = {
 }
 
 const CartToCsvButton = ({ cart }: CartToCsvButtonProps) => {
+  const t = useTranslations("Cart.cartToCsvButton")
   const [isExportingCart, setIsExportingCart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -57,7 +59,7 @@ const CartToCsvButton = ({ cart }: CartToCsvButtonProps) => {
         onClick={handleExportCart}
         isLoading={isExportingCart}
       >
-        Export Cart (.csv)
+        {t("exportLabel")}
       </Button>
       {error && <Text className="text-red-500">{error}</Text>}
     </div>

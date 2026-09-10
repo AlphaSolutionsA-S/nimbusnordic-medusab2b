@@ -5,6 +5,7 @@ import { B2BCart, B2BCustomer } from "@/types"
 import { HttpTypes } from "@medusajs/types"
 import { Container } from "@medusajs/ui"
 import { mapKeys } from "lodash"
+import { useTranslations } from "next-intl"
 import React, { useEffect, useMemo, useState } from "react"
 
 const ShippingAddressForm = ({
@@ -14,6 +15,7 @@ const ShippingAddressForm = ({
   customer: B2BCustomer | null
   cart: B2BCart | null
 }) => {
+  const t = useTranslations("Checkout.addressForm")
   const [formData, setFormData] = useState<Record<string, any>>({
     "shipping_address.first_name": "",
     "shipping_address.last_name": "",
@@ -89,7 +91,7 @@ const ShippingAddressForm = ({
       {customer && (addressesInRegion?.length || 0) > 0 && (
         <Container className="mb-6 flex flex-col gap-y-4 p-5">
           <p className="text-small-regular">
-            {`Hi ${customer.first_name}, do you want to use one of your saved addresses?`}
+            {t("savedAddressPrompt", { name: String(customer.first_name) })}
           </p>
           <AddressSelect
             addresses={customer.addresses}
@@ -104,7 +106,7 @@ const ShippingAddressForm = ({
       )}
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="First name"
+          label={t("firstNameLabel")}
           name="shipping_address.first_name"
           autoComplete="given-name"
           value={formData["shipping_address.first_name"]}
@@ -113,7 +115,7 @@ const ShippingAddressForm = ({
           data-testid="shipping-first-name-input"
         />
         <Input
-          label="Last name"
+          label={t("lastNameLabel")}
           name="shipping_address.last_name"
           autoComplete="family-name"
           value={formData["shipping_address.last_name"]}
@@ -122,7 +124,7 @@ const ShippingAddressForm = ({
           data-testid="shipping-last-name-input"
         />
         <Input
-          label="Phone"
+          label={t("phoneLabel")}
           name="shipping_address.phone"
           autoComplete="tel"
           value={formData["shipping_address.phone"]}
@@ -131,7 +133,7 @@ const ShippingAddressForm = ({
           data-testid="shipping-phone-input"
         />
         <Input
-          label="Company name"
+          label={t("companyNameLabel")}
           name="shipping_address.company"
           value={formData["shipping_address.company"]}
           onChange={handleChange}
@@ -140,7 +142,7 @@ const ShippingAddressForm = ({
           colSpan={2}
         />
         <Input
-          label="Address"
+          label={t("addressLabel")}
           name="shipping_address.address_1"
           autoComplete="address-line1"
           value={formData["shipping_address.address_1"]}
@@ -150,7 +152,7 @@ const ShippingAddressForm = ({
           colSpan={2}
         />
         <Input
-          label="Postal code"
+          label={t("postalCodeLabel")}
           name="shipping_address.postal_code"
           autoComplete="postal-code"
           value={formData["shipping_address.postal_code"]}
@@ -161,7 +163,7 @@ const ShippingAddressForm = ({
         />
         <div className="grid small:grid-cols-3 grid-cols-2 gap-4 col-span-2">
           <Input
-            label="City"
+            label={t("cityLabel")}
             name="shipping_address.city"
             autoComplete="address-level2"
             value={formData["shipping_address.city"]}
@@ -170,7 +172,7 @@ const ShippingAddressForm = ({
             data-testid="shipping-city-input"
           />
           <Input
-            label="Province"
+            label={t("provinceLabel")}
             name="shipping_address.province"
             autoComplete="address-level1"
             value={formData["shipping_address.province"]}
@@ -185,6 +187,7 @@ const ShippingAddressForm = ({
             value={formData["shipping_address.country_code"]}
             onChange={handleChange}
             required
+            placeholder={t("countryPlaceholder")}
             data-testid="shipping-country-select"
           />
         </div>

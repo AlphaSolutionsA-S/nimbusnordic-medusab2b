@@ -154,7 +154,7 @@ pnpm dev
 |----------|-------------|
 | `NEXT_PUBLIC_MEDUSA_BACKEND_URL` | URL of the Medusa backend |
 | `NEXT_PUBLIC_BASE_URL` | Public URL of the storefront |
-| `NEXT_PUBLIC_DEFAULT_REGION` | Default region code (e.g. `us`) |
+| `NEXT_PUBLIC_DEFAULT_REGION` | Default region code (e.g. `gb`) |
 | `REVALIDATE_SECRET` | Secret for on-demand cache revalidation |
 
 ## Resources

@@ -8,6 +8,7 @@ import Button from "@/modules/common/components/button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { B2BCart, B2BCustomer } from "@/types"
 import { ExclamationCircle } from "@medusajs/icons"
+import { useTranslations } from "next-intl"
 
 const Review = ({
   cart,
@@ -16,6 +17,10 @@ const Review = ({
   cart: B2BCart
   customer: B2BCustomer | null
 }) => {
+  const t = useTranslations("Checkout.review")
+  // Reuses the identical spending-limit message already extracted for
+  // `@/modules/cart/templates/summary`.
+  const tCartSummary = useTranslations("Cart.summary")
   const spendLimitExceeded = customer
     ? checkSpendingLimit(cart, customer)
     : false
@@ -24,22 +29,26 @@ const Review = ({
     <div className="flex flex-col gap-y-2">
       <div className="flex items-start gap-x-1 w-full">
         <Text className="txt-xsmall text-neutral-500 mb-1">
-          By Completing this order, I agree to Medusa&apos;s{" "}
-          <LocalizedClientLink
-            href="/terms-of-sale"
-            className="hover:text-neutral-800"
-            target="_blank"
-          >
-            Terms of Sale ↗
-          </LocalizedClientLink>{" "}
-          and{" "}
-          <LocalizedClientLink
-            href="/privacy-policy"
-            className="hover:text-neutral-800"
-            target="_blank"
-          >
-            Privacy Policy ↗
-          </LocalizedClientLink>
+          {t.rich("agreementText", {
+            termsLink: (chunks) => (
+              <LocalizedClientLink
+                href="/terms-of-sale"
+                className="hover:text-neutral-800"
+                target="_blank"
+              >
+                {chunks}
+              </LocalizedClientLink>
+            ),
+            privacyLink: (chunks) => (
+              <LocalizedClientLink
+                href="/privacy-policy"
+                className="hover:text-neutral-800"
+                target="_blank"
+              >
+                {chunks}
+              </LocalizedClientLink>
+            ),
+          })}
         </Text>
       </div>
       {spendLimitExceeded ? (
@@ -47,13 +56,11 @@ const Review = ({
           <div className="flex items-center gap-x-2 bg-neutral-100 p-3 rounded-md shadow-borders-base">
             <ExclamationCircle className="text-orange-500 w-fit overflow-visible" />
             <p className="text-neutral-950 text-xs">
-              This order exceeds your spending limit.
-              <br />
-              Please contact your manager for approval.
+              {tCartSummary.rich("spendingLimitMessage", { br: () => <br /> })}
             </p>
           </div>
           <Button className="w-full h-10 rounded-full shadow-none" disabled>
-            Place Order
+            {t("placeOrderLabel")}
           </Button>
         </>
       ) : (

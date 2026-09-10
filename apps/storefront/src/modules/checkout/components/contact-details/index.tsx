@@ -6,6 +6,7 @@ import { ApprovalStatusType, B2BCart, B2BCustomer } from "@/types"
 import { CheckCircleSolid } from "@medusajs/icons"
 import { clx, Container, Heading, Text } from "@medusajs/ui"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useActionState, useCallback } from "react"
 import ContactDetailsForm from "../contact-details-form"
 import ErrorMessage from "../error-message"
@@ -18,6 +19,7 @@ const ContactDetails = ({
   cart: B2BCart | null
   customer: B2BCustomer | null
 }) => {
+  const t = useTranslations("Checkout.contactDetails")
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -86,7 +88,7 @@ const ContactDetails = ({
               }
             )}
           >
-            Contact Details
+            {t("heading")}
             {!isOpen && isCompleted && <CheckCircleSolid />}
           </Heading>
 
@@ -99,7 +101,7 @@ const ContactDetails = ({
                   className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
                   data-testid="edit-contact-details-button"
                 >
-                  Edit
+                  {t("editLabel")}
                 </button>
               </Text>
             )}
@@ -117,8 +119,8 @@ const ContactDetails = ({
                   {requiresApproval &&
                   cartApprovalStatus !== ApprovalStatusType.APPROVED &&
                   !customerIsAdmin
-                    ? "Review order"
-                    : "Next step"}
+                    ? t("reviewOrderLabel")
+                    : t("nextStepLabel")}
                 </SubmitButton>
                 <ErrorMessage
                   error={message}
@@ -142,7 +144,7 @@ const ContactDetails = ({
                   <div>
                     <Divider />
                     <Text className="txt-medium text-ui-fg-subtle pt-2">
-                      Note: {cart.metadata?.notes as string}
+                      {t("notePrefix", { notes: cart.metadata?.notes as string })}
                     </Text>
                   </div>
                 ) : null}

@@ -1,6 +1,6 @@
 ---
 name: feature-requests
-description: "Use when asked to register, describe, log, or document a feature request for Nimbus Nordic. Mirrors the tracker issue into issues/<caseid>/FEATURE.md so the tracker stays business-facing and the repo carries the engineering detail."
+description: "Use when asked to register, describe, log, or document a feature request or an enhancement for Nimbus Nordic. Mirrors the tracker issue into issues/<caseid>/FEATURE.md so the tracker stays business-facing and the repo carries the engineering detail."
 ---
 
 # Feature Request Convention — Nimbus Nordic

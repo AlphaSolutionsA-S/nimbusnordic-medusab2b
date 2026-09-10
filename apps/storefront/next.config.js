@@ -1,6 +1,19 @@
 const checkEnvVariables = require("./check-env-variables")
+const createNextIntlPlugin = require("next-intl/plugin")
 
 checkEnvVariables()
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts")
+
+function getPayloadPreviewOrigin() {
+  try {
+    return process.env.PAYLOAD_PUBLIC_URL
+      ? new URL(process.env.PAYLOAD_PUBLIC_URL).origin
+      : null
+  } catch {
+    return null
+  }
+}
 
 /**
  * @type {import('next').NextConfig}
@@ -14,6 +27,28 @@ const nextConfig = {
     fetches: {
       fullUrl: true,
     },
+  },
+  async headers() {
+    const payloadOrigin = getPayloadPreviewOrigin()
+    const localPreviewOrigins =
+      process.env.NODE_ENV === "production"
+        ? []
+        : ["http://localhost:3000", "http://localhost:3001"]
+    const frameAncestors = ["'self'", payloadOrigin, ...localPreviewOrigins]
+      .filter(Boolean)
+      .join(" ")
+
+    return [
+      {
+        source: "/:countryCode/account/claims",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: `frame-ancestors ${frameAncestors};`,
+          },
+        ],
+      },
+    ]
   },
   images: {
     unoptimized: true,
@@ -46,8 +81,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.s3.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "*.blob.core.windows.net",
+      },
     ],
   },
 }
 
-module.exports = nextConfig
+module.exports = withNextIntl(nextConfig)

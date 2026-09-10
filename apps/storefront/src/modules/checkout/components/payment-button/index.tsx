@@ -8,6 +8,7 @@ import Spinner from "@/modules/common/icons/spinner"
 import { B2BCart } from "@/types"
 import { ApprovalStatusType } from "@/types/approval"
 import { Container, Text, toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { OnApproveActions, OnApproveData } from "@paypal/paypal-js"
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js"
 import { useElements, useStripe } from "@stripe/react-stripe-js"
@@ -34,6 +35,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
   cart,
   "data-testid": dataTestId,
 }) => {
+  const t = useTranslations("Checkout.paymentButton")
   const notReady =
     !cart ||
     !cart.shipping_address ||
@@ -89,7 +91,7 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({
         />
       )
     default:
-      return <Button disabled>Select a payment method</Button>
+      return <Button disabled>{t("selectPaymentMethodLabel")}</Button>
   }
 }
 
@@ -100,6 +102,7 @@ const RequestApprovalButton = ({
   cart: B2BCart
   notReady: boolean
 }) => {
+  const t = useTranslations("Checkout.paymentButton")
   const [submitting, setSubmitting] = useState(false)
 
   const { requires_admin_approval, requires_sales_manager_approval } =
@@ -125,10 +128,10 @@ const RequestApprovalButton = ({
       <Container className="flex flex-col gap-y-2">
         <Text className="text-neutral-700-950 text-xs text-center">
           {requires_admin_approval && requires_sales_manager_approval
-            ? "This order requires approval by both a company admin and a sales manager."
+            ? t("approvalRequiredBoth")
             : requires_admin_approval
-            ? "This order requires approval by a company admin."
-            : "This order requires approval by a sales manager."}
+            ? t("approvalRequiredAdmin")
+            : t("approvalRequiredSalesManager")}
         </Text>
         <Button
           className="w-full h-10 rounded-full shadow-none"
@@ -136,7 +139,9 @@ const RequestApprovalButton = ({
           onClick={createApproval}
           isLoading={submitting}
         >
-          {isPendingAdminApproval ? "Approval Requested" : "Request Approval"}
+          {isPendingAdminApproval
+            ? t("approvalRequestedLabel")
+            : t("requestApprovalLabel")}
         </Button>
       </Container>
     </>
@@ -144,6 +149,7 @@ const RequestApprovalButton = ({
 }
 
 const GiftCardPaymentButton = ({ cart }: { cart: B2BCart }) => {
+  const t = useTranslations("Checkout.paymentButton")
   const [submitting, setSubmitting] = useState(false)
 
   const handleOrder = async () => {
@@ -157,7 +163,7 @@ const GiftCardPaymentButton = ({ cart }: { cart: B2BCart }) => {
       isLoading={submitting}
       data-testid="submit-order-button"
     >
-      Place order
+      {t("placeOrderLabel")}
     </Button>
   )
 }
@@ -171,6 +177,7 @@ const StripePaymentButton = ({
   notReady: boolean
   "data-testid"?: string
 }) => {
+  const t = useTranslations("Checkout.paymentButton")
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -260,7 +267,7 @@ const StripePaymentButton = ({
         isLoading={submitting}
         data-testid={dataTestId}
       >
-        Place order
+        {t("placeOrderLabel")}
       </Button>
       <ErrorMessage
         error={errorMessage}
@@ -347,6 +354,7 @@ const ManualTestPaymentButton = ({
   notReady: boolean
   cart: B2BCart
 }) => {
+  const t = useTranslations("Checkout.paymentButton")
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -376,7 +384,7 @@ const ManualTestPaymentButton = ({
         size="large"
         data-testid="submit-order-button"
       >
-        Place order
+        {t("placeOrderLabel")}
       </Button>
       <ErrorMessage
         error={errorMessage}

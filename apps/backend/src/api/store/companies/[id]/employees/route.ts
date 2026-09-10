@@ -1,6 +1,9 @@
 import { MedusaRequest, MedusaResponse } from "@medusajs/framework";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
-import { createEmployeesWorkflow } from "../../../../../workflows/employee/workflows";
+import {
+  createEmployeeAccountWorkflow,
+  createEmployeesWorkflow,
+} from "../../../../../workflows/employee/workflows";
 import {
   StoreCreateEmployeeType,
   StoreGetEmployeeParamsType,
@@ -42,17 +45,44 @@ export const POST = async (
 ) => {
   const { id } = req.params;
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+  const body = req.validatedBody;
 
-  const { result: createdEmployee } = await createEmployeesWorkflow.run({
-    input: {
-      employeeData: {
-        ...req.validatedBody,
-        company_id: id,
+  let createdEmployeeId: string;
+
+  if (body.customer_id) {
+    const { result } = await createEmployeesWorkflow.run({
+      input: {
+        employeeData: {
+          spending_limit: body.spending_limit ?? 0,
+          is_admin: body.is_admin ?? false,
+          company_id: id,
+          customer_id: body.customer_id,
+        },
+        customerId: body.customer_id,
       },
-      customerId: req.validatedBody.customer_id,
-    },
-    container: req.scope,
-  });
+      container: req.scope,
+    });
+    createdEmployeeId = result.id;
+  } else {
+    const { result } = await createEmployeeAccountWorkflow.run({
+      input: {
+        customerData: {
+          email: body.email!,
+          first_name: body.first_name,
+          last_name: body.last_name,
+          phone: body.phone,
+        },
+        password: body.password!,
+        employeeData: {
+          company_id: id,
+          spending_limit: body.spending_limit ?? 0,
+          is_admin: body.is_admin ?? false,
+        },
+      },
+      container: req.scope,
+    });
+    createdEmployeeId = result.employee.id;
+  }
 
   const {
     data: [employee],
@@ -62,7 +92,7 @@ export const POST = async (
       fields: req.queryConfig.fields,
       filters: {
         ...req.filterableFields,
-        id: createdEmployee.id,
+        id: createdEmployeeId,
       },
     },
     { throwIfKeyNotFound: true }

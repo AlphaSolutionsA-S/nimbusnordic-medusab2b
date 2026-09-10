@@ -1,0 +1,158 @@
+trigger: none
+pr: none
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '9.15.0'
+  APP_SERVICE_NAME: 'app-payload'
+  RESOURCE_GROUP: 'rg_nimbus_customerportal'
+  AZURE_SUBSCRIPTION: 'new azure deploy for nimbus'  # Set this to your Azure subscription ID
+  BUILD_OUTPUT_PATH: '$(System.DefaultWorkingDirectory)/apps/cms/.next'
+
+stages:
+  - stage: Build
+    displayName: 'Build CMS App'
+    jobs:
+      - job: BuildJob
+        displayName: 'Build and Test'
+        steps:
+          # Install Node.js
+          - task: UseNode@1
+            inputs:
+              version: $(NODE_VERSION)
+            displayName: 'Install Node.js'
+
+          # Install pnpm
+          - script: npm install -g pnpm@$(PNPM_VERSION)
+            displayName: 'Install pnpm'
+
+          # Install dependencies
+          - script: pnpm install --frozen-lockfile
+            displayName: 'Install dependencies'
+
+          # Lint CMS app
+          - script: pnpm --filter '@dtc/cms' lint
+            displayName: 'Lint CMS app'
+            continueOnError: true
+
+          # Build CMS app
+          - script: pnpm --filter '@dtc/cms' build
+            displayName: 'Build CMS app'
+
+          # Test CMS app (if tests exist)
+          - script: pnpm --filter '@dtc/cms' test
+            displayName: 'Run CMS tests'
+            continueOnError: true
+
+          # Build a clean deployment package: migration source + .next build + package-lock for Oryx
+          - script: |
+              DEST=$(Build.ArtifactStagingDirectory)/cms
+              mkdir -p "$DEST"
+              # Copy runtime and migration files (no node_modules — Oryx installs on App Service)
+              cp apps/cms/next.config.mjs "$DEST/next.config.mjs"
+              cp apps/cms/payload.config.ts "$DEST/payload.config.ts"
+              cp apps/cms/tsconfig.json "$DEST/tsconfig.json"
+              cp -r apps/cms/.next "$DEST/.next"
+              cp -r apps/cms/src "$DEST/src"
+              cp -r apps/cms/public "$DEST/public" 2>/dev/null || true
+              # Tell Oryx which Node version to use
+              echo "22" > "$DEST/.nvmrc"
+              # Generate a package.json for App Service:
+              # - override "build" to no-op so Oryx only runs npm install (not next build)
+              # - keep "start" pointing to next start via full path (next may not be in PATH)
+              node -e "
+                const fs = require('fs');
+                const pkg = JSON.parse(fs.readFileSync('apps/cms/package.json', 'utf8'));
+                delete pkg.scripts.dev;
+                delete pkg.scripts.test;
+                delete pkg.devDependencies;
+                pkg.scripts.build = 'echo Pre-built in CI, skipping build';
+                pkg.scripts.migrate = 'payload migrate';
+                pkg.scripts.start = 'node node_modules/.bin/next start';
+                fs.writeFileSync('$DEST/package.json', JSON.stringify(pkg, null, 2));
+              "
+              # Generate package-lock.json so Oryx uses npm ci (fast, reproducible)
+              cd "$DEST"
+              npm install --package-lock-only --ignore-scripts 2>/dev/null || true
+              # Zip from inside the dir so files are at zip root (not inside cms/ subfolder)
+              cd $(Build.ArtifactStagingDirectory)
+              cd cms && zip -qr ../cms.zip . && cd ..
+              echo "Artifact size: $(du -sh cms.zip)"
+            displayName: 'Prepare deployment artifacts'
+
+          # Publish artifact (single zip = fast upload)
+          - task: PublishBuildArtifacts@1
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)/cms.zip'
+              artifactName: 'cms-app'
+              publishLocation: 'Container'
+            displayName: 'Publish artifacts'
+
+  - stage: Deploy
+    displayName: 'Deploy to Azure App Service'
+    dependsOn: Build
+    condition: succeeded()
+    jobs:
+      - job: DeployToAppService
+        displayName: 'Deploy CMS to App Service'
+        steps:
+          # Download artifact
+          - task: DownloadBuildArtifacts@0
+            inputs:
+              buildType: 'current'
+              downloadType: 'single'
+              artifactName: 'cms-app'
+              downloadPath: '$(Pipeline.Workspace)'
+            displayName: 'Download artifacts'
+
+          # Deploy using Azure App Service Deploy task
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: $(AZURE_SUBSCRIPTION)
+              appType: 'webAppLinux'
+              appName: $(APP_SERVICE_NAME)
+              runtimeStack: 'NODE|22-lts'
+              startupCommand: 'npm run migrate && npm start'
+              package: '$(Pipeline.Workspace)/cms-app/cms.zip'
+            displayName: 'Deploy to App Service'
+
+          # Post-deployment note
+          - script: echo "✓ Deployment complete. Committed Payload migrations run before startup."
+            displayName: 'Deployment Summary'
+
+          # Warm-up: hit the site to ensure the container handles its first request
+          - script: |
+              APP_URL="https://app-payload-ekhaedeqa9gugmfw.westeurope-01.azurewebsites.net/admin"
+              echo "Warming up $APP_URL ..."
+              for i in 1 2; do
+                STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$APP_URL")
+                echo "Attempt $i: HTTP $STATUS"
+                if [ "$STATUS" = "200" ] || [ "$STATUS" = "302" ] || [ "$STATUS" = "301" ]; then
+                  echo "✓ Site is up."
+                  exit 0
+                fi
+                echo "Not ready yet, waiting 60s..."
+                sleep 60
+              done
+              echo "##[warning]Site did not respond with 2xx/3xx after 2 attempts — check App Service logs."
+              exit 0
+            displayName: 'Warm-up ping'
+
+# Note: 
+# 1. Environment variables (PAYLOAD_SECRET, PAYLOAD_PUBLIC_URL, DATABASE_URI, AZURE_STORAGE_*,
+#    STOREFRONT_URL, STOREFRONT_DEFAULT_COUNTRY, RESEND_API_KEY,
+#    RESEND_FROM_ADDRESS, and RESEND_FROM_NAME)
+#    should be configured in Azure App Service → Configuration → Application settings
+#    Never commit these to source control.
+#
+# 2. Committed Payload migrations are included in the artifact and run before Next.js starts.
+#    This prevents App Service warm-up requests from racing database initialization.
+#    Oryx installs production dependencies during deployment.
+#
+# 3. After the first deployment, create the initial administrator at:
+#    https://<app-service-url>/admin/create-first-user
+#
+# 4. Access the admin dashboard at: https://<app-service-url>/admin

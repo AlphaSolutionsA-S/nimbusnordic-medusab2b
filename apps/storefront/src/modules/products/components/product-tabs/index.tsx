@@ -2,6 +2,7 @@
 
 import { HttpTypes } from "@medusajs/types"
 import { Table, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import Markdown from "react-markdown"
 import Accordion from "./accordion"
 
@@ -10,13 +11,14 @@ type ProductTabsProps = {
 }
 
 const ProductTabs = ({ product }: ProductTabsProps) => {
+  const t = useTranslations("Products.tabs")
   const tabs = [
     {
-      label: "Description",
+      label: t("descriptionLabel"),
       component: <ProductSpecsTab product={product} />,
     },
     {
-      label: "Specifications",
+      label: t("specificationsLabel"),
       component: <ProductSpecificationsTab product={product} />,
     },
   ]
@@ -65,6 +67,8 @@ const ProductSpecsTab = ({ product }: ProductTabsProps) => {
 }
 
 const ProductSpecificationsTab = ({ product }: ProductTabsProps) => {
+  const t = useTranslations("Products.tabs")
+
   return (
     <div className="text-small-regular py-8">
       <Table className="rounded-lg shadow-borders-base overflow-hidden border-none">
@@ -72,18 +76,26 @@ const ProductSpecificationsTab = ({ product }: ProductTabsProps) => {
           {product.weight && (
             <Table.Row>
               <Table.Cell className="border-r">
-                <span className="font-semibold">Weight</span>
+                <span className="font-semibold">{t("weightLabel")}</span>
               </Table.Cell>
-              <Table.Cell className="px-4">{product.weight} grams</Table.Cell>
+              <Table.Cell className="px-4">
+                {t("weightValue", { weight: product.weight })}
+              </Table.Cell>
             </Table.Row>
           )}
           {(product.height || product.width || product.length) && (
             <Table.Row>
               <Table.Cell className="border-r">
-                <span className="font-semibold">Dimensions (HxWxL)</span>
+                <span className="font-semibold">
+                  {t("dimensionsLabel")}
+                </span>
               </Table.Cell>
               <Table.Cell className="px-4">
-                {product.height}mm x {product.width}mm x {product.length}mm
+                {t("dimensionsValue", {
+                  height: String(product.height),
+                  width: String(product.width),
+                  length: String(product.length),
+                })}
               </Table.Cell>
             </Table.Row>
           )}

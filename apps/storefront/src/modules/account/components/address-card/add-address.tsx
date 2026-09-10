@@ -10,9 +10,13 @@ import Modal from "@/modules/common/components/modal"
 import { Plus } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { Heading } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useActionState, useEffect, useState } from "react"
 
+// Namespace shared with `@/modules/account/components/address-card/edit-address-modal`
+// since both render the same address form fields.
 const AddAddress = ({ region }: { region: HttpTypes.StoreRegion }) => {
+  const t = useTranslations("Account.addressCard")
   const [successState, setSuccessState] = useState(false)
   const { state, open, close: closeModal } = useToggleState(false)
 
@@ -46,27 +50,27 @@ const AddAddress = ({ region }: { region: HttpTypes.StoreRegion }) => {
         onClick={open}
         data-testid="add-address-button"
       >
-        <span className="text-base-semi">New address</span>
+        <span className="text-base-semi">{t("newAddressLabel")}</span>
         <Plus />
       </button>
 
       <Modal isOpen={state} close={close} data-testid="add-address-modal">
         <Modal.Title>
-          <Heading className="mb-2">Add address</Heading>
+          <Heading className="mb-2">{t("addAddressHeading")}</Heading>
         </Modal.Title>
         <form action={formAction}>
           <Modal.Body>
             <div className="flex flex-col gap-y-2">
               <div className="grid grid-cols-2 gap-x-2">
                 <Input
-                  label="First name"
+                  label={t("firstNameLabel")}
                   name="first_name"
                   required
                   autoComplete="given-name"
                   data-testid="first-name-input"
                 />
                 <Input
-                  label="Last name"
+                  label={t("lastNameLabel")}
                   name="last_name"
                   required
                   autoComplete="family-name"
@@ -74,34 +78,34 @@ const AddAddress = ({ region }: { region: HttpTypes.StoreRegion }) => {
                 />
               </div>
               <Input
-                label="Company"
+                label={t("companyLabel")}
                 name="company"
                 autoComplete="organization"
                 data-testid="company-input"
               />
               <Input
-                label="Address"
+                label={t("addressLabel")}
                 name="address_1"
                 required
                 autoComplete="address-line1"
                 data-testid="address-1-input"
               />
               <Input
-                label="Apartment, suite, etc."
+                label={t("apartmentLabel")}
                 name="address_2"
                 autoComplete="address-line2"
                 data-testid="address-2-input"
               />
               <div className="grid grid-cols-[144px_1fr] gap-x-2">
                 <Input
-                  label="Postal code"
+                  label={t("postalCodeLabel")}
                   name="postal_code"
                   required
                   autoComplete="postal-code"
                   data-testid="postal-code-input"
                 />
                 <Input
-                  label="City"
+                  label={t("cityLabel")}
                   name="city"
                   required
                   autoComplete="locality"
@@ -109,7 +113,7 @@ const AddAddress = ({ region }: { region: HttpTypes.StoreRegion }) => {
                 />
               </div>
               <Input
-                label="Province / State"
+                label={t("provinceLabel")}
                 name="province"
                 autoComplete="address-level1"
                 data-testid="state-input"
@@ -122,7 +126,7 @@ const AddAddress = ({ region }: { region: HttpTypes.StoreRegion }) => {
                 data-testid="country-select"
               />
               <Input
-                label="Phone"
+                label={t("phoneLabel")}
                 name="phone"
                 autoComplete="phone"
                 data-testid="phone-input"
@@ -146,9 +150,9 @@ const AddAddress = ({ region }: { region: HttpTypes.StoreRegion }) => {
                 className="h-10"
                 data-testid="cancel-button"
               >
-                Cancel
+                {t("cancelLabel")}
               </Button>
-              <SubmitButton data-testid="save-button">Save</SubmitButton>
+              <SubmitButton data-testid="save-button">{t("saveLabel")}</SubmitButton>
             </div>
           </Modal.Footer>
         </form>

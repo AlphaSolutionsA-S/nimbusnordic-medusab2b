@@ -5,6 +5,7 @@ import SquarePlus from "@/modules/common/icons/square-plus"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Text } from "@medusajs/ui"
 import { usePathname, useSearchParams } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { useCallback, useEffect, useState } from "react"
 
 const CategoryList = ({
@@ -14,6 +15,7 @@ const CategoryList = ({
   categories: HttpTypes.StoreProductCategory[]
   currentCategory?: HttpTypes.StoreProductCategory
 }) => {
+  const t = useTranslations("Catalog.categoryList")
   const getCategoriesToExpand = useCallback(
     (category: HttpTypes.StoreProductCategory) => {
       const categoriesToExpand = [category.id]
@@ -130,13 +132,13 @@ const CategoryList = ({
   return (
     <Container className="flex flex-col p-0 divide-y divide-neutral-200">
       <div className="flex justify-between items-center p-3">
-        <Text className="text-sm font-medium">Categories</Text>
+        <Text className="text-sm font-medium">{t("heading")}</Text>
         {pathname.includes("/categories") && (
           <LocalizedClientLink
             href="/store"
             className="text-xs text-neutral-500 hover:text-neutral-700"
           >
-            Clear
+            {t("clearLabel")}
           </LocalizedClientLink>
         )}
       </div>

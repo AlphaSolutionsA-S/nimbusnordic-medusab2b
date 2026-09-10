@@ -11,10 +11,12 @@ import { B2BCart } from "@/types"
 import { ApprovalStatusType } from "@/types/approval"
 import { CheckCircleSolid } from "@medusajs/icons"
 import { clx, Container, Heading, Text, useToggleState } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useState } from "react"
 
 const BillingAddress = ({ cart }: { cart: B2BCart | null }) => {
+  const t = useTranslations("Checkout.billingAddress")
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -81,7 +83,7 @@ const BillingAddress = ({ cart }: { cart: B2BCart | null }) => {
                 }
               )}
             >
-              Billing Address
+              {t("heading")}
             </Heading>
             {!isOpen && cart?.billing_address?.address_1 && (
               <CheckCircleSolid />
@@ -90,7 +92,7 @@ const BillingAddress = ({ cart }: { cart: B2BCart | null }) => {
           {cart?.shipping_address?.address_1 && (
             <CheckboxWithLabel
               disabled={cartApprovalStatus === ApprovalStatusType.PENDING}
-              label="Same as shipping address"
+              label={t("sameAsShippingLabel")}
               name="same_as_billing"
               checked={sameAsBilling}
               onChange={handleToggleSameAsBilling}
@@ -111,7 +113,7 @@ const BillingAddress = ({ cart }: { cart: B2BCart | null }) => {
                   className="mt-6"
                   data-testid="submit-address-button"
                 >
-                  Next step
+                  {t("nextStepLabel")}
                 </SubmitButton>
                 <ErrorMessage
                   error={error}

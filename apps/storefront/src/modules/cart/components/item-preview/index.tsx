@@ -5,6 +5,7 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import Thumbnail from "@/modules/products/components/thumbnail"
 import { HttpTypes } from "@medusajs/types"
 import { clx, Container } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 
 type ItemProps = {
   item: HttpTypes.StoreCartLineItem
@@ -13,6 +14,7 @@ type ItemProps = {
 }
 
 const ItemPreview = ({ item, showBorders = true, currencyCode }: ItemProps) => {
+  const t = useTranslations("Cart.itemPreview")
   const { handle } = item.product ?? {};
 
   const maxQuantity = item.variant?.inventory_quantity ?? 100
@@ -46,7 +48,9 @@ const ItemPreview = ({ item, showBorders = true, currencyCode }: ItemProps) => {
           <div className="flex small:flex-row flex-col gap-2">
             {(item.metadata?.note as string) && (
               <div className="flex gap-x-1">
-                <span className="text-neutral-950 text-xs">Note:</span>
+                <span className="text-neutral-950 text-xs">
+                  {t("noteLabel")}
+                </span>
                 <span className="text-xs text-neutral-600 italic truncate max-w-44 pr-px">
                   {item.metadata?.note as string}
                 </span>

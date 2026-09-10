@@ -1,0 +1,725 @@
+{
+  "Common": {
+    "welcome": "Velkommen",
+    "deleteButton": {
+      "removeLabel": "Fjern"
+    },
+    "promptModal": {
+      "cancelLabel": "Annuller",
+      "continueLabel": "Fortsæt"
+    },
+    "thumbnail": {
+      "altFallback": "test"
+    },
+    "notFound": {
+      "headingLabel": "Siden blev ikke fundet",
+      "pageMessage": "Siden, du forsøgte at tilgå, findes ikke.",
+      "goToFrontpageLabel": "Gå til forsiden"
+    }
+  },
+  "Layout": {
+    "nav": {
+      "brandName": "Medusa B2B Starter",
+      "searchPlaceholder": "Søg efter produkter",
+      "searchDisabledTooltip": "Installer en søgeudbyder for at aktivere produktsøgning",
+      "quoteLabel": "Tilbud"
+    },
+    "regionSwitcher": {
+      "label": "Vælg din region"
+    },
+    "megaMenu": {
+      "productsLabel": "Produkter"
+    },
+    "footer": {
+      "brandName": "Medusa Store",
+      "categoriesHeading": "Kategorier",
+      "collectionsHeading": "Kollektioner",
+      "medusaHeading": "Medusa",
+      "githubLabel": "GitHub",
+      "documentationLabel": "Dokumentation",
+      "sourceCodeLabel": "Kildekode",
+      "copyright": "© {year} Medusa Store. Alle rettigheder forbeholdes.",
+      "poweredByLabel": "Drevet af"
+    },
+    "cartMismatchBanner": {
+      "message": "Kurven er ikke forbundet med din konto",
+      "connectLabel": "Forbind kurv",
+      "connectingLabel": "Forbinder.."
+    },
+    "promoBanner": {
+      "buildYourOwnLabel": "Byg din egen B2B-butik med denne starter:",
+      "deployToMedusaCloudLabel": "Udrul til Medusa Cloud"
+    }
+  },
+  "Checkout": {
+    "contactDetails": {
+      "heading": "Kontaktoplysninger",
+      "editLabel": "Rediger",
+      "emailLabel": "E-mail",
+      "invoiceRecipientLabel": "Fakturamodtager",
+      "costCenterLabel": "Omkostningssted",
+      "requisitionNumberLabel": "Rekvisitionsnummer",
+      "doorCodeLabel": "Dørkode/varemærkning",
+      "notesLabel": "Bemærkninger",
+      "notesHelpText": "Bemærkningen vises kun på fakturaen og ordrebekræftelsen og læses ikke af forhandleren.",
+      "reviewOrderLabel": "Gennemgå ordre",
+      "nextStepLabel": "Næste trin",
+      "notePrefix": "Bemærkning: {notes}"
+    },
+    "addressForm": {
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Efternavn",
+      "phoneLabel": "Telefon",
+      "companyNameLabel": "Firmanavn",
+      "addressLabel": "Adresse",
+      "postalCodeLabel": "Postnummer",
+      "cityLabel": "By",
+      "provinceLabel": "Region",
+      "countryPlaceholder": "Land",
+      "savedAddressPrompt": "Hej {name}, vil du bruge en af dine gemte adresser?"
+    },
+    "addressSelect": {
+      "choosePlaceholder": "Vælg en adresse"
+    },
+    "billingAddress": {
+      "heading": "Faktureringsadresse",
+      "sameAsShippingLabel": "Samme som leveringsadresse",
+      "nextStepLabel": "Næste trin"
+    },
+    "company": {
+      "heading": "Virksomhed"
+    },
+    "companyForm": {
+      "orderOnBehalfOf": "Bestil på vegne af {companyName}",
+      "customCheckoutLabel": "Tilpasset checkout"
+    },
+    "paymentButton": {
+      "selectPaymentMethodLabel": "Vælg en betalingsmetode",
+      "approvalRequiredBoth": "Denne ordre kræver godkendelse af både en virksomhedsadministrator og en salgschef.",
+      "approvalRequiredAdmin": "Denne ordre kræver godkendelse af en virksomhedsadministrator.",
+      "approvalRequiredSalesManager": "Denne ordre kræver godkendelse af en salgschef.",
+      "approvalRequestedLabel": "Godkendelse anmodet",
+      "requestApprovalLabel": "Anmod om godkendelse",
+      "placeOrderLabel": "Afgiv ordre"
+    },
+    "paymentTest": {
+      "attentionLabel": "Bemærk:",
+      "testingOnlyMessage": "Kun til testformål."
+    },
+    "payment": {
+      "heading": "Betalingsmetode",
+      "editLabel": "Rediger",
+      "enterCardDetailsLabel": "Indtast dine kortoplysninger:",
+      "enterCardDetailsButtonLabel": " Indtast kortoplysninger",
+      "nextStepLabel": "Næste trin",
+      "giftCardLabel": "Gavekort",
+      "paymentMethodLabel": "Betalingsmetode"
+    },
+    "promotionCode": {
+      "enterPromotionCodeLabel": "Indtast kampagnekode",
+      "applyLabel": "Anvend",
+      "promotionAppliedOne": "Tilbud anvendt:",
+      "promotionAppliedOther": "Tilbud anvendt:",
+      "removeDiscountSrLabel": "Fjern rabatkode fra ordre"
+    },
+    "review": {
+      "agreementText": "Ved at gennemføre denne ordre accepterer jeg Medusas <termsLink>salgsbetingelser ↗</termsLink> og <privacyLink>privatlivspolitik ↗</privacyLink>",
+      "placeOrderLabel": "Afgiv ordre"
+    },
+    "shippingAddress": {
+      "heading": "Leveringsadresse",
+      "editLabel": "Rediger",
+      "nextStepLabel": "Næste trin"
+    },
+    "shipping": {
+      "heading": "Leveringsmetode",
+      "editLabel": "Rediger",
+      "nextStepLabel": "Næste trin"
+    },
+    "checkoutForm": {
+      "backToCartLabel": "Tilbage til indkøbskurv"
+    }
+  },
+  "Account": {
+    "login": {
+      "heading": "Log ind for hurtigere<br></br>checkout.",
+      "emailLabel": "E-mail",
+      "emailValidationMessage": "Indtast en gyldig e-mailadresse.",
+      "passwordLabel": "Adgangskode",
+      "rememberMeLabel": "Husk mig",
+      "submitLabel": "Log ind",
+      "registerLinkLabel": "Opret konto",
+      "bannerAlt": "Login-bannerbaggrund"
+    },
+    "register": {
+      "heading": "Opret din<br></br>virksomhedskonto.",
+      "emailLabel": "E-mail",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Efternavn",
+      "companyNameLabel": "Firmanavn",
+      "passwordLabel": "Adgangskode",
+      "companyAddressLabel": "Virksomhedsadresse",
+      "companyCityLabel": "Virksomhedsby",
+      "companyStateLabel": "Virksomhedsregion",
+      "companyZipLabel": "Virksomhedspostnummer",
+      "countryPlaceholder": "Vælg et land",
+      "currencyPlaceholder": "Vælg en valuta",
+      "termsLabel": "Jeg accepterer vilkårene og betingelserne.",
+      "submitLabel": "Opret konto",
+      "alreadyMemberText": "Allerede medlem?",
+      "loginLinkLabel": "Log ind"
+    },
+    "accountButton": {
+      "loginLabel": "Log ind"
+    },
+    "nav": {
+      "accountLabel": "Konto",
+      "helloLabel": "Hej {name}",
+      "profileLabel": "Profil",
+      "companyLabel": "Virksomhed",
+      "addressesLabel": "Adresser",
+      "ordersLabel": "Ordrer",
+      "bcOrdersLabel": "BC-ordrer",
+      "claimsLabel": "Reklamationer",
+      "approvalsLabel": "Godkendelser",
+      "quotesLabel": "Tilbud",
+      "logoutLabel": "Log ud",
+      "overviewLabel": "Oversigt"
+    },
+    "overview": {
+      "helloLabel": "Hej {name}",
+      "signedInAsLabel": "Logget ind som:",
+      "profileHeading": "Profil",
+      "completedLabel": "Udfyldt",
+      "addressesHeading": "Adresser",
+      "savedLabel": "Gemt",
+      "recentOrdersHeading": "Seneste ordrer",
+      "noRecentOrdersMessage": "Ingen seneste ordrer",
+      "previouslyPurchasedHeading": "Tidligere købte varer",
+      "noPreviouslyPurchasedMessage": "Ingen tidligere købte varer"
+    },
+    "orderCard": {
+      "itemsCount": "{count} varer",
+      "itemCount": "{count} vare",
+      "detailsLabel": "Detaljer"
+    },
+    "previouslyPurchased": {
+      "buyAgainLabel": "Køb igen"
+    },
+    "profileCard": {
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Efternavn",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Telefon",
+      "cancelLabel": "Annuller",
+      "saveLabel": "Gem",
+      "editLabel": "Rediger",
+      "currentPasswordLabel": "Nuværende adgangskode",
+      "newPasswordLabel": "Ny adgangskode",
+      "confirmPasswordLabel": "Bekræft adgangskode",
+      "passwordLabel": "Adgangskode",
+      "changePasswordLabel": "Skift adgangskode",
+      "customerUpdatedToast": "Kunde opdateret",
+      "customerUpdateErrorToast": "Fejl ved opdatering af kunde",
+      "passwordMismatchToast": "De nye adgangskoder stemmer ikke overens",
+      "passwordTooShortToast": "Adgangskoden skal være mindst 8 tegn",
+      "passwordUpdatedToast": "Adgangskode opdateret",
+      "passwordUpdateErrorToast": "Fejl ved opdatering af adgangskode"
+    },
+    "companyCard": {
+      "companyNameLabel": "Firmanavn",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Telefon",
+      "addressLabel": "Adresse",
+      "cityLabel": "By",
+      "stateLabel": "Region",
+      "zipLabel": "Postnummer",
+      "countryLabel": "Land",
+      "currencyLabel": "Valuta",
+      "spendingLimitResetFrequencyLabel": "Nulstillingsfrekvens for forbrugsgrænse",
+      "bcCustomerNumberLabel": "BC-kundenummer",
+      "cancelLabel": "Annuller",
+      "saveLabel": "Gem",
+      "editLabel": "Rediger",
+      "companyUpdatedToast": "Virksomhed opdateret",
+      "companyUpdateErrorToast": "Fejl ved opdatering af virksomhed"
+    },
+    "securityCard": {
+      "passwordLabel": "Adgangskode",
+      "editLabel": "Rediger",
+      "notImplementedToast": "Ikke implementeret"
+    },
+    "accountInfo": {
+      "defaultErrorMessage": "Der opstod en fejl, prøv igen",
+      "cancelLabel": "Annuller",
+      "editLabel": "Rediger",
+      "updatedSuccessfullyMessage": "{label} opdateret",
+      "saveChangesLabel": "Gem ændringer"
+    },
+    "quoteCard": {
+      "seeDetailsLabel": "Se detaljer"
+    },
+    "claimsPageContent": {
+      "defaultTitle": "Reklamationer"
+    },
+    "claimsUnavailable": {
+      "message": "Reklamationsoplysningerne er midlertidigt utilgængelige. Prøv igen senere."
+    },
+    "addressCard": {
+      "newAddressLabel": "Ny adresse",
+      "addAddressHeading": "Tilføj adresse",
+      "editAddressHeading": "Rediger adresse",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Efternavn",
+      "companyLabel": "Virksomhed",
+      "addressLabel": "Adresse",
+      "apartmentLabel": "Lejlighed, suite osv.",
+      "postalCodeLabel": "Postnummer",
+      "cityLabel": "By",
+      "provinceLabel": "Region / Stat",
+      "phoneLabel": "Telefon",
+      "cancelLabel": "Annuller",
+      "saveLabel": "Gem",
+      "editLabel": "Rediger",
+      "removeLabel": "Fjern"
+    },
+    "employeeCard": {
+      "employeeDeletedToast": "Medarbejder slettet",
+      "employeeDeleteErrorToast": "Fejl ved sletning af medarbejder",
+      "employeeUpdatedToast": "Medarbejder opdateret",
+      "employeeUpdateErrorToast": "Fejl ved opdatering af medarbejder",
+      "removeLabel": "Fjern",
+      "removeEmployeeHeading": "Fjern medarbejder",
+      "removeConfirmMessage": "Er du sikker på, at du vil fjerne <email></email> fra dit team? De kan ikke længere købe på vegne af din virksomhed.",
+      "deleteCustomerAccountLabel": "Slet også den tilknyttede kundekonto og login",
+      "cancelLabel": "Annuller",
+      "saveLabel": "Gem",
+      "editLabel": "Rediger",
+      "youSuffixLabel": "(Dig)",
+      "adminBadgeLabel": "Administrator",
+      "amountSpentMessage": "{amountSpent} / {limit} brugt",
+      "noLimitLabel": "Ingen grænse",
+      "spendingLimitLabel": "Forbrugsgrænse",
+      "permissionsLabel": "Tilladelser",
+      "adminOptionLabel": "Administrator",
+      "employeeOptionLabel": "Medarbejder"
+    },
+    "inviteEmployeeCard": {
+      "employeeInvitedToast": "Medarbejder inviteret",
+      "employeeInviteErrorToast": "Fejl ved invitation af medarbejder",
+      "nameLabel": "Navn",
+      "firstNameLabel": "Fornavn",
+      "lastNameLabel": "Efternavn",
+      "emailLabel": "E-mail",
+      "emailInputLabel": "Indtast en e-mail",
+      "initialPasswordLabel": "Startadgangskode",
+      "setPasswordInputLabel": "Angiv en startadgangskode",
+      "sendInviteLabel": "Send invitation"
+    },
+    "approvalCard": {
+      "orderCompletedAtLabel": "Ordre gennemført den",
+      "approvedAtLabel": "Godkendt den",
+      "rejectedAtLabel": "Afvist den"
+    },
+    "approvalCardActions": {
+      "confirmApproveTitle": "Er du sikker på, at du vil godkende denne kurv?",
+      "confirmRejectTitle": "Er du sikker på, at du vil afvise denne kurv?",
+      "confirmActionDescription": "Denne handling kan ikke fortrydes.",
+      "rejectLabel": "Afvis",
+      "approveLabel": "Godkend",
+      "awaitingExternalApprovalLabel": "Afventer ekstern godkendelse",
+      "placeOrderLabel": "Afgiv ordre"
+    },
+    "pendingCustomerApprovals": {
+      "emptyHeading": "Der er ikke noget at se her",
+      "emptyMessage": "Du har endnu ikke nogen godkendelser."
+    },
+    "approvalRequestsAdminList": {
+      "noRequestsMessage": "Ingen anmodninger"
+    },
+    "approvalSettingsCard": {
+      "requiresAdminApprovalLabel": "Kræver administratorgodkendelse",
+      "requiresAdminApprovalTooltip": "Denne indstilling afgør, om ordrer kræver administratorgodkendelse, før de behandles. Hvis aktiveret, holdes ordrer tilbage, indtil en administrator godkender dem.",
+      "requiresSalesManagerApprovalLabel": "Kræver salgschefgodkendelse",
+      "requiresSalesManagerApprovalTooltip": "Denne indstilling afgør, om ordrer kræver salgschefgodkendelse, før de behandles. Hvis aktiveret, holdes ordrer tilbage, indtil en salgschef godkender dem.",
+      "yesLabel": "Ja",
+      "noLabel": "Nej",
+      "updateErrorToast": "Fejl ved opdatering af godkendelsesindstillinger",
+      "updatedToast": "Virksomhed opdateret",
+      "cancelLabel": "Annuller",
+      "saveLabel": "Gem",
+      "editLabel": "Rediger"
+    },
+    "bcOrderCard": {
+      "detailsLabel": "Detaljer"
+    },
+    "bcOrderOverview": {
+      "errorHeading": "Noget gik galt",
+      "errorMessage": "Vi kunne ikke indlæse dine virksomhedsordrer. Prøv igen.",
+      "tryAgainLabel": "Prøv igen",
+      "emptyHeading": "Ingen virksomhedsordrer fundet",
+      "emptyMessage": "Prøv at justere dine filtre for at se flere resultater."
+    },
+    "bcOrderFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alle statusser",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "searchLabel": "Søg",
+      "searchPlaceholder": "Ordrenummer…",
+      "clearLabel": "Ryd"
+    },
+    "bcOrderReturn": {
+      "orderUnavailableError": "Denne ordre kan ikke længere returneres.",
+      "returnUnconfirmedError": "Vi kunne ikke bekræfte returanmodningen. Prøv igen om lidt.",
+      "genericReturnError": "Gennemgå venligst de valgte linjer, og prøv igen.",
+      "requestReturnLabel": "Anmod om en returnering",
+      "returnRequestedHeading": "Returnering anmodet",
+      "returnCreatedMessage": "Returnering {number} oprettet - status {status}.",
+      "backToOrderDetailsLabel": "Tilbage til ordredetaljer",
+      "orderNumberLabel": "Ordrenummer",
+      "billToAddressLabel": "Faktureringsadresse",
+      "shipToAddressLabel": "Leveringsadresse",
+      "itemColumnLabel": "Vare",
+      "orderedQuantityColumnLabel": "Bestilt antal",
+      "unitPriceColumnLabel": "Enhedspris",
+      "returnQuantityColumnLabel": "Returneringsantal",
+      "returnReasonColumnLabel": "Returårsag",
+      "itemFallbackLabel": "Vare",
+      "returnQuantityAriaLabel": "Returneringsantal for {item}",
+      "itemLowercaseFallbackLabel": "vare",
+      "selectReasonPlaceholder": "Vælg en årsag",
+      "cancelLabel": "Annuller",
+      "submitReturnRequestLabel": "Send returanmodning"
+    },
+    "orderOverview": {
+      "emptyMessage": "Du har endnu ingen ordrer, lad os ændre det :)",
+      "continueShoppingLabel": "Fortsæt med at handle"
+    },
+    "bcOrderDetailTemplate": {
+      "backToBcOrdersLabel": "Tilbage til BC-ordrer",
+      "orderNumberHeading": "Ordre #{number}",
+      "customerLabel": "Kunde",
+      "statusLabel": "Status",
+      "currencyLabel": "Valuta",
+      "totalExcludingTaxLabel": "Total ekskl. moms",
+      "totalIncludingTaxLabel": "Total inkl. moms",
+      "itemsHeading": "Varer",
+      "descriptionColumnLabel": "Beskrivelse",
+      "quantityColumnLabel": "Antal",
+      "amountColumnLabel": "Beløb"
+    },
+    "bcOrderNotFound": {
+      "headingLabel": "Ordre ikke fundet",
+      "message": "Denne ordre er ikke tilgængelig."
+    },
+    "addressesPage": {
+      "heading": "Leveringsadresser",
+      "description": "Se og opdater dine leveringsadresser, du kan tilføje så mange, du vil. Hvis du gemmer dine adresser, bliver de tilgængelige ved checkout."
+    },
+    "approvalsPage": {
+      "heading": "Godkendelser",
+      "pendingHeading": "Afventer",
+      "approvedHeading": "Godkendt",
+      "rejectedHeading": "Afvist",
+      "loadingLabel": "Indlæser..."
+    },
+    "companyPage": {
+      "companyDetailsHeading": "Virksomhedsoplysninger",
+      "approvalSettingsHeading": "Godkendelsesindstillinger",
+      "employeesHeading": "Medarbejdere",
+      "inviteEmployeesHeading": "Inviter medarbejdere"
+    },
+    "profilePage": {
+      "detailsHeading": "Detaljer",
+      "securityHeading": "Sikkerhed"
+    },
+    "ordersPage": {
+      "heading": "Ordrer",
+      "pendingApprovalsHeading": "Afventende godkendelser",
+      "completedOrdersHeading": "Gennemførte ordrer"
+    },
+    "quotesPage": {
+      "heading": "Tilbud"
+    },
+    "quotesOverview": {
+      "emptyMessage": "Du har endnu ingen tilbud"
+    },
+    "quoteStatusBadge": {
+      "acceptedLabel": "Accepteret",
+      "customerRejectedLabel": "Afvist af kunde",
+      "merchantRejectedLabel": "Afvist af forhandler",
+      "pendingMerchantLabel": "Afventer forhandler",
+      "pendingCustomerLabel": "Afventer kunde"
+    },
+    "quoteMessages": {
+      "messagesHeading": "Beskeder",
+      "pickQuoteItemLabel": "Vælg tilbudsvare",
+      "pickQuoteItemDescription": "Vælg en tilbudsvare at skrive en besked om",
+      "selectItemPlaceholder": "Vælg vare",
+      "sendLabel": "Send"
+    },
+    "quoteTable": {
+      "newLabel": "Ny",
+      "removedLabel": "Fjernet",
+      "modifiedLabel": "Ændret"
+    },
+    "quoteDetails": {
+      "backLabel": "Tilbage",
+      "acceptedNoticeMessage": "Tilbud accepteret af kunde. Ordren er klar til behandling.",
+      "viewOrderLabel": "Se ordre",
+      "currentTotalLabel": "Nuværende total",
+      "newTotalLabel": "Ny total",
+      "rejectQuoteConfirmTitle": "Afvis tilbud?",
+      "rejectQuoteConfirmDescription": "Er du sikker på, at du vil afvise tilbuddet? Denne handling kan ikke fortrydes.",
+      "rejectQuoteLabel": "Afvis tilbud",
+      "acceptQuoteConfirmTitle": "Accepter tilbud?",
+      "acceptQuoteConfirmDescription": "Er du sikker på, at du vil acceptere tilbuddet? Denne handling kan ikke fortrydes.",
+      "acceptQuoteLabel": "Accepter tilbud",
+      "quoteIdLabel": "Tilbuds-ID:",
+      "customerHeading": "Kunde",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Telefon",
+      "spendLimitLabel": "Forbrugsgrænse",
+      "companyHeading": "Virksomhed",
+      "nameLabel": "Navn"
+    },
+    "bcOrderDetailPage": {
+      "errorMessage": "Vi kunne ikke indlæse denne ordre. Prøv igen."
+    },
+    "bcOrdersPage": {
+      "heading": "BC-ordrer"
+    }
+  },
+  "Cart": {
+    "addNoteButton": {
+      "addNoteLabel": "Tilføj bemærkning",
+      "noteLabel": "Bemærkning:"
+    },
+    "appliedPromotions": {
+      "label": "Tilbud anvendt:"
+    },
+    "approvalStatusBanner": {
+      "pendingMessage": "Denne kurv er låst til godkendelse.",
+      "rejectedMessage": "Denne kurv er blevet afvist. Du kan anmode om godkendelse igen fra <link>checkout-siden</link>.",
+      "approvedMessage": "Denne kurv er blevet godkendt og kan nu gennemføres."
+    },
+    "cartToCsvButton": {
+      "exportLabel": "Eksporter kurv (.csv)"
+    },
+    "emptyCartMessage": {
+      "heading": "Kurv",
+      "message": "Din kurv er tom. Lad os ændre det - brug linket nedenfor for at begynde at gennemse vores produkter.",
+      "exploreProductsLabel": "Udforsk produkter"
+    },
+    "itemFull": {
+      "brandLabel": "MÆRKE"
+    },
+    "itemPreview": {
+      "noteLabel": "Bemærkning:"
+    },
+    "cartDrawer": {
+      "cartLabel": "Kurv",
+      "itemsInCartTitle": "Du har {count} varer i din kurv",
+      "emptyCartTitle": "Din kurv er tom",
+      "subtotalLabel": "Subtotal",
+      "viewCartLabel": "Se kurv",
+      "spendingLimitExceededLabel": "Forbrugsgrænse overskredet",
+      "secureCheckoutLabel": "Sikker checkout",
+      "loginToCheckoutLabel": "Log ind for at gennemføre køb",
+      "spendingLimitMessage": "Denne ordre overskrider din forbrugsgrænse. Kontakt venligst din leder for godkendelse."
+    },
+    "cartTotals": {
+      "subtotalLabel": "Subtotal (ekskl. levering og moms)",
+      "discountLabel": "Rabat",
+      "shippingLabel": "Levering",
+      "taxesLabel": "Moms",
+      "giftCardLabel": "Gavekort",
+      "totalLabel": "Total"
+    },
+    "signInPrompt": {
+      "bannerAlt": "Login-bannerbaggrund",
+      "heading": "Log ind for<br></br>hurtigere checkout.",
+      "registerLabel": "Opret konto",
+      "loginLabel": "Log ind"
+    },
+    "template": {
+      "itemsInCartHeading": "Du har {count} varer i din kurv"
+    },
+    "items": {
+      "totalItemsLabel": "I alt: {count} varer"
+    },
+    "summary": {
+      "spendingLimitMessage": "Denne ordre overskrider din forbrugsgrænse.<br></br>Kontakt venligst din leder for godkendelse.",
+      "spendingLimitExceededLabel": "Forbrugsgrænse overskredet",
+      "checkoutLabel": "Checkout",
+      "loginToCheckoutLabel": "Log ind for at gennemføre køb",
+      "requestQuoteLabel": "Anmod om tilbud",
+      "emptyCartLabel": "Tom kurv"
+    },
+    "notFound": {
+      "cartMessage": "Kurven, du forsøgte at tilgå, findes ikke. Ryd dine cookies, og prøv igen."
+    }
+  },
+  "Products": {
+    "facts": {
+      "inStockMessage": "Kan sendes med det samme ({count} på lager)",
+      "limitedStockMessage": "Begrænset antal tilgængeligt ({count} på lager)",
+      "midLabel": "MID: {code}"
+    },
+    "preview": {
+      "brandLabel": "MÆRKE",
+      "exclVatLabel": "Ekskl. moms",
+      "leftLabel": "{count} tilbage"
+    },
+    "price": {
+      "fromLabel": "Fra {price}",
+      "exclVatLabel": "Ekskl. moms"
+    },
+    "mobileActions": {
+      "selectOptionsLabel": "Vælg muligheder",
+      "selectVariantLabel": "Vælg variant",
+      "outOfStockLabel": "Udsolgt",
+      "addToCartLabel": "Læg i kurv"
+    },
+    "optionSelect": {
+      "selectLabel": "Vælg {title}"
+    },
+    "tabs": {
+      "descriptionLabel": "Beskrivelse",
+      "specificationsLabel": "Specifikationer",
+      "weightLabel": "Vægt",
+      "weightValue": "{weight} gram",
+      "dimensionsLabel": "Mål (HxBxL)",
+      "dimensionsValue": "{height} mm x {width} mm x {length} mm"
+    },
+    "variantsTable": {
+      "skuHeader": "SKU",
+      "priceHeader": "Pris",
+      "quantityHeader": "Antal",
+      "chooseVariantLabel": "Vælg produktvariant(er) ovenfor",
+      "addToCartLabel": "Læg i kurv"
+    },
+    "relatedProducts": {
+      "heading": "Andre kunder har også set"
+    }
+  },
+  "Catalog": {
+    "breadcrumb": {
+      "productsLabel": "Produkter",
+      "allProductsLabel": "Alle produkter"
+    },
+    "categoryList": {
+      "heading": "Kategorier",
+      "clearLabel": "Ryd"
+    },
+    "searchInResults": {
+      "searchInListPlaceholder": "Søg i {listName}",
+      "searchProductsPlaceholder": "Søg i produkter",
+      "searchDisabledTooltip": "Installer en søgeudbyder for at aktivere produktsøgning"
+    },
+    "sortProducts": {
+      "sortByLabel": "Sorter efter:",
+      "sortByTooltip": "Sorter efter",
+      "latestArrivalsLabel": "Nyeste varer",
+      "priceLowToHighLabel": "Pris: Lav -> Høj",
+      "priceHighToLowLabel": "Pris: Høj -> Lav"
+    },
+    "noProductsFoundMessage": "Ingen produkter fundet for denne kategori.",
+    "categoryTemplate": {
+      "backToAllProductsLabel": "Tilbage til alle produkter"
+    }
+  },
+  "Home": {
+    "productRail": {
+      "viewAllLabel": "Se alle"
+    },
+    "hero": {
+      "bannerAlt": "Hero-baggrund",
+      "eyebrow": "Vær let på fødderne",
+      "heading": "Bærbare bestsellere",
+      "subheading": "Se vores bredeste udvalg af elektronik",
+      "githubRepoLabel": "Github-repository"
+    }
+  },
+  "Shipping": {
+    "freeShippingNudge": {
+      "unlockedLabel": "Fri fragt låst op!",
+      "unlockPrompt": "Lås op for fri fragt",
+      "remainingMessage": "Kun <amount></amount> tilbage",
+      "viewCartLabel": "Se kurv",
+      "viewProductsLabel": "Se produkter"
+    }
+  },
+  "Quotes": {
+    "requestQuoteConfirmation": {
+      "title": "Send anmodning om tilbud",
+      "description": "Du er ved at anmode om et tilbud for kurven. Hvis du bekræfter, konverteres kurven til et tilbud.",
+      "cancelLabel": "Annuller",
+      "submitLabel": "Send",
+      "errorToast": "Kunne ikke oprette tilbudsanmodning"
+    },
+    "requestQuotePrompt": {
+      "title": "Anmod om et tilbud",
+      "loginLabel": "Log ind",
+      "orLabel": "eller",
+      "createAccountLabel": "opret en konto",
+      "addProductsStep": "Læg produkter i din kurv",
+      "openCartStep": "Åbn kurv og klik på \"Anmod om et tilbud\"",
+      "followUpMessage": "Vi vender derefter tilbage til dig hurtigst muligt via e-mail"
+    }
+  },
+  "Order": {
+    "billingDetails": {
+      "heading": "Faktureringsadresse"
+    },
+    "help": {
+      "heading": "Brug for hjælp?",
+      "contactLabel": "Kontakt",
+      "returnsExchangesLabel": "Retur og bytte"
+    },
+    "item": {
+      "originalLabel": "Original: "
+    },
+    "orderDetails": {
+      "heading": "Detaljer",
+      "orderNumberLabel": "Ordrenummer",
+      "orderDateLabel": "Ordredato",
+      "confirmationSentMessage": "Vi har sendt ordrebekræftelsen til <email></email>."
+    },
+    "summary": {
+      "heading": "Ordreoversigt",
+      "subtotalLabel": "Subtotal",
+      "discountLabel": "Rabat",
+      "shippingLabel": "Levering",
+      "taxesLabel": "Moms",
+      "totalLabel": "Total"
+    },
+    "paymentDetails": {
+      "heading": "Betaling",
+      "paymentMethodLabel": "Betalingsmetode",
+      "paymentDetailsLabel": "Betalingsoplysninger",
+      "maskedCardNumber": "**** **** **** {last4}",
+      "paidAtMessage": "{amount} betalt den {date}"
+    },
+    "shippingDetails": {
+      "heading": "Leveringsadresse"
+    },
+    "completedTemplate": {
+      "thankYouLabel": "Tak!",
+      "orderPlacedMessage": "Din ordre er gennemført.",
+      "summaryHeading": "Oversigt"
+    },
+    "detailsTemplate": {
+      "backLabel": "Tilbage"
+    }
+  },
+  "BcTest": {
+    "heading": "Business Central API-handlinger",
+    "errorLabel": "Fejl",
+    "unknownErrorMessage": "Ukendt fejl"
+  },
+  "MetaDescription": {
+    "storeSuffix": "| Nimbus Nordic"
+  }
+}

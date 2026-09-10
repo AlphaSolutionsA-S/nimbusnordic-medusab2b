@@ -1,6 +1,7 @@
 "use client"
 
 import { ChevronUpDown } from "@medusajs/icons"
+import { useTranslations } from "next-intl"
 
 export type SortOptions = "price_asc" | "price_desc" | "created_at"
 
@@ -10,37 +11,39 @@ type SortProductsProps = {
   "data-testid"?: string
 }
 
-const sortOptions = [
-  {
-    value: "created_at",
-    label: "Latest Arrivals",
-  },
-  {
-    value: "price_asc",
-    label: "Price: Low -> High",
-  },
-  {
-    value: "price_desc",
-    label: "Price: High -> Low",
-  },
-]
-
 const SortProducts = ({
   "data-testid": dataTestId,
   sortBy,
   setQueryParams,
 }: SortProductsProps) => {
+  const t = useTranslations("Catalog.sortProducts")
+
+  const sortOptions = [
+    {
+      value: "created_at",
+      label: t("latestArrivalsLabel"),
+    },
+    {
+      value: "price_asc",
+      label: t("priceLowToHighLabel"),
+    },
+    {
+      value: "price_desc",
+      label: t("priceHighToLowLabel"),
+    },
+  ]
+
   const handleChange = (value: SortOptions) => {
     setQueryParams("sortBy", value)
   }
 
   return (
     <div className="flex items-center gap-2 text-sm p-2 justify-between">
-      <span className="text-neutral-500">Sort by:</span>
+      <span className="text-neutral-500">{t("sortByLabel")}</span>
       <div className="relative">
         <select
           className="w-full pr-8 overflow-hidden focus:outline-none appearance-none"
-          title="Sort by"
+          title={t("sortByTooltip")}
           value={sortBy}
           onChange={(e) => handleChange(e.target.value as SortOptions)}
           data-testid={dataTestId}

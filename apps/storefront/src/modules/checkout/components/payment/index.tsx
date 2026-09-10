@@ -13,6 +13,7 @@ import { CheckCircleSolid, CreditCard } from "@medusajs/icons"
 import { Container, Heading, Text, clx } from "@medusajs/ui"
 import { CardElement } from "@stripe/react-stripe-js"
 import { StripeCardElementOptions } from "@stripe/stripe-js"
+import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useContext, useEffect, useMemo, useState } from "react"
 
@@ -23,6 +24,7 @@ const Payment = ({
   cart: any
   availablePaymentMethods: any[]
 }) => {
+  const t = useTranslations("Checkout.payment")
   const activeSession = cart.payment_collection?.payment_sessions?.find(
     (paymentSession: any) => paymentSession.status === "pending"
   )
@@ -129,7 +131,7 @@ const Payment = ({
                 !isOpen && !paymentReady,
             })}
           >
-            Payment Method
+            {t("heading")}
             {!isOpen && paymentReady && <CheckCircleSolid />}
           </Heading>
           {!isOpen &&
@@ -141,7 +143,7 @@ const Payment = ({
                   className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
                   data-testid="edit-payment-button"
                 >
-                  Edit
+                  {t("editLabel")}
                 </button>
               </Text>
             )}
@@ -174,7 +176,7 @@ const Payment = ({
               {stripeReady && selectedPaymentMethod === "pp_stripe_stripe" && (
                 <div className="mt-5 transition-all duration-150 ease-in-out">
                   <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                    Enter your card details:
+                    {t("enterCardDetailsLabel")}
                   </Text>
 
                   <CardElement
@@ -199,7 +201,7 @@ const Payment = ({
                 className="txt-medium text-ui-fg-subtle"
                 data-testid="payment-method-summary"
               >
-                Gift card
+                {t("giftCardLabel")}
               </Text>
             </div>
           )}
@@ -223,8 +225,8 @@ const Payment = ({
               data-testid="submit-payment-button"
             >
               {!activeSession && isStripeLike(selectedPaymentMethod)
-                ? " Enter card details"
-                : "Next step"}
+                ? t("enterCardDetailsButtonLabel")
+                : t("nextStepLabel")}
             </Button>
           </div>
         </div>
@@ -262,13 +264,13 @@ const Payment = ({
           ) : paidByGiftcard ? (
             <div className="flex flex-col w-1/3">
               <Text className="txt-medium-plus text-ui-fg-base mb-1">
-                Payment method
+                {t("paymentMethodLabel")}
               </Text>
               <Text
                 className="txt-medium text-ui-fg-subtle"
                 data-testid="payment-method-summary"
               >
-                Gift card
+                {t("giftCardLabel")}
               </Text>
             </div>
           ) : null}

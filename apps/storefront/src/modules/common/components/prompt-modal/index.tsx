@@ -1,6 +1,7 @@
 import { XMark } from "@medusajs/icons"
 import { Button } from "@medusajs/ui"
 import * as Dialog from "@radix-ui/react-dialog"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 export const PromptModal = ({
@@ -16,6 +17,7 @@ export const PromptModal = ({
   children: React.ReactNode
   isLoading: boolean
 }) => {
+  const t = useTranslations("Common.promptModal")
   const [open, setOpen] = useState(false)
 
   return (
@@ -36,7 +38,7 @@ export const PromptModal = ({
           <div className="flex gap-x-2 items-end justify-end self-end">
             <Dialog.Close asChild>
               <Button variant="secondary" size="small">
-                Cancel
+                {t("cancelLabel")}
               </Button>
             </Dialog.Close>
             <Button
@@ -48,7 +50,7 @@ export const PromptModal = ({
                 setOpen(false)
               }}
             >
-              Continue
+              {t("continueLabel")}
             </Button>
           </div>
 

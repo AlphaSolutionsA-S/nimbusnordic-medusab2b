@@ -51,8 +51,13 @@ export type AdminEmployeesResponse = PaginatedResponse<{
 export type AdminCreateEmployee = {
   spending_limit: number;
   is_admin: boolean;
-  company_id: string;
-  customer_id: string;
+  company_id?: string;
+  customer_id?: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
 };
 
 export type AdminUpdateEmployee = Partial<AdminCreateEmployee>;
@@ -114,10 +119,15 @@ export type StoreEmployeesResponse = PaginatedResponse<{
 }>;
 
 export type StoreCreateEmployee = {
-  customer_id: string;
+  customer_id?: string;
   spending_limit: number;
   is_admin: boolean;
   company_id: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
 };
 
 export type StoreUpdateEmployee = {

@@ -23,11 +23,6 @@ export const StoreCreateCompany = z
       .enum(["never", "daily", "weekly", "monthly", "yearly"])
       .optional()
       .nullable(),
-    business_central_customer_number: z
-      .string()
-      .regex(/^\d+$/, "Business Central customer number must be numeric only")
-      .optional()
-      .nullable(),
   })
   .strict();
 
@@ -48,11 +43,6 @@ export const StoreUpdateCompany = z
       .enum(["never", "daily", "weekly", "monthly", "yearly"])
       .optional()
       .nullable(),
-    business_central_customer_number: z
-      .string()
-      .regex(/^\d+$/, "Business Central customer number must be numeric only")
-      .optional()
-      .nullable(),
   })
   .strict();
 
@@ -65,9 +55,21 @@ export const StoreCreateEmployee = z
   .object({
     spending_limit: z.number().optional().nullable(),
     is_admin: z.boolean().optional().nullable().default(false),
-    customer_id: z.string(),
+    customer_id: z.string().optional(),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
+    password: z.string().min(8).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => Boolean(data.customer_id) || Boolean(data.email && data.password),
+    {
+      message:
+        "Provide either an existing customer_id or an email and password to create a new employee account.",
+    }
+  );
 
 export type StoreUpdateEmployeeType = z.infer<typeof StoreUpdateEmployee>;
 export const StoreUpdateEmployee = z
@@ -80,6 +82,13 @@ export const StoreUpdateEmployee = z
       })
       .optional(),
     is_admin: z.boolean().optional(),
+  })
+  .strict();
+
+export type StoreDeleteEmployeeType = z.infer<typeof StoreDeleteEmployee>;
+export const StoreDeleteEmployee = z
+  .object({
+    delete_customer_account: z.boolean().default(false),
   })
   .strict();
 

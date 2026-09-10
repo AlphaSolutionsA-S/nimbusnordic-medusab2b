@@ -1,5 +1,6 @@
 import Input from "@/modules/common/components/input"
 import { B2BCart, B2BCustomer } from "@/types"
+import { useTranslations } from "next-intl"
 import React, { useEffect, useMemo, useState } from "react"
 
 const ContactDetailsForm = ({
@@ -9,6 +10,7 @@ const ContactDetailsForm = ({
   customer: B2BCustomer | null
   cart: B2BCart | null
 }) => {
+  const t = useTranslations("Checkout.contactDetails")
   const [formData, setFormData] = useState<Record<string, string>>({
     email: "",
     invoice_recipient: "",
@@ -51,7 +53,7 @@ const ContactDetailsForm = ({
   return (
     <div className="flex flex-col small:grid small:grid-cols-2 gap-4">
       <Input
-        label="Email"
+        label={t("emailLabel")}
         name="email"
         autoComplete="email"
         value={formData["email"]}
@@ -61,7 +63,7 @@ const ContactDetailsForm = ({
         className="small:col-span-2"
       />
       <Input
-        label="Invoice recipient"
+        label={t("invoiceRecipientLabel")}
         name="invoice_recipient"
         autoComplete="family-name"
         value={formData["invoice_recipient"]}
@@ -69,21 +71,21 @@ const ContactDetailsForm = ({
         data-testid="invoice-recipient-input"
       />
       <Input
-        label="Cost center"
+        label={t("costCenterLabel")}
         name="cost_center"
         value={formData["cost_center"]}
         onChange={handleChange}
         data-testid="cost-center-input"
       />
       <Input
-        label="Requisition number"
+        label={t("requisitionNumberLabel")}
         name="requisition_number"
         value={formData["requisition_number"]}
         onChange={handleChange}
         data-testid="requisition-number-input"
       />
       <Input
-        label="Door code/goods mark"
+        label={t("doorCodeLabel")}
         name="door_code"
         value={formData["door_code"]}
         onChange={handleChange}
@@ -91,7 +93,7 @@ const ContactDetailsForm = ({
       />
       <div className="col-span-2">
         <Input
-          label="Notes"
+          label={t("notesLabel")}
           name="notes"
           value={formData["notes"]}
           onChange={handleChange}
@@ -99,8 +101,7 @@ const ContactDetailsForm = ({
           className="small:col-span-2"
         />
         <label className="text-xs italic text-neutral-500">
-          The note will only appear on the invoice and order confirmation and
-          will not be read by the merchant.
+          {t("notesHelpText")}
         </label>
       </div>
     </div>

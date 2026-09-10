@@ -7,6 +7,7 @@ import { ApprovalStatusType } from "@/types/approval"
 import { B2BCart } from "@/types/global"
 import { CheckMini, XMarkMini } from "@medusajs/icons"
 import { clx, Container, Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 import Image from "next/image"
 
 type ApprovalCardProps = {
@@ -18,6 +19,10 @@ export default async function ApprovalCard({
   cartWithApprovals,
   type = "customer",
 }: ApprovalCardProps) {
+  const t = await getTranslations("Account.approvalCard")
+  // Reuses the identical "{count} item(s)" pattern already extracted for
+  // `@/modules/account/components/order-card`.
+  const tOrderCard = await getTranslations("Account.orderCard")
   const cart = await retrieveCart(cartWithApprovals.id)
 
   if (!cart) {
@@ -91,7 +96,7 @@ export default async function ApprovalCard({
           cartWithApprovals.completed_at ? (
             <Text className="flex items-center gap-x-1 text-xs text-grey-500">
               <CheckMini className="inline-block" />
-              Order completed at{" "}
+              {t("orderCompletedAtLabel")}{" "}
               {updatedAt.toLocaleDateString("en-GB", {
                 year: "numeric",
                 month: "numeric",
@@ -100,7 +105,7 @@ export default async function ApprovalCard({
             </Text>
           ) : (
             <Text className="flex items-center gap-x-1 text-xs text-grey-500">
-              Approved at{" "}
+              {t("approvedAtLabel")}{" "}
               {updatedAt.toLocaleDateString("en-GB", {
                 year: "numeric",
                 month: "numeric",
@@ -116,7 +121,7 @@ export default async function ApprovalCard({
           <div className="flex items-center text-small-regular">
             <XMarkMini className="inline-block mr-1" />
             <span data-testid="order-display-id">
-              Rejected at{" "}
+              {t("rejectedAtLabel")}{" "}
               {updatedAt.toLocaleDateString("en-GB", {
                 year: "numeric",
                 month: "numeric",
@@ -136,9 +141,11 @@ export default async function ApprovalCard({
             })}
           </span>
           {"·"}
-          <span className="px-2">{`${numberOfLines} ${
-            numberOfLines > 1 ? "items" : "item"
-          }`}</span>
+          <span className="px-2">
+            {numberOfLines > 1
+              ? tOrderCard("itemsCount", { count: numberOfLines })
+              : tOrderCard("itemCount", { count: numberOfLines })}
+          </span>
           {type === "admin" && (
             <ApprovalCardActions cartWithApprovals={cartWithApprovals} />
           )}

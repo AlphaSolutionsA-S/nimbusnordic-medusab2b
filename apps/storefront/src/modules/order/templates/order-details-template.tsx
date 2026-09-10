@@ -1,4 +1,5 @@
 import { ArrowUturnLeft } from "@medusajs/icons"
+import { getTranslations } from "next-intl/server"
 import React from "react"
 
 import { HttpTypes } from "@medusajs/types"
@@ -15,9 +16,11 @@ type OrderDetailsTemplateProps = {
   order: HttpTypes.StoreOrder
 }
 
-const OrderDetailsTemplate: React.FC<OrderDetailsTemplateProps> = ({
+const OrderDetailsTemplate = async ({
   order,
-}) => {
+}: OrderDetailsTemplateProps) => {
+  const t = await getTranslations("Order.detailsTemplate")
+
   return (
     <div className="flex flex-col justify-center gap-y-2">
       <div className="flex gap-2 justify-between items-center mb-2">
@@ -27,7 +30,7 @@ const OrderDetailsTemplate: React.FC<OrderDetailsTemplateProps> = ({
           data-testid="back-to-overview-button"
         >
           <Button variant="secondary">
-            <ArrowUturnLeft /> Back
+            <ArrowUturnLeft /> {t("backLabel")}
           </Button>
         </LocalizedClientLink>
       </div>

@@ -1,13 +1,14 @@
 "use client"
 
 import { StatusBadge } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 
-const StatusTitles: Record<string, string> = {
-  accepted: "Accepted",
-  customer_rejected: "Customer Rejected",
-  merchant_rejected: "Merchant Rejected",
-  pending_merchant: "Pending Merchant",
-  pending_customer: "Pending Customer",
+const StatusTitleKeys: Record<string, string> = {
+  accepted: "acceptedLabel",
+  customer_rejected: "customerRejectedLabel",
+  merchant_rejected: "merchantRejectedLabel",
+  pending_merchant: "pendingMerchantLabel",
+  pending_customer: "pendingCustomerLabel",
 }
 
 const StatusColors: Record<string, "green" | "orange" | "red" | "blue"> = {
@@ -19,9 +20,11 @@ const StatusColors: Record<string, "green" | "orange" | "red" | "blue"> = {
 }
 
 export default function QuoteStatusBadge({ status }: { status: string }) {
+  const t = useTranslations("Account.quoteStatusBadge")
+
   return (
     <StatusBadge color={StatusColors[status]}>
-      {StatusTitles[status]}
+      {t(StatusTitleKeys[status])}
     </StatusBadge>
   )
 }

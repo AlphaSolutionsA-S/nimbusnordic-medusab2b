@@ -1,6 +1,7 @@
 import BcOrderCard from "@/modules/account/components/bc-order-card"
 import ResourcePagination from "@/modules/account/components/resource-pagination"
 import type { BCOrderListResponse } from "@/types/bc-order"
+import { getTranslations } from "next-intl/server"
 
 type BcOrderOverviewProps = {
   result: BCOrderListResponse | null
@@ -9,28 +10,30 @@ type BcOrderOverviewProps = {
   limit: number
 }
 
-const BcOrderOverview = ({
+const BcOrderOverview = async ({
   result,
   error,
   currentPage,
   limit,
 }: BcOrderOverviewProps) => {
+  const t = await getTranslations("Account.bcOrderOverview")
+
   if (error) {
     return (
       <div
         className="w-full flex flex-col items-center gap-y-4 py-8"
         data-testid="bc-orders-error"
       >
-        <h2 className="text-large-semi">Something went wrong</h2>
+        <h2 className="text-large-semi">{t("errorHeading")}</h2>
         <p className="text-base-regular text-neutral-500">
-          We were unable to load your company orders. Please try again.
+          {t("errorMessage")}
         </p>
         <a
           href=""
           className="text-sm text-neutral-900 underline"
           data-testid="bc-orders-try-again"
         >
-          Try again
+          {t("tryAgainLabel")}
         </a>
       </div>
     )
@@ -42,9 +45,9 @@ const BcOrderOverview = ({
         className="w-full flex flex-col items-center gap-y-4 py-8"
         data-testid="bc-orders-empty"
       >
-        <h2 className="text-large-semi">No company orders found</h2>
+        <h2 className="text-large-semi">{t("emptyHeading")}</h2>
         <p className="text-base-regular text-neutral-500">
-          Try adjusting your filters to see more results.
+          {t("emptyMessage")}
         </p>
       </div>
     )

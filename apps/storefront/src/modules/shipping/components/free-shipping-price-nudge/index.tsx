@@ -6,6 +6,7 @@ import { Button, clx } from "@medusajs/ui"
 import { formatAmount } from "@/modules/common/components/amount-cell"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { StoreFreeShippingPrice } from "@/types/shipping-option/http"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 export default function FreeShippingPriceNudge({
@@ -47,6 +48,8 @@ function FreeShippingInline({
     remaining_percentage: number
   }
 }) {
+  const t = useTranslations("Shipping.freeShippingNudge")
+
   return (
     <div className="bg-neutral-100 p-2 rounded-lg border">
       <div className="space-y-1.5">
@@ -55,10 +58,10 @@ function FreeShippingInline({
             {price.target_reached ? (
               <div className="flex items-center gap-1.5">
                 <CheckCircleSolid className="text-green-500 inline-block" />{" "}
-                Free Shipping unlocked!
+                {t("unlockedLabel")}
               </div>
             ) : (
-              `Unlock Free Shipping`
+              t("unlockPrompt")
             )}
           </div>
 
@@ -67,11 +70,13 @@ function FreeShippingInline({
               "opacity-0 invisible": price.target_reached,
             })}
           >
-            Only{" "}
-            <span className="text-neutral-950">
-              {formatAmount(price.target_remaining, cart.currency_code)}
-            </span>{" "}
-            away
+            {t.rich("remainingMessage", {
+              amount: () => (
+                <span className="text-neutral-950">
+                  {formatAmount(price.target_remaining, cart.currency_code)}
+                </span>
+              ),
+            })}
           </div>
         </div>
         <div className="flex justify-between gap-1">
@@ -102,6 +107,7 @@ function FreeShippingPopup({
     remaining_percentage: number
   }
 }) {
+  const t = useTranslations("Shipping.freeShippingNudge")
   const [isClosed, setIsClosed] = useState(false)
 
   if (cart.items?.length === 0) {
@@ -136,10 +142,10 @@ function FreeShippingPopup({
                 {price.target_reached ? (
                   <div className="flex items-center gap-1.5">
                     <CheckCircleSolid className="text-green-500 inline-block" />{" "}
-                    Free Shipping unlocked!
+                    {t("unlockedLabel")}
                   </div>
                 ) : (
-                  `Unlock Free Shipping`
+                  t("unlockPrompt")
                 )}
               </div>
 
@@ -148,11 +154,16 @@ function FreeShippingPopup({
                   "opacity-0 invisible": price.target_reached,
                 })}
               >
-                Only{" "}
-                <span className="text-white">
-                  {formatAmount(price.target_remaining, cart.currency_code)}
-                </span>{" "}
-                away
+                {t.rich("remainingMessage", {
+                  amount: () => (
+                    <span className="text-white">
+                      {formatAmount(
+                        price.target_remaining,
+                        cart.currency_code
+                      )}
+                    </span>
+                  ),
+                })}
               </div>
             </div>
             <div className="flex justify-between gap-1">
@@ -175,14 +186,14 @@ function FreeShippingPopup({
             className="rounded-2xl bg-transparent shadow-none outline-none border-[1px] border-white text-[15px] py-2.5 px-4"
             href="/cart"
           >
-            View cart
+            {t("viewCartLabel")}
           </LocalizedClientLink>
 
           <LocalizedClientLink
             className="flex-grow rounded-2xl bg-white text-neutral-950 shadow-none outline-none border-[1px] border-white text-[15px] py-2.5 px-4 text-center"
             href="/store"
           >
-            View Products
+            {t("viewProductsLabel")}
           </LocalizedClientLink>
         </div>
       </div>

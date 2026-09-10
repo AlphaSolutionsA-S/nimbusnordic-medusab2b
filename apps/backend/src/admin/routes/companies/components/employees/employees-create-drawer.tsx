@@ -1,11 +1,7 @@
-import { HttpTypes } from "@medusajs/types";
 import { Button, Drawer, toast } from "@medusajs/ui";
 import { AdminCreateEmployee, QueryCompany } from "../../../../../types";
 import { useState } from "react";
-import {
-  useAdminCreateCustomer,
-  useCreateEmployee,
-} from "../../../../hooks/api";
+import { useCreateEmployee } from "../../../../hooks/api";
 import { EmployeesCreateForm } from "./employees-create-form";
 
 export function EmployeeCreateDrawer({ company }: { company: QueryCompany }) {
@@ -17,47 +13,37 @@ export function EmployeeCreateDrawer({ company }: { company: QueryCompany }) {
     error: createEmployeeError,
   } = useCreateEmployee(company.id);
 
-  const {
-    mutateAsync: createCustomer,
-    isPending: createCustomerLoading,
-    error: createCustomerError,
-  } = useAdminCreateCustomer();
-
-  const handleSubmit = async (
-    formData: AdminCreateEmployee & HttpTypes.AdminCreateCustomer
-  ) => {
-    const { customer } = await createCustomer({
-      email: formData.email!,
-      first_name: formData.first_name!,
-      last_name: formData.last_name!,
-      phone: formData.phone!,
-      company_name: company.name,
-    });
-
-    if (!customer?.id) {
-      toast.error("Failed to create customer");
+  const handleSubmit = async (formData: AdminCreateEmployee) => {
+    if (!formData.email || !formData.password) {
+      toast.error("Email and an initial password are required");
       return;
     }
 
-    const employee = await createEmployee({
-      spending_limit: formData.spending_limit!,
-      is_admin: formData.is_admin!,
-      customer_id: customer.id,
-    });
+    const response = await createEmployee({
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password,
+      spending_limit: formData.spending_limit,
+      is_admin: formData.is_admin,
+    }).catch(() => null);
 
-    if (!employee) {
+    if (!response?.employee) {
       toast.error("Failed to create employee");
       return;
     }
 
     setOpen(false);
     toast.success(
-      `Employee ${customer?.first_name} ${customer?.last_name} created successfully`
+      `Employee ${formData.first_name ?? ""} ${
+        formData.last_name ?? ""
+      } created successfully`
     );
   };
 
-  const loading = createCustomerLoading || createEmployeeLoading;
-  const error = createCustomerError || createEmployeeError;
+  const loading = createEmployeeLoading;
+  const error = createEmployeeError;
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>

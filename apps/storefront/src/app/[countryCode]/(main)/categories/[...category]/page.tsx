@@ -1,8 +1,11 @@
 import { getCategoryByHandle, listCategories } from "@/lib/data/categories"
 import { listRegions } from "@/lib/data/regions"
+import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
+import { buildLocaleAlternates } from "@/lib/seo/locale-alternates"
 import CategoryTemplate from "@/modules/categories/templates"
 import { SortOptions } from "@/modules/store/components/refinement-list/sort-products"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 
 export const dynamicParams = true
@@ -25,11 +28,17 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
     const description = product_category.description ?? `${title} category.`
 
+    const locale = getLocaleForCountry(params.countryCode)
+    const t = await getTranslations({ locale, namespace: "MetaDescription" })
+
     return {
-      title: `${title} | Medusa Store`,
+      title: `${title} ${t("storeSuffix")}`,
       description,
       alternates: {
         canonical: `${params.category.join("/")}`,
+        languages: buildLocaleAlternates(
+          `/categories/${params.category.join("/")}`
+        ),
       },
     }
   } catch (error) {

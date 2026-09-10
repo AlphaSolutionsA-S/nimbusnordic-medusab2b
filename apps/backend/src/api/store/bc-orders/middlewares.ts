@@ -1,5 +1,10 @@
-import { authenticate, validateAndTransformQuery } from "@medusajs/framework";
+import {
+  authenticate,
+  validateAndTransformBody,
+  validateAndTransformQuery,
+} from "@medusajs/framework";
 import { MiddlewareRoute } from "@medusajs/medusa";
+import { StoreCreateBCReturn } from "./[id]/returns/validators";
 import { StoreBCOrdersQuery } from "./validators";
 
 export const storeBCOrdersMiddlewares: MiddlewareRoute[] = [
@@ -24,5 +29,10 @@ export const storeBCOrdersMiddlewares: MiddlewareRoute[] = [
         isList: true,
       }),
     ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/store/bc-orders/:id/returns",
+    middlewares: [validateAndTransformBody(StoreCreateBCReturn)],
   },
 ];

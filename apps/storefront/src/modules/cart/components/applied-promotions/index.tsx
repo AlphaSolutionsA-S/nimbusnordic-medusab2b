@@ -1,14 +1,17 @@
 import { HttpTypes } from "@medusajs/types"
 import { Badge, Container, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 
 const AppliedPromotions = ({
   promotions,
 }: {
   promotions: HttpTypes.StorePromotion[]
 }) => {
+  const t = useTranslations("Cart.appliedPromotions")
+
   return (
     <Container className="flex gap-2 items-center py-3 flex-wrap">
-      <Text>Promotions applied:</Text>
+      <Text>{t("label")}</Text>
       {promotions?.map((promotion) => (
         <Badge
           key={promotion.id}

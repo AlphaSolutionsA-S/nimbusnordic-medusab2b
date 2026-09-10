@@ -2,16 +2,13 @@
 
 import Button from "@/modules/common/components/button"
 import type { BCOrderStatus } from "@/types/bc-order"
+import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 
 const BC_ORDER_STATUSES: BCOrderStatus[] = [
   "Open",
-  "Released",
-  "Pending Approval",
-  "Pending Prepayment",
-  "Shipped",
-  "Invoiced",
+  "Draft",
 ]
 
 type BcOrderFiltersProps = {
@@ -27,10 +24,21 @@ const BcOrderFilters = ({
   currentDateTo,
   currentSearch,
 }: BcOrderFiltersProps) => {
+  const t = useTranslations("Account.bcOrderFilters")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [isPending, startTransition] = useTransition()
+  const [dateFrom, setDateFrom] = useState(currentDateFrom ?? "")
+  const [dateTo, setDateTo] = useState(currentDateTo ?? "")
+
+  useEffect(() => {
+    setDateFrom(currentDateFrom ?? "")
+  }, [currentDateFrom])
+
+  useEffect(() => {
+    setDateTo(currentDateTo ?? "")
+  }, [currentDateTo])
 
   const pushParams = (updates: Record<string, string | undefined>) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -65,7 +73,7 @@ const BcOrderFilters = ({
           htmlFor="bc-status-filter"
           className="text-xs text-neutral-500"
         >
-          Status
+          {t("statusLabel")}
         </label>
         <select
           id="bc-status-filter"
@@ -73,7 +81,7 @@ const BcOrderFilters = ({
           value={currentStatus ?? ""}
           onChange={(e) => pushParams({ status: e.target.value || undefined })}
         >
-          <option value="">All statuses</option>
+          <option value="">{t("allStatusesOption")}</option>
           {BC_ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -88,16 +96,18 @@ const BcOrderFilters = ({
           htmlFor="bc-date-from-filter"
           className="text-xs text-neutral-500"
         >
-          From
+          {t("fromLabel")}
         </label>
         <input
           id="bc-date-from-filter"
           type="date"
           className="text-sm border border-neutral-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
-          value={currentDateFrom ?? ""}
-          onChange={(e) =>
-            pushParams({ date_from: e.target.value || undefined })
-          }
+          value={dateFrom}
+          onChange={(e) => {
+            const value = e.target.value
+            setDateFrom(value)
+            pushParams({ date_from: value || undefined })
+          }}
         />
       </div>
 
@@ -107,16 +117,18 @@ const BcOrderFilters = ({
           htmlFor="bc-date-to-filter"
           className="text-xs text-neutral-500"
         >
-          To
+          {t("toLabel")}
         </label>
         <input
           id="bc-date-to-filter"
           type="date"
           className="text-sm border border-neutral-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
-          value={currentDateTo ?? ""}
-          onChange={(e) =>
-            pushParams({ date_to: e.target.value || undefined })
-          }
+          value={dateTo}
+          onChange={(e) => {
+            const value = e.target.value
+            setDateTo(value)
+            pushParams({ date_to: value || undefined })
+          }}
         />
       </div>
 
@@ -126,7 +138,7 @@ const BcOrderFilters = ({
           htmlFor="bc-search-filter"
           className="text-xs text-neutral-500"
         >
-          Search
+          {t("searchLabel")}
         </label>
         <form
           onSubmit={(e) => {
@@ -142,7 +154,7 @@ const BcOrderFilters = ({
             name="search"
             type="text"
             defaultValue={currentSearch ?? ""}
-            placeholder="Order number…"
+            placeholder={t("searchPlaceholder")}
             className="text-sm border border-neutral-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
           />
         </form>
@@ -156,7 +168,7 @@ const BcOrderFilters = ({
         type="button"
         data-testid="bc-orders-clear-filters"
       >
-        Clear
+        {t("clearLabel")}
       </Button>
     </div>
   )

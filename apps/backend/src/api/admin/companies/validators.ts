@@ -11,13 +11,13 @@ export const AdminCreateCompany = z
     name: z.string(),
     email: z.string(),
     currency_code: z.string(),
-    phone: z.string().optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zip: z.string().optional(),
-    country: z.string().optional(),
-    logo_url: z.string().optional(),
+    phone: z.string().optional().nullable(),
+    address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
+    state: z.string().optional().nullable(),
+    zip: z.string().optional().nullable(),
+    country: z.string().optional().nullable(),
+    logo_url: z.string().optional().nullable(),
     business_central_customer_number: z
       .string()
       .regex(/^\d+$/, "Business Central customer number must be numeric only")
@@ -32,12 +32,12 @@ export const AdminUpdateCompany = z
     name: z.string().optional(),
     email: z.string().optional(),
     currency_code: z.string().optional(),
-    phone: z.string().optional(),
-    address: z.string().optional(),
-    city: z.string().optional(),
-    state: z.string().optional(),
-    zip: z.string().optional(),
-    country: z.string().optional(),
+    phone: z.string().optional().nullable(),
+    address: z.string().optional().nullable(),
+    city: z.string().optional().nullable(),
+    state: z.string().optional().nullable(),
+    zip: z.string().optional().nullable(),
+    country: z.string().optional().nullable(),
     logo_url: z.string().optional().nullable(),
     business_central_customer_number: z
       .string()
@@ -82,9 +82,21 @@ export const AdminCreateEmployee = z
       })
       .optional(),
     is_admin: z.boolean().optional(),
-    customer_id: z.string(),
+    customer_id: z.string().optional(),
+    first_name: z.string().optional(),
+    last_name: z.string().optional(),
+    email: z.string().email().optional(),
+    phone: z.string().optional(),
+    password: z.string().min(8).optional(),
   })
-  .strict();
+  .strict()
+  .refine(
+    (data) => Boolean(data.customer_id) || Boolean(data.email && data.password),
+    {
+      message:
+        "Provide either an existing customer_id or an email and password to create a new employee account.",
+    }
+  );
 
 export type AdminUpdateEmployeeType = z.infer<typeof AdminUpdateEmployee>;
 export const AdminUpdateEmployee = z
@@ -98,6 +110,13 @@ export const AdminUpdateEmployee = z
       })
       .optional(),
     is_admin: z.boolean().optional(),
+  })
+  .strict();
+
+export type AdminDeleteEmployeeType = z.infer<typeof AdminDeleteEmployee>;
+export const AdminDeleteEmployee = z
+  .object({
+    delete_customer_account: z.boolean().default(false),
   })
   .strict();
 

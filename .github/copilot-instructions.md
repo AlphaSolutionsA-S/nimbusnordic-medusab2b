@@ -43,24 +43,44 @@ This repository includes installed team skills and instructions for GitHub Copil
 
 ## Installed Skills (Copilot paths)
 
-- jira-workflow (instance: dev): .github/skills/jira-workflow/SKILL.md
-- commit-messages: .github/skills/commit-messages/SKILL.md
-- bug-reporting: .github/skills/bug-reporting/SKILL.md
-- feature-requests: .github/skills/feature-requests/SKILL.md
-- secure-coding-owasp: .github/skills/secure-coding-owasp/SKILL.md
-- code-review: .github/skills/code-review/SKILL.md
-- definition-of-done: .github/skills/definition-of-done/SKILL.md
-- memory-discipline: .github/skills/memory-discipline/SKILL.md
+### General & Workflow
 
-When working on Medusa-related code, load the appropriate skill:
+| Skill | Path | When to use |
+|-------|------|-------------|
+| `jira-workflow` (instance: dev) | `.github/skills/jira-workflow/SKILL.md` | Starting/switching to a JIRA issue, or closing one — issue lookup, assignee/status hygiene, commit-message formatting |
+| `commit-messages` | `.github/skills/commit-messages/SKILL.md` | Committing code, staging changes, running `git commit` |
+| `bug-reporting` | `.github/skills/bug-reporting/SKILL.md` | Registering/filing/documenting a bug |
+| `feature-requests` | `.github/skills/feature-requests/SKILL.md` | Registering/documenting a feature request or enhancement |
+| `secure-coding-owasp` | `.github/skills/secure-coding-owasp/SKILL.md` | Generating, reviewing, or modifying any code |
+| `code-review` | `.github/skills/code-review/SKILL.md` | Reviewing a PR, diff, patch, or staged changes |
+| `definition-of-done` | `.github/skills/definition-of-done/SKILL.md` | Closing an issue, opening a PR, asking "is this done?" |
+| `memory-discipline` | `.github/skills/memory-discipline/SKILL.md` | Before writing to agent memory (Copilot, Claude, Cursor) |
 
-| Skill | When to use |
-|-------|-------------|
-| `building-with-medusa` | Backend work in `apps/backend/` — custom modules, data models, workflows, API routes, subscribers, scheduled jobs |
-| `building-admin-dashboard-customizations` | Admin UI in `apps/backend/src/admin/` — widgets, custom pages, forms, data tables |
-| `building-storefronts` | Storefront Medusa integration in `apps/storefront/`  — JS SDK usage, React Query patterns |
-| `creating-internal-agents` | Internal admin-facing AI agents — merchant/operator tools, not customer-facing |
-| `using-medusa-cloud` | Deployments, environment management, debugging via `mcloud` CLI |
+### Medusa Development
+
+| Skill | Path | When to use |
+|-------|------|-------------|
+| `building-with-medusa` | `.github/skills/building-with-medusa/SKILL.md` | Backend work in `apps/backend/` — custom modules, data models, workflows, API routes, subscribers, scheduled jobs |
+| `building-admin-dashboard-customizations` | `.github/skills/building-admin-dashboard-customizations/SKILL.md` | Admin UI in `apps/backend/src/admin/` — widgets, custom pages, forms, data tables |
+| `building-storefronts` | `.github/skills/building-storefronts/SKILL.md` | Storefront Medusa integration in `apps/storefront/` — JS SDK usage, React Query patterns |
+| `storefront-best-practices` | `.github/skills/storefront-best-practices/SKILL.md` | Any storefront component/page — cart, checkout, PDP/PLP, nav, homepage |
+| `creating-internal-agents` | `.github/skills/creating-internal-agents/SKILL.md` | Internal admin-facing AI agents — merchant/operator tools, not customer-facing |
+| `db-generate` | `.github/skills/db-generate/SKILL.md` | Generating database migrations for a Medusa module |
+| `db-migrate` | `.github/skills/db-migrate/SKILL.md` | Running database migrations in Medusa |
+| `new-user` | `.github/skills/new-user/SKILL.md` | Creating an admin user in Medusa |
+
+### Medusa Cloud (`mcloud`)
+
+| Skill | Path | When to use |
+|-------|------|-------------|
+| `using-medusa-cloud` | `.github/skills/using-medusa-cloud/SKILL.md` | Umbrella skill for deployments, environment management, debugging via `mcloud` CLI |
+| `mcloud-auth` | `.github/skills/mcloud-auth/SKILL.md` | `login`, `logout`, `whoami`, `use`, `version`, `signup` |
+| `mcloud-organizations` | `.github/skills/mcloud-organizations/SKILL.md` | Listing/getting Cloud organizations |
+| `mcloud-projects` | `.github/skills/mcloud-projects/SKILL.md` | Listing/getting/deleting Cloud projects |
+| `mcloud-environments` | `.github/skills/mcloud-environments/SKILL.md` | Managing environment lifecycle, redeploying, triggering builds |
+| `mcloud-deployments` | `.github/skills/mcloud-deployments/SKILL.md` | Listing deployments, deployment details, build logs |
+| `mcloud-variables` | `.github/skills/mcloud-variables/SKILL.md` | Listing/getting environment variables |
+| `mcloud-logs` | `.github/skills/mcloud-logs/SKILL.md` | Fetching/streaming runtime logs |
 
 ## Installed Instructions (Copilot paths)
 

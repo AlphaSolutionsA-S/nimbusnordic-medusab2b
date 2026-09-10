@@ -11,6 +11,7 @@ import {
 } from "./query-config";
 import {
   StoreCreateCompany,
+  StoreDeleteEmployee,
   StoreCreateEmployee,
   StoreGetCompanyParams,
   StoreGetEmployeeParams,
@@ -112,6 +113,14 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
         StoreGetEmployeeParams,
         storeEmployeeQueryConfig.retrieve
       ),
+    ],
+  },
+  {
+    method: ["DELETE"],
+    matcher: "/store/companies/:id/employees/:employee_id",
+    middlewares: [
+      ensureRole("company_admin"),
+      validateAndTransformBody(StoreDeleteEmployee),
     ],
   },
   {

@@ -1,16 +1,33 @@
 import { HttpTypes } from "@medusajs/types"
 import { NextRequest, NextResponse } from "next/server"
 
+import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
+
+// next-intl reads the active locale from this header when an app doesn't use
+// next-intl's own `[locale]`-segment middleware/routing (see
+// src/i18n/request.ts and https://next-intl.dev, "X-NEXT-INTL-LOCALE").
+// Without it, `getRequestLocale()` (used internally by `getTranslations()`/
+// `getMessages()`) falls back to `undefined` -> the default locale ("en"),
+// regardless of the `setRequestLocale(countryCode)` call in
+// `[countryCode]/layout.tsx` — that call only affects code running in the
+// same request's React render tree from that point on, not this constant
+// used by other unrelated request-config resolutions, and was found to not
+// reliably propagate in this app/Next.js version combination either way.
+// Discovered during NIMBUS-169 visual QA: every non-English locale rendered
+// entirely in English (translations exist and are correct in `messages/`,
+// but were never being loaded).
+const NEXT_INTL_LOCALE_HEADER = "X-NEXT-INTL-LOCALE"
+
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
-const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
+const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "gb"
 
 const regionMapCache = {
   regionMap: new Map<string, HttpTypes.StoreRegion>(),
   regionMapUpdated: Date.now(),
 }
 
-async function getRegionMap(cacheId: string) {
+export async function getRegionMap(cacheId: string) {
   const { regionMap, regionMapUpdated } = regionMapCache
 
   if (
@@ -60,7 +77,7 @@ async function getRegionMap(cacheId: string) {
  * @param request
  * @param response
  */
-async function getCountryCode(
+export async function getCountryCode(
   request: NextRequest,
   regionMap: Map<string, HttpTypes.StoreRegion | number>
 ) {
@@ -111,6 +128,8 @@ async function setCacheId(request: NextRequest, response: NextResponse) {
  */
 export async function middleware(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.delete("x-payload-live-preview")
   const cartId = searchParams.get("cart_id")
   const checkoutStep = searchParams.get("step")
   const cacheIdCookie = request.cookies.get("_medusa_cache_id")
@@ -132,7 +151,29 @@ export async function middleware(request: NextRequest) {
 
   // check if one of the country codes is in the url
   if (urlHasCountryCode && (!cartId || cartIdCookie) && cacheIdCookie) {
-    return NextResponse.next()
+    requestHeaders.set(
+      NEXT_INTL_LOCALE_HEADER,
+      getLocaleForCountry(countryCode as string)
+    )
+
+    if (
+      request.nextUrl.pathname.endsWith("/account/claims") &&
+      searchParams.get("livePreview") === "true"
+    ) {
+      requestHeaders.set("x-payload-live-preview", "true")
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      })
+    }
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
   }
 
   // check if the url is a static asset

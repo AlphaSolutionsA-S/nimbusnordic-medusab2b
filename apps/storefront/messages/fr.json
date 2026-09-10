@@ -1,0 +1,725 @@
+{
+  "Common": {
+    "welcome": "Bienvenue",
+    "deleteButton": {
+      "removeLabel": "Retirer"
+    },
+    "promptModal": {
+      "cancelLabel": "Annuler",
+      "continueLabel": "Continuer"
+    },
+    "thumbnail": {
+      "altFallback": "test"
+    },
+    "notFound": {
+      "headingLabel": "Page introuvable",
+      "pageMessage": "La page que vous avez essayé de consulter n'existe pas.",
+      "goToFrontpageLabel": "Aller à la page d'accueil"
+    }
+  },
+  "Layout": {
+    "nav": {
+      "brandName": "Medusa B2B Starter",
+      "searchPlaceholder": "Rechercher des produits",
+      "searchDisabledTooltip": "Installez un fournisseur de recherche pour activer la recherche de produits",
+      "quoteLabel": "Devis"
+    },
+    "regionSwitcher": {
+      "label": "Sélectionnez votre région"
+    },
+    "megaMenu": {
+      "productsLabel": "Produits"
+    },
+    "footer": {
+      "brandName": "Medusa Store",
+      "categoriesHeading": "Catégories",
+      "collectionsHeading": "Collections",
+      "medusaHeading": "Medusa",
+      "githubLabel": "GitHub",
+      "documentationLabel": "Documentation",
+      "sourceCodeLabel": "Code source",
+      "copyright": "© {year} Medusa Store. Tous droits réservés.",
+      "poweredByLabel": "Propulsé par"
+    },
+    "cartMismatchBanner": {
+      "message": "Le panier n'est pas connecté à votre compte",
+      "connectLabel": "Connecter le panier",
+      "connectingLabel": "Connexion en cours.."
+    },
+    "promoBanner": {
+      "buildYourOwnLabel": "Créez votre propre boutique B2B avec ce starter :",
+      "deployToMedusaCloudLabel": "Déployer sur Medusa Cloud"
+    }
+  },
+  "Checkout": {
+    "contactDetails": {
+      "heading": "Coordonnées",
+      "editLabel": "Modifier",
+      "emailLabel": "E-mail",
+      "invoiceRecipientLabel": "Destinataire de la facture",
+      "costCenterLabel": "Centre de coûts",
+      "requisitionNumberLabel": "Numéro de réquisition",
+      "doorCodeLabel": "Code d'accès/repère de livraison",
+      "notesLabel": "Notes",
+      "notesHelpText": "La note apparaîtra uniquement sur la facture et la confirmation de commande et ne sera pas lue par le marchand.",
+      "reviewOrderLabel": "Vérifier la commande",
+      "nextStepLabel": "Étape suivante",
+      "notePrefix": "Note : {notes}"
+    },
+    "addressForm": {
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "phoneLabel": "Téléphone",
+      "companyNameLabel": "Nom de l'entreprise",
+      "addressLabel": "Adresse",
+      "postalCodeLabel": "Code postal",
+      "cityLabel": "Ville",
+      "provinceLabel": "Région",
+      "countryPlaceholder": "Pays",
+      "savedAddressPrompt": "Bonjour {name}, souhaitez-vous utiliser l'une de vos adresses enregistrées ?"
+    },
+    "addressSelect": {
+      "choosePlaceholder": "Choisir une adresse"
+    },
+    "billingAddress": {
+      "heading": "Adresse de facturation",
+      "sameAsShippingLabel": "Identique à l'adresse de livraison",
+      "nextStepLabel": "Étape suivante"
+    },
+    "company": {
+      "heading": "Entreprise"
+    },
+    "companyForm": {
+      "orderOnBehalfOf": "Commander pour le compte de {companyName}",
+      "customCheckoutLabel": "Paiement personnalisé"
+    },
+    "paymentButton": {
+      "selectPaymentMethodLabel": "Sélectionner un moyen de paiement",
+      "approvalRequiredBoth": "Cette commande nécessite l'approbation d'un administrateur d'entreprise et d'un responsable commercial.",
+      "approvalRequiredAdmin": "Cette commande nécessite l'approbation d'un administrateur d'entreprise.",
+      "approvalRequiredSalesManager": "Cette commande nécessite l'approbation d'un responsable commercial.",
+      "approvalRequestedLabel": "Approbation demandée",
+      "requestApprovalLabel": "Demander une approbation",
+      "placeOrderLabel": "Passer la commande"
+    },
+    "paymentTest": {
+      "attentionLabel": "Attention :",
+      "testingOnlyMessage": "À des fins de test uniquement."
+    },
+    "payment": {
+      "heading": "Moyen de paiement",
+      "editLabel": "Modifier",
+      "enterCardDetailsLabel": "Saisissez les informations de votre carte :",
+      "enterCardDetailsButtonLabel": " Saisir les informations de la carte",
+      "nextStepLabel": "Étape suivante",
+      "giftCardLabel": "Carte cadeau",
+      "paymentMethodLabel": "Moyen de paiement"
+    },
+    "promotionCode": {
+      "enterPromotionCodeLabel": "Saisir un code promotionnel",
+      "applyLabel": "Appliquer",
+      "promotionAppliedOne": "Promotion appliquée :",
+      "promotionAppliedOther": "Promotions appliquées :",
+      "removeDiscountSrLabel": "Retirer le code de réduction de la commande"
+    },
+    "review": {
+      "agreementText": "En finalisant cette commande, j'accepte les <termsLink>conditions de vente ↗</termsLink> et la <privacyLink>politique de confidentialité ↗</privacyLink> de Medusa",
+      "placeOrderLabel": "Passer la commande"
+    },
+    "shippingAddress": {
+      "heading": "Adresse de livraison",
+      "editLabel": "Modifier",
+      "nextStepLabel": "Étape suivante"
+    },
+    "shipping": {
+      "heading": "Mode de livraison",
+      "editLabel": "Modifier",
+      "nextStepLabel": "Étape suivante"
+    },
+    "checkoutForm": {
+      "backToCartLabel": "Retour au panier"
+    }
+  },
+  "Account": {
+    "login": {
+      "heading": "Connectez-vous pour un<br></br>paiement plus rapide.",
+      "emailLabel": "E-mail",
+      "emailValidationMessage": "Saisissez une adresse e-mail valide.",
+      "passwordLabel": "Mot de passe",
+      "rememberMeLabel": "Se souvenir de moi",
+      "submitLabel": "Se connecter",
+      "registerLinkLabel": "S'inscrire",
+      "bannerAlt": "Arrière-plan de la bannière de connexion"
+    },
+    "register": {
+      "heading": "Créez votre<br></br>compte entreprise.",
+      "emailLabel": "E-mail",
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "companyNameLabel": "Nom de l'entreprise",
+      "passwordLabel": "Mot de passe",
+      "companyAddressLabel": "Adresse de l'entreprise",
+      "companyCityLabel": "Ville de l'entreprise",
+      "companyStateLabel": "Région de l'entreprise",
+      "companyZipLabel": "Code postal de l'entreprise",
+      "countryPlaceholder": "Sélectionner un pays",
+      "currencyPlaceholder": "Sélectionner une devise",
+      "termsLabel": "J'accepte les conditions générales.",
+      "submitLabel": "S'inscrire",
+      "alreadyMemberText": "Déjà membre ?",
+      "loginLinkLabel": "Se connecter"
+    },
+    "accountButton": {
+      "loginLabel": "Se connecter"
+    },
+    "nav": {
+      "accountLabel": "Compte",
+      "helloLabel": "Bonjour {name}",
+      "profileLabel": "Profil",
+      "companyLabel": "Entreprise",
+      "addressesLabel": "Adresses",
+      "ordersLabel": "Commandes",
+      "bcOrdersLabel": "Commandes BC",
+      "claimsLabel": "Réclamations",
+      "approvalsLabel": "Approbations",
+      "quotesLabel": "Devis",
+      "logoutLabel": "Se déconnecter",
+      "overviewLabel": "Aperçu"
+    },
+    "overview": {
+      "helloLabel": "Bonjour {name}",
+      "signedInAsLabel": "Connecté en tant que :",
+      "profileHeading": "Profil",
+      "completedLabel": "Terminé",
+      "addressesHeading": "Adresses",
+      "savedLabel": "Enregistré",
+      "recentOrdersHeading": "Commandes récentes",
+      "noRecentOrdersMessage": "Aucune commande récente",
+      "previouslyPurchasedHeading": "Articles achetés précédemment",
+      "noPreviouslyPurchasedMessage": "Aucun article acheté précédemment"
+    },
+    "orderCard": {
+      "itemsCount": "{count} articles",
+      "itemCount": "{count} article",
+      "detailsLabel": "Détails"
+    },
+    "previouslyPurchased": {
+      "buyAgainLabel": "Racheter"
+    },
+    "profileCard": {
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Téléphone",
+      "cancelLabel": "Annuler",
+      "saveLabel": "Enregistrer",
+      "editLabel": "Modifier",
+      "currentPasswordLabel": "Mot de passe actuel",
+      "newPasswordLabel": "Nouveau mot de passe",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "passwordLabel": "Mot de passe",
+      "changePasswordLabel": "Changer le mot de passe",
+      "customerUpdatedToast": "Client mis à jour",
+      "customerUpdateErrorToast": "Erreur lors de la mise à jour du client",
+      "passwordMismatchToast": "Les nouveaux mots de passe ne correspondent pas",
+      "passwordTooShortToast": "Le mot de passe doit contenir au moins 8 caractères",
+      "passwordUpdatedToast": "Mot de passe mis à jour",
+      "passwordUpdateErrorToast": "Erreur lors de la mise à jour du mot de passe"
+    },
+    "companyCard": {
+      "companyNameLabel": "Nom de l'entreprise",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Téléphone",
+      "addressLabel": "Adresse",
+      "cityLabel": "Ville",
+      "stateLabel": "Région",
+      "zipLabel": "Code postal",
+      "countryLabel": "Pays",
+      "currencyLabel": "Devise",
+      "spendingLimitResetFrequencyLabel": "Fréquence de réinitialisation du plafond de dépenses",
+      "bcCustomerNumberLabel": "Numéro client BC",
+      "cancelLabel": "Annuler",
+      "saveLabel": "Enregistrer",
+      "editLabel": "Modifier",
+      "companyUpdatedToast": "Entreprise mise à jour",
+      "companyUpdateErrorToast": "Erreur lors de la mise à jour de l'entreprise"
+    },
+    "securityCard": {
+      "passwordLabel": "Mot de passe",
+      "editLabel": "Modifier",
+      "notImplementedToast": "Non implémenté"
+    },
+    "accountInfo": {
+      "defaultErrorMessage": "Une erreur s'est produite, veuillez réessayer",
+      "cancelLabel": "Annuler",
+      "editLabel": "Modifier",
+      "updatedSuccessfullyMessage": "{label} mis à jour avec succès",
+      "saveChangesLabel": "Enregistrer les modifications"
+    },
+    "quoteCard": {
+      "seeDetailsLabel": "Voir les détails"
+    },
+    "claimsPageContent": {
+      "defaultTitle": "Réclamations"
+    },
+    "claimsUnavailable": {
+      "message": "Les informations de réclamation sont temporairement indisponibles. Veuillez réessayer plus tard."
+    },
+    "addressCard": {
+      "newAddressLabel": "Nouvelle adresse",
+      "addAddressHeading": "Ajouter une adresse",
+      "editAddressHeading": "Modifier l'adresse",
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "companyLabel": "Entreprise",
+      "addressLabel": "Adresse",
+      "apartmentLabel": "Appartement, suite, etc.",
+      "postalCodeLabel": "Code postal",
+      "cityLabel": "Ville",
+      "provinceLabel": "Région / État",
+      "phoneLabel": "Téléphone",
+      "cancelLabel": "Annuler",
+      "saveLabel": "Enregistrer",
+      "editLabel": "Modifier",
+      "removeLabel": "Retirer"
+    },
+    "employeeCard": {
+      "employeeDeletedToast": "Employé supprimé",
+      "employeeDeleteErrorToast": "Erreur lors de la suppression de l'employé",
+      "employeeUpdatedToast": "Employé mis à jour",
+      "employeeUpdateErrorToast": "Erreur lors de la mise à jour de l'employé",
+      "removeLabel": "Retirer",
+      "removeEmployeeHeading": "Retirer l'employé",
+      "removeConfirmMessage": "Êtes-vous sûr de vouloir retirer <email></email> de votre équipe ? Cette personne ne pourra plus effectuer d'achats pour le compte de votre entreprise.",
+      "deleteCustomerAccountLabel": "Supprimer également le compte client et la connexion associés",
+      "cancelLabel": "Annuler",
+      "saveLabel": "Enregistrer",
+      "editLabel": "Modifier",
+      "youSuffixLabel": "(Vous)",
+      "adminBadgeLabel": "Administrateur",
+      "amountSpentMessage": "{amountSpent} / {limit} dépensé",
+      "noLimitLabel": "Aucune limite",
+      "spendingLimitLabel": "Plafond de dépenses",
+      "permissionsLabel": "Autorisations",
+      "adminOptionLabel": "Administrateur",
+      "employeeOptionLabel": "Employé"
+    },
+    "inviteEmployeeCard": {
+      "employeeInvitedToast": "Employé invité",
+      "employeeInviteErrorToast": "Erreur lors de l'invitation de l'employé",
+      "nameLabel": "Nom",
+      "firstNameLabel": "Prénom",
+      "lastNameLabel": "Nom",
+      "emailLabel": "E-mail",
+      "emailInputLabel": "Saisir un e-mail",
+      "initialPasswordLabel": "Mot de passe initial",
+      "setPasswordInputLabel": "Définir un mot de passe initial",
+      "sendInviteLabel": "Envoyer l'invitation"
+    },
+    "approvalCard": {
+      "orderCompletedAtLabel": "Commande terminée le",
+      "approvedAtLabel": "Approuvé le",
+      "rejectedAtLabel": "Rejeté le"
+    },
+    "approvalCardActions": {
+      "confirmApproveTitle": "Êtes-vous sûr de vouloir approuver ce panier ?",
+      "confirmRejectTitle": "Êtes-vous sûr de vouloir rejeter ce panier ?",
+      "confirmActionDescription": "Cette action est irréversible.",
+      "rejectLabel": "Rejeter",
+      "approveLabel": "Approuver",
+      "awaitingExternalApprovalLabel": "En attente d'approbation externe",
+      "placeOrderLabel": "Passer la commande"
+    },
+    "pendingCustomerApprovals": {
+      "emptyHeading": "Rien à voir ici",
+      "emptyMessage": "Vous n'avez encore aucune approbation."
+    },
+    "approvalRequestsAdminList": {
+      "noRequestsMessage": "Aucune demande"
+    },
+    "approvalSettingsCard": {
+      "requiresAdminApprovalLabel": "Nécessite l'approbation d'un administrateur",
+      "requiresAdminApprovalTooltip": "Ce paramètre détermine si les commandes nécessitent l'approbation d'un administrateur avant d'être traitées. Si activé, les commandes sont retenues jusqu'à ce qu'un administrateur les approuve.",
+      "requiresSalesManagerApprovalLabel": "Nécessite l'approbation d'un responsable commercial",
+      "requiresSalesManagerApprovalTooltip": "Ce paramètre détermine si les commandes nécessitent l'approbation d'un responsable commercial avant d'être traitées. Si activé, les commandes sont retenues jusqu'à ce qu'un responsable commercial les approuve.",
+      "yesLabel": "Oui",
+      "noLabel": "Non",
+      "updateErrorToast": "Erreur lors de la mise à jour des paramètres d'approbation",
+      "updatedToast": "Entreprise mise à jour",
+      "cancelLabel": "Annuler",
+      "saveLabel": "Enregistrer",
+      "editLabel": "Modifier"
+    },
+    "bcOrderCard": {
+      "detailsLabel": "Détails"
+    },
+    "bcOrderOverview": {
+      "errorHeading": "Une erreur s'est produite",
+      "errorMessage": "Nous n'avons pas pu charger les commandes de votre entreprise. Veuillez réessayer.",
+      "tryAgainLabel": "Réessayer",
+      "emptyHeading": "Aucune commande d'entreprise trouvée",
+      "emptyMessage": "Essayez d'ajuster vos filtres pour voir plus de résultats."
+    },
+    "bcOrderFilters": {
+      "statusLabel": "Statut",
+      "allStatusesOption": "Tous les statuts",
+      "fromLabel": "De",
+      "toLabel": "À",
+      "searchLabel": "Rechercher",
+      "searchPlaceholder": "Numéro de commande…",
+      "clearLabel": "Effacer"
+    },
+    "bcOrderReturn": {
+      "orderUnavailableError": "Cette commande n'est plus disponible pour un retour.",
+      "returnUnconfirmedError": "Nous n'avons pas pu confirmer la demande de retour. Veuillez réessayer sous peu.",
+      "genericReturnError": "Veuillez vérifier les lignes sélectionnées et réessayer.",
+      "requestReturnLabel": "Demander un retour",
+      "returnRequestedHeading": "Retour demandé",
+      "returnCreatedMessage": "Retour {number} créé - statut {status}.",
+      "backToOrderDetailsLabel": "Retour aux détails de la commande",
+      "orderNumberLabel": "Numéro de commande",
+      "billToAddressLabel": "Adresse de facturation",
+      "shipToAddressLabel": "Adresse de livraison",
+      "itemColumnLabel": "Article",
+      "orderedQuantityColumnLabel": "Quantité commandée",
+      "unitPriceColumnLabel": "Prix unitaire",
+      "returnQuantityColumnLabel": "Quantité à retourner",
+      "returnReasonColumnLabel": "Motif du retour",
+      "itemFallbackLabel": "Article",
+      "returnQuantityAriaLabel": "Quantité à retourner pour {item}",
+      "itemLowercaseFallbackLabel": "article",
+      "selectReasonPlaceholder": "Sélectionner un motif",
+      "cancelLabel": "Annuler",
+      "submitReturnRequestLabel": "Envoyer la demande de retour"
+    },
+    "orderOverview": {
+      "emptyMessage": "Vous n'avez pas encore de commande, changeons cela :)",
+      "continueShoppingLabel": "Continuer mes achats"
+    },
+    "bcOrderDetailTemplate": {
+      "backToBcOrdersLabel": "Retour aux commandes BC",
+      "orderNumberHeading": "Commande n°{number}",
+      "customerLabel": "Client",
+      "statusLabel": "Statut",
+      "currencyLabel": "Devise",
+      "totalExcludingTaxLabel": "Total hors taxes",
+      "totalIncludingTaxLabel": "Total toutes taxes comprises",
+      "itemsHeading": "Articles",
+      "descriptionColumnLabel": "Description",
+      "quantityColumnLabel": "Quantité",
+      "amountColumnLabel": "Montant"
+    },
+    "bcOrderNotFound": {
+      "headingLabel": "Commande introuvable",
+      "message": "Cette commande n'est pas disponible."
+    },
+    "addressesPage": {
+      "heading": "Adresses de livraison",
+      "description": "Consultez et mettez à jour vos adresses de livraison, vous pouvez en ajouter autant que vous le souhaitez. L'enregistrement de vos adresses les rendra disponibles lors du paiement."
+    },
+    "approvalsPage": {
+      "heading": "Approbations",
+      "pendingHeading": "En attente",
+      "approvedHeading": "Approuvé",
+      "rejectedHeading": "Rejeté",
+      "loadingLabel": "Chargement..."
+    },
+    "companyPage": {
+      "companyDetailsHeading": "Détails de l'entreprise",
+      "approvalSettingsHeading": "Paramètres d'approbation",
+      "employeesHeading": "Employés",
+      "inviteEmployeesHeading": "Inviter des employés"
+    },
+    "profilePage": {
+      "detailsHeading": "Détails",
+      "securityHeading": "Sécurité"
+    },
+    "ordersPage": {
+      "heading": "Commandes",
+      "pendingApprovalsHeading": "Approbations en attente",
+      "completedOrdersHeading": "Commandes terminées"
+    },
+    "quotesPage": {
+      "heading": "Devis"
+    },
+    "quotesOverview": {
+      "emptyMessage": "Vous n'avez pas encore de devis"
+    },
+    "quoteStatusBadge": {
+      "acceptedLabel": "Accepté",
+      "customerRejectedLabel": "Rejeté par le client",
+      "merchantRejectedLabel": "Rejeté par le marchand",
+      "pendingMerchantLabel": "En attente du marchand",
+      "pendingCustomerLabel": "En attente du client"
+    },
+    "quoteMessages": {
+      "messagesHeading": "Messages",
+      "pickQuoteItemLabel": "Choisir un article du devis",
+      "pickQuoteItemDescription": "Sélectionnez un article du devis autour duquel rédiger un message",
+      "selectItemPlaceholder": "Sélectionner un article",
+      "sendLabel": "Envoyer"
+    },
+    "quoteTable": {
+      "newLabel": "Nouveau",
+      "removedLabel": "Supprimé",
+      "modifiedLabel": "Modifié"
+    },
+    "quoteDetails": {
+      "backLabel": "Retour",
+      "acceptedNoticeMessage": "Devis accepté par le client. La commande est prête à être traitée.",
+      "viewOrderLabel": "Voir la commande",
+      "currentTotalLabel": "Total actuel",
+      "newTotalLabel": "Nouveau total",
+      "rejectQuoteConfirmTitle": "Rejeter le devis ?",
+      "rejectQuoteConfirmDescription": "Êtes-vous sûr de vouloir rejeter le devis ? Cette action est irréversible.",
+      "rejectQuoteLabel": "Rejeter le devis",
+      "acceptQuoteConfirmTitle": "Accepter le devis ?",
+      "acceptQuoteConfirmDescription": "Êtes-vous sûr de vouloir accepter le devis ? Cette action est irréversible.",
+      "acceptQuoteLabel": "Accepter le devis",
+      "quoteIdLabel": "ID du devis :",
+      "customerHeading": "Client",
+      "emailLabel": "E-mail",
+      "phoneLabel": "Téléphone",
+      "spendLimitLabel": "Plafond de dépenses",
+      "companyHeading": "Entreprise",
+      "nameLabel": "Nom"
+    },
+    "bcOrderDetailPage": {
+      "errorMessage": "Nous n'avons pas pu charger cette commande. Veuillez réessayer."
+    },
+    "bcOrdersPage": {
+      "heading": "Commandes BC"
+    }
+  },
+  "Cart": {
+    "addNoteButton": {
+      "addNoteLabel": "Ajouter une note",
+      "noteLabel": "Note :"
+    },
+    "appliedPromotions": {
+      "label": "Promotions appliquées :"
+    },
+    "approvalStatusBanner": {
+      "pendingMessage": "Ce panier est verrouillé en attente d'approbation.",
+      "rejectedMessage": "Ce panier a été rejeté. Vous pouvez redemander une approbation depuis la <link>page de paiement</link>.",
+      "approvedMessage": "Ce panier a été approuvé et peut désormais être finalisé."
+    },
+    "cartToCsvButton": {
+      "exportLabel": "Exporter le panier (.csv)"
+    },
+    "emptyCartMessage": {
+      "heading": "Panier",
+      "message": "Votre panier est vide. Changeons cela, utilisez le lien ci-dessous pour commencer à parcourir nos produits.",
+      "exploreProductsLabel": "Découvrir les produits"
+    },
+    "itemFull": {
+      "brandLabel": "MARQUE"
+    },
+    "itemPreview": {
+      "noteLabel": "Note :"
+    },
+    "cartDrawer": {
+      "cartLabel": "Panier",
+      "itemsInCartTitle": "Vous avez {count} articles dans votre panier",
+      "emptyCartTitle": "Votre panier est vide",
+      "subtotalLabel": "Sous-total",
+      "viewCartLabel": "Voir le panier",
+      "spendingLimitExceededLabel": "Plafond de dépenses dépassé",
+      "secureCheckoutLabel": "Paiement sécurisé",
+      "loginToCheckoutLabel": "Se connecter pour payer",
+      "spendingLimitMessage": "Cette commande dépasse votre plafond de dépenses. Veuillez contacter votre responsable pour obtenir une approbation."
+    },
+    "cartTotals": {
+      "subtotalLabel": "Sous-total (hors livraison et taxes)",
+      "discountLabel": "Réduction",
+      "shippingLabel": "Livraison",
+      "taxesLabel": "Taxes",
+      "giftCardLabel": "Carte cadeau",
+      "totalLabel": "Total"
+    },
+    "signInPrompt": {
+      "bannerAlt": "Arrière-plan de la bannière de connexion",
+      "heading": "Connectez-vous pour un<br></br>paiement plus rapide.",
+      "registerLabel": "S'inscrire",
+      "loginLabel": "Se connecter"
+    },
+    "template": {
+      "itemsInCartHeading": "Vous avez {count} articles dans votre panier"
+    },
+    "items": {
+      "totalItemsLabel": "Total : {count} articles"
+    },
+    "summary": {
+      "spendingLimitMessage": "Cette commande dépasse votre plafond de dépenses.<br></br>Veuillez contacter votre responsable pour obtenir une approbation.",
+      "spendingLimitExceededLabel": "Plafond de dépenses dépassé",
+      "checkoutLabel": "Paiement",
+      "loginToCheckoutLabel": "Se connecter pour payer",
+      "requestQuoteLabel": "Demander un devis",
+      "emptyCartLabel": "Panier vide"
+    },
+    "notFound": {
+      "cartMessage": "Le panier que vous avez essayé de consulter n'existe pas. Videz vos cookies et réessayez."
+    }
+  },
+  "Products": {
+    "facts": {
+      "inStockMessage": "Peut être expédié immédiatement ({count} en stock)",
+      "limitedStockMessage": "Quantité limitée disponible ({count} en stock)",
+      "midLabel": "MID : {code}"
+    },
+    "preview": {
+      "brandLabel": "MARQUE",
+      "exclVatLabel": "HT",
+      "leftLabel": "{count} restant(s)"
+    },
+    "price": {
+      "fromLabel": "À partir de {price}",
+      "exclVatLabel": "HT"
+    },
+    "mobileActions": {
+      "selectOptionsLabel": "Sélectionner des options",
+      "selectVariantLabel": "Sélectionner une variante",
+      "outOfStockLabel": "Rupture de stock",
+      "addToCartLabel": "Ajouter au panier"
+    },
+    "optionSelect": {
+      "selectLabel": "Sélectionner {title}"
+    },
+    "tabs": {
+      "descriptionLabel": "Description",
+      "specificationsLabel": "Spécifications",
+      "weightLabel": "Poids",
+      "weightValue": "{weight} grammes",
+      "dimensionsLabel": "Dimensions (HxLxP)",
+      "dimensionsValue": "{height}mm x {width}mm x {length}mm"
+    },
+    "variantsTable": {
+      "skuHeader": "Référence (SKU)",
+      "priceHeader": "Prix",
+      "quantityHeader": "Quantité",
+      "chooseVariantLabel": "Choisissez une ou plusieurs variantes du produit ci-dessus",
+      "addToCartLabel": "Ajouter au panier"
+    },
+    "relatedProducts": {
+      "heading": "D'autres clients ont également consulté"
+    }
+  },
+  "Catalog": {
+    "breadcrumb": {
+      "productsLabel": "Produits",
+      "allProductsLabel": "Tous les produits"
+    },
+    "categoryList": {
+      "heading": "Catégories",
+      "clearLabel": "Effacer"
+    },
+    "searchInResults": {
+      "searchInListPlaceholder": "Rechercher dans {listName}",
+      "searchProductsPlaceholder": "Rechercher dans les produits",
+      "searchDisabledTooltip": "Installez un fournisseur de recherche pour activer la recherche de produits"
+    },
+    "sortProducts": {
+      "sortByLabel": "Trier par :",
+      "sortByTooltip": "Trier par",
+      "latestArrivalsLabel": "Dernières arrivées",
+      "priceLowToHighLabel": "Prix : croissant",
+      "priceHighToLowLabel": "Prix : décroissant"
+    },
+    "noProductsFoundMessage": "Aucun produit trouvé pour cette catégorie.",
+    "categoryTemplate": {
+      "backToAllProductsLabel": "Retour à tous les produits"
+    }
+  },
+  "Home": {
+    "productRail": {
+      "viewAllLabel": "Tout voir"
+    },
+    "hero": {
+      "bannerAlt": "Arrière-plan de la bannière principale",
+      "eyebrow": "Voyagez léger",
+      "heading": "Meilleures ventes portables",
+      "subheading": "Découvrez notre plus large sélection d'appareils électroniques",
+      "githubRepoLabel": "Dépôt Github"
+    }
+  },
+  "Shipping": {
+    "freeShippingNudge": {
+      "unlockedLabel": "Livraison gratuite débloquée !",
+      "unlockPrompt": "Débloquer la livraison gratuite",
+      "remainingMessage": "Plus que <amount></amount> pour en profiter",
+      "viewCartLabel": "Voir le panier",
+      "viewProductsLabel": "Voir les produits"
+    }
+  },
+  "Quotes": {
+    "requestQuoteConfirmation": {
+      "title": "Envoyer une demande de devis",
+      "description": "Vous êtes sur le point de demander un devis pour ce panier. Si vous confirmez, le panier sera converti en devis.",
+      "cancelLabel": "Annuler",
+      "submitLabel": "Envoyer",
+      "errorToast": "Échec de la création de la demande de devis"
+    },
+    "requestQuotePrompt": {
+      "title": "Demander un devis",
+      "loginLabel": "Se connecter",
+      "orLabel": "ou",
+      "createAccountLabel": "créer un compte",
+      "addProductsStep": "Ajoutez des produits à votre panier",
+      "openCartStep": "Ouvrez le panier et cliquez sur « Demander un devis »",
+      "followUpMessage": "Nous vous répondrons ensuite par e-mail dans les meilleurs délais"
+    }
+  },
+  "Order": {
+    "billingDetails": {
+      "heading": "Adresse de facturation"
+    },
+    "help": {
+      "heading": "Besoin d'aide ?",
+      "contactLabel": "Contact",
+      "returnsExchangesLabel": "Retours et échanges"
+    },
+    "item": {
+      "originalLabel": "Original : "
+    },
+    "orderDetails": {
+      "heading": "Détails",
+      "orderNumberLabel": "Numéro de commande",
+      "orderDateLabel": "Date de commande",
+      "confirmationSentMessage": "Nous avons envoyé les détails de la confirmation de commande à <email></email>."
+    },
+    "summary": {
+      "heading": "Récapitulatif de la commande",
+      "subtotalLabel": "Sous-total",
+      "discountLabel": "Réduction",
+      "shippingLabel": "Livraison",
+      "taxesLabel": "Taxes",
+      "totalLabel": "Total"
+    },
+    "paymentDetails": {
+      "heading": "Paiement",
+      "paymentMethodLabel": "Moyen de paiement",
+      "paymentDetailsLabel": "Détails du paiement",
+      "maskedCardNumber": "**** **** **** {last4}",
+      "paidAtMessage": "{amount} payé le {date}"
+    },
+    "shippingDetails": {
+      "heading": "Adresse de livraison"
+    },
+    "completedTemplate": {
+      "thankYouLabel": "Merci !",
+      "orderPlacedMessage": "Votre commande a été passée avec succès.",
+      "summaryHeading": "Récapitulatif"
+    },
+    "detailsTemplate": {
+      "backLabel": "Retour"
+    }
+  },
+  "BcTest": {
+    "heading": "Opérations de l'API Business Central",
+    "errorLabel": "Erreur",
+    "unknownErrorMessage": "Erreur inconnue"
+  },
+  "MetaDescription": {
+    "storeSuffix": "| Nimbus Nordic"
+  }
+}

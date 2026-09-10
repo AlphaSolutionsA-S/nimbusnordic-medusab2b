@@ -6,14 +6,38 @@ Harnesses: github-copilot-vscode, codex
 
 ## Installed Skills (Codex paths)
 
-- jira-workflow (instance: dev): .agents/skills/jira-workflow/SKILL.md
-- commit-messages: .agents/skills/commit-messages/SKILL.md
-- bug-reporting: .agents/skills/bug-reporting/SKILL.md
-- feature-requests: .agents/skills/feature-requests/SKILL.md
-- secure-coding-owasp: .agents/skills/secure-coding-owasp/SKILL.md
-- code-review: .agents/skills/code-review/SKILL.md
-- definition-of-done: .agents/skills/definition-of-done/SKILL.md
-- memory-discipline: .agents/skills/memory-discipline/SKILL.md
+### Workflow & process
+
+- jira-workflow (instance: dev): .agents/skills/jira-workflow/SKILL.md — issue lookup, assignee/status hygiene, commit-message formatting, technical issue documentation
+- commit-messages: .agents/skills/commit-messages/SKILL.md — Nimbus Nordic commit-message convention
+- bug-reporting: .agents/skills/bug-reporting/SKILL.md — mirrors tracker bugs into issues/<caseid>/BUG.md
+- feature-requests: .agents/skills/feature-requests/SKILL.md — mirrors tracker feature requests into issues/<caseid>/FEATURE.md
+- definition-of-done: .agents/skills/definition-of-done/SKILL.md — Alpha Definition of Done checks when closing/completing work
+- code-review: .agents/skills/code-review/SKILL.md — Alpha code-review checklist for PRs/diffs/patches
+- secure-coding-owasp: .agents/skills/secure-coding-owasp/SKILL.md — OWASP Top 10 awareness on every change
+- memory-discipline: .agents/skills/memory-discipline/SKILL.md — keeps project-specific facts in the repo, not private agent memory
+- creating-internal-agents: .agents/skills/creating-internal-agents/SKILL.md — building internal, admin-facing AI agents in Medusa (data models, module service, runtime, streaming routes, admin UI chat)
+
+### Medusa development
+
+- building-with-medusa: .agents/skills/building-with-medusa/SKILL.md — REQUIRED for any Medusa backend work (custom modules, API routes, workflows, data models, module links)
+- building-admin-dashboard-customizations: .agents/skills/building-admin-dashboard-customizations/SKILL.md — REQUIRED for Medusa Admin dashboard UI work (widgets, custom pages, forms, tables, navigation)
+- building-storefronts: .agents/skills/building-storefronts/SKILL.md — REQUIRED for Medusa storefront features (custom API routes, SDK integration, React Query, data fetching)
+- storefront-best-practices: .agents/skills/storefront-best-practices/SKILL.md — ecommerce storefront UI/UX, checkout, cart, payment flows, SEO, mobile
+- db-generate: .agents/skills/db-generate/SKILL.md — generate database migrations for a Medusa module
+- db-migrate: .agents/skills/db-migrate/SKILL.md — run database migrations in Medusa
+- new-user: .agents/skills/new-user/SKILL.md — create an admin user in Medusa
+
+### Medusa Cloud (mcloud)
+
+- using-medusa-cloud: .agents/skills/using-medusa-cloud/SKILL.md — top-level entry point for Medusa Cloud CLI operations (deploy, debug, env vars, CI/CD)
+- mcloud-auth: .agents/skills/mcloud-auth/SKILL.md — login, logout, whoami, use, version, signup
+- mcloud-organizations: .agents/skills/mcloud-organizations/SKILL.md — list/get Cloud organizations
+- mcloud-projects: .agents/skills/mcloud-projects/SKILL.md — list/get/delete Cloud projects
+- mcloud-environments: .agents/skills/mcloud-environments/SKILL.md — list/get/create/delete/redeploy Cloud environments
+- mcloud-variables: .agents/skills/mcloud-variables/SKILL.md — list/get environment variables (never pass --reveal unless explicitly asked)
+- mcloud-deployments: .agents/skills/mcloud-deployments/SKILL.md — list deployments, deployment details, build logs
+- mcloud-logs: .agents/skills/mcloud-logs/SKILL.md — fetch/stream runtime logs for Cloud environments
 
 ## Inlined Instruction Rules
 

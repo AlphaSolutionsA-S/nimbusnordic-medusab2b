@@ -16,45 +16,74 @@ import {
   StoreUpdateEmployee,
 } from "@/types"
 import { HttpTypes } from "@medusajs/types"
-import { CurrencyInput, Prompt, Text, clx, toast } from "@medusajs/ui"
+import {
+  Checkbox,
+  CurrencyInput,
+  Label,
+  Prompt,
+  Text,
+  clx,
+  toast,
+} from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 const RemoveEmployeePrompt = ({ employee }: { employee: QueryEmployee }) => {
+  const t = useTranslations("Account.employeeCard")
   const [isRemoving, setIsRemoving] = useState(false)
+  const [deleteCustomerAccount, setDeleteCustomerAccount] = useState(false)
 
   const handleRemove = async () => {
     setIsRemoving(true)
-    await deleteEmployee(employee.company_id, employee.id).catch(() => {
-      toast.error("Error deleting employee")
-    })
-    setIsRemoving(false)
-
-    toast.success("Employee deleted")
+    try {
+      await deleteEmployee(
+        employee.company_id,
+        employee.id,
+        deleteCustomerAccount
+      )
+      toast.success(t("employeeDeletedToast"))
+    } catch {
+      toast.error(t("employeeDeleteErrorToast"))
+    } finally {
+      setIsRemoving(false)
+    }
   }
 
   return (
     <Prompt variant="danger">
       <Prompt.Trigger asChild>
-        <Button variant="transparent">Remove</Button>
+        <Button variant="transparent">{t("removeLabel")}</Button>
       </Prompt.Trigger>
       <Prompt.Content>
         <Prompt.Header>
-          <Prompt.Title>Remove Employee</Prompt.Title>
+          <Prompt.Title>{t("removeEmployeeHeading")}</Prompt.Title>
           <Prompt.Description>
-            Are you sure you want to remove{" "}
-            <strong>{employee.customer.email}</strong> from your team? They will
-            no longer be able to purchase on behalf of your company.
+            {t.rich("removeConfirmMessage", {
+              email: () => <strong>{employee.customer.email}</strong>,
+            })}
           </Prompt.Description>
         </Prompt.Header>
+        <div className="flex items-center gap-3 px-6 pb-6">
+          <Checkbox
+            checked={deleteCustomerAccount}
+            onCheckedChange={(checked) =>
+              setDeleteCustomerAccount(Boolean(checked))
+            }
+          />
+          <Label className="txt-compact-small font-medium">
+            {t("deleteCustomerAccountLabel")}
+          </Label>
+        </div>
         <Prompt.Footer>
           <Prompt.Cancel className="h-10 rounded-full shadow-borders-base">
-            Cancel
+            {t("cancelLabel")}
           </Prompt.Cancel>
           <Prompt.Action
             className="h-10 px-4 rounded-full shadow-none"
             onClick={handleRemove}
+            disabled={isRemoving}
           >
-            Remove
+            {t("removeLabel")}
           </Prompt.Action>
         </Prompt.Footer>
       </Prompt.Content>
@@ -73,6 +102,7 @@ const Employee = ({
   orders: HttpTypes.StoreOrder[]
   customer: B2BCustomer | null
 }) => {
+  const t = useTranslations("Account.employeeCard")
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [employeeData, setEmployeeData] = useState({
@@ -92,13 +122,13 @@ const Employee = ({
 
     setIsSaving(true)
     await updateEmployee(updateData as StoreUpdateEmployee).catch(() => {
-      toast.error("Error updating employee")
+      toast.error(t("employeeUpdateErrorToast"))
     })
 
     setIsSaving(false)
     setIsEditing(false)
 
-    toast.success("Employee updated")
+    toast.success(t("employeeUpdatedToast"))
   }
 
   const spent = getOrderTotalInSpendWindow(orders, getSpendWindow(company)) || 0
@@ -110,11 +140,11 @@ const Employee = ({
         <div className="flex flex-col">
           <Text className=" text-neutral-950 font-medium">
             {employee.customer.first_name} {employee.customer.last_name}{" "}
-            {isCurrentUser && "(You)"}{" "}
+            {isCurrentUser && t("youSuffixLabel")}{" "}
             {employee.is_admin && (
               <>
                 {" • "}
-                <span className="text-blue-500">Admin</span>
+                <span className="text-blue-500">{t("adminBadgeLabel")}</span>
               </>
             )}
           </Text>
@@ -128,11 +158,16 @@ const Employee = ({
               {" • "}
             </Text>
             <Text className=" text-neutral-500">
-              {amountSpent} /{" "}
-              {employee.spending_limit > 0
-                ? formatAmount(employee.spending_limit, company.currency_code!)
-                : "No limit"}{" "}
-              spent
+              {t("amountSpentMessage", {
+                amountSpent,
+                limit:
+                  employee.spending_limit > 0
+                    ? formatAmount(
+                        employee.spending_limit,
+                        company.currency_code!
+                      )
+                    : t("noLimitLabel"),
+              })}
             </Text>
           </div>
         </div>
@@ -144,14 +179,14 @@ const Employee = ({
                 onClick={() => setIsEditing(false)}
                 disabled={isSaving}
               >
-                Cancel
+                {t("cancelLabel")}
               </Button>
               <Button
                 variant="primary"
                 onClick={handleSubmit}
                 isLoading={isSaving}
               >
-                Save
+                {t("saveLabel")}
               </Button>
             </>
           ) : (
@@ -161,7 +196,7 @@ const Employee = ({
                 variant="secondary"
                 onClick={() => setIsEditing((prev) => !prev)}
               >
-                Edit
+                {t("editLabel")}
               </Button>
             </>
           )}
@@ -183,7 +218,9 @@ const Employee = ({
         }}
       >
         <div className="flex flex-col gap-y-2">
-          <Text className=" text-neutral-950 font-medium">Spending Limit</Text>
+          <Text className=" text-neutral-950 font-medium">
+            {t("spendingLimitLabel")}
+          </Text>
           <CurrencyInput
             symbol={currencySymbolMap[company.currency_code!]}
             code={company.currency_code!}
@@ -199,7 +236,9 @@ const Employee = ({
           />
         </div>
         <div className="flex flex-col gap-y-2">
-          <Text className=" text-neutral-950 font-medium">Permissions</Text>
+          <Text className=" text-neutral-950 font-medium">
+            {t("permissionsLabel")}
+          </Text>
           <NativeSelect
             className="bg-white"
             name="permissions"
@@ -212,8 +251,8 @@ const Employee = ({
               })
             }}
           >
-            <option value="true">Admin</option>
-            <option value="false">Employee</option>
+            <option value="true">{t("adminOptionLabel")}</option>
+            <option value="false">{t("employeeOptionLabel")}</option>
           </NativeSelect>
         </div>
       </form>

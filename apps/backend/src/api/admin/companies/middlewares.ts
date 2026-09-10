@@ -10,6 +10,7 @@ import {
 } from "./query-config";
 import {
   AdminCreateCompany,
+  AdminDeleteEmployee,
   AdminCreateEmployee,
   AdminGetApprovalSettingsParams,
   AdminGetCompanyParams,
@@ -106,6 +107,11 @@ export const adminCompaniesMiddlewares: MiddlewareRoute[] = [
         adminEmployeeQueryConfig.retrieve
       ),
     ],
+  },
+  {
+    method: ["DELETE"],
+    matcher: "/admin/companies/:id/employees/:employee_id",
+    middlewares: [validateAndTransformBody(AdminDeleteEmployee)],
   },
   /* Approval Settings Middlewares */
   {

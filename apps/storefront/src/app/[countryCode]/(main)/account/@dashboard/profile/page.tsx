@@ -4,6 +4,7 @@ import ProfileCard from "@/modules/account/components/profile-card"
 import SecurityCard from "@/modules/account/components/security-card"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 
 export const metadata: Metadata = {
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function Profile() {
+  const t = await getTranslations("Account.profilePage")
   const customer = await retrieveCustomer()
   const regions = await listRegions()
 
@@ -23,13 +25,13 @@ export default async function Profile() {
     <div className="w-full" data-testid="profile-page-wrapper">
       <div className="mb-8 flex flex-col gap-y-4">
         <Heading level="h2" className="text-lg text-neutral-950">
-          Details
+          {t("detailsHeading")}
         </Heading>
         <ProfileCard customer={customer} />
       </div>
       <div className="mb-8 flex flex-col gap-y-4">
         <Heading level="h2" className="text-lg text-neutral-950">
-          Security
+          {t("securityHeading")}
         </Heading>
         <SecurityCard customer={customer} />
       </div>

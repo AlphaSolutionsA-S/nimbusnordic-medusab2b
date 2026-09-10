@@ -6,9 +6,11 @@ import Radio from "@/modules/common/components/radio"
 import { B2BCart } from "@/types"
 import { RadioGroup } from "@headlessui/react"
 import { clx } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useState } from "react"
 
 const CompanyForm = ({ cart }: { cart: B2BCart }) => {
+  const t = useTranslations("Checkout.companyForm")
   const [selectedOption, setSelectedOption] = useState("company")
 
   const { isPendingAdminApproval, isPendingSalesManagerApproval } =
@@ -42,7 +44,9 @@ const CompanyForm = ({ cart }: { cart: B2BCart }) => {
               data-testid="company-form-company-radio"
               disabled={isPendingApproval}
             />
-            <span>Order on behalf of {cart?.company.name}</span>
+            <span>
+              {t("orderOnBehalfOf", { companyName: cart?.company.name })}
+            </span>
           </div>
         </RadioGroup.Option>
         <Divider />
@@ -61,7 +65,7 @@ const CompanyForm = ({ cart }: { cart: B2BCart }) => {
               data-testid="company-form-custom-radio"
               disabled={isPendingApproval}
             />
-            <span>Custom checkout</span>
+            <span>{t("customCheckoutLabel")}</span>
           </div>
         </RadioGroup.Option>
       </RadioGroup>

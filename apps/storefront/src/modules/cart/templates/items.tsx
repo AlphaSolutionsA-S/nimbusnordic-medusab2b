@@ -4,6 +4,7 @@ import ItemFull from "@/modules/cart/components/item-full"
 import { B2BCart } from "@/types/global"
 import { StoreCartLineItem } from "@medusajs/types"
 import { Container, Text } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useMemo } from "react"
 
 type ItemsTemplateProps = {
@@ -17,6 +18,7 @@ const ItemsTemplate = ({
   showBorders = true,
   showTotal = true,
 }: ItemsTemplateProps) => {
+  const t = useTranslations("Cart.items")
   const items = cart?.items
   const totalQuantity = useMemo(
     () => cart?.items?.reduce((acc, item) => acc + item.quantity, 0),
@@ -52,7 +54,7 @@ const ItemsTemplate = ({
       {showTotal && (
         <Container>
           <div className="flex items-start justify-between h-full self-stretch">
-            <Text>Total: {totalQuantity} items</Text>
+            <Text>{t("totalItemsLabel", { count: totalQuantity ?? 0 })}</Text>
             <Text>
               {convertToLocale({
                 amount: cart?.item_total,

@@ -4,6 +4,7 @@ import CalendarIcon from "@/modules/common/icons/calendar"
 import DocumentIcon from "@/modules/common/icons/document"
 import { HttpTypes } from "@medusajs/types"
 import { Button, clx, Container } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import { useMemo } from "react"
 
@@ -12,6 +13,7 @@ type OrderCardProps = {
 }
 
 const OrderCard = ({ order }: OrderCardProps) => {
+  const t = useTranslations("Account.orderCard")
   const createdAt = new Date(order.created_at)
   const numberOfLines = useMemo(() => {
     return (
@@ -90,9 +92,11 @@ const OrderCard = ({ order }: OrderCardProps) => {
               })}
             </span>
             {"·"}
-            <span className="px-2">{`${numberOfLines} ${
-              numberOfLines > 1 ? "items" : "item"
-            }`}</span>
+            <span className="px-2">
+              {numberOfLines > 1
+                ? t("itemsCount", { count: numberOfLines })
+                : t("itemCount", { count: numberOfLines })}
+            </span>
           </div>
 
           <div className="flex items-center gap-x-2 pl-4">
@@ -109,7 +113,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
                 variant="secondary"
                 className="rounded-full text-xs"
               >
-                Details
+                {t("detailsLabel")}
               </Button>
             </LocalizedClientLink>
           </div>

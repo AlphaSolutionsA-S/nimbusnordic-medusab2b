@@ -57,3 +57,10 @@ You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbu
 - **Outcome:** Implementation plan is ready; implementation is the next stage.
 - **Handover to:** implementor agent
 - **Handover prompt:** You are the implementor for `NIMBUS-136` in `D:\projects\Nimbus\nimbusnordic-medusab2b`. Read `issues\NIMBUS-136\manifest.md` and implement all four tasks in dependency order (01 → 02 → 03 → 04). Task files are in `issues\NIMBUS-136\`. Work on branch `feature/NIMBUS-136` from `develop`. Do not implement BC-backed order detail pages — those are NIMBUS-137. After each task, run `pnpm build` (from repo root) to verify no TypeScript errors before proceeding to the next task.
+
+## 2026-08-21 - In review
+
+- **Updated by:** developer
+- **Outcome:** Story implementation is complete and the issue is now in review.
+- **Handover to:** reviewer
+- **Handover prompt:** Review NIMBUS-136 against the approved scope and acceptance criteria, with focus on company-scoped BC order listing, filters, pagination, and unchanged `/account/orders` behavior.

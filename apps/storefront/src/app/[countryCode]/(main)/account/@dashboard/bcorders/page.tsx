@@ -4,6 +4,7 @@ import BcOrderOverview from "@/modules/account/components/bc-order-overview"
 import type { BCOrderListResponse } from "@/types/bc-order"
 import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
 export const metadata: Metadata = {
   title: "BC Orders",
@@ -23,6 +24,7 @@ export default async function BCOrders({
     search?: string
   }>
 }) {
+  const t = await getTranslations("Account.bcOrdersPage")
   const params = await searchParams
 
   const currentPage = Math.max(1, parseInt(params.page ?? "1") || 1)
@@ -51,7 +53,7 @@ export default async function BCOrders({
       data-testid="bc-orders-page-wrapper"
     >
       <div className="mb-4">
-        <Heading>BC Orders</Heading>
+        <Heading>{t("heading")}</Heading>
       </div>
       <BcOrderFilters
         currentStatus={status}

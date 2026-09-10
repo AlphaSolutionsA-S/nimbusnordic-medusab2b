@@ -1,27 +1,29 @@
 import { HttpTypes } from "@medusajs/types"
 import { Heading, Text } from "@medusajs/ui"
+import { getTranslations } from "next-intl/server"
 
 type OrderDetailsProps = {
   order: HttpTypes.StoreOrder
 }
 
-const OrderDetails = ({ order }: OrderDetailsProps) => {
+const OrderDetails = async ({ order }: OrderDetailsProps) => {
+  const t = await getTranslations("Order.orderDetails")
   const createdAt = new Date(order.created_at)
 
   return (
     <>
       <Heading level="h3" className="mb-2">
-        Details
+        {t("heading")}
       </Heading>
 
       <div className="text-sm text-ui-fg-subtle overflow-auto">
         <div className="flex justify-between">
-          <Text>Order Number</Text>
+          <Text>{t("orderNumberLabel")}</Text>
           <Text>#{order.display_id}</Text>
         </div>
 
         <div className="flex justify-between mb-2">
-          <Text>Order Date</Text>
+          <Text>{t("orderDateLabel")}</Text>
           <Text>
             {" "}
             {createdAt.getDate()}-{createdAt.getMonth()}-
@@ -30,8 +32,11 @@ const OrderDetails = ({ order }: OrderDetailsProps) => {
         </div>
 
         <Text>
-          We have sent the order confirmation details to{" "}
-          <span className="font-semibold">{order.email}</span>.
+          {t.rich("confirmationSentMessage", {
+            email: () => (
+              <span className="font-semibold">{order.email}</span>
+            ),
+          })}
         </Text>
       </div>
     </>

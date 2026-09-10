@@ -1,4 +1,10 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
+import { MedusaError } from "@medusajs/framework/utils";
+
+import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
+import type { IBusinessCentralModuleService } from "../../../src/modules/business-central/types";
+import { COMPANY_MODULE } from "../../../src/modules/company";
+import type { ICompanyModuleService } from "../../../src/types";
 import {
   adminHeaders,
   createAdminUser,
@@ -23,7 +29,7 @@ medusaIntegrationTestRunner({
     JWT_SECRET: "supersecret",
   },
   testSuite: ({ api, getContainer }) => {
-    let storeHeaders, cart, product, salesChannel, region, customerToken;
+    let storeHeaders, cart, product, salesChannel, region, customerToken, customer;
 
     beforeEach(async () => {
       const container = getContainer();
@@ -32,6 +38,7 @@ medusaIntegrationTestRunner({
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
       customerToken = res.token;
+      customer = res.customer;
       console.log("vic logs customerToken", customerToken);
       storeHeaders.headers["Authorization"] = `Bearer ${customerToken}`;
       console.log("vic logs storeHeaders", storeHeaders);
@@ -67,6 +74,79 @@ medusaIntegrationTestRunner({
         },
       });
     });
+
+    async function createLinkedCompany(): Promise<string> {
+      const response = await api.post(
+        "/store/companies",
+        {
+          name: "Test Company",
+          email: "company@example.com",
+          phone: "12345678",
+          address: "Original address",
+          city: "Original city",
+          state: "Original state",
+          zip: "1000",
+          country: "DK",
+          logo_url: "https://example.com/logo.png",
+          currency_code: "DKK",
+          spending_limit_reset_frequency: "monthly",
+        },
+        storeHeaders
+      );
+      const companyId = response.data.companies[0].id as string;
+      const companyService = getContainer().resolve<ICompanyModuleService>(
+        COMPANY_MODULE
+      );
+
+      await companyService.updateCompanies({
+        id: companyId,
+        business_central_customer_number: "00011551",
+      });
+      await api.post(
+        `/store/companies/${companyId}/employees`,
+        {
+          customer_id: customer.id,
+          spending_limit: 0,
+          is_admin: true,
+        },
+        storeHeaders
+      );
+
+      return companyId;
+    }
+
+    async function setSyncedAt(
+      companyId: string,
+      businessCentralSyncedAt: Date | null
+    ): Promise<void> {
+      const companyService = getContainer().resolve<ICompanyModuleService>(
+        COMPANY_MODULE
+      );
+
+      await companyService.updateCompanies({
+        id: companyId,
+        business_central_synced_at: businessCentralSyncedAt,
+      });
+    }
+
+    function businessCentralCustomer(displayName: string) {
+      return {
+        number: "00011551",
+        displayName,
+        email: "updated@example.com",
+        phoneNumber: "87654321",
+        addressLine1: "Updated Street 1",
+        addressLine2: "Building 2",
+        city: "Updated city",
+        state: "Updated state",
+        postalCode: "2000",
+        country: "SE",
+        blocked: "Invoice" as const,
+        creditLimit: 12345.67,
+        taxRegistrationNumber: "SE12345678",
+        currencyCode: "SEK",
+      };
+    }
 
     describe("POST /store/companies", () => {
       it("successfully creates a company", async () => {
@@ -153,6 +233,127 @@ medusaIntegrationTestRunner({
         expect(response.data).toMatchObject({
           type: "not_found",
         });
+      });
+    });
+
+    describe("GET /store/companies/:id - Business Central freshness", () => {
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      it("does not call Business Central for a fresh company", async () => {
+        const companyId = await createLinkedCompany();
+        await setSyncedAt(companyId, new Date());
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        const getCustomerSpy = jest.spyOn(bcService, "getCustomer");
+
+        const response = await api.get(
+          `/store/companies/${companyId}`,
+          storeHeaders
+        );
+
+        expect(response.status).toBe(200);
+        expect(getCustomerSpy).not.toHaveBeenCalled();
+        expect(response.data.company).toMatchObject({
+          id: companyId,
+          name: "Test Company",
+          email: "company@example.com",
+        });
+      });
+
+      it("synchronizes a company with no timestamp", async () => {
+        const companyId = await createLinkedCompany();
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        const getCustomerSpy = jest
+          .spyOn(bcService, "getCustomer")
+          .mockResolvedValueOnce(businessCentralCustomer("Updated Company"));
+
+        const response = await api.get(
+          `/store/companies/${companyId}`,
+          storeHeaders
+        );
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const [company] = await companyService.listCompanies({ id: companyId });
+
+        expect(response.status).toBe(200);
+        expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+        expect(response.data.company).toMatchObject({
+          name: "Updated Company",
+          email: "updated@example.com",
+        });
+        expect(company.business_central_synced_at).not.toBeNull();
+      });
+
+      it("synchronizes a stale company and advances its timestamp", async () => {
+        const companyId = await createLinkedCompany();
+        const staleAt = new Date(Date.now() - 11 * 60 * 1000);
+        await setSyncedAt(companyId, staleAt);
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        const getCustomerSpy = jest
+          .spyOn(bcService, "getCustomer")
+          .mockResolvedValueOnce(businessCentralCustomer("Stale Company Updated"));
+
+        const response = await api.get(
+          `/store/companies/${companyId}`,
+          storeHeaders
+        );
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const [company] = await companyService.listCompanies({ id: companyId });
+
+        expect(response.status).toBe(200);
+        expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+        expect(response.data.company.name).toBe("Stale Company Updated");
+        expect(company.business_central_synced_at?.getTime()).toBeGreaterThan(
+          staleAt.getTime()
+        );
+      });
+
+      it("returns last-known data when a stale sync fails", async () => {
+        const companyId = await createLinkedCompany();
+        const staleAt = new Date(Date.now() - 11 * 60 * 1000);
+        await setSyncedAt(companyId, staleAt);
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        const getCustomerSpy = jest
+          .spyOn(bcService, "getCustomer")
+          .mockRejectedValueOnce(
+            new MedusaError(
+              MedusaError.Types.UNEXPECTED_STATE,
+              "expected BC failure"
+            )
+          );
+
+        const response = await api.get(
+          `/store/companies/${companyId}`,
+          storeHeaders
+        );
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const [company] = await companyService.listCompanies({ id: companyId });
+
+        expect(response.status).toBe(200);
+        expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+        expect(response.data.company).toMatchObject({
+          name: "Test Company",
+          email: "company@example.com",
+        });
+        expect(company.business_central_synced_at).toEqual(staleAt);
       });
     });
 
@@ -275,22 +476,21 @@ medusaIntegrationTestRunner({
     });
 
     describe("Business Central customer number", () => {
-      it("TC-1: creates company with numeric business_central_customer_number", async () => {
-        const response = await api.post(
-          "/store/companies",
-          {
-            name: "BC Company",
-            email: "bc@company.com",
-            currency_code: "USD",
-            business_central_customer_number: "123456",
-          },
-          storeHeaders
-        );
+      it("TC-1: rejects business_central_customer_number on create", async () => {
+        const { response } = await api
+          .post(
+            "/store/companies",
+            {
+              name: "BC Company",
+              email: "bc@company.com",
+              currency_code: "USD",
+              business_central_customer_number: "123456",
+            },
+            storeHeaders
+          )
+          .catch((e) => e);
 
-        expect(response.status).toEqual(200);
-        expect(response.data.companies[0]).toMatchObject({
-          business_central_customer_number: "123456",
-        });
+        expect(response.status).toEqual(400);
       });
 
       it("TC-2: rejects non-numeric business_central_customer_number on create", async () => {
@@ -310,7 +510,7 @@ medusaIntegrationTestRunner({
         expect(response.status).toEqual(400);
       });
 
-      it("TC-3: updates company with numeric business_central_customer_number", async () => {
+      it("TC-3: rejects business_central_customer_number on update", async () => {
         const createResponse = await api.post(
           "/store/companies",
           {
@@ -322,16 +522,15 @@ medusaIntegrationTestRunner({
         );
         const company = createResponse.data.companies[0];
 
-        const updateResponse = await api.post(
-          `/store/companies/${company.id}`,
-          { business_central_customer_number: "98765" },
-          storeHeaders
-        );
+        const { response } = await api
+          .post(
+            `/store/companies/${company.id}`,
+            { business_central_customer_number: "98765" },
+            storeHeaders
+          )
+          .catch((e) => e);
 
-        expect(updateResponse.status).toEqual(200);
-        expect(updateResponse.data.company).toMatchObject({
-          business_central_customer_number: "98765",
-        });
+        expect(response.status).toEqual(400);
       });
 
       it("TC-4: rejects non-numeric business_central_customer_number on update", async () => {
@@ -341,7 +540,6 @@ medusaIntegrationTestRunner({
             name: "BC Company",
             email: "bc@company.com",
             currency_code: "USD",
-            business_central_customer_number: "11111",
           },
           storeHeaders
         );
@@ -362,7 +560,7 @@ medusaIntegrationTestRunner({
           storeHeaders
         );
         expect(getResponse.data.company.business_central_customer_number).toEqual(
-          "11111"
+          null
         );
       });
 

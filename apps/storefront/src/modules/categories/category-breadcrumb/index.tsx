@@ -1,5 +1,6 @@
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
+import { getTranslations } from "next-intl/server"
 import type { JSX } from "react"
 
 const CategoryBreadcrumbItem = ({
@@ -21,13 +22,15 @@ const CategoryBreadcrumbItem = ({
   )
 }
 
-const CategoryBreadcrumb = ({
+const CategoryBreadcrumb = async ({
   categories,
   category,
 }: {
   categories: HttpTypes.StoreProductCategory[]
   category: HttpTypes.StoreProductCategory
 }) => {
+  const t = await getTranslations("Catalog.breadcrumb")
+
   const generateBreadcrumbs = (
     category: HttpTypes.StoreProductCategory
   ): JSX.Element[] => {
@@ -76,7 +79,7 @@ const CategoryBreadcrumb = ({
     )
 
     breadcrumbs.unshift(
-      <CategoryBreadcrumbItem title="Products" key={`base`} />
+      <CategoryBreadcrumbItem title={t("productsLabel")} key={`base`} />
     )
 
     return breadcrumbs
