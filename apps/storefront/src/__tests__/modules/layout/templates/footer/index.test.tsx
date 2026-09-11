@@ -5,20 +5,13 @@ jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ countryCode: "us" })),
 }))
 
-jest.mock("@/lib/data/categories", () => ({
-  listCategories: jest.fn(async () => []),
-}))
-
-jest.mock("@/lib/data/collections", () => ({
-  listCollections: jest.fn(async () => ({ collections: [] })),
-}))
-
-// Own extraction area, covered by its own test — stubbed here since async
-// Server Components can't be rendered directly by RTL when nested (only the
-// top-level component under test is resolved via `await Footer()`).
-jest.mock("@/modules/layout/components/medusa-cta", () => ({
-  __esModule: true,
-  default: () => <div data-testid="medusa-cta-stub" />,
+jest.mock("@/lib/data/regions", () => ({
+  listRegions: jest.fn(async () => [
+    {
+      id: "reg_1",
+      countries: [{ iso_2: "us", display_name: "United States" }],
+    },
+  ]),
 }))
 
 import Footer from "@/modules/layout/templates/footer"
@@ -32,23 +25,19 @@ describe("Footer", () => {
     const element = await Footer()
     render(element)
 
-    expect(screen.getByText("Medusa Store")).toBeInTheDocument()
-    expect(screen.getByText("Medusa")).toBeInTheDocument()
-    expect(screen.getByText("GitHub")).toBeInTheDocument()
-    expect(screen.getByText("Documentation")).toBeInTheDocument()
-    expect(screen.getByText("Source code")).toBeInTheDocument()
+    expect(screen.getByText("NIMBUS NORDIC A/S")).toBeInTheDocument()
     expect(
-      screen.getByText(
-        `© ${new Date().getFullYear()} Medusa Store. All rights reserved.`
-      )
+      screen.getByText(/Nimbus is an international corporate fashion brand/)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("Nimbus® | Official B2B Brand Page | EN")
     ).toBeInTheDocument()
   })
 
-  it("TC-3: renders category/collection headings only when data is present", async () => {
+  it("TC-3: renders the region switcher", async () => {
     const element = await Footer()
     render(element)
 
-    expect(screen.queryByText("Categories")).not.toBeInTheDocument()
-    expect(screen.queryByText("Collections")).not.toBeInTheDocument()
+    expect(screen.getByTestId("region-switcher")).toBeInTheDocument()
   })
 })
