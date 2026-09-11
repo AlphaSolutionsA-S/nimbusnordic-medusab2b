@@ -1,10 +1,4 @@
-export type BCOrderStatus =
-  | "Open"
-  | "Released"
-  | "Pending Approval"
-  | "Pending Prepayment"
-  | "Shipped"
-  | "Invoiced";
+export type BCOrderInvoiceStatus = "open" | "partially_invoiced" | "fully_invoiced";
 
 export type BCOrder = {
   id: string;
@@ -14,7 +8,8 @@ export type BCOrder = {
   customerName: string;
   billToAddress: string[];
   shipToAddress: string[];
-  status: BCOrderStatus;
+  status: string;
+  invoiceStatus: BCOrderInvoiceStatus;
   currencyCode: string;
   totalAmountExcludingTax: number;
   totalAmountIncludingTax: number;
@@ -33,8 +28,18 @@ export type BCOrderLine = {
   lineAmount: number;
 };
 
+export type BCOrderInvoiceSummary = {
+  id: string;
+  number: string;
+  invoiceDate: string;
+  status: string;
+  totalAmountExcludingTax: number;
+  totalAmountIncludingTax: number;
+};
+
 export type BCOrderDetail = BCOrder & {
   lines: BCOrderLine[];
+  invoices: BCOrderInvoiceSummary[];
 };
 
 export type BCListOrdersParams = {
@@ -48,6 +53,15 @@ export type BCListOrdersParams = {
 };
 
 export type BCGetOrderParams = {
+  customerNumber: string;
+  orderNumber: string;
+};
+
+// Used only by the business-central-return workflow, which still identifies the source
+// order by its salesOrder GUID id (see NIMBUS-170 D6) rather than its order number.
+// Returns are out of scope for NIMBUS-170 and this accessor deliberately keeps the
+// pre-NIMBUS-170 salesOrders-only, id-based lookup (no invoice merge).
+export type BCGetOrderBySalesOrderIdParams = {
   customerNumber: string;
   orderId: string;
 };
@@ -118,6 +132,9 @@ export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
   getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
+  getOrderBySalesOrderId(
+    params: BCGetOrderBySalesOrderIdParams
+  ): Promise<BCOrderDetail | null>;
   getCustomer(customerNumber: string): Promise<BCCustomer | null>;
   createReturnFromSalesOrder(
     params: BCCreateReturnParams

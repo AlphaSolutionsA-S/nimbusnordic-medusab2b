@@ -41,7 +41,7 @@ export const GET = async (
     req.scope.resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
   const order = await bcService.getOrder({
     customerNumber: bcCustomerNumber,
-    orderId: req.params.id,
+    orderNumber: req.params.id,
   });
 
   if (!order) {

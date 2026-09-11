@@ -22,7 +22,8 @@
       "brandName": "Medusa B2B Starter",
       "searchPlaceholder": "Nach Produkten suchen",
       "searchDisabledTooltip": "Installieren Sie einen Suchanbieter, um die Produktsuche zu aktivieren",
-      "quoteLabel": "Angebot"
+      "quoteLabel": "Angebot",
+      "myAccountLabel": "Mein Konto"
     },
     "regionSwitcher": {
       "label": "Wählen Sie Ihre Region"
@@ -31,14 +32,9 @@
       "productsLabel": "Produkte"
     },
     "footer": {
-      "brandName": "Medusa Store",
-      "categoriesHeading": "Kategorien",
-      "collectionsHeading": "Kollektionen",
-      "medusaHeading": "Medusa",
-      "githubLabel": "GitHub",
-      "documentationLabel": "Dokumentation",
-      "sourceCodeLabel": "Quellcode",
-      "copyright": "© {year} Medusa Store. Alle Rechte vorbehalten.",
+      "aboutHeading": "NIMBUS NORDIC A/S",
+      "aboutCopy": "Nimbus ist eine internationale Corporate-Fashion-Marke mit Wurzeln in skandinavischer Schlichtheit. Wir streben danach, eine Premium-Marke für Unternehmen zu sein, die ihre Garderobe mit moderner Businesskleidung in hoher Qualität ohne Verfallsdatum pflegen möchten.",
+      "siteTagline": "Nimbus® | Offizielle B2B Brand Page | DE",
       "poweredByLabel": "Bereitgestellt von"
     },
     "cartMismatchBanner": {
