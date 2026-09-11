@@ -30,7 +30,7 @@ export const prepareBcReturnStep = createStep(
     const bcService = container.resolve<IBusinessCentralModuleService>(
       BUSINESS_CENTRAL_MODULE
     );
-    const order = await bcService.getOrder({
+    const order = await bcService.getOrderBySalesOrderId({
       customerNumber: input.bcCustomerNumber,
       orderId: input.sourceSalesOrderId,
     });

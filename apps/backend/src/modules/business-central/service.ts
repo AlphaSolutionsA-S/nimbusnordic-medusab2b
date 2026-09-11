@@ -1,10 +1,12 @@
 import { MedusaError } from "@medusajs/framework/utils";
 import type {
+  BCGetOrderBySalesOrderIdParams,
   BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
   BCOrder,
   BCOrderDetail,
+  BCOrderInvoiceSummary,
   BCOrderLine,
   BCCreateReturnParams,
   BCCustomer,
@@ -27,6 +29,10 @@ const BC_BLOCKED_STATES: readonly BCCustomerBlockedState[] = [
   "Invoice",
   "All",
 ];
+const SALES_ORDER_DEDUP_FETCH_CAP = 1000;
+const INVOICE_FILL_BATCH_SIZE = 50;
+const MAX_INVOICE_FILL_ROUND_TRIPS = 10;
+const MAX_ORDER_DETAIL_INVOICES = 50;
 
 type BusinessCentralTokenResponse = {
   access_token: string;
@@ -119,6 +125,182 @@ function formatAddress(
   return [name, addressLine1, addressLine2, cityLine, country].filter(
     (value): value is string => Boolean(value)
   );
+}
+
+type BCSalesOrderRaw = {
+  id: string;
+  number: unknown;
+  orderDate: string;
+  customerNumber: string;
+  customerName: string;
+  billToName?: string;
+  billToAddressLine1?: string;
+  billToAddressLine2?: string;
+  billToCity?: string;
+  billToPostalCode?: string;
+  billToCountry?: string;
+  shipToName?: string;
+  shipToAddressLine1?: string;
+  shipToAddressLine2?: string;
+  shipToCity?: string;
+  shipToPostalCode?: string;
+  shipToCountry?: string;
+  status: string;
+  currencyCode: string;
+  totalAmountExcludingTax?: number;
+  totalAmountIncludingTax?: number;
+};
+
+type BCSalesInvoiceRaw = {
+  id: string;
+  number: unknown;
+  orderNumber: unknown;
+  invoiceDate: string;
+  customerNumber: string;
+  customerName: string;
+  billToName?: string;
+  billToAddressLine1?: string;
+  billToAddressLine2?: string;
+  billToCity?: string;
+  billToPostCode?: string;
+  billToCountry?: string;
+  shipToName?: string;
+  shipToAddressLine1?: string;
+  shipToAddressLine2?: string;
+  shipToCity?: string;
+  shipToPostCode?: string;
+  shipToCountry?: string;
+  status: string;
+  currencyCode: string;
+  totalAmountExcludingTax?: number;
+  totalAmountIncludingTax?: number;
+};
+
+function mapSalesOrderToBCOrder(item: BCSalesOrderRaw): BCOrder {
+  return {
+    id: item.id,
+    number: requireBusinessCentralString(item.number, "number"),
+    orderDate: item.orderDate,
+    customerNumber: item.customerNumber,
+    customerName: item.customerName,
+    billToAddress: formatAddress(
+      item.billToName,
+      item.billToAddressLine1,
+      item.billToAddressLine2,
+      item.billToCity,
+      item.billToPostalCode,
+      item.billToCountry
+    ),
+    shipToAddress: formatAddress(
+      item.shipToName,
+      item.shipToAddressLine1,
+      item.shipToAddressLine2,
+      item.shipToCity,
+      item.shipToPostalCode,
+      item.shipToCountry
+    ),
+    status: item.status,
+    invoiceStatus: "open",
+    currencyCode: item.currencyCode,
+    totalAmountExcludingTax: item.totalAmountExcludingTax ?? 0,
+    totalAmountIncludingTax: item.totalAmountIncludingTax ?? 0,
+  };
+}
+
+function mapSalesInvoiceToBCOrder(item: BCSalesInvoiceRaw): BCOrder {
+  return {
+    id: item.id,
+    number: requireBusinessCentralString(item.orderNumber, "orderNumber"),
+    orderDate: item.invoiceDate,
+    customerNumber: item.customerNumber,
+    customerName: item.customerName,
+    billToAddress: formatAddress(
+      item.billToName,
+      item.billToAddressLine1,
+      item.billToAddressLine2,
+      item.billToCity,
+      item.billToPostCode,
+      item.billToCountry
+    ),
+    shipToAddress: formatAddress(
+      item.shipToName,
+      item.shipToAddressLine1,
+      item.shipToAddressLine2,
+      item.shipToCity,
+      item.shipToPostCode,
+      item.shipToCountry
+    ),
+    status: item.status,
+    invoiceStatus: "fully_invoiced",
+    currencyCode: item.currencyCode,
+    totalAmountExcludingTax: item.totalAmountExcludingTax ?? 0,
+    totalAmountIncludingTax: item.totalAmountIncludingTax ?? 0,
+  };
+}
+
+type BCSalesOrderLineRaw = {
+  id: string;
+  sequence: number;
+  lineType?: string;
+  itemId?: string;
+  item?: { number?: string; displayName?: string };
+  description?: string;
+  quantity?: number;
+  unitPrice?: number;
+  amountExcludingTax?: number;
+};
+
+type BCSalesInvoiceLineRaw = {
+  id: string;
+  sequence: number;
+  lineType?: string;
+  itemId?: string;
+  item?: { number?: string; displayName?: string };
+  description?: string;
+  quantity?: number;
+  unitPrice?: number;
+  amountExcludingTax?: number;
+};
+
+function mapSalesOrderLine(line: BCSalesOrderLineRaw): BCOrderLine {
+  return {
+    id: line.id,
+    sequence: line.sequence,
+    lineType: line.lineType ?? "",
+    itemId: line.itemId,
+    itemNumber: line.item?.number,
+    itemDisplayName: line.item?.displayName,
+    description: line.description ?? "",
+    quantity: line.quantity ?? 0,
+    unitPrice: line.unitPrice ?? 0,
+    lineAmount: line.amountExcludingTax ?? 0,
+  };
+}
+
+function mapSalesInvoiceLine(line: BCSalesInvoiceLineRaw): BCOrderLine {
+  return {
+    id: line.id,
+    sequence: line.sequence,
+    lineType: line.lineType ?? "",
+    itemId: line.itemId,
+    itemNumber: line.item?.number,
+    itemDisplayName: line.item?.displayName,
+    description: line.description ?? "",
+    quantity: line.quantity ?? 0,
+    unitPrice: line.unitPrice ?? 0,
+    lineAmount: line.amountExcludingTax ?? 0,
+  };
+}
+
+function mapSalesInvoiceToSummary(invoice: BCSalesInvoiceRaw): BCOrderInvoiceSummary {
+  return {
+    id: invoice.id,
+    number: requireBusinessCentralString(invoice.number, "number"),
+    invoiceDate: invoice.invoiceDate,
+    status: invoice.status,
+    totalAmountExcludingTax: invoice.totalAmountExcludingTax ?? 0,
+    totalAmountIncludingTax: invoice.totalAmountIncludingTax ?? 0,
+  };
 }
 
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
@@ -484,6 +666,76 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return customerId ?? null;
   }
 
+  private async fetchAllSalesOrderNumbers(
+    discoveryUrl: URL,
+    accessToken: string,
+    orderFilters: string[]
+  ): Promise<Set<string>> {
+    const url = new URL(`${discoveryUrl.toString()}/salesOrders()`);
+    url.searchParams.set("$filter", orderFilters.join(" and "));
+    url.searchParams.set("$top", String(SALES_ORDER_DEDUP_FETCH_CAP));
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central orders request failed with status ${response.status}`
+      );
+    }
+
+    const body = (await response.json()) as {
+      value?: Array<{ number?: unknown }>;
+    };
+    const numbers = new Set<string>();
+
+    for (const item of body.value ?? []) {
+      if (typeof item.number === "string" && item.number.length > 0) {
+        numbers.add(item.number);
+      }
+    }
+
+    return numbers;
+  }
+
+  private async fetchSalesInvoicesBatch(
+    discoveryUrl: URL,
+    accessToken: string,
+    invoiceFilters: string[],
+    top: number,
+    skip: number
+  ): Promise<BCSalesInvoiceRaw[]> {
+    const url = new URL(`${discoveryUrl.toString()}/salesInvoices()`);
+    url.searchParams.set("$filter", invoiceFilters.join(" and "));
+    url.searchParams.set("$top", String(top));
+    url.searchParams.set("$skip", String(skip));
+    url.searchParams.set("$orderby", "invoiceDate desc");
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central invoices request failed with status ${response.status}`
+      );
+    }
+
+    const body = (await response.json()) as { value?: BCSalesInvoiceRaw[] };
+    return body.value ?? [];
+  }
+
   async listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult> {
     const discoveryUrl = this.getDiscoveryUrl();
     const tenantId = this.getTenantId(discoveryUrl);
@@ -504,25 +756,36 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       };
     }
 
-    // Build OData $filter
-    const filters: string[] = [];
-    filters.push(`customerId eq ${escapeODataString(customerId)}`);
-
+    const orderFilters: string[] = [`customerId eq ${escapeODataString(customerId)}`];
     if (params.status) {
-      filters.push(`status eq '${escapeODataString(params.status)}'`);
+      orderFilters.push(`status eq '${escapeODataString(params.status)}'`);
     }
     if (params.date_from) {
-      filters.push(`orderDate ge ${params.date_from}`);
+      orderFilters.push(`orderDate ge ${params.date_from}`);
     }
     if (params.date_to) {
-      filters.push(`orderDate le ${params.date_to}`);
+      orderFilters.push(`orderDate le ${params.date_to}`);
     }
     if (params.search) {
-      filters.push(`contains(number,'${escapeODataString(params.search)}')`);
+      orderFilters.push(`contains(number,'${escapeODataString(params.search)}')`);
     }
 
-    const odataUrl = new URL(`${discoveryUrl.toString()}/SalesOrders()`);
-    odataUrl.searchParams.set("$filter", filters.join(" and "));
+    const invoiceFilters: string[] = [`customerId eq ${escapeODataString(customerId)}`];
+    if (params.status) {
+      invoiceFilters.push(`status eq '${escapeODataString(params.status)}'`);
+    }
+    if (params.date_from) {
+      invoiceFilters.push(`invoiceDate ge ${params.date_from}`);
+    }
+    if (params.date_to) {
+      invoiceFilters.push(`invoiceDate le ${params.date_to}`);
+    }
+    if (params.search) {
+      invoiceFilters.push(`contains(orderNumber,'${escapeODataString(params.search)}')`);
+    }
+
+    const odataUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
+    odataUrl.searchParams.set("$filter", orderFilters.join(" and "));
     odataUrl.searchParams.set("$top", String(params.limit));
     odataUrl.searchParams.set("$skip", String(params.offset));
     odataUrl.searchParams.set("$count", "true");
@@ -543,68 +806,107 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       );
     }
 
-    const responseText = await ordersResponse.text();
-
-    type BCOrderRaw = {
-      id: string;
-      number: unknown;
-      orderDate: string;
-      customerNumber: string;
-      customerName: string;
-      billToName?: string;
-      billToAddressLine1?: string;
-      billToAddressLine2?: string;
-      billToCity?: string;
-      billToPostalCode?: string;
-      billToCountry?: string;
-      shipToName?: string;
-      shipToAddressLine1?: string;
-      shipToAddressLine2?: string;
-      shipToCity?: string;
-      shipToPostalCode?: string;
-      shipToCountry?: string;
-      status: string;
-      currencyCode: string;
-      totalAmountExcludingTax?: number;
-      totalAmountIncludingTax?: number;
-    };
-
-    const body = JSON.parse(responseText) as {
+    const ordersBody = (await ordersResponse.json()) as {
       "@odata.count"?: number;
-      value: BCOrderRaw[];
+      value: BCSalesOrderRaw[];
     };
+    const salesOrdersTotal = ordersBody["@odata.count"] ?? 0;
+    const orders: BCOrder[] = (ordersBody.value ?? []).map(mapSalesOrderToBCOrder);
 
-    const orders: BCOrder[] = (body.value ?? []).map((item) => ({
-      id: item.id,
-      number: requireBusinessCentralString(item.number, "number"),
-      orderDate: item.orderDate,
-      customerNumber: item.customerNumber,
-      customerName: item.customerName,
-      billToAddress: formatAddress(
-        item.billToName,
-        item.billToAddressLine1,
-        item.billToAddressLine2,
-        item.billToCity,
-        item.billToPostalCode,
-        item.billToCountry
-      ),
-      shipToAddress: formatAddress(
-        item.shipToName,
-        item.shipToAddressLine1,
-        item.shipToAddressLine2,
-        item.shipToCity,
-        item.shipToPostalCode,
-        item.shipToCountry
-      ),
-      status: item.status as BCOrder["status"],
-      currencyCode: item.currencyCode,
-      totalAmountExcludingTax: item.totalAmountExcludingTax ?? 0,
-      totalAmountIncludingTax: item.totalAmountIncludingTax ?? 0,
-    }));
+    const invoicesCountUrl = new URL(`${discoveryUrl.toString()}/salesInvoices()`);
+    invoicesCountUrl.searchParams.set("$filter", invoiceFilters.join(" and "));
+    invoicesCountUrl.searchParams.set("$top", "1");
+    invoicesCountUrl.searchParams.set("$count", "true");
+
+    const invoicesCountResponse = await fetch(invoicesCountUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!invoicesCountResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central invoices request failed with status ${invoicesCountResponse.status}`
+      );
+    }
+
+    const invoicesCountBody = (await invoicesCountResponse.json()) as {
+      "@odata.count"?: number;
+    };
+    const invoicesRawCountApprox = invoicesCountBody["@odata.count"] ?? 0;
+
+    const remainder = params.limit - orders.length;
+    let invoiceOnlyOrders: BCOrder[] = [];
+
+    if (remainder > 0) {
+      const dedupOrderNumbers = await this.fetchAllSalesOrderNumbers(
+        discoveryUrl,
+        accessToken,
+        orderFilters
+      );
+
+      const skipPastInvoiceOnly = Math.max(0, params.offset - salesOrdersTotal);
+      const seenInvoiceOrderNumbers = new Set<string>();
+      const collected: BCOrder[] = [];
+      let skippedSoFar = 0;
+      let rawInvoiceSkip = 0;
+      let roundTrips = 0;
+
+      while (
+        collected.length < remainder &&
+        roundTrips < MAX_INVOICE_FILL_ROUND_TRIPS
+      ) {
+        const batch = await this.fetchSalesInvoicesBatch(
+          discoveryUrl,
+          accessToken,
+          invoiceFilters,
+          INVOICE_FILL_BATCH_SIZE,
+          rawInvoiceSkip
+        );
+        roundTrips += 1;
+
+        if (batch.length === 0) {
+          break;
+        }
+
+        for (const raw of batch) {
+          if (typeof raw.orderNumber !== "string" || raw.orderNumber.length === 0) {
+            continue;
+          }
+          if (dedupOrderNumbers.has(raw.orderNumber)) {
+            continue;
+          }
+          if (seenInvoiceOrderNumbers.has(raw.orderNumber)) {
+            continue;
+          }
+          seenInvoiceOrderNumbers.add(raw.orderNumber);
+
+          if (skippedSoFar < skipPastInvoiceOnly) {
+            skippedSoFar += 1;
+            continue;
+          }
+
+          collected.push(mapSalesInvoiceToBCOrder(raw));
+          if (collected.length === remainder) {
+            break;
+          }
+        }
+
+        rawInvoiceSkip += batch.length;
+        if (batch.length < INVOICE_FILL_BATCH_SIZE) {
+          break;
+        }
+      }
+
+      invoiceOnlyOrders = collected;
+    }
 
     return {
-      orders,
-      count: body["@odata.count"] ?? 0,
+      orders: [...orders, ...invoiceOnlyOrders],
+      count: salesOrdersTotal + invoicesRawCountApprox,
       offset: params.offset,
       limit: params.limit,
     };
@@ -625,18 +927,161 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       return null;
     }
 
-    const ordersUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
-    ordersUrl.searchParams.set(
+    const orderUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
+    orderUrl.searchParams.set(
+      "$filter",
+      [
+        `customerId eq ${escapeODataString(customerId)}`,
+        `number eq '${escapeODataString(params.orderNumber)}'`,
+      ].join(" and ")
+    );
+    orderUrl.searchParams.set("$top", "1");
+    orderUrl.searchParams.set("$expand", "salesOrderLines($expand=item)");
+
+    const invoicesUrl = new URL(`${discoveryUrl.toString()}/salesInvoices()`);
+    invoicesUrl.searchParams.set(
+      "$filter",
+      [
+        `customerId eq ${escapeODataString(customerId)}`,
+        `orderNumber eq '${escapeODataString(params.orderNumber)}'`,
+      ].join(" and ")
+    );
+    invoicesUrl.searchParams.set("$top", String(MAX_ORDER_DETAIL_INVOICES));
+    invoicesUrl.searchParams.set("$orderby", "invoiceDate asc");
+    invoicesUrl.searchParams.set("$expand", "salesInvoiceLines($expand=item)");
+
+    const [orderResponse, invoicesResponse] = await Promise.all([
+      fetch(orderUrl.toString(), {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      }),
+      fetch(invoicesUrl.toString(), {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      }),
+    ]);
+
+    if (!orderResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central order request failed with status ${orderResponse.status}`
+      );
+    }
+
+    if (!invoicesResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central invoices request failed with status ${invoicesResponse.status}`
+      );
+    }
+
+    type BCSalesOrderWithLinesRaw = BCSalesOrderRaw & {
+      salesOrderLines?: BCSalesOrderLineRaw[];
+    };
+    type BCSalesInvoiceWithLinesRaw = BCSalesInvoiceRaw & {
+      salesInvoiceLines?: BCSalesInvoiceLineRaw[];
+    };
+
+    const orderBody = (await orderResponse.json()) as {
+      value?: BCSalesOrderWithLinesRaw[];
+    };
+    const invoicesBody = (await invoicesResponse.json()) as {
+      value?: BCSalesInvoiceWithLinesRaw[];
+    };
+
+    const order = orderBody.value?.[0];
+    const invoices = invoicesBody.value ?? [];
+
+    if (!order && invoices.length === 0) {
+      return null;
+    }
+
+    if (order) {
+      const orderLines: BCOrderLine[] = [...(order.salesOrderLines ?? [])]
+        .sort((left, right) => left.sequence - right.sequence)
+        .map(mapSalesOrderLine);
+
+      const invoiceLines: BCOrderLine[] = invoices.flatMap((invoice) =>
+        [...(invoice.salesInvoiceLines ?? [])]
+          .sort((left, right) => left.sequence - right.sequence)
+          .map(mapSalesInvoiceLine)
+      );
+
+      const base = mapSalesOrderToBCOrder(order);
+
+      return {
+        ...base,
+        invoiceStatus: invoices.length > 0 ? "partially_invoiced" : "open",
+        lines: [...orderLines, ...invoiceLines],
+        invoices: invoices.map(mapSalesInvoiceToSummary),
+      };
+    }
+
+    const earliestInvoice = invoices[0];
+    const latestInvoice = invoices[invoices.length - 1];
+    const base = mapSalesInvoiceToBCOrder(latestInvoice);
+
+    const lines: BCOrderLine[] = invoices.flatMap((invoice) =>
+      [...(invoice.salesInvoiceLines ?? [])]
+        .sort((left, right) => left.sequence - right.sequence)
+        .map(mapSalesInvoiceLine)
+    );
+
+    return {
+      ...base,
+      orderDate: earliestInvoice.invoiceDate,
+      totalAmountExcludingTax: invoices.reduce(
+        (sum, invoice) => sum + (invoice.totalAmountExcludingTax ?? 0),
+        0
+      ),
+      totalAmountIncludingTax: invoices.reduce(
+        (sum, invoice) => sum + (invoice.totalAmountIncludingTax ?? 0),
+        0
+      ),
+      invoiceStatus: "fully_invoiced",
+      lines,
+      invoices: invoices.map(mapSalesInvoiceToSummary),
+    };
+  }
+
+  // Used only by the business-central-return workflow (see NIMBUS-170 D6). Returns are out
+  // of scope for NIMBUS-170; this preserves the pre-NIMBUS-170 salesOrders-only, id-based
+  // lookup so that flow is unaffected by getOrder's move to a number-based, merged lookup.
+  async getOrderBySalesOrderId(
+    params: BCGetOrderBySalesOrderIdParams
+  ): Promise<BCOrderDetail | null> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const customerId = await this.getCustomerId(
+      discoveryUrl,
+      accessToken,
+      params.customerNumber
+    );
+
+    if (!customerId) {
+      return null;
+    }
+
+    const orderUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
+    orderUrl.searchParams.set(
       "$filter",
       [
         `customerId eq ${escapeODataString(customerId)}`,
         `id eq ${escapeODataString(params.orderId)}`,
       ].join(" and ")
     );
-    ordersUrl.searchParams.set("$top", "1");
-    ordersUrl.searchParams.set("$expand", "salesOrderLines($expand=item)");
+    orderUrl.searchParams.set("$top", "1");
+    orderUrl.searchParams.set("$expand", "salesOrderLines($expand=item)");
 
-    const ordersResponse = await fetch(ordersUrl.toString(), {
+    const orderResponse = await fetch(orderUrl.toString(), {
       method: "GET",
       headers: {
         authorization: `Bearer ${accessToken}`,
@@ -644,54 +1089,21 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       },
     });
 
-    if (!ordersResponse.ok) {
+    if (!orderResponse.ok) {
       throw new MedusaError(
         MedusaError.Types.UNEXPECTED_STATE,
-        `Business Central order request failed with status ${ordersResponse.status}`
+        `Business Central order request failed with status ${orderResponse.status}`
       );
     }
 
-    type BCOrderLineRaw = {
-      id: string;
-      sequence: number;
-      lineType?: string;
-      itemId?: string;
-      item?: { number?: string; displayName?: string };
-      description?: string;
-      quantity?: number;
-      unitPrice?: number;
-      amountExcludingTax?: number;
+    type BCSalesOrderWithLinesRaw = BCSalesOrderRaw & {
+      salesOrderLines?: BCSalesOrderLineRaw[];
     };
 
-    type BCOrderRaw = {
-      id: string;
-      number: unknown;
-      orderDate: string;
-      customerNumber: string;
-      customerName: string;
-      billToName?: string;
-      billToAddressLine1?: string;
-      billToAddressLine2?: string;
-      billToCity?: string;
-      billToPostalCode?: string;
-      billToCountry?: string;
-      shipToName?: string;
-      shipToAddressLine1?: string;
-      shipToAddressLine2?: string;
-      shipToCity?: string;
-      shipToPostalCode?: string;
-      shipToCountry?: string;
-      status: string;
-      currencyCode: string;
-      totalAmountExcludingTax?: number;
-      totalAmountIncludingTax?: number;
-      salesOrderLines?: BCOrderLineRaw[];
+    const orderBody = (await orderResponse.json()) as {
+      value?: BCSalesOrderWithLinesRaw[];
     };
-
-    const ordersBody = (await ordersResponse.json()) as {
-      value?: BCOrderRaw[];
-    };
-    const order = ordersBody.value?.[0];
+    const order = orderBody.value?.[0];
 
     if (!order) {
       return null;
@@ -699,46 +1111,12 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
 
     const lines: BCOrderLine[] = [...(order.salesOrderLines ?? [])]
       .sort((left, right) => left.sequence - right.sequence)
-      .map((line) => ({
-        id: line.id,
-        sequence: line.sequence,
-        lineType: line.lineType ?? "",
-        itemId: line.itemId,
-        itemNumber: line.item?.number,
-        itemDisplayName: line.item?.displayName,
-        description: line.description ?? "",
-        quantity: line.quantity ?? 0,
-        unitPrice: line.unitPrice ?? 0,
-        lineAmount: line.amountExcludingTax ?? 0,
-      }));
+      .map(mapSalesOrderLine);
 
     return {
-      id: order.id,
-      number: requireBusinessCentralString(order.number, "number"),
-      orderDate: order.orderDate,
-      customerNumber: order.customerNumber,
-      customerName: order.customerName,
-      billToAddress: formatAddress(
-        order.billToName,
-        order.billToAddressLine1,
-        order.billToAddressLine2,
-        order.billToCity,
-        order.billToPostalCode,
-        order.billToCountry
-      ),
-      shipToAddress: formatAddress(
-        order.shipToName,
-        order.shipToAddressLine1,
-        order.shipToAddressLine2,
-        order.shipToCity,
-        order.shipToPostalCode,
-        order.shipToCountry
-      ),
-      status: order.status as BCOrder["status"],
-      currencyCode: order.currencyCode,
-      totalAmountExcludingTax: order.totalAmountExcludingTax ?? 0,
-      totalAmountIncludingTax: order.totalAmountIncludingTax ?? 0,
+      ...mapSalesOrderToBCOrder(order),
       lines,
+      invoices: [],
     };
   }
 }

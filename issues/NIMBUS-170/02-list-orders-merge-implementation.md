@@ -1,6 +1,6 @@
 # Task 02: Merge salesOrders + salesInvoices in `listOrders` — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02

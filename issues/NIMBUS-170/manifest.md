@@ -12,10 +12,10 @@
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Update Business Central order types for the merge | `01-bc-types-implementation.md` | backend | None | TODO |
-| 02 | Merge salesOrders + salesInvoices in `listOrders` | `02-list-orders-merge-implementation.md` | backend | 01 | TODO |
-| 03 | Merge salesOrder + salesInvoice lines in `getOrder` | `03-get-order-merge-implementation.md` | backend | 01, 02 | TODO |
-| 04 | Storefront — route by order number, widen types | `04-storefront-updates-implementation.md` | storefront | 02, 03 | TODO |
+| 01 | Update Business Central order types for the merge | `01-bc-types-implementation.md` | backend | None | DONE |
+| 02 | Merge salesOrders + salesInvoices in `listOrders` | `02-list-orders-merge-implementation.md` | backend | 01 | DONE |
+| 03 | Merge salesOrder + salesInvoice lines in `getOrder` | `03-get-order-merge-implementation.md` | backend | 01, 02 | DONE |
+| 04 | Storefront — route by order number, widen types | `04-storefront-updates-implementation.md` | storefront | 02, 03 | DONE |
 
 ## Notes for the dispatcher
 

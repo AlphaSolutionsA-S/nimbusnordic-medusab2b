@@ -1,6 +1,6 @@
 # Task 01: Update Business Central order types for the merge — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01

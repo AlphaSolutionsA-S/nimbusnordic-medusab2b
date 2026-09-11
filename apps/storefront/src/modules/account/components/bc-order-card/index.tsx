@@ -58,7 +58,7 @@ const BcOrderCard = async ({ order }: BcOrderCardProps) => {
         </div>
 
         <LocalizedClientLink
-          href={`/account/bcorders/${order.id}`}
+          href={`/account/bcorders/${encodeURIComponent(order.number)}`}
           className="flex items-center pl-4 text-small-regular text-ui-fg-base underline"
           data-testid="bc-order-details-link"
         >

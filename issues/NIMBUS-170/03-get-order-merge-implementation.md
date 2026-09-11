@@ -1,6 +1,6 @@
 # Task 03: Merge salesOrder + salesInvoice lines in `getOrder` — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 03

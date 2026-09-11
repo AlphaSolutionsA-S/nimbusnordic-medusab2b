@@ -1,6 +1,6 @@
 # Task 04: Storefront — route by order number, widen types — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 04
