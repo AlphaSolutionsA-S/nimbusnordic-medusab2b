@@ -29,9 +29,9 @@ const BC_BLOCKED_STATES: readonly BCCustomerBlockedState[] = [
   "Invoice",
   "All",
 ];
-const SALES_ORDER_DEDUP_FETCH_CAP = 1000;
+const SALES_ORDER_DEDUP_FETCH_CAP = 10000;
 const INVOICE_FILL_BATCH_SIZE = 50;
-const MAX_INVOICE_FILL_ROUND_TRIPS = 10;
+const MAX_INVOICE_FILL_ROUND_TRIPS = 50;
 const MAX_ORDER_DETAIL_INVOICES = 50;
 
 type BusinessCentralTokenResponse = {
