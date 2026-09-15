@@ -43,6 +43,8 @@ status view).
   (out of scope here) — NIMBUS-140 wires the link/route so it is ready to point at that page
   once it exists.
 - An appropriate empty state is shown when a customer has no returns.
+- "Returns" is a new top-level entry in the account navigation (matching Business Central's
+  own terminology, "Sales Return Order"), not nested under Orders.
 
 ### Non-Functional
 
@@ -61,8 +63,33 @@ status view).
   returns.
 - **storefront** — New account UI mirroring the existing order-overview components (e.g.
   `bc-order-overview`, `bc-order-filters`, `bc-order-card`, `resource-pagination`) but for
-  returns, plus a new account route/page and navigation entry, plus the outbound link/route
-  to the (future) return detail page from NIMBUS-141.
+  returns, plus a new top-level account route/page and navigation entry ("Returns"), plus the
+  outbound link/route to the (future) return detail page from NIMBUS-141.
+
+## Reference Material
+
+Business Central's OData metadata (already captured in the repo at
+`issues/NIMBUS-129/bc metadata/std odata metadata.xml`) confirms BC's API supports listing
+sales return orders directly — this resolves the open question below about whether BC
+supports listing vs. needing local persistence in Medusa.
+
+- **EntitySet `salesReturnOrders`** (EntityType `Microsoft.NAV.salesReturnOrder`) — the
+  collection to query for the list (metadata around line 10643, EntityType fields around
+  lines 6500-6574). Key fields relevant to a list view: `id` (Guid, key), `number`,
+  `externalDocumentNumber`, `documentDate`, `postingDate`, `dueDate`, `sellToCustomerNumber`,
+  `sellToCustomerName`, `status` (`Microsoft.NAV.salesDocumentStatus`),
+  `lastModifiedDateTime`. Has a navigation property `salesReturnOrderLines`
+  (`Collection(Microsoft.NAV.salesReturnOrderLine)`) usable for an item/line count.
+- **EntitySet `salesReturnOrderLines`** (EntityType `Microsoft.NAV.salesReturnOrderLine`) —
+  around line 9374 (set) / 4259-4293 (type). Fields: `id`, `documentType`, `documentNumber`
+  (FK back to the return order's `number`), `sequence`, `lineType`, `lineObjectNumber`,
+  `description`, `quantity`, `unitPrice`, `lineAmount`, `returnQtyToReceive`,
+  `returnQtyReceived`, `lastModifiedDateTime`.
+- The new backend `listReturns` method should query `salesReturnOrders` filtered by customer
+  (likely via `sellToCustomerNumber`, mirroring however `listOrders` currently filters by
+  customer). The implementation planner should check the existing `listOrders` implementation
+  in `apps/backend/src/modules/business-central/` to mirror its customer-filtering and
+  pagination approach.
 
 ## Proposed Structure
 
@@ -81,12 +108,9 @@ High-level task breakdown for implementation planning:
 
 ## Open Questions
 
-- Does the Business Central API actually expose an endpoint to list a customer's return
-  orders, or will returns need to be tracked/persisted on the Medusa side when created (since
-  today only creation exists, not retrieval)? This needs technical investigation during
-  implementation planning and materially affects the size of the backend work.
-- Should "Returns" be a new top-level account navigation entry (mirroring "Orders"), or
-  nested under the existing Orders section? Not yet confirmed with the stakeholder.
+- None outstanding. (Previously open: whether BC supports listing return orders directly —
+  resolved, see "Reference Material" above, BC's `salesReturnOrders` OData entity set
+  supports this. Nav placement — resolved, confirmed as a new top-level "Returns" entry.)
 
 ## Dependencies
 
