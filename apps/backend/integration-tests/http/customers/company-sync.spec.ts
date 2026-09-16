@@ -215,6 +215,50 @@ medusaIntegrationTestRunner({
         });
       });
 
+      it("resolves a blank Business Central currency code to the local currency (LCY)", async () => {
+        const companyId = await createLinkedCompany("00011552");
+        const companyService =
+          getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+        // Start from a non-LCY currency so the assertion proves the fallback ran, rather than
+        // just observing the company's seeded default.
+        await companyService.updateCompanies({
+          id: companyId,
+          currency_code: "SEK",
+        });
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        jest.spyOn(bcService, "getCustomer").mockResolvedValueOnce({
+          number: "00011552",
+          displayName: "Domestic Company",
+          email: "domestic@example.com",
+          phoneNumber: "11223344",
+          addressLine1: "Industrivej 15",
+          addressLine2: "",
+          city: "Silkeborg",
+          state: "",
+          postalCode: "8600",
+          country: "DK",
+          blocked: "not_blocked",
+          creditLimit: 0,
+          taxRegistrationNumber: "DK12345678",
+          currencyCode: null,
+        });
+
+        const response = await api.post(
+          "/store/customers/me/company/sync-business-central",
+          {},
+          authenticatedStoreHeaders
+        );
+        const [company] = await companyService.listCompanies({
+          id: companyId,
+        });
+
+        expect(response.data).toEqual({ status: "updated" });
+        expect(company.currency_code).toEqual("DKK");
+      });
+
       it("does not convert unexpected database failures to HTTP 200", async () => {
         await createLinkedCompany("00011551");
         const container = getContainer();

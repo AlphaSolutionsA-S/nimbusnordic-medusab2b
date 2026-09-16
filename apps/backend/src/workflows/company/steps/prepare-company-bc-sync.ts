@@ -17,8 +17,25 @@ export type PreparedCompanyBcSync =
   | { status: "failed"; update: null }
   | { status: "ready"; update: ModuleUpdateCompany };
 
+const DEFAULT_BUSINESS_CENTRAL_LCY_CODE = "DKK";
+
 function joinAddressLines(line1: string, line2: string): string {
   return [line1, line2].filter(Boolean).join(", ");
+}
+
+/*
+  A blank Currency Code on a Business Central customer is not missing data — it means the
+  customer transacts in the local currency (LCY), which is the normal state for domestic
+  customers. Resolve it to an explicit code so Company.currency_code is always populated.
+*/
+function resolveCurrencyCode(bcCurrencyCode: string | null): string {
+  if (bcCurrencyCode && bcCurrencyCode.trim()) {
+    return bcCurrencyCode.trim();
+  }
+
+  const configuredLcyCode = process.env.BUSINESS_CENTRAL_LCY_CODE?.trim();
+
+  return configuredLcyCode || DEFAULT_BUSINESS_CENTRAL_LCY_CODE;
 }
 
 export const prepareCompanyBcSyncStep = createStep(
@@ -97,7 +114,7 @@ export const prepareCompanyBcSyncStep = createStep(
       blocked: bcCustomer.blocked,
       credit_limit: bcCustomer.creditLimit,
       vat_number: bcCustomer.taxRegistrationNumber,
-      currency_code: bcCustomer.currencyCode,
+      currency_code: resolveCurrencyCode(bcCustomer.currencyCode),
       business_central_synced_at: new Date(),
     };
 
