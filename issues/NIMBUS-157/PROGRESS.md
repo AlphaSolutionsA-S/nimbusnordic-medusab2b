@@ -30,3 +30,16 @@
   Preserve the read-only storefront profile, server-enforced company-admin-only financial
   fields, complete company-information display, persistent Admin warning, per-field Business
   Central indicators, Admin editability, and dependency on NIMBUS-156.
+
+## 2026-09-16 - Implementation planning completed
+
+- **Date:** 2026-09-16
+- **Updated by:** implementation planner
+- **Outcome:** Created \`PLAN.md\`, a dispatch-ready \`manifest.md\`, and four dependency-ordered
+  implementation task files. The plan uses NIMBUS-156's implemented company-sync contract and
+  treats its Internal review status as an acceptable dependency state.
+- **Handover to:** implementor agent
+- **Handover prompt:** Implement NIMBUS-157 from \`issues/NIMBUS-157/manifest.md\` in dispatch
+  order. Begin with Task 01's server-side ownership and financial-field projection; do not rely
+  on UI hiding. Task 03 may run independently. Complete Task 04's tests and record verification
+  outcomes here before requesting review.
