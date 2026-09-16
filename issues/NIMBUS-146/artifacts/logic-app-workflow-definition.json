@@ -1,0 +1,192 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "globalListsApiUrl": {
+      "type": "string",
+      "defaultValue": "<GLOBALLISTS_API_URL_TBD - see issues/NIMBUS-146/artifacts/token-list-schema.md>"
+    },
+    "globalListsApiKey": {
+      "type": "securestring",
+      "defaultValue": ""
+    },
+    "medusaOrderApiBaseUrl": {
+      "type": "string",
+      "defaultValue": "<MEDUSA_ORDER_API_BASE_URL_TBD - e.g. https://<env>.medusa.example.com>"
+    },
+    "medusaSecretApiKey": {
+      "type": "securestring",
+      "defaultValue": ""
+    }
+  },
+  "triggers": {
+    "manual": {
+      "type": "Request",
+      "kind": "Http",
+      "inputs": {
+        "method": "POST",
+        "relativePath": "orders/{token}",
+        "schema": {
+          "type": "object"
+        }
+      }
+    }
+  },
+  "actions": {
+    "Get_Token_List": {
+      "type": "Http",
+      "runAfter": {},
+      "inputs": {
+        "method": "GET",
+        "uri": "@parameters('globalListsApiUrl')",
+        "headers": {
+          "Ocp-Apim-Subscription-Key": "@parameters('globalListsApiKey')"
+        },
+        "retryPolicy": {
+          "type": "fixed",
+          "count": 3,
+          "interval": "PT5S"
+        }
+      },
+      "runtimeConfiguration": {
+        "secureData": {
+          "properties": ["inputs"]
+        }
+      }
+    },
+    "Parse_Token_List": {
+      "type": "ParseJson",
+      "runAfter": {
+        "Get_Token_List": ["Succeeded"]
+      },
+      "inputs": {
+        "content": "@body('Get_Token_List')",
+        "schema": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Uid": { "type": "string" },
+              "SortOrder": { "type": "integer" },
+              "Value": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "Filter_Matching_Token": {
+      "type": "Query",
+      "runAfter": {
+        "Parse_Token_List": ["Succeeded"]
+      },
+      "inputs": {
+        "from": "@body('Parse_Token_List')",
+        "where": "@equals(first(split(item()?['Value'], '::')), triggerOutputs()?['relativePathParameters']?['token'])"
+      }
+    },
+    "Condition_Token_Matched": {
+      "type": "If",
+      "runAfter": {
+        "Filter_Matching_Token": ["Succeeded"]
+      },
+      "expression": {
+        "and": [
+          {
+            "greater": ["@length(body('Filter_Matching_Token'))", 0]
+          }
+        ]
+      },
+      "actions": {
+        "Compose_Matched_Value": {
+          "type": "Compose",
+          "runAfter": {},
+          "inputs": "@coalesce(first(body('Filter_Matching_Token'))?['Value'], '')"
+        },
+        "Compose_Customer_Number": {
+          "type": "Compose",
+          "runAfter": {
+            "Compose_Matched_Value": ["Succeeded"]
+          },
+          "inputs": "@if(contains(outputs('Compose_Matched_Value'), '::'), last(split(outputs('Compose_Matched_Value'), '::')), '')"
+        },
+        "Condition_Customer_Number_Present": {
+          "type": "If",
+          "runAfter": {
+            "Compose_Customer_Number": ["Succeeded"]
+          },
+          "expression": "@not(equals(coalesce(outputs('Compose_Customer_Number'), ''), ''))",
+          "actions": {
+            "Forward_Order_To_Medusa": {
+              "type": "Http",
+              "runAfter": {},
+              "inputs": {
+                "method": "POST",
+                "uri": "@concat(parameters('medusaOrderApiBaseUrl'), '/orderapi/orders?customerNumber=', outputs('Compose_Customer_Number'))",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "authentication": {
+                  "type": "Basic",
+                  "username": "@parameters('medusaSecretApiKey')",
+                  "password": ""
+                },
+                "body": "@triggerBody()",
+                "retryPolicy": {
+                  "type": "none"
+                }
+              }
+            },
+            "Response_Success": {
+              "type": "Response",
+              "runAfter": {
+                "Forward_Order_To_Medusa": ["Succeeded", "Failed"]
+              },
+              "inputs": {
+                "statusCode": "@outputs('Forward_Order_To_Medusa')['statusCode']",
+                "headers": {
+                  "Content-Type": "application/json"
+                },
+                "body": "@body('Forward_Order_To_Medusa')"
+              }
+            }
+          },
+          "else": {
+            "actions": {
+              "Response_Not_Allowed": {
+                "type": "Response",
+                "runAfter": {},
+                "inputs": {
+                  "statusCode": 401,
+                  "headers": {
+                    "Content-Type": "application/json"
+                  },
+                  "body": {
+                    "error": "Not allowed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "else": {
+        "actions": {
+          "Response_Unauthorized": {
+            "type": "Response",
+            "runAfter": {},
+            "inputs": {
+              "statusCode": 401,
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "error": "Token not recognized"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "outputs": {}
+}

@@ -1,6 +1,6 @@
 # Task 02: Logic App Workflow — Token Validation and Order Routing — Implementation Plan
 
-**Status:** TODO
+**Status:** Complete
 **App:** azure-integration (no `apps/backend` or `apps/storefront` code changes)
 **App Root:** `issues/NIMBUS-146/artifacts` (deliverables live in this issue folder, not in `apps/`)
 **Task ID:** 02
@@ -70,7 +70,8 @@ Trigger: manual (Request/Http), relativePath "orders/{token}"
   -> Filter_Matching_Token (Query / "Filter array", matches on token portion of Value)
   -> Condition_Token_Matched (If length(filtered array) > 0)
        True branch:
-         -> Compose_Customer_Number (Compose, extracts customerNumber portion of Value)
+         -> Compose_Matched_Value (Compose, the matched entry's raw Value)
+         -> Compose_Customer_Number (Compose, customerNumber portion, or '' if malformed)
          -> Condition_Customer_Number_Present (If customerNumber is neither null nor empty)
               True branch:
                 -> Forward_Order_To_Medusa (Http POST, Basic auth)
@@ -90,6 +91,17 @@ customer-number value. The primary delimiter design reaches this branch for entr
 `"token::"`; the fallback dedicated-field design reaches it when `CustomerNumber` is missing,
 `null`, or `""`.
 
+**Why extraction is delimiter-aware, not just `last(split(...))`:** an entry whose `Value` carries
+no `::` at all (an operator forgetting the encoding, or a row copied from the example list)
+satisfies `Filter_Matching_Token` — `first(split("tok", "::"))` is `"tok"` — and a bare
+`last(split(...))` would then return the *token itself* as the customer number, non-empty, passing
+the guard and forwarding the token to Medusa as `?customerNumber=`. That is precisely the
+"known token with no resolvable customer number" case SCOPE.md forbids. `Compose_Matched_Value`
+therefore holds the matched entry's raw `Value`, and `Compose_Customer_Number` extracts from it
+with `if(contains(..., '::'), last(split(..., '::')), '')` — a malformed entry yields `''` and is
+rejected by the existing guard. The delimiter check lives in the extraction rather than in the
+guard so there is exactly one definition of "the customer number for this entry".
+
 **Why `Forward_Order_To_Medusa` must run on `Succeeded` AND `Failed`:** Azure Logic Apps marks an
 HTTP action's status as `Failed` whenever the response status code is 4xx/5xx. If
 `Response_Success` only ran after `Succeeded`, a legitimate Medusa `404`/`422`/`400` would never
@@ -98,6 +110,14 @@ both `"Succeeded"` and `"Failed"` in `Response_Success`'s `runAfter` is what mak
 pass-through of Medusa's real status code possible. `retryPolicy: { "type": "none" }` on
 `Forward_Order_To_Medusa` avoids retrying on 4xx responses (they are validation/business
 rejections, not transient failures — retrying wastes time and cannot change the outcome).
+
+**Why `Get_Token_List` *does* retry:** the opposite reasoning applies to the token-list fetch. It
+is an idempotent `GET` against a third-party API, where a failure is far more likely to be
+transient than meaningful, and where failing gives up on an order that is probably legitimate.
+It uses `retryPolicy: { "type": "fixed", "count": 3, "interval": "PT5S" }` — three retries, at
+most ~15s of added latency. If all four attempts fail, `Parse_Token_List` (which requires
+`Succeeded`) never runs, no `Response` action executes, and the Logic App surfaces its own
+failure to the caller: fail-closed, with no order forwarded and no token validated.
 
 **HTTPS enforcement:** an Azure Logic App Consumption "Request" trigger's generated callback URL
 is HTTPS-only by construction — there is no HTTP variant of the trigger endpoint to disable. This
@@ -126,6 +146,28 @@ from:
 Standard plan and whether Key Vault is already provisioned for this project — not visible from
 this repository, flagged for the environment owner to confirm at deployment time** (see
 deployment-instructions.md's checklist).
+
+**Keeping both secrets out of run history:** a `securestring` parameter protects the value in the
+template layer, but an action's *evaluated* inputs are visible in Logic App run history to anyone
+with Reader on the resource — so a hand-built `Authorization: Basic <base64>` header would be
+readable there in cleartext. This is a different secret from the customer's own path token, and
+SCOPE.md's decision to drop path-token redaction does not cover it. Two mechanisms, chosen per
+action:
+
+- `Forward_Order_To_Medusa` uses the HTTP action's native
+  `authentication: { "type": "Basic", "username": "@parameters('medusaSecretApiKey')",
+  "password": "" }` instead of a hand-built header. Logic Apps masks the `authentication` block in
+  run history automatically, and — unlike securing the whole `inputs` object — this leaves the
+  forwarded order body visible for operational debugging. The empty password is correct: Medusa's
+  secret API key is the Basic-auth *username*, per
+  `issues/NIMBUS-129/05-order-api-route-implementation.md`. **If the Portal rejects an empty
+  password**, fall back to the explicit header plus
+  `runtimeConfiguration.secureData.properties: ["inputs"]` on this action, accepting the loss of
+  body visibility.
+- `Get_Token_List` passes its key as a custom `Ocp-Apim-Subscription-Key` header, which the
+  `authentication` property cannot express, so it uses
+  `runtimeConfiguration.secureData.properties: ["inputs"]`. Only `inputs` is secured — the
+  response `outputs` stay visible, which is what a list-fetch problem is actually debugged from.
 
 ## Deliverable 1: New File — `issues/NIMBUS-146/artifacts/logic-app-workflow-definition.json`
 
@@ -180,7 +222,14 @@ task):
           "Ocp-Apim-Subscription-Key": "@parameters('globalListsApiKey')"
         },
         "retryPolicy": {
-          "type": "none"
+          "type": "fixed",
+          "count": 3,
+          "interval": "PT5S"
+        }
+      },
+      "runtimeConfiguration": {
+        "secureData": {
+          "properties": ["inputs"]
         }
       }
     },
@@ -227,10 +276,17 @@ task):
         ]
       },
       "actions": {
-        "Compose_Customer_Number": {
+        "Compose_Matched_Value": {
           "type": "Compose",
           "runAfter": {},
-          "inputs": "@last(split(first(body('Filter_Matching_Token'))?['Value'], '::'))"
+          "inputs": "@coalesce(first(body('Filter_Matching_Token'))?['Value'], '')"
+        },
+        "Compose_Customer_Number": {
+          "type": "Compose",
+          "runAfter": {
+            "Compose_Matched_Value": ["Succeeded"]
+          },
+          "inputs": "@if(contains(outputs('Compose_Matched_Value'), '::'), last(split(outputs('Compose_Matched_Value'), '::')), '')"
         },
         "Condition_Customer_Number_Present": {
           "type": "If",
@@ -246,8 +302,12 @@ task):
                 "method": "POST",
                 "uri": "@concat(parameters('medusaOrderApiBaseUrl'), '/orderapi/orders?customerNumber=', outputs('Compose_Customer_Number'))",
                 "headers": {
-                  "Content-Type": "application/json",
-                  "Authorization": "@concat('Basic ', base64(concat(parameters('medusaSecretApiKey'), ':')))"
+                  "Content-Type": "application/json"
+                },
+                "authentication": {
+                  "type": "Basic",
+                  "username": "@parameters('medusaSecretApiKey')",
+                  "password": ""
                 },
                 "body": "@triggerBody()",
                 "retryPolicy": {
@@ -357,7 +417,9 @@ definition.
       planning pass it exists only as an approved, undeployed implementation plan.
 - [ ] Obtain a Medusa secret API key (`sk_...`) issued specifically for this Logic App, following
       Task 05's "Manual Verification" steps (Admin dashboard → Settings → API Key Management →
-      create a **Secret** key). This is a separate credential from the customer's own token.
+      create a **Secret** key). This is a separate credential from the customer's own token. It is
+      supplied as the HTTP action's Basic-auth `username` with an empty `password`, through the
+      action's native `authentication` block so Azure masks it in run history.
 
 ## Steps
 
@@ -386,7 +448,25 @@ definition.
 6. Populate the real GlobalLists list with authorized customer tokens per
    `token-list-schema.md`'s entry schema before enabling live traffic.
 7. Run through Task 03's documented test payloads against this deployed workflow (via the Portal's
-   "Run Trigger" / test tooling, or a manual HTTPS client) before considering this story done.
+   "Run Trigger" / test tooling, or a manual HTTPS client) before considering this story done,
+   including the malformed-entry (no `::` delimiter) regression check.
+
+## Secret handling notes
+
+- `Forward_Order_To_Medusa` uses the HTTP action's native `authentication` block (`type: Basic`,
+  the Medusa secret API key as `username`, empty `password`) rather than a hand-built
+  `Authorization` header. Azure masks that block in run history, while leaving the forwarded order
+  body visible for debugging. **If the Portal rejects an empty password**, replace it with an
+  explicit `Authorization: @concat('Basic ', base64(concat(parameters('medusaSecretApiKey'), ':')))`
+  header *and* add `"runtimeConfiguration": {"secureData": {"properties": ["inputs"]}}` to that
+  action — without the second part the key is readable in run history by anyone holding Reader on
+  the resource.
+- `Get_Token_List` already carries `runtimeConfiguration.secureData` on `inputs`, because its
+  GlobalLists subscription key travels as a custom `Ocp-Apim-Subscription-Key` header that the
+  `authentication` property cannot express. Only `inputs` is secured; the fetched list stays
+  visible in `outputs` for debugging.
+- Neither of these concerns the customer's own path token — redacting that is explicitly out of
+  scope for NIMBUS-146, per SCOPE.md.
 
 ## Rollback
 
@@ -412,7 +492,8 @@ logic), not live Azure execution (that's Task 03, which requires an actual deplo
   `equals(first(split("a1b2c3d4e5f6::579000283084", '::')), "a1b2c3d4e5f6")`.
 - **Then:** The expression evaluates `true` (first split part is `"a1b2c3d4e5f6"`, matching the
   path token exactly), the entry is included in the filtered array, and
-  `Compose_Customer_Number`'s `last(split(..., '::'))` yields `"579000283084"`.
+  `Compose_Customer_Number` yields `"579000283084"` (the `contains(..., '::')` test passes, so the
+  `last(split(..., '::'))` branch is taken).
 
 ### TC-2: Matched token with a null or empty customer number is not allowed (edge case)
 - **Given:** The token matches an entry, but `Compose_Customer_Number` resolves to `""` for the
@@ -422,7 +503,19 @@ logic), not live Azure execution (that's Task 03, which requires an actual deplo
 - **Then:** The expression evaluates `false`, `Response_Not_Allowed` returns `401` with body
   `{"error":"Not allowed"}`, and `Forward_Order_To_Medusa` does not run.
 
-### TC-3: Unmatched token produces an empty filtered array and takes the else branch (edge case)
+### TC-3: Matched entry with no `::` delimiter is not allowed (edge case, regression guard)
+- **Given:** `Parse_Token_List` output contains `{ "Uid": "9", "SortOrder": 9,
+  "Value": "a1b2c3d4e5f6" }` — the customer number was never encoded — and the trigger's path
+  token is `a1b2c3d4e5f6`.
+- **When:** `Filter_Matching_Token` matches the entry (`first(split("a1b2c3d4e5f6", '::'))` is
+  `"a1b2c3d4e5f6"`), then `Compose_Customer_Number` evaluates
+  `if(contains("a1b2c3d4e5f6", '::'), last(split(...)), '')`.
+- **Then:** `contains` is `false`, so the composed value is `""`,
+  `Condition_Customer_Number_Present` evaluates `false`, and `Response_Not_Allowed` returns `401`.
+  **The token is never sent to Medusa as its own `customerNumber`** — the failure mode a bare
+  `last(split(...))` would produce.
+
+### TC-4: Unmatched token produces an empty filtered array and takes the else branch (edge case)
 - **Given:** The trigger's path token is `does-not-exist` and no list entry's `Value` starts with
   that token before `::`.
 - **When:** `Filter_Matching_Token` runs.
@@ -431,7 +524,7 @@ logic), not live Azure execution (that's Task 03, which requires an actual deplo
   `Response_Unauthorized` action runs, returning `401` with body `{"error": "Token not
   recognized"}` — no token value anywhere in that response body.
 
-### TC-4: A Medusa 4xx response passes through unchanged (wiring/integration test)
+### TC-5: A Medusa 4xx response passes through unchanged (wiring/integration test)
 - **Given:** `Forward_Order_To_Medusa` receives a `404` response from Medusa (e.g. unrecognized
   `customerNumber`, per NIMBUS-144's contract) with body
   `{ "message": "...", "type": "not_found" }`.

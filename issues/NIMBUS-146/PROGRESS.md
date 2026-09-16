@@ -95,3 +95,70 @@
 - **Handover prompt:** Implement NIMBUS-146's Logic App plan from
   `issues/NIMBUS-146/manifest.md`, in task order 01 through 03. This produces reference artifacts
   under `issues/NIMBUS-146/artifacts/` only — no `apps/backend` or `apps/storefront` code changes.
+
+---
+
+## 2026-09-15 — Reference-artifact implementation complete
+
+- **Updated by:** Codex
+- **Outcome:** Implemented all three manifest tasks as the approved repository-side Azure
+  deliverables: `token-list-schema.md`, `logic-app-workflow-definition.json`,
+  `deployment-instructions.md`, and `test-payloads.md`. The workflow definition was parsed
+  successfully and checked for its HTTPS request-trigger route, secure credential parameters,
+  token-free 401 branches, non-empty-customer-number guard, disabled downstream retries, and
+  Medusa response pass-through after both successful and failed HTTP actions.
+- **Not completed here:** No Azure resource was deployed, no real GlobalLists values or credentials
+  were introduced, and no live manual tests were run. End-to-end cases remain blocked until
+  NIMBUS-129 Task 05 (`POST /orderapi/orders`) is deployed.
+- **Handover to:** Azure environment owner
+- **Handover prompt:** Apply `issues/NIMBUS-146/artifacts/logic-app-workflow-definition.json`
+  through the Azure Portal using `deployment-instructions.md`; populate the dedicated token list
+  from `token-list-schema.md`; then execute and record the manual checks in `test-payloads.md`.
+
+---
+
+## 2026-09-15 — Post-implementation review fixes
+
+- **Updated by:** Claude (main session), at the user's request after reviewing the delivered
+  artifacts against SCOPE.md.
+- **Outcome:** Four defects found in review were fixed in
+  `artifacts/logic-app-workflow-definition.json` and its documentation, with the Task 01–03 spec
+  files updated in step so the artifacts remain verbatim-consistent with the plan:
+  1. **Malformed list entry could forward the token as the customer number.** An entry whose
+     `Value` carried no `::` at all still matched `Filter_Matching_Token`, and the old
+     `last(split(...))` extraction then returned the *token* — non-empty, so it passed the guard
+     and would have been sent to Medusa as `?customerNumber=<token>`, violating SCOPE.md's rule
+     that a known token with no resolvable customer number must never reach NIMBUS-144.
+     Extraction is now delimiter-aware: `Compose_Matched_Value` holds the matched entry's raw
+     `Value`, and `Compose_Customer_Number` uses
+     `if(contains(..., '::'), last(split(..., '::')), '')`, so a malformed entry yields `''` and
+     is rejected by the existing guard. Covered by Task 02's new TC-3 and Task 03's new TC-4.
+  2. **Medusa and GlobalLists credentials were readable in run history.** A `securestring`
+     parameter protects the template layer only; evaluated action inputs are visible to anyone
+     with Reader on the resource. `Forward_Order_To_Medusa` now uses the HTTP action's native
+     `authentication` block (Basic, key as username, empty password) instead of a hand-built
+     `Authorization` header — Azure masks it, and the order body stays visible for debugging.
+     `Get_Token_List`, whose key travels as a custom header that `authentication` cannot express,
+     uses `runtimeConfiguration.secureData` on `inputs` only. This is separate from the customer's
+     own path token, whose redaction remains explicitly out of scope per SCOPE.md.
+  3. **`Get_Token_List` now retries 3 times** (`fixed`, `count: 3`, `interval: PT5S`) instead of
+     `type: none`. It is an idempotent GET against a third-party API where failures are usually
+     transient — the opposite case from the Medusa POST, which keeps `type: none` because 4xx
+     responses are business rejections that retrying cannot change.
+  4. **The three markdown artifacts rendered broken.** Every inline code span was a literal
+     `` \` `` and fences were `~~~`; restored to normal backticks and ``` fences.
+- **Not fixed (reviewed, accepted):** the APIM → Logic App path handoff in
+  `deployment-instructions.md` step 5 is still under-specified — APIM must rewrite the
+  `orders/{token}` path segment per request while preserving the callback URL's SAS query
+  params. The user accepted this as-is.
+- **Still unverified:** nothing here was executed against Azure. In particular, **Basic auth with
+  an empty password is unverified against the Portal** — `deployment-instructions.md` documents
+  the explicit-header + `secureData` fallback if it is rejected. Also note that if all four
+  `Get_Token_List` attempts fail, no `Response` action runs and the Logic App surfaces its own
+  failure to the caller (fail-closed, no order forwarded), rather than a designed status code.
+- **Handover to:** Azure environment owner (unchanged).
+- **Handover prompt:** Apply `issues/NIMBUS-146/artifacts/logic-app-workflow-definition.json`
+  through the Azure Portal using `deployment-instructions.md`, including its new "Secret handling
+  notes" section; populate the dedicated token list from `token-list-schema.md`; then execute and
+  record the manual checks in `test-payloads.md` — now seven cases, with the new TC-4 covering the
+  malformed-entry regression.

@@ -21,9 +21,9 @@ step performed by the environment owner afterward, per Task 02's `deployment-ins
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Extend token-list store to carry a customer number | `01-token-list-store-extension-implementation.md` | azure-integration | None | TODO |
-| 02 | Logic App workflow — token validation and order routing | `02-logic-app-workflow-implementation.md` | azure-integration | 01 | TODO |
-| 03 | Documented test payloads and manual verification plan | `03-test-documentation-implementation.md` | azure-integration | 01, 02 | TODO |
+| 01 | Extend token-list store to carry a customer number | `01-token-list-store-extension-implementation.md` | azure-integration | None | Complete |
+| 02 | Logic App workflow — token validation and order routing | `02-logic-app-workflow-implementation.md` | azure-integration | 01 | Complete |
+| 03 | Documented test payloads and manual verification plan | `03-test-documentation-implementation.md` | azure-integration | 01, 02 | Complete |
 
 ## Deliverables (written under `issues/NIMBUS-146/artifacts/`)
 

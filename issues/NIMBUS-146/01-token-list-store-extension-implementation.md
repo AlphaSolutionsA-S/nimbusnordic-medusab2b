@@ -1,6 +1,6 @@
 # Task 01: Extend Token-List Store to Carry a Customer Number — Implementation Plan
 
-**Status:** TODO
+**Status:** Complete
 **App:** azure-integration (no `apps/backend` or `apps/storefront` code changes)
 **App Root:** `issues/NIMBUS-146/artifacts` (deliverables live in this issue folder, not in `apps/`)
 **Task ID:** 01
@@ -66,10 +66,11 @@ Value = "a1b2c3d4e5f6::579000283084"
 order) — this task does not change them.
 
 **Customer-number invariant:** every authorized token entry must resolve to a non-empty Business
-Central customer number. For the primary design, the portion after `::` must not be empty. For the
-fallback design, `CustomerNumber` must be neither `null` nor `""`. Task 02 still enforces this at
-runtime and returns `401` with `{"error":"Not allowed"}` for malformed entries so they cannot be
-forwarded to Medusa.
+Central customer number. For the primary design, the `::` delimiter must be present *and* the
+portion after it must not be empty — an entry with no delimiter at all is equally invalid, because
+it matches the token yet encodes no customer number. For the fallback design, `CustomerNumber` must
+be neither `null` nor `""`. Task 02 still enforces this at runtime and returns `401` with
+`{"error":"Not allowed"}` for malformed entries so they cannot be forwarded to Medusa.
 
 **Why a delimiter inside `Value` rather than a new property:** the example's list entries have
 exactly three fixed fields. Encoding inside the existing `Value` field guarantees compatibility
@@ -132,8 +133,11 @@ Each entry has the same three fields as the example list, with the customer numb
 | `SortOrder` | number | Display/sort order (unchanged from example)    |
 | `Value`     | string | `"<token>::<customerNumber>"`                  |
 
-The `<customerNumber>` portion is required and must not be empty. An entry such as
-`"a1b2c3d4e5f6::"` is invalid and is rejected by Task 02's runtime guard.
+The `<customerNumber>` portion is required and must not be empty. Two malformed shapes are
+rejected by Task 02's runtime guard — `"a1b2c3d4e5f6::"` (delimiter present, customer number
+empty) and `"a1b2c3d4e5f6"` (no `::` delimiter at all, i.e. the customer number was never
+encoded). The second shape still matches the token, so Task 02 checks for the delimiter before
+extracting; otherwise the token itself would be forwarded as the customer number.
 
 ## Sample entries
 
@@ -169,7 +173,8 @@ read `CustomerNumber` directly, no split needed).
 - [ ] Populate the real list with one entry per authorized customer token, each resolving to that
       customer's Business Central customer number (the same value expected in
       `Company.business_central_customer_number`, per NIMBUS-147's SCOPE.md).
-- [ ] Confirm no token-list entry has a `null` or empty-string Business Central customer number.
+- [ ] Confirm no token-list entry has a `null` or empty-string Business Central customer number,
+      and that every entry in the primary design actually contains the `::` delimiter.
 ```
 
 ## Test Cases
