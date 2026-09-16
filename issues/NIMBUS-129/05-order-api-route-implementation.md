@@ -1,6 +1,6 @@
 # Task 05: Order API Route + Middleware (NIMBUS-144 endpoint) — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 05
@@ -477,7 +477,7 @@ Run with: `cd apps/backend && pnpm test:integration:http`.
 curl -X POST "http://localhost:9000/orderapi/orders?customerNumber=<that company's number>" \
   -H "Content-Type: application/json" \
   -u "sk_your_secret_key_here:" \
-  -d '{"externalOrderNumber":"MANUAL-TEST-1","orderDate":"2026-09-02","currencyCode":"DKK","lines":[{"lineNumber":1,"itemNumber":"ITEM-1","eanNo":"1234567890123","description":"Test item","quantity":1,"unitPrice":10}]}'
+  -d '{"externalOrderNumber":"MANUAL-TEST-1","orderDate":"02-09-2026","currencyCode":"DKK","lines":[{"lineNumber":1,"itemNumber":"ITEM-1","eanNo":"1234567890123","description":"Test item","quantity":1,"unitPrice":10}]}'
 ```
 
 Expect `201` with `{"order_id":"order_...","status":"pending"}` immediately (no waiting). Query

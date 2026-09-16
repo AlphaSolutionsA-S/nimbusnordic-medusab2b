@@ -1,6 +1,6 @@
 # Task 02: Canonical Order Contract (zod schema) — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02
@@ -52,9 +52,69 @@ rather than defining two near-identical schemas — `billTo` payloads simply nev
 required when the address object itself is present: `name`, `addressLine1`, `city`, `postCode`,
 `country`. Optional: `contact`, `addressLine2`, `state`.
 
-**Order line** — required: `lineNumber`, `itemNumber`, `eanNo`, `description`, `quantity`,
-`unitPrice`. Optional: `custItemNo`, `description2`, `unitOfMeasureCode`, `discountPercent`,
-`discountAmount`, `discountAppliedBeforeTax`, `taxCode`, `taxPercent`, `requestedShipmentDate`.
+**Order line** — required: `lineNumber`, `eanNo`, `quantity`. Optional: `unitPrice`,
+`itemNumber`, `description`, `custItemNo`, `description2`, `unitOfMeasureCode`,
+`discountPercent`, `discountAmount`, `discountAppliedBeforeTax`, `taxCode`, `taxPercent`,
+`requestedShipmentDate`.
+
+**`unitPrice` made optional 2026-09-16 (user decision).** This story's SCOPE.md drew its line at
+"computed totals are derived outputs, keep calculation inputs" and listed `unitPrice` as an
+input. On review that was one level too shallow: `unitPrice` is itself derived, by Business
+Central, from (customer, item, quantity, date) via sales prices / price lists / customer price
+groups. The user confirmed the decisive fact — **these orders are keyed into BC by hand today,
+and BC already applies the customer's price in that manual process** — so the automated path
+should mirror it rather than assert a price of its own. The contract was also internally
+inconsistent before this: every other BC-priced line field (`discountPercent`, `discountAmount`,
+`discountAppliedBeforeTax`, `taxCode`, `taxPercent`) was already optional, and `unitPrice` was
+the lone required exception among its own siblings.
+The submitter-owned facts on a line are therefore: **which item (`eanNo`), how many
+(`quantity`), and when (`requestedShipmentDate`)** — plus `lineNumber` as the sender's identity
+for the line. Everything else is traceability or a stated expectation.
+**Binding guidance for NIMBUS-148:** a submitted `unitPrice` is a *stated expectation, not an
+instruction*. Do **not** set it explicitly on the Business Central sales-order line — let BC
+price the line as it does for a manually keyed order. Setting it explicitly overrides BC's
+contract price, so a stale price in a customer's ordering system would silently beat the
+negotiated one. Use the submitted value only to detect and flag a discrepancy.
+**Trade-off accepted:** when a sender omits `unitPrice`, Medusa retains no price for that line
+at all, so the metadata blob carries only EAN and quantity until BC prices the order.
+
+**Revised 2026-09-16 (user decision):** `itemNumber` and `description` were originally required
+and are now **optional**. The line's item is identified by `eanNo` alone — Business Central
+resolves that EAN to a real item, and BC's own item master supplies the description that ends up
+on the sales-order line. Two supporting findings: in all five lines across both real EDI samples
+`ItemNo` is byte-identical to `CustItemNo` (both carry the *customer's* SKU coding, e.g.
+`FLS-NIM-VESPERMNA-XL`, not a Nimbus/BC item number), and nothing in the ingestion path reads
+either field — the canonical payload is stored as an opaque blob in `order.metadata`.
+The counter-argument raised during review was that NIMBUS-158's admin widget has no other source
+for a human-readable line label, since these orders are header-only with no `OrderLineItem`
+records. The user overruled it: that widget is only consulted when the Medusa→BC integration
+*fails*, and the EAN is sufficient to identify an item in that situation.
+**Guidance for NIMBUS-158:** display `description` (and `itemNumber`) when present, but do not
+assume either exists — render from `eanNo` alone when they are absent.
+
+**Field-format validation added 2026-09-16 (user decisions).** The contract originally typed
+every string as `z.string().min(1)`, which accepted structurally valid but meaningless values.
+Four rules were added, one option was explicitly declined:
+
+- **`eanNo`** — must be exactly 13 digits (`/^\d{13}$/`), kept as a `string` (not a number, so
+  leading zeros survive). It carries the line's item identity on its own now that `itemNumber`
+  is optional, so an unvalidated `"x"` was the weakest point in the contract.
+- **`lineNumber`** — must be unique within an order, enforced by a `.refine` on the `lines`
+  array. It is the sender's identity for the line, so two lines both claiming to be line 1 is
+  incoherent.
+- **A repeated `eanNo` across lines is explicitly ALLOWED** (declined, not overlooked): the same
+  item may legitimately appear on several lines, e.g. with different requested shipment dates.
+- **`currencyCode`** — must be 3 letters (`/^[A-Za-z]{3}$/`), ISO 4217. Case-insensitive because
+  Medusa lowercases `currency_code` on persist anyway. Previously `"Danish Kroner"` would have
+  been accepted and stored.
+- **All date fields** (`orderDate`, `requestedDeliveryDate`, `requestedShipmentDate`) — must be
+  `DD-MM-YYYY`, matching the source EDI (`<DocumentDate>27-08-2026</DocumentDate>`), **and** must
+  be a real calendar date. The pattern alone would accept `31-02-2026`, so `CanonicalDateSchema`
+  also range-checks against the actual calendar (`29-02-2028` passes; `29-02-2027` does not).
+
+**Fixture correction**: the fixtures originally carried ISO dates (`2026-08-27`), which did not
+match the EDI samples they claim to be derived from and would now fail validation. They are
+corrected to `27-08-2026` and `26-08-2026`, matching `order1.xml`/`order2.xml` exactly.
 
 **Assumption carried from NIMBUS-147's SCOPE.md "Findings from Real EDI Samples"**: by the time a
 payload reaches this schema, `unitPrice` (and any other numeric field) is already a JSON number,
@@ -87,10 +147,10 @@ export type CanonicalOrderAddress = z.infer<typeof CanonicalOrderAddressSchema>;
 export const CanonicalOrderLineSchema = z
   .object({
     lineNumber: z.number().int().nonnegative(),
-    itemNumber: z.string().min(1),
+    itemNumber: z.string().min(1).optional(),
     custItemNo: z.string().optional(),
     eanNo: z.string().min(1),
-    description: z.string().min(1),
+    description: z.string().min(1).optional(),
     description2: z.string().optional(),
     unitOfMeasureCode: z.string().optional(),
     quantity: z.number().positive(),

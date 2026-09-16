@@ -3,6 +3,7 @@
 **Project ID:** NIMBUS-129-order-ingestion
 **Date:** 2026-09-02
 **Ready for Dispatch:** true
+**Implemented:** 2026-09-16 on branch `feature/NIMBUS-129-order-ingestion`
 
 ## Scope Note
 
@@ -25,11 +26,11 @@ with what this plan actually built.
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Order Ingestion Module (canonical contract + dedupe-index model) | `01-order-ingestion-module-implementation.md` | backend | None | TODO |
-| 02 | Canonical Order Contract (zod schema) | `02-canonical-order-contract-implementation.md` | backend | None | TODO |
-| 03 | Synchronous Validate + Create Order Workflow | `03-create-order-workflow-implementation.md` | backend | 01, 02 | TODO |
-| 04 | Post-Creation Async Event Chain | `04-order-ingestion-event-chain-implementation.md` | backend | 01, 03 | TODO |
-| 05 | Order API Route + Middleware (NIMBUS-144 endpoint) | `05-order-api-route-implementation.md` | backend | 01, 02, 03, 04 | TODO |
+| 01 | Order Ingestion Module (canonical contract + dedupe-index model) | `01-order-ingestion-module-implementation.md` | backend | None | DONE |
+| 02 | Canonical Order Contract (zod schema) | `02-canonical-order-contract-implementation.md` | backend | None | DONE |
+| 03 | Synchronous Validate + Create Order Workflow | `03-create-order-workflow-implementation.md` | backend | 01, 02 | DONE |
+| 04 | Post-Creation Async Event Chain | `04-order-ingestion-event-chain-implementation.md` | backend | 01, 03 | DONE |
+| 05 | Order API Route + Middleware (NIMBUS-144 endpoint) | `05-order-api-route-implementation.md` | backend | 01, 02, 03, 04 | DONE |
 
 **Task file renames from an earlier revision**: `03-receive-order-workflow-implementation.md`
 and `04-process-incoming-order-workflow-implementation.md` no longer exist — they were superseded
@@ -45,8 +46,10 @@ content, not incremental edits.
   consumed by Tasks 03 and 04's tests.
 - Task 02 exports `CanonicalOrderSchema` (a single schema now, not an envelope/canonical pair) —
   consumed directly by Task 05's middleware for body validation, and by Task 03's workflow for
-  its `CanonicalOrder` TypeScript type. Also exports the test fixtures file
-  `canonical-order-fixtures.ts`, consumed by Tasks 03, 04, and 05's test files.
+  its `CanonicalOrder` TypeScript type. The shared test fixtures live in
+  `src/modules/order-ingestion/__fixtures__/canonical-order-fixtures.ts` (moved out of
+  `__tests__/` during implementation — see Deviations below), consumed by Tasks 03, 04, and 05's
+  test files.
 - Task 03 exports `createOrderFromCanonicalPayloadWorkflow` — consumed by Task 05's route
   handler. Its `matchCompanyAndCheckDuplicateStep`/`createOrderAndReferenceStep` are internal to
   this workflow, not consumed elsewhere.
@@ -82,3 +85,36 @@ Backend test infrastructure already exists (`apps/backend/jest.config.js`, three
 gated commands). No scaffolding needed. All new tests follow existing conventions:
 `pnpm test:unit` (Task 02), `pnpm test:integration:modules` (Task 01),
 `pnpm test:integration:http` (Tasks 03, 04, 05).
+
+## Deviations From the Plan Found During Implementation
+
+Four things in the planned skeletons did not survive contact with the real repo. Each was
+verified empirically (a failing test or a failing suite), not assumed:
+
+1. **`canonical-order-fixtures.ts` moved out of `__tests__/`.** The plan put it at
+   `src/modules/order-ingestion/__tests__/canonical-order-fixtures.ts`, but this repo's
+   `test:integration:modules` glob is `**/src/modules/*/__tests__/**/*.[jt]s` — it picked the
+   fixtures file up as a test suite and failed the whole run with "Your test suite must contain
+   at least one test." The file now lives at
+   `src/modules/order-ingestion/__fixtures__/canonical-order-fixtures.ts`; Tasks 02–05's test
+   files import it from there.
+2. **The model no longer has a `default` export.** The planned
+   `export default OrderExternalReference` alongside the named export made MikroORM discover the
+   entity twice — `MetadataError: Duplicate entity names are not allowed: OrderExternalReference`.
+   The module now follows this repo's own convention (`company`, `quote`): a named export only,
+   re-exported through `models/index.ts`, with `service.ts` importing from `./models`.
+3. **Workflow rejections are serialized plain objects, not `MedusaError` instances.** This was
+   the residual uncertainty Task 03's doc flagged, and it is real: the engine rejects with a
+   plain object where `instanceof Error === false` but `type` (`"not_found"` /
+   `"duplicate_error"`) and `message` survive. Consequence for tests: `.rejects.toThrow(/re/)`
+   never matches, so Task 03's TC-2/TC-3 assert with `.rejects.toMatchObject({ type, message })`
+   instead. **Consequence for the route: none.** Medusa's `errorHandler` keys off
+   `err.type || err.name`, not `instanceof` — verified by reading
+   `@medusajs/framework/dist/http/middlewares/error-handler.js` and confirmed by Task 05's TC-5
+   (404) and TC-6 (422) passing. The route's no-try/catch design holds as planned.
+4. **`currency_code` is persisted lowercase.** `createOrders({ currency_code: "DKK" })` reads
+   back as `"dkk"`, so Task 03's TC-1 asserts `"dkk"`.
+
+Minor style alignment (not defects): the skeletons used single quotes and imported
+`MiddlewareRoute` from `@medusajs/framework`; the implementation uses this repo's actual
+conventions — double quotes and `MiddlewareRoute` from `@medusajs/medusa`.

@@ -2,6 +2,7 @@ import { QUOTE_MODULE } from "./src/modules/quote";
 import { APPROVAL_MODULE } from "./src/modules/approval";
 import { COMPANY_MODULE } from "./src/modules/company";
 import { BUSINESS_CENTRAL_MODULE } from "./src/modules/business-central";
+import { ORDER_INGESTION_MODULE } from "./src/modules/order-ingestion";
 import { loadEnv, defineConfig } from "@medusajs/framework/utils";
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
@@ -29,6 +30,9 @@ module.exports = defineConfig({
     },
     [BUSINESS_CENTRAL_MODULE]: {
       resolve: "./modules/business-central",
+    },
+    [ORDER_INGESTION_MODULE]: {
+      resolve: "./modules/order-ingestion",
     },
     [ "notification" ]: {
       resolve: "@medusajs/medusa/notification",

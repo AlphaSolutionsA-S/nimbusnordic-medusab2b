@@ -1,6 +1,6 @@
 # Task 04: Post-Creation Async Event Chain — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 04

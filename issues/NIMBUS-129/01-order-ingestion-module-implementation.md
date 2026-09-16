@@ -1,6 +1,6 @@
 # Task 01: Order Ingestion Module (canonical contract + dedupe-index model) — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01
