@@ -9,5 +9,8 @@ export const cartFields = [
 
 export const retrieveCartTransformQueryConfig = {
   defaults: cartFields,
+  // Keep the defaults queryable now that a non-empty allow list activates
+  // strict field filtering on this route.
+  allowed: cartFields.map((field) => field.replace(/^\*/, "")),
   isList: false,
 };
