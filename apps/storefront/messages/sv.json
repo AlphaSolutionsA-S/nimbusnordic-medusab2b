@@ -485,6 +485,20 @@
     },
     "bcOrdersPage": {
       "heading": "BC-beställningar"
+    },
+    "bcOrderLineFulfillment": {
+      "statusColumnLabel": "Status",
+      "fullyShippedLabel": "Skickad",
+      "notShippedLabel": "Inte skickad än",
+      "partiallyShippedLabel": "{shipped} av {ordered} skickade",
+      "reservedLabel": "{quantity} reserverade",
+      "awaitingLabel": "{quantity} väntar",
+      "reservationQuantityLabel": "{quantity} reserverade",
+      "reservationFromLabel": "Från {source}",
+      "reservationLocationLabel": "Plats {location}",
+      "reservationExpectedLabel": "Förväntas {date}",
+      "reservationShipsLabel": "Skickas {date}",
+      "reservationFreightLabel": "Frakt: {freightType}"
     }
   },
   "Cart": {

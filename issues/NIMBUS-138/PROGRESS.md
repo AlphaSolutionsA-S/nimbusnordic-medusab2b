@@ -153,3 +153,143 @@ business-facing and technical plans only under `issues\NIMBUS-138\`.
   and HTTP route integration coverage, then perform the storefront walkthrough with the backend
   running. Before enabling real BC writes, task 08 must verify the custom BC action, including that
   it deduplicates the deterministic `requestId`; task 09 must replace the offline stub.
+
+## 2026-09-28 - Task 07 stubbed end-to-end verification complete
+
+- **Outcome:** The user confirmed task 07 (stubbed end-to-end verification) is done. The demoable
+  stubbed milestone is reached. Tasks 03–06 stay `DONE (stub)` until task 09. The implementation is
+  committed on `develop` (`d508e67`), not on a `feature/NIMBUS-138` branch.
+- **Next owner:** implementor (task 08 contract spike)
+- **Handover prompt:** Run task 08 (`08-bc-return-contract-verification.md`) against the target BC
+  sandbox: confirm the custom return-order API/action, its request/response schema, that
+  `sequence === "Line No."`, the error catalogue, and that BC deduplicates the deterministic
+  `requestId`. Record the result in `issues\NIMBUS-138\CONTRACT.md`. Only then start task 09, which
+  replaces the offline stub in `service.ts` with the real BC call. Keep the feature disabled for
+  customers until task 09 is verified against sandbox BC.
+
+## 2026-09-28 - Task 08 contract partially verified
+
+- **Outcome:** Created `CONTRACT.md` from the tenant OData metadata (`orderreturncreate metadata.xml`)
+  and the customer's description. Confirmed: the unbound custom action
+  `CustomerPortalReturns_CreateReturnOrder`, called as a `POST` to
+  `.../v2.0/{TenantId}/{Environment}/ODataV4/CustomerPortalReturns_CreateReturnOrder?company='{companyName}'`,
+  with the `Edm.String` parameters `requestId`, `sourceOrderNo`, and `lines`. **`lines` is a
+  JSON-encoded string**, not an array. The return type is `Edm.String`. The metadata exposes
+  `CS_EnabledReasonCodes` as a candidate return-reason source.
+- **Still open:** Response string format, error catalogue, `requestId` deduplication, whether
+  `sequence` equals "Line No.", reason-code filter, non-goals, permissions, and sandbox test data.
+  All of these need a sandbox call.
+- **Next owner:** implementor (finish task 08 in the sandbox, then task 09)
+- **Handover prompt:** Close the OPEN items in `issues\NIMBUS-138\CONTRACT.md` with a real sandbox
+  call. Then implement task 09 from the change list in CONTRACT.md: build the ODataV4 URL with the
+  company name, send `lines` as `JSON.stringify(params.lines)`, parse the `{ value: string }`
+  response into `BCReturnOrder`, and replace the dummy reason provider (the customer uses codes
+  such as `NORMAL`).
+
+## 2026-09-28 - Contract items confirmed by customer
+
+- **Outcome:** The customer confirmed three contract items: order line numbers are the v2.0
+  `sequence` (the current mapping stands); the action does not post a credit memo, receipt,
+  payment, or refund; and the existing app registration has the required permissions.
+  `CONTRACT.md` is updated.
+- **Still open:** Response string format, error catalogue, `requestId` deduplication, the
+  return-reason filter on `CS_EnabledReasonCodes`, and sandbox test data.
+- **Next owner:** implementor (task 08 remainder, then task 09)
+
+## 2026-09-28 - Task 09 real BC implementation
+
+- **Outcome:** Replaced both stubs in `apps/backend/src/modules/business-central/service.ts`.
+  `createReturnFromSalesOrder` now POSTs to `ODataV4/CustomerPortalReturns_CreateReturnOrder`,
+  with `lines` sent as a JSON string and a 30 s timeout. `listReturnReasons` reads
+  `ODataV4/CS_EnabledReasonCodes`. The company is scoped by the new
+  `BUSINESS_CENTRAL_COMPANY_ID` config (GUID); its name is read from
+  `/companies(id)`. The helper is reusable for later calls, as the customer requested. Error
+  classification is documented in `CONTRACT.md`. The seam types, workflow, routes, and
+  storefront are unchanged. `return-stub.spec.ts` is replaced by `return.spec.ts` (fetch-mocked).
+- **Validation:** `return.spec.ts` passes, and the backend `pnpm build` passes. `service.spec.ts`
+  has one failing test that was already failing (`listOrders › stops filling from salesInvoices
+  after the round-trip guardrail…`); neither `listOrders` nor that test was changed.
+- **Still open:** Set `BUSINESS_CENTRAL_COMPANY_ID` in `.env` and in Cloud environments. Run a
+  sandbox return to confirm the response `value` format, BC error bodies, `requestId`
+  deduplication, and whether `CS_EnabledReasonCodes` needs a `DocType`/`Type` filter.
+- **Next owner:** implementor / customer (sandbox verification)
+
+## 2026-09-28 - TEMP: return reason fixed to NORMAL
+
+- **Outcome:** BC reason codes cannot be fetched yet, so reason selection is temporarily bypassed,
+  at the customer's request. Every change is marked `TEMP (NIMBUS-138)`:
+  - Storefront `bc-order-return/index.tsx`: the reason select is disabled, and every line sends
+    `return_reason_code: "NORMAL"`.
+  - Storefront `bc-order-detail-template.tsx`: `listBCReturnReasons()` is no longer called; an empty
+    list is passed instead.
+  - Backend `prepare-bc-return.ts`: `listReturnReasons()` is no longer called, and only `NORMAL` is
+    accepted.
+- **Next owner:** implementor. Revert all `TEMP (NIMBUS-138)` markers once `CS_EnabledReasonCodes`
+  (and any needed filter) is verified against BC.
+
+## 2026-09-29 - Returns resolve the source order by number (invoiced orders)
+
+- **Outcome:** Returns failed with a 500 because invoiced orders have no BC sales order, and the
+  order page hands the invoice id to the return flow; the salesOrders-only id lookup found nothing.
+  The customer decided: `sourceOrderNo` is always the **sales order no.**, `sourceLineNo` is the
+  line's own sequence (the **invoice line sequence** for invoiced lines), and both open and
+  invoiced lines are returnable. The return flow now posts to
+  `/store/bc-orders/{orderNumber}/returns` and the workflow uses the merged `getOrder` lookup
+  (open order lines and invoice lines). The now-unused `getOrderBySalesOrderId` and
+  `BCGetOrderBySalesOrderIdParams` are removed. Temporary debug logging (marked `TEMP (NIMBUS-138)`)
+  now covers the BC request URL/body, the BC response, and unexpected route errors.
+- **Known risk:** In partially invoiced orders, and in orders with several invoices, the same
+  sequence number can appear on more than one line. The storefront draft is keyed by sequence, and
+  BC receives only `sourceLineNo`, so those rows cannot be told apart.
+- **Next owner:** implementor / customer (sandbox run with an invoiced order)
+
+## 2026-09-29 - Shipped-only returns and order-line reservations
+
+- **Outcome:** Two changes.
+  - **Shipped-only returns:** Unshipped goods can no longer be returned. `BCOrderLine` now carries
+    `shippedQuantity` and `returnableQuantity`.
+    - Order lines: returnable = `shippedQuantity − invoicedQuantity`.
+    - Invoice lines: returnable = the full invoiced `quantity`.
+    - The return workflow caps each `sourceLineNo` at the sum of its lines' returnable quantity.
+    - The return form shows a status column, caps each quantity input, and disables unshipped
+      lines. The trigger is hidden when nothing is returnable.
+  - **Order-line reservations:** The order detail page shows a per-line status with reservations.
+    - Source: `GET /api/abakion/customerPortal/v2.0/companies({BUSINESS_CENTRAL_COMPANY_ID})/salesOrderReservationEntries?$filter=documentNumber eq '…'`
+      (metadata: `abakion api metadata.xml`), fetched in parallel with the order.
+    - Only `reservationStatus = Reservation` entries are used, matched to lines by
+      `lineNumber = sequence`, with `|quantityBase|` as the quantity.
+    - The page shows "shipped · reserved · awaiting", and a `<details>` row lists quantity, source,
+      location, expected receipt, shipment date, and freight.
+    - A failed reservation fetch is logged and does not block the order.
+  - **Translations:** Added `Account.bcOrderLineFulfillment` for all 8 locales.
+- **Validation:** The backend build passes. The BC module tests pass (3 new `getOrder` tests),
+  apart from the pre-existing `listOrders` guardrail failure. The storefront return form and
+  order-detail template tests pass (6/6, including 3 new). Storefront tsc and lint are clean for
+  the touched files.
+- **Open:**
+  - Verify against real BC:
+    - that `shippedQuantity`/`invoicedQuantity` are populated;
+    - the sign and unit of `quantityBase`;
+    - the `reservedFrom` values.
+  - Earlier returns are not subtracted from returnable quantities (possible via `salesReturnOrders`).
+  - Reservation display arguably belongs in its own Jira issue.
+- **Next owner:** implementor / customer (sandbox walkthrough)
+
+## 2026-09-29 - Reservations matched by item + variant
+
+- **Outcome:** A real entry showed that `salesOrderReservationEntries` returns the **supply side**:
+  `documentNumber`/`lineNumber` point at the purchase-order line (e.g. PO1865 / 30000), and the
+  sales order appears only in `reservedFor`. A reservation for Camden L was therefore shown on the
+  freight line.
+- **Changes:**
+  - Reservations are now matched to order lines by `itemNumber` + `variantCode`. The order query
+    expands `salesOrderLines($expand=item,itemVariant)`.
+  - When several lines match, the reservation fills the line that still has unshipped quantity.
+  - The UI caps "reserved" at the unshipped quantity.
+  - Observed `quantityBase` is positive; `Math.abs` is kept as a guard.
+- **Validation:** Service tests pass (18/19; only the pre-existing `listOrders` guardrail test
+  fails). Storefront tests pass (6/6).
+- **Open:**
+  - Confirm that the v2.0 `itemVariant` expand works on the tenant.
+  - Ask the BC team to expose the sales order line no. (the reserved-for source ref. no.) on the
+    entry, so matching can be exact.

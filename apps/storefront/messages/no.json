@@ -485,6 +485,20 @@
     },
     "bcOrdersPage": {
       "heading": "BC-bestillinger"
+    },
+    "bcOrderLineFulfillment": {
+      "statusColumnLabel": "Status",
+      "fullyShippedLabel": "Sendt",
+      "notShippedLabel": "Ikke sendt ennå",
+      "partiallyShippedLabel": "{shipped} av {ordered} sendt",
+      "reservedLabel": "{quantity} reservert",
+      "awaitingLabel": "{quantity} venter",
+      "reservationQuantityLabel": "{quantity} reservert",
+      "reservationFromLabel": "Fra {source}",
+      "reservationLocationLabel": "Lokasjon {location}",
+      "reservationExpectedLabel": "Forventet {date}",
+      "reservationShipsLabel": "Sendes {date}",
+      "reservationFreightLabel": "Frakt: {freightType}"
     }
   },
   "Cart": {

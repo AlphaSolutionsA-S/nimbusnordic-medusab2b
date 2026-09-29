@@ -1,4 +1,4 @@
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils"
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 import { APPROVAL_MODULE } from "../../../modules/approval";
 import {
@@ -27,6 +27,10 @@ export const updateApprovalStep = createStep(
         id: input.id,
       },
     });
+
+    if (!approval || approval.status !== ApprovalStatusType.PENDING) {
+      throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Only pending approvals can be decided");
+    }
 
     if (input.status === ApprovalStatusType.REJECTED) {
       const { data: approvalsToReject } = await query.graph({

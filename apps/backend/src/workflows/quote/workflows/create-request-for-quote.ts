@@ -39,15 +39,15 @@ export const createRequestForQuoteWorkflow = createWorkflow(
         "shipping_methods.*",
         "promotions.code",
       ],
-      variables: { id: input.cart_id },
+      variables: { filters: { id: input.cart_id, customer_id: input.customer_id } },
       list: false,
       throw_if_key_not_found: true,
     });
 
     const customer = useRemoteQueryStep({
       entry_point: "customer",
-      fields: ["id", "customer"],
-      variables: { id: input.customer_id },
+      fields: ["id", "email"],
+      variables: { filters: { id: input.customer_id } },
       list: false,
       throw_if_key_not_found: true,
     }).config({ name: "customer-query" });

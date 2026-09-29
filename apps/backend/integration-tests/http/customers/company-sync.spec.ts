@@ -76,15 +76,6 @@ medusaIntegrationTestRunner({
         });
       }
 
-      await api.post(
-        `/store/companies/${companyId}/employees`,
-        {
-          customer_id: customer.id,
-          spending_limit: 0,
-          is_admin: true,
-        },
-        authenticatedStoreHeaders
-      );
 
       return companyId;
     }

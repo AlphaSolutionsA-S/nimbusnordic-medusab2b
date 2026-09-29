@@ -485,6 +485,20 @@
     },
     "bcOrdersPage": {
       "heading": "BC Orders"
+    },
+    "bcOrderLineFulfillment": {
+      "statusColumnLabel": "Status",
+      "fullyShippedLabel": "Shipped",
+      "notShippedLabel": "Not shipped yet",
+      "partiallyShippedLabel": "{shipped} of {ordered} shipped",
+      "reservedLabel": "{quantity} reserved",
+      "awaitingLabel": "{quantity} awaiting",
+      "reservationQuantityLabel": "{quantity} reserved",
+      "reservationFromLabel": "From {source}",
+      "reservationLocationLabel": "Location {location}",
+      "reservationExpectedLabel": "Expected {date}",
+      "reservationShipsLabel": "Ships {date}",
+      "reservationFreightLabel": "Freight: {freightType}"
     }
   },
   "Cart": {

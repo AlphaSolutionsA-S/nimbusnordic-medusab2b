@@ -1,6 +1,6 @@
+import type { Logger } from "@medusajs/framework/types";
 import { MedusaError } from "@medusajs/framework/utils";
 import type {
-  BCGetOrderBySalesOrderIdParams,
   BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
@@ -8,6 +8,7 @@ import type {
   BCOrderDetail,
   BCOrderInvoiceSummary,
   BCOrderLine,
+  BCOrderLineReservation,
   BCCreateReturnParams,
   BCCustomer,
   BCCustomerBlockedState,
@@ -33,6 +34,11 @@ const SALES_ORDER_DEDUP_FETCH_CAP = 10000;
 const INVOICE_FILL_BATCH_SIZE = 50;
 const MAX_INVOICE_FILL_ROUND_TRIPS = 50;
 const MAX_ORDER_DETAIL_INVOICES = 50;
+const CREATE_RETURN_ORDER_ACTION = "CustomerPortalReturns_CreateReturnOrder";
+const ENABLED_REASON_CODES_ENTITY_SET = "CS_EnabledReasonCodes";
+const CREATE_RETURN_TIMEOUT_MS = 30000;
+const CUSTOMER_PORTAL_API_PATH = "api/abakion/customerPortal/v2.0";
+const BC_EMPTY_DATE = "0001-01-01";
 
 type BusinessCentralTokenResponse = {
   access_token: string;
@@ -244,11 +250,79 @@ type BCSalesOrderLineRaw = {
   lineType?: string;
   itemId?: string;
   item?: { number?: string; displayName?: string };
+  itemVariant?: { code?: string } | null;
   description?: string;
   quantity?: number;
   unitPrice?: number;
   amountExcludingTax?: number;
+  shippedQuantity?: number;
+  invoicedQuantity?: number;
 };
+
+type BCReservationEntryRaw = {
+  id?: unknown;
+  itemNumber?: unknown;
+  variantCode?: unknown;
+  reservationStatus?: unknown;
+  quantityBase?: unknown;
+  reservedFrom?: unknown;
+  locationCode?: unknown;
+  freightType?: unknown;
+  expectedReceiptDate?: unknown;
+  shipmentDate?: unknown;
+};
+
+type BCItemReservation = {
+  itemNumber: string;
+  variantCode: string;
+  reservation: BCOrderLineReservation;
+};
+
+// Reservation entries describe the supply side (e.g. the purchase order line), so they cannot be
+// matched by line number; they are matched to the order's lines by item and variant instead,
+// filling the lines that still have unshipped quantity first.
+function allocateReservations(
+  lines: BCSalesOrderLineRaw[],
+  itemReservations: BCItemReservation[]
+): Map<string, BCOrderLineReservation[]> {
+  const reservationsByLineId = new Map<string, BCOrderLineReservation[]>();
+  const openQuantityByLineId = new Map(
+    lines.map((line) => [line.id, (line.quantity ?? 0) - (line.shippedQuantity ?? 0)])
+  );
+
+  for (const { itemNumber, variantCode, reservation } of itemReservations) {
+    const candidates = lines.filter(
+      (line) =>
+        line.lineType === "Item" &&
+        line.item?.number === itemNumber &&
+        (line.itemVariant?.code ?? "") === variantCode
+    );
+    const target =
+      candidates.find((line) => (openQuantityByLineId.get(line.id) ?? 0) > 0) ??
+      candidates[0];
+
+    if (!target) {
+      continue;
+    }
+
+    openQuantityByLineId.set(
+      target.id,
+      (openQuantityByLineId.get(target.id) ?? 0) - reservation.quantity
+    );
+    reservationsByLineId.set(target.id, [
+      ...(reservationsByLineId.get(target.id) ?? []),
+      reservation,
+    ]);
+  }
+
+  return reservationsByLineId;
+}
+
+function optionalDate(value: unknown): string | null {
+  return typeof value === "string" && value !== "" && value !== BC_EMPTY_DATE
+    ? value
+    : null;
+}
 
 type BCSalesInvoiceLineRaw = {
   id: string;
@@ -262,7 +336,12 @@ type BCSalesInvoiceLineRaw = {
   amountExcludingTax?: number;
 };
 
-function mapSalesOrderLine(line: BCSalesOrderLineRaw): BCOrderLine {
+function mapSalesOrderLine(
+  line: BCSalesOrderLineRaw,
+  reservations: BCOrderLineReservation[] = []
+): BCOrderLine {
+  const shippedQuantity = line.shippedQuantity ?? 0;
+
   return {
     id: line.id,
     sequence: line.sequence,
@@ -274,6 +353,10 @@ function mapSalesOrderLine(line: BCSalesOrderLineRaw): BCOrderLine {
     quantity: line.quantity ?? 0,
     unitPrice: line.unitPrice ?? 0,
     lineAmount: line.amountExcludingTax ?? 0,
+    shippedQuantity,
+    // Invoiced quantities are returned from their invoice lines, so only shipped-not-invoiced remains here.
+    returnableQuantity: Math.max(0, shippedQuantity - (line.invoicedQuantity ?? 0)),
+    reservations,
   };
 }
 
@@ -289,6 +372,9 @@ function mapSalesInvoiceLine(line: BCSalesInvoiceLineRaw): BCOrderLine {
     quantity: line.quantity ?? 0,
     unitPrice: line.unitPrice ?? 0,
     lineAmount: line.amountExcludingTax ?? 0,
+    shippedQuantity: line.quantity ?? 0,
+    returnableQuantity: line.quantity ?? 0,
+    reservations: [],
   };
 }
 
@@ -304,6 +390,12 @@ function mapSalesInvoiceToSummary(invoice: BCSalesInvoiceRaw): BCOrderInvoiceSum
 }
 
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
+  private readonly logger?: Logger;
+
+  constructor({ logger }: { logger?: Logger } = {}) {
+    this.logger = logger;
+  }
+
   private getDiscoveryUrl(): URL {
     const configuredUrl =
       process.env.BUSINESS_CENTRAL_DISCOVERY_URL ??
@@ -388,6 +480,148 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     return { clientId, clientSecret };
+  }
+
+  private getCompanyId(): string {
+    const companyId = process.env.BUSINESS_CENTRAL_COMPANY_ID;
+
+    if (!companyId || !AZURE_GUID_PATTERN.test(companyId)) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "BUSINESS_CENTRAL_COMPANY_ID must be the Business Central company ID GUID"
+      );
+    }
+
+    return companyId;
+  }
+
+  private async getCompanyName(
+    discoveryUrl: URL,
+    accessToken: string,
+    companyId: string
+  ): Promise<string> {
+    let companyResponse: Response;
+
+    try {
+      companyResponse = await fetch(
+        `${discoveryUrl.toString()}/companies(${companyId})`,
+        {
+          method: "GET",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            accept: "application/json",
+          },
+        }
+      );
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central company request failed"
+      );
+    }
+
+    if (!companyResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central company request failed with status ${companyResponse.status}`
+      );
+    }
+
+    const companyBody = (await companyResponse.json()) as { name?: unknown };
+
+    return requireBusinessCentralString(companyBody.name, "name");
+  }
+
+  private getEnvironmentBaseUrl(discoveryUrl: URL): string {
+    const [, tenantId, environment] = discoveryUrl.pathname.split("/").filter(Boolean);
+
+    if (!environment) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "BUSINESS_CENTRAL_DISCOVERY_URL must include environment in /v2.0/{tenant}/{environment}/..."
+      );
+    }
+
+    return `https://${discoveryUrl.hostname}/v2.0/${tenantId}/${environment}`;
+  }
+
+  private async listOrderReservations(
+    discoveryUrl: URL,
+    accessToken: string,
+    orderNumber: string
+  ): Promise<BCItemReservation[]> {
+    const reservationsUrl = new URL(
+      `${this.getEnvironmentBaseUrl(discoveryUrl)}/${CUSTOMER_PORTAL_API_PATH}/companies(${this.getCompanyId()})/salesOrderReservationEntries`
+    );
+    reservationsUrl.searchParams.set(
+      "$filter",
+      `documentNumber eq '${escapeODataString(orderNumber)}'`
+    );
+
+    const reservationsResponse = await fetch(reservationsUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!reservationsResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central reservations request failed with status ${reservationsResponse.status}`
+      );
+    }
+
+    const reservationsBody = (await reservationsResponse.json()) as {
+      value?: BCReservationEntryRaw[];
+    };
+    const itemReservations: BCItemReservation[] = [];
+
+    for (const raw of reservationsBody.value ?? []) {
+      // Tracking, Surplus and Prospect entries are BC order-tracking internals, not reservations.
+      if (
+        raw.reservationStatus !== "Reservation" ||
+        typeof raw.itemNumber !== "string" ||
+        typeof raw.quantityBase !== "number"
+      ) {
+        continue;
+      }
+
+      itemReservations.push({
+        itemNumber: raw.itemNumber,
+        variantCode: optionalString(raw.variantCode),
+        reservation: {
+          id: optionalString(raw.id),
+          // Guard against the demand side of a reservation, which BC stores as a negative quantity.
+          quantity: Math.abs(raw.quantityBase),
+          reservedFrom: optionalString(raw.reservedFrom),
+          locationCode: optionalString(raw.locationCode),
+          freightType: optionalString(raw.freightType),
+          expectedReceiptDate: optionalDate(raw.expectedReceiptDate),
+          shipmentDate: optionalDate(raw.shipmentDate),
+        },
+      });
+    }
+
+    return itemReservations;
+  }
+
+  private async getODataV4Url(
+    discoveryUrl: URL,
+    accessToken: string,
+    resource: string
+  ): Promise<URL> {
+    const environmentBaseUrl = this.getEnvironmentBaseUrl(discoveryUrl);
+    const companyName = await this.getCompanyName(
+      discoveryUrl,
+      accessToken,
+      this.getCompanyId()
+    );
+    const url = new URL(`${environmentBaseUrl}/ODataV4/${resource}`);
+    url.searchParams.set("company", `'${escapeODataString(companyName)}'`);
+
+    return url;
   }
 
   private async getTokenErrorMessage(tokenResponse: Response): Promise<string> {
@@ -583,7 +817,6 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
   }
 
-  // STUB (NIMBUS-138 task 09): replace with the real BC custom-action HTTP call.
   async createReturnFromSalesOrder(
     params: BCCreateReturnParams
   ): Promise<BCReturnOrder> {
@@ -603,32 +836,160 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       }
     }
 
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const actionUrl = await this.getODataV4Url(
+      discoveryUrl,
+      accessToken,
+      CREATE_RETURN_ORDER_ACTION
+    );
+    const lines = params.lines.map((line) => ({
+      sourceLineNo: line.sourceLineNo,
+      quantityToReturn: line.quantityToReturn,
+      returnReasonCode: line.returnReasonCode,
+    }));
+
+    const requestBody = JSON.stringify({
+      requestId: params.requestId,
+      sourceOrderNo: params.sourceOrderNo,
+      lines: JSON.stringify(lines),
+    });
+    // TEMP (NIMBUS-138): debug logging of the BC return request; remove after sandbox verification.
+    this.logger?.info(
+      `Business Central create return request: POST ${actionUrl.toString()} body=${requestBody}`
+    );
+
+    let actionResponse: Response;
+
+    try {
+      actionResponse = await fetch(actionUrl.toString(), {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: requestBody,
+        signal: AbortSignal.timeout(CREATE_RETURN_TIMEOUT_MS),
+      });
+    } catch (error) {
+      this.logger?.info(
+        `Business Central create return request did not complete: ${String(error)}`
+      );
+      throw new BusinessCentralAmbiguousOutcomeError(
+        "Business Central return request did not complete",
+        params.requestId
+      );
+    }
+
+    const responseText = await actionResponse.text().catch(() => "");
+    this.logger?.info(
+      `Business Central create return response: status=${actionResponse.status} body=${responseText}`
+    );
+
+    if (actionResponse.status >= 500 || actionResponse.status === 408) {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        `Business Central return request failed with status ${actionResponse.status}`,
+        params.requestId
+      );
+    }
+
+    if (actionResponse.status === 401 || actionResponse.status === 403) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central return request failed with status ${actionResponse.status}`
+      );
+    }
+
+    if (!actionResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "The return request could not be accepted. Please check the selected lines and try again."
+      );
+    }
+
+    let returnOrderNo: unknown;
+
+    try {
+      returnOrderNo = (JSON.parse(responseText) as { value?: unknown }).value;
+    } catch {
+      returnOrderNo = undefined;
+    }
+
+    if (typeof returnOrderNo !== "string" || returnOrderNo.trim() === "") {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        "Business Central return response did not include a return order",
+        params.requestId
+      );
+    }
+
     return {
-      id: `bcret_stub_${params.requestId}`,
-      number: params.requestId,
+      id: returnOrderNo.trim(),
+      number: returnOrderNo.trim(),
       status: "Open",
       requestId: params.requestId,
       sourceOrderNo: params.sourceOrderNo,
-      lines: params.lines.map((line) => ({
-        sourceLineNo: line.sourceLineNo,
-        quantityToReturn: line.quantityToReturn,
-        returnReasonCode: line.returnReasonCode,
-      })),
+      lines,
     };
   }
 
-  // STUB (NIMBUS-138 task 09): replace with the verified BC return-reason source.
   async listReturnReasons(): Promise<BCReturnReason[]> {
-    return [
-      { id: "DAMAGED", description: "Item arrived damaged or defective" },
-      { id: "WRONGITEM", description: "Wrong item was delivered" },
-      {
-        id: "NOTORDERED",
-        description: "Item was not ordered by the customer",
-      },
-      { id: "QUALITY", description: "Item does not meet expected quality" },
-      { id: "OTHER", description: "Other reason (specified separately)" },
-    ];
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const reasonsUrl = await this.getODataV4Url(
+      discoveryUrl,
+      accessToken,
+      ENABLED_REASON_CODES_ENTITY_SET
+    );
+    reasonsUrl.searchParams.set("$select", "ReasonCode,Description");
+
+    let reasonsResponse: Response;
+
+    try {
+      reasonsResponse = await fetch(reasonsUrl.toString(), {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      });
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central return reasons request failed"
+      );
+    }
+
+    if (!reasonsResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central return reasons request failed with status ${reasonsResponse.status}`
+      );
+    }
+
+    const reasonsBody = (await reasonsResponse.json()) as {
+      value?: Array<{ ReasonCode?: unknown; Description?: unknown }>;
+    };
+    const reasons = new Map<string, BCReturnReason>();
+
+    for (const raw of reasonsBody.value ?? []) {
+      if (typeof raw.ReasonCode !== "string" || raw.ReasonCode === "") {
+        continue;
+      }
+
+      if (!reasons.has(raw.ReasonCode)) {
+        reasons.set(raw.ReasonCode, {
+          id: raw.ReasonCode,
+          description: optionalString(raw.Description) || raw.ReasonCode,
+        });
+      }
+    }
+
+    return [...reasons.values()];
   }
 
   private async getCustomerId(
@@ -936,7 +1297,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       ].join(" and ")
     );
     orderUrl.searchParams.set("$top", "1");
-    orderUrl.searchParams.set("$expand", "salesOrderLines($expand=item)");
+    orderUrl.searchParams.set("$expand", "salesOrderLines($expand=item,itemVariant)");
 
     const invoicesUrl = new URL(`${discoveryUrl.toString()}/salesInvoices()`);
     invoicesUrl.searchParams.set(
@@ -950,7 +1311,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     invoicesUrl.searchParams.set("$orderby", "invoiceDate asc");
     invoicesUrl.searchParams.set("$expand", "salesInvoiceLines($expand=item)");
 
-    const [orderResponse, invoicesResponse] = await Promise.all([
+    const [orderResponse, invoicesResponse, itemReservations] = await Promise.all([
       fetch(orderUrl.toString(), {
         method: "GET",
         headers: {
@@ -965,6 +1326,17 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
           accept: "application/json",
         },
       }),
+      // Reservations are supplementary; the order must still load when they cannot be fetched.
+      this.listOrderReservations(discoveryUrl, accessToken, params.orderNumber).catch(
+        (error: unknown) => {
+          this.logger?.warn(
+            `Business Central reservations could not be loaded: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
+          return [];
+        }
+      ),
     ]);
 
     if (!orderResponse.ok) {
@@ -1003,9 +1375,13 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     if (order) {
-      const orderLines: BCOrderLine[] = [...(order.salesOrderLines ?? [])]
-        .sort((left, right) => left.sequence - right.sequence)
-        .map(mapSalesOrderLine);
+      const sortedOrderLines = [...(order.salesOrderLines ?? [])].sort(
+        (left, right) => left.sequence - right.sequence
+      );
+      const reservationsByLineId = allocateReservations(sortedOrderLines, itemReservations);
+      const orderLines: BCOrderLine[] = sortedOrderLines.map((line) =>
+        mapSalesOrderLine(line, reservationsByLineId.get(line.id))
+      );
 
       const invoiceLines: BCOrderLine[] = invoices.flatMap((invoice) =>
         [...(invoice.salesInvoiceLines ?? [])]
@@ -1047,76 +1423,6 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       invoiceStatus: "fully_invoiced",
       lines,
       invoices: invoices.map(mapSalesInvoiceToSummary),
-    };
-  }
-
-  // Used only by the business-central-return workflow (see NIMBUS-170 D6). Returns are out
-  // of scope for NIMBUS-170; this preserves the pre-NIMBUS-170 salesOrders-only, id-based
-  // lookup so that flow is unaffected by getOrder's move to a number-based, merged lookup.
-  async getOrderBySalesOrderId(
-    params: BCGetOrderBySalesOrderIdParams
-  ): Promise<BCOrderDetail | null> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
-    const { clientId, clientSecret } = this.getClientCredentials();
-    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
-    const customerId = await this.getCustomerId(
-      discoveryUrl,
-      accessToken,
-      params.customerNumber
-    );
-
-    if (!customerId) {
-      return null;
-    }
-
-    const orderUrl = new URL(`${discoveryUrl.toString()}/salesOrders()`);
-    orderUrl.searchParams.set(
-      "$filter",
-      [
-        `customerId eq ${escapeODataString(customerId)}`,
-        `id eq ${escapeODataString(params.orderId)}`,
-      ].join(" and ")
-    );
-    orderUrl.searchParams.set("$top", "1");
-    orderUrl.searchParams.set("$expand", "salesOrderLines($expand=item)");
-
-    const orderResponse = await fetch(orderUrl.toString(), {
-      method: "GET",
-      headers: {
-        authorization: `Bearer ${accessToken}`,
-        accept: "application/json",
-      },
-    });
-
-    if (!orderResponse.ok) {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        `Business Central order request failed with status ${orderResponse.status}`
-      );
-    }
-
-    type BCSalesOrderWithLinesRaw = BCSalesOrderRaw & {
-      salesOrderLines?: BCSalesOrderLineRaw[];
-    };
-
-    const orderBody = (await orderResponse.json()) as {
-      value?: BCSalesOrderWithLinesRaw[];
-    };
-    const order = orderBody.value?.[0];
-
-    if (!order) {
-      return null;
-    }
-
-    const lines: BCOrderLine[] = [...(order.salesOrderLines ?? [])]
-      .sort((left, right) => left.sequence - right.sequence)
-      .map(mapSalesOrderLine);
-
-    return {
-      ...mapSalesOrderToBCOrder(order),
-      lines,
-      invoices: [],
     };
   }
 }

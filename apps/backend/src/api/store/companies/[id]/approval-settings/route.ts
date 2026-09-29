@@ -22,7 +22,7 @@ export const POST = async (
 
   const { requires_admin_approval } = req.validatedBody;
 
-  await updateApprovalSettingsWorkflow.run({
+  await updateApprovalSettingsWorkflow(req.scope).run({
     input: {
       id: approval_settings.id,
       requires_admin_approval,

@@ -11,12 +11,6 @@ import {
   createStoreUser,
 } from "../../utils/admin";
 import {
-  cartSeeder,
-  productSeeder,
-  regionSeeder,
-  salesChannelSeeder,
-} from "../../utils/seeder";
-import {
   generatePublishableKey,
   generateStoreHeaders,
 } from "../../utils/store";
@@ -29,7 +23,7 @@ medusaIntegrationTestRunner({
     JWT_SECRET: "supersecret",
   },
   testSuite: ({ api, getContainer }) => {
-    let storeHeaders, cart, product, salesChannel, region, customerToken, customer;
+    let storeHeaders, customerToken;
 
     beforeEach(async () => {
       const container = getContainer();
@@ -38,41 +32,7 @@ medusaIntegrationTestRunner({
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
       customerToken = res.token;
-      customer = res.customer;
-      console.log("vic logs customerToken", customerToken);
       storeHeaders.headers["Authorization"] = `Bearer ${customerToken}`;
-      console.log("vic logs storeHeaders", storeHeaders);
-      region = await regionSeeder({ api, adminHeaders, data: {} });
-
-      salesChannel = await salesChannelSeeder({
-        api,
-        adminHeaders,
-        data: {},
-      });
-
-      product = await productSeeder({
-        api,
-        adminHeaders,
-        data: {
-          sales_channels: [{ id: salesChannel.id }],
-        },
-      });
-
-      await api.post(
-        `/admin/api-keys/${publishableKey.id}/sales-channels`,
-        { add: [salesChannel.id] },
-        adminHeaders
-      );
-
-      cart = await cartSeeder({
-        api,
-        storeHeaders,
-        data: {
-          region_id: region.id,
-          sales_channel_id: salesChannel.id,
-          items: [{ quantity: 1, variant_id: product.variants[0].id }],
-        },
-      });
     });
 
     async function createLinkedCompany(): Promise<string> {
@@ -102,15 +62,6 @@ medusaIntegrationTestRunner({
         id: companyId,
         business_central_customer_number: "00011551",
       });
-      await api.post(
-        `/store/companies/${companyId}/employees`,
-        {
-          customer_id: customer.id,
-          spending_limit: 0,
-          is_admin: true,
-        },
-        storeHeaders
-      );
 
       return companyId;
     }
@@ -471,7 +422,7 @@ medusaIntegrationTestRunner({
           .delete(`/store/companies/does-not-exist`, storeHeaders)
           .catch((e) => e);
 
-        expect(response.status).toEqual(204);
+        expect(response.status).toEqual(404);
       });
     });
 

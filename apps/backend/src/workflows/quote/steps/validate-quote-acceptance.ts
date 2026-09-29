@@ -4,7 +4,7 @@ import { QueryQuote } from "../../../types";
 
 export const validateQuoteAcceptanceStep = createStep(
   "validate-quote-acceptance",
-  async function ({ quote }: { quote: QueryQuote }) {
+  async function ({ quote }: { quote: Pick<QueryQuote, "status"> }) {
     if (!["pending_customer"].includes(quote.status)) {
       throw new MedusaError(
         MedusaError.Types.INVALID_DATA,

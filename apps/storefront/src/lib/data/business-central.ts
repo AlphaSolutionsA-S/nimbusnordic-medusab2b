@@ -110,14 +110,14 @@ export const listBCReturnReasons = async (): Promise<BCReturnReason[]> => {
 }
 
 export const createBCReturn = async (
-  orderId: string,
+  orderNumber: string,
   body: BCReturnRequestBody
 ): Promise<BCReturnOrder> => {
   const headers = {
     ...(await getAuthHeaders()),
   }
   const response = await sdk.client.fetch<StoreBCReturnResponse>(
-    `/store/bc-orders/${orderId}/returns`,
+    `/store/bc-orders/${encodeURIComponent(orderNumber)}/returns`,
     {
       method: "POST",
       headers,

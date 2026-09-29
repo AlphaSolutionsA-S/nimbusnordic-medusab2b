@@ -16,10 +16,10 @@ updateCartWorkflow.hooks.validate(async ({ cart }, { container }) => {
     },
   });
 
-  const { isPendingApproval } = getCartApprovalStatus(queryCart);
+  const { isPendingApproval, isApproved } = getCartApprovalStatus(queryCart);
 
-  if (isPendingApproval) {
-    throw new Error("Cart is pending approval");
+  if (isPendingApproval || isApproved) {
+    throw new Error("Cart awaiting approval or already approved cannot be changed");
   }
 
   return new StepResponse(undefined, null);

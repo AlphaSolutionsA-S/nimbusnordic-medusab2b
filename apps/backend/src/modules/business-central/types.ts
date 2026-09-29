@@ -26,6 +26,19 @@ export type BCOrderLine = {
   quantity: number;
   unitPrice: number;
   lineAmount: number;
+  shippedQuantity: number;
+  returnableQuantity: number;
+  reservations: BCOrderLineReservation[];
+};
+
+export type BCOrderLineReservation = {
+  id: string;
+  quantity: number;
+  reservedFrom: string;
+  locationCode: string;
+  freightType: string;
+  expectedReceiptDate: string | null;
+  shipmentDate: string | null;
 };
 
 export type BCOrderInvoiceSummary = {
@@ -55,15 +68,6 @@ export type BCListOrdersParams = {
 export type BCGetOrderParams = {
   customerNumber: string;
   orderNumber: string;
-};
-
-// Used only by the business-central-return workflow, which still identifies the source
-// order by its salesOrder GUID id (see NIMBUS-170 D6) rather than its order number.
-// Returns are out of scope for NIMBUS-170 and this accessor deliberately keeps the
-// pre-NIMBUS-170 salesOrders-only, id-based lookup (no invoice merge).
-export type BCGetOrderBySalesOrderIdParams = {
-  customerNumber: string;
-  orderId: string;
 };
 
 export type BCCustomerBlockedState =
@@ -132,9 +136,6 @@ export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
   getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
-  getOrderBySalesOrderId(
-    params: BCGetOrderBySalesOrderIdParams
-  ): Promise<BCOrderDetail | null>;
   getCustomer(customerNumber: string): Promise<BCCustomer | null>;
   createReturnFromSalesOrder(
     params: BCCreateReturnParams

@@ -1,4 +1,4 @@
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils";
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 import { COMPANY_MODULE } from "../../../modules/company";
 import {
@@ -16,9 +16,17 @@ export const createEmployeesStep = createStep(
     const companyModuleService =
       container.resolve<ICompanyModuleService>(COMPANY_MODULE);
 
-    const createdEmployee = await companyModuleService.createEmployees(input);
-
     const query = container.resolve(ContainerRegistrationKeys.QUERY);
+    const { data: [customer] } = await query.graph({
+      entity: "customer",
+      fields: ["id", "employee.id"],
+      filters: { id: input.customer_id },
+    }, { throwIfKeyNotFound: true });
+    if (customer.employee) {
+      throw new MedusaError(MedusaError.Types.NOT_ALLOWED, "Customer already belongs to a company");
+    }
+
+    const createdEmployee = await companyModuleService.createEmployees(input);
 
     const {
       data: [employee],

@@ -11,7 +11,7 @@ import type {
 export type PrepareBcReturnInput = {
   customerId: string;
   bcCustomerNumber: string;
-  sourceSalesOrderId: string;
+  sourceOrderNumber: string;
   lines: BCReturnLineInput[];
 };
 
@@ -30,17 +30,17 @@ export const prepareBcReturnStep = createStep(
     const bcService = container.resolve<IBusinessCentralModuleService>(
       BUSINESS_CENTRAL_MODULE
     );
-    const order = await bcService.getOrderBySalesOrderId({
+    const order = await bcService.getOrder({
       customerNumber: input.bcCustomerNumber,
-      orderId: input.sourceSalesOrderId,
+      orderNumber: input.sourceOrderNumber,
     });
 
     if (!order) {
       throw new MedusaError(MedusaError.Types.NOT_FOUND, "Order not found.");
     }
 
-    const returnReasons = await bcService.listReturnReasons();
-    const reasonIds = new Set(returnReasons.map((reason) => reason.id));
+    // TEMP (NIMBUS-138): BC reason codes cannot be fetched yet; only "NORMAL" is accepted.
+    const reasonIds = new Set(["NORMAL"]);
     const sourceLineNumbers = new Set<number>();
     const verifiedLines = input.lines
       .map((inputLine) => {
@@ -52,19 +52,25 @@ export const prepareBcReturnStep = createStep(
         }
         sourceLineNumbers.add(inputLine.sourceLineNo);
 
-        const orderLine = order.lines.find(
+        const matchingLines = order.lines.filter(
           (line) =>
             line.sequence === inputLine.sourceLineNo && line.lineType === "Item"
         );
 
-        if (!orderLine) {
+        if (matchingLines.length === 0) {
           throw new MedusaError(
             MedusaError.Types.INVALID_DATA,
             "One or more selected lines cannot be returned."
           );
         }
 
-        if (inputLine.quantityToReturn > orderLine.quantity) {
+        // Only shipped quantities are returnable; an order line and its invoice lines can share a sequence.
+        const returnableQuantity = matchingLines.reduce(
+          (sum, line) => sum + line.returnableQuantity,
+          0
+        );
+
+        if (inputLine.quantityToReturn > returnableQuantity) {
           throw new MedusaError(
             MedusaError.Types.INVALID_DATA,
             "The requested return quantity exceeds the available quantity."

@@ -2,6 +2,7 @@ jest.mock("@/lib/config", () => ({
   sdk: {
     auth: {
       login: jest.fn(),
+      register: jest.fn(),
     },
     client: {
       fetch: jest.fn(),
@@ -10,7 +11,7 @@ jest.mock("@/lib/config", () => ({
       cart: {
         transferCart: jest.fn(),
       },
-      customer: {},
+      customer: { create: jest.fn() },
     },
   },
 }))
@@ -49,10 +50,12 @@ jest.mock("next/navigation", () => ({
 
 import {
   login,
+  signup,
   syncCompanyFromBusinessCentral,
 } from "@/lib/data/customer"
 import { sdk } from "@/lib/config"
 import { retrieveCart } from "@/lib/data/cart"
+import { createCompany, createEmployee } from "@/lib/data/companies"
 import {
   getAuthHeaders,
   getCacheOptions,
@@ -155,5 +158,34 @@ describe("syncCompanyFromBusinessCentral", () => {
           path === "/store/customers/me/company/sync-business-central"
       )
     ).toHaveLength(1)
+  })
+
+  it("registers the company after persisting authentication without a second employee request", async () => {
+    const events: string[] = []
+    const employee = { id: "employee-new", is_admin: true }
+    const formData = new FormData()
+    formData.set("email", "signup@example.test")
+    formData.set("password", "test-password")
+    formData.set("company_name", "New company")
+    formData.set("currency_code", "dkk")
+    jest.mocked(sdk.auth.register).mockResolvedValue("registration-token")
+    jest.mocked(sdk.store.customer.create).mockResolvedValue({
+      customer: { id: "customer-new" },
+    } as Awaited<ReturnType<typeof sdk.store.customer.create>>)
+    mockLogin.mockResolvedValue("customer-token")
+    mockSetAuthToken.mockImplementationOnce(async () => {
+      await Promise.resolve()
+      events.push("token-stored")
+    })
+    jest.mocked(createCompany).mockImplementationOnce(async () => {
+      events.push("company-created")
+      return { id: "company-new", employees: [employee] } as Awaited<ReturnType<typeof createCompany>>
+    })
+
+    const result = await signup(undefined, formData)
+
+    expect(events).toEqual(["token-stored", "company-created"])
+    expect(createEmployee).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ employee })
   })
 })

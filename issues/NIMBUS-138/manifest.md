@@ -52,9 +52,9 @@ task 08, bound in task 09. No public `salesReturnOrders` writer is assumed.
 | 04 | Store return routes + validators + middlewares | `04-backend-store-return-routes.md` | backend | 01, 03 | stub | DONE (stub) |
 | 05 | Storefront return data layer + types | `05-storefront-return-data-layer.md` | storefront | 04 | stub | DONE (stub) |
 | 06 | Storefront return-entry UI | `06-storefront-return-ui.md` | storefront | 05 | stub | DONE (stub) |
-| 07 | Verification — stubbed end-to-end flow (demoable) | `07-verification-stubbed-flow.md` | both | 01–06 | stub | TODO (blocked) |
-| 08 | BC return contract verification (spike) | `08-bc-return-contract-verification.md` | backend (spike) | 07 | — | TODO |
-| 09 | Replace stubs with real BC implementation | `09-backend-bc-real-implementation.md` | backend | 08 | swaps stub | TODO |
+| 07 | Verification — stubbed end-to-end flow (demoable) | `07-verification-stubbed-flow.md` | both | 01–06 | stub | DONE |
+| 08 | BC return contract verification (spike) | `08-bc-return-contract-verification.md` | backend (spike) | 07 | — | IN PROGRESS |
+| 09 | Replace stubs with real BC implementation | `09-backend-bc-real-implementation.md` | backend | 08 | swaps stub | DONE (pending sandbox run) |
 
 Notes:
 - Task 02 was removed: Business Central owns idempotency through the deterministic `requestId`.
@@ -62,14 +62,11 @@ Notes:
   it only blocks task 09.
 - **Every stub carries a `// STUB (NIMBUS-138 task 09):` comment** so the swap points are
   greppable.
-- **Status as of 2026-08-19:** Tasks 03–06 are implemented against the offline stub (verified
-  in the working tree on `develop`; `return-stub.spec.ts` passes 6/6). They are marked
-  `DONE (stub)` because the real BC call is still stubbed — task 09 must swap the stub before
-  they are fully complete. Task 07 is `TODO (blocked)`: the stubbed e2e walkthrough and HTTP
-  integration tests are pending a valid local test PostgreSQL configuration
-  (`SASL: client password must be a string`) and a running local backend for storefront
-  page-data collection. Tasks 08–09 are not started. Work is currently uncommitted on
-  `develop` rather than on the planned `feature/NIMBUS-138` branch.
+- **Status as of 2026-09-28:** Tasks 03–06 are implemented against the offline stub and
+  remain `DONE (stub)` until task 09 swaps the stub for the real BC call. Task 07 (stubbed
+  end-to-end verification) is `DONE`, confirmed by the user. Tasks 08–09 are not started.
+  The implementation was committed directly on `develop` (`d508e67`) rather than on the
+  planned `feature/NIMBUS-138` branch.
 
 ## Test Strategy
 

@@ -1,0 +1,735 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:DataServices>
+        <Schema Namespace="Microsoft.NAV" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <EntityType Name="entityMetadata">
+                <Key>
+                    <PropertyRef Name="entityName" />
+                </Key>
+                <Property Name="entityName" Type="Edm.String" Nullable="false" />
+                <Property Name="entitySetName" Type="Edm.String" />
+                <Property Name="entityCaptions" Type="Collection(Microsoft.NAV.entityMetadataLabel)" />
+                <Property Name="entitySetCaptions" Type="Collection(Microsoft.NAV.entityMetadataLabel)" />
+                <Property Name="properties" Type="Collection(Microsoft.NAV.entityMetadataField)" />
+                <Property Name="actions" Type="Collection(Microsoft.NAV.entityMetadataAction)" />
+                <Property Name="enumMembers" Type="Collection(Microsoft.NAV.entityMetadataEnumMember)" />
+            </EntityType>
+            <ComplexType Name="entityMetadataLabel">
+                <Property Name="languageCode" Type="Edm.Int32" Nullable="false" />
+                <Property Name="caption" Type="Edm.String" Nullable="false" />
+            </ComplexType>
+            <ComplexType Name="entityMetadataField">
+                <Property Name="name" Type="Edm.String" Nullable="false" />
+                <Property Name="captions" Type="Collection(Microsoft.NAV.entityMetadataLabel)" />
+            </ComplexType>
+            <ComplexType Name="entityMetadataAction">
+                <Property Name="name" Type="Edm.String" Nullable="false" />
+                <Property Name="captions" Type="Collection(Microsoft.NAV.entityMetadataLabel)" />
+            </ComplexType>
+            <ComplexType Name="entityMetadataEnumMember">
+                <Property Name="name" Type="Edm.String" Nullable="false" />
+                <Property Name="value" Type="Edm.Int32" Nullable="false" />
+                <Property Name="captions" Type="Collection(Microsoft.NAV.entityMetadataLabel)" />
+            </ComplexType>
+            <EnumType Name="reservationStatus">
+                <Member Name="Reservation" Value="0" />
+                <Member Name="Tracking" Value="1" />
+                <Member Name="Surplus" Value="2" />
+                <Member Name="Prospect" Value="3" />
+            </EnumType>
+            <EnumType Name="salesDocumentStatus">
+                <Member Name="Open" Value="0" />
+                <Member Name="Released" Value="1" />
+                <Member Name="Pending_x0020_Approval" Value="2" />
+                <Member Name="Pending_x0020_Prepayment" Value="3" />
+            </EnumType>
+            <EnumType Name="salesDocumentType">
+                <Member Name="Quote" Value="0" />
+                <Member Name="Order" Value="1" />
+                <Member Name="Invoice" Value="2" />
+                <Member Name="Credit_x0020_Memo" Value="3" />
+                <Member Name="Blanket_x0020_Order" Value="4" />
+                <Member Name="Return_x0020_Order" Value="5" />
+            </EnumType>
+            <EnumType Name="salesLineType">
+                <Member Name="_x0020_" Value="0" />
+                <Member Name="G_x002F_L_x0020_Account" Value="1" />
+                <Member Name="Item" Value="2" />
+                <Member Name="Resource" Value="3" />
+                <Member Name="Fixed_x0020_Asset" Value="4" />
+                <Member Name="Charge_x0020__x0028_Item_x0029_" Value="5" />
+                <Member Name="Allocation_x0020_Account" Value="10" />
+                <Member Name="Service_x0020_Object" Value="8000" />
+            </EnumType>
+            <EnumType Name="attachmentEntityBufferDocumentType">
+                <Member Name="_x0020_" Value="0" />
+                <Member Name="Journal" Value="1" />
+                <Member Name="Employee" Value="9" />
+                <Member Name="Item" Value="11" />
+                <Member Name="Customer" Value="12" />
+                <Member Name="Vendor" Value="13" />
+                <Member Name="Assembly_x0020_Order" Value="33" />
+                <Member Name="Posted_x0020_Assembly_x0020_Order" Value="34" />
+                <Member Name="Transfer_x0020_Order" Value="24" />
+                <Member Name="Transfer_x0020_Shipment" Value="25" />
+                <Member Name="Transfer_x0020_Receipt" Value="26" />
+                <Member Name="Phys_x002E__x0020_Inventory_x0020_Order" Value="37" />
+                <Member Name="Posted_x0020_Phys_x002E__x0020_Inventory_x0020_Order" Value="38" />
+                <Member Name="Phys_x002E__x0020_Inventory_x0020_Recording" Value="39" />
+                <Member Name="Posted_x0020_Phys_x002E__x0020_Inventory_x0020_Recording" Value="40" />
+                <Member Name="Inventory_x0020_Shipment" Value="41" />
+                <Member Name="Inventory_x0020_Receipt" Value="42" />
+                <Member Name="Posted_x0020_Inventory_x0020_Shipment" Value="43" />
+                <Member Name="Posted_x0020_Inventory_x0020_Receipt" Value="44" />
+                <Member Name="Posted_x0020_Direct_x0020_Transfer" Value="45" />
+                <Member Name="Job" Value="10" />
+                <Member Name="Purchase_x0020_Invoice" Value="6" />
+                <Member Name="Purchase_x0020_Order" Value="7" />
+                <Member Name="Purchase_x0020_Quote" Value="8" />
+                <Member Name="Purchase_x0020_Credit_x0020_Memo" Value="14" />
+                <Member Name="Blanket_x0020_Purchase_x0020_Order" Value="20" />
+                <Member Name="Purchase_x0020_Receipt" Value="21" />
+                <Member Name="Purchase_x0020_Return_x0020_Order" Value="22" />
+                <Member Name="Purch_x002E__x0020_Return_x0020_Shipment" Value="23" />
+                <Member Name="Purchase_x0020_Archive_x0020_Quote" Value="29" />
+                <Member Name="Purchase_x0020_Archive_x0020_Order" Value="30" />
+                <Member Name="Purchase_x0020_Archive_x0020_Return" Value="32" />
+                <Member Name="Purchase_x0020_Archive_x0020_Blanket_x0020_Order" Value="36" />
+                <Member Name="Sales_x0020_Order" Value="2" />
+                <Member Name="Sales_x0020_Quote" Value="3" />
+                <Member Name="Sales_x0020_Credit_x0020_Memo" Value="4" />
+                <Member Name="Sales_x0020_Invoice" Value="5" />
+                <Member Name="Customer_x0020_Statement" Value="15" />
+                <Member Name="Blanket_x0020_Sales_x0020_Order" Value="16" />
+                <Member Name="Sales_x0020_Return_x0020_Order" Value="17" />
+                <Member Name="Sales_x0020_Shipment" Value="18" />
+                <Member Name="Return_x0020_Receipt" Value="19" />
+                <Member Name="Sales_x0020_Archive_x0020_Quote" Value="27" />
+                <Member Name="Sales_x0020_Archive_x0020_Order" Value="28" />
+                <Member Name="Sales_x0020_Archive_x0020_Return" Value="31" />
+                <Member Name="Sales_x0020_Archive_x0020_Blanket_x0020_Order" Value="35" />
+            </EnumType>
+            <EntityType Name="company">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="systemVersion" Type="Edm.String" />
+                <Property Name="timestamp" Type="Edm.Int64" />
+                <Property Name="name" Type="Edm.String" MaxLength="30" />
+                <Property Name="displayName" Type="Edm.String" MaxLength="250" />
+                <Property Name="businessProfileId" Type="Edm.String" MaxLength="250" />
+                <Property Name="systemCreatedAt" Type="Edm.DateTimeOffset" />
+                <Property Name="systemCreatedBy" Type="Edm.Guid" />
+                <Property Name="systemModifiedAt" Type="Edm.DateTimeOffset" />
+                <Property Name="systemModifiedBy" Type="Edm.Guid" />
+                <NavigationProperty Name="salesOrderReservationEntries" Type="Collection(Microsoft.NAV.salesOrderReservationEntry)" ContainsTarget="true" />
+                <NavigationProperty Name="salesReturnOrders" Type="Collection(Microsoft.NAV.salesReturnOrder)" ContainsTarget="true" />
+                <NavigationProperty Name="salesReturnOrderLines" Type="Collection(Microsoft.NAV.salesReturnOrderLine)" ContainsTarget="true" />
+                <NavigationProperty Name="pdfDocument" Type="Collection(Microsoft.NAV.pdfDocument)" ContainsTarget="true" />
+                <NavigationProperty Name="attachments" Type="Collection(Microsoft.NAV.attachment)" ContainsTarget="true" />
+                <NavigationProperty Name="documentAttachments" Type="Collection(Microsoft.NAV.documentAttachment)" ContainsTarget="true" />
+                <Annotation Term="OData.Community.Keys.V1.AlternateKeys">
+                    <Collection>
+                        <Record Type="OData.Community.Keys.V1.AlternateKey">
+                            <PropertyValue Property="Key">
+                                <Collection>
+                                    <Record Type="OData.Community.Keys.V1.PropertyRef">
+                                        <PropertyValue Property="Alias" String="businessProfileId" />
+                                        <PropertyValue Property="Name" PropertyPath="businessProfileId" />
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                        <Record Type="OData.Community.Keys.V1.AlternateKey">
+                            <PropertyValue Property="Key">
+                                <Collection>
+                                    <Record Type="OData.Community.Keys.V1.PropertyRef">
+                                        <PropertyValue Property="Alias" String="name" />
+                                        <PropertyValue Property="Name" PropertyPath="name" />
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </EntityType>
+            <EntityType Name="subscriptions">
+                <Key>
+                    <PropertyRef Name="subscriptionId" />
+                </Key>
+                <Property Name="subscriptionId" Type="Edm.String" Nullable="false" MaxLength="150" />
+                <Property Name="notificationUrl" Type="Edm.String" Nullable="false" />
+                <Property Name="resource" Type="Edm.String" Nullable="false" />
+                <Property Name="timestamp" Type="Edm.Int64" />
+                <Property Name="userId" Type="Edm.Guid" />
+                <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+                <Property Name="clientState" Type="Edm.String" MaxLength="2048" />
+                <Property Name="expirationDateTime" Type="Edm.DateTimeOffset" />
+                <Property Name="systemCreatedAt" Type="Edm.DateTimeOffset" />
+                <Property Name="systemCreatedBy" Type="Edm.Guid" />
+                <Property Name="systemModifiedAt" Type="Edm.DateTimeOffset" />
+                <Property Name="systemModifiedBy" Type="Edm.Guid" />
+            </EntityType>
+            <EntityType Name="externaleventsubscriptions">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="companyId" Type="Edm.Guid" />
+                <Property Name="timestamp" Type="Edm.Int64" />
+                <Property Name="appId" Type="Edm.Guid" />
+                <Property Name="eventName" Type="Edm.String" MaxLength="80" />
+                <Property Name="companyName" Type="Edm.String" MaxLength="30" />
+                <Property Name="userId" Type="Edm.Guid" />
+                <Property Name="notificationUrl" Type="Edm.String" MaxLength="2048" />
+                <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+                <Property Name="clientState" Type="Edm.String" MaxLength="2048" />
+                <Property Name="subscriptionType" Type="Edm.String" />
+                <Property Name="eventVersion" Type="Edm.String" MaxLength="43" />
+                <Property Name="subscriptionState" Type="Edm.String" />
+                <Property Name="systemCreatedAt" Type="Edm.DateTimeOffset" />
+                <Property Name="systemCreatedBy" Type="Edm.Guid" />
+                <Property Name="systemModifiedAt" Type="Edm.DateTimeOffset" />
+                <Property Name="systemModifiedBy" Type="Edm.Guid" />
+            </EntityType>
+            <EntityType Name="externalbusinesseventdefinitions">
+                <Key>
+                    <PropertyRef Name="appId" />
+                    <PropertyRef Name="name" />
+                    <PropertyRef Name="eventVersion" />
+                </Key>
+                <Property Name="appId" Type="Edm.Guid" Nullable="false" />
+                <Property Name="name" Type="Edm.String" Nullable="false" MaxLength="80" />
+                <Property Name="eventVersion" Type="Edm.String" Nullable="false" MaxLength="43" />
+                <Property Name="isObsolete" Type="Edm.Boolean" />
+                <Property Name="obsoleteReason" Type="Edm.String" MaxLength="250" />
+                <Property Name="obsoleteTag" Type="Edm.String" MaxLength="43" />
+                <Property Name="payload" Type="Edm.String" Nullable="false" />
+                <Property Name="displayName" Type="Edm.String" MaxLength="250" />
+                <Property Name="description" Type="Edm.String" MaxLength="1024" />
+                <Property Name="category" Type="Edm.String" MaxLength="250" />
+                <Property Name="appName" Type="Edm.String" MaxLength="250" />
+                <Property Name="appPublisher" Type="Edm.String" MaxLength="250" />
+                <Property Name="appVersion" Type="Edm.String" MaxLength="43" />
+                <Annotation Term="OData.Community.Keys.V1.AlternateKeys">
+                    <Collection>
+                        <Record Type="OData.Community.Keys.V1.AlternateKey">
+                            <PropertyValue Property="Key">
+                                <Collection>
+                                    <Record Type="OData.Community.Keys.V1.PropertyRef">
+                                        <PropertyValue Property="Alias" String="appId" />
+                                        <PropertyValue Property="Name" PropertyPath="appId" />
+                                    </Record>
+                                    <Record Type="OData.Community.Keys.V1.PropertyRef">
+                                        <PropertyValue Property="Alias" String="name" />
+                                        <PropertyValue Property="Name" PropertyPath="name" />
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </EntityType>
+            <EntityType Name="apicategoryroutes">
+                <Key>
+                    <PropertyRef Name="route" />
+                </Key>
+                <Property Name="route" Type="Edm.String" Nullable="false" />
+                <Property Name="publisher" Type="Edm.String" MaxLength="40" />
+                <Property Name="group" Type="Edm.String" MaxLength="40" />
+                <Property Name="version" Type="Edm.String" MaxLength="10" />
+            </EntityType>
+            <EntityType Name="salesOrderReservationEntry">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="documentNumber" Type="Edm.String" MaxLength="20" />
+                <Property Name="lineNumber" Type="Edm.Int32" />
+                <Property Name="reservationStatus" Type="Microsoft.NAV.reservationStatus" />
+                <Property Name="itemNumber" Type="Edm.String" MaxLength="20" />
+                <Property Name="variantCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="locationCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="freightType" Type="Edm.String" />
+                <Property Name="expectedReceiptDate" Type="Edm.Date" />
+                <Property Name="shipmentDate" Type="Edm.Date" />
+                <Property Name="quantityBase" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="reservedFor" Type="Edm.String" />
+                <Property Name="reservedFrom" Type="Edm.String" />
+                <Property Name="description" Type="Edm.String" MaxLength="100" />
+                <Property Name="entryNumber" Type="Edm.Int32" />
+                <Property Name="creationDate" Type="Edm.Date" />
+                <Property Name="transferredFromEntryNumber" Type="Edm.Int32" />
+            </EntityType>
+            <EntityType Name="salesReturnOrder">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="number" Type="Edm.String" MaxLength="20" />
+                <Property Name="externalDocumentNumber" Type="Edm.String" MaxLength="35" />
+                <Property Name="documentDate" Type="Edm.Date" />
+                <Property Name="postingDate" Type="Edm.Date" />
+                <Property Name="dueDate" Type="Edm.Date" />
+                <Property Name="sellToCustomerNumber" Type="Edm.String" MaxLength="20" />
+                <Property Name="sellToCustomerName" Type="Edm.String" MaxLength="100" />
+                <Property Name="billToName" Type="Edm.String" MaxLength="100" />
+                <Property Name="billToCustomerNumber" Type="Edm.String" Nullable="false" MaxLength="20" />
+                <Property Name="shipToName" Type="Edm.String" MaxLength="100" />
+                <Property Name="shipToContact" Type="Edm.String" MaxLength="100" />
+                <Property Name="sellToAddress" Type="Edm.String" MaxLength="100" />
+                <Property Name="sellToAddress2" Type="Edm.String" MaxLength="50" />
+                <Property Name="sellToCity" Type="Edm.String" MaxLength="30" />
+                <Property Name="sellToCountryRegionCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="sellToCounty" Type="Edm.String" MaxLength="30" />
+                <Property Name="sellToPostCode" Type="Edm.String" MaxLength="20" />
+                <Property Name="shipToAddress" Type="Edm.String" MaxLength="100" />
+                <Property Name="shipToAddress2" Type="Edm.String" MaxLength="50" />
+                <Property Name="shipToCity" Type="Edm.String" MaxLength="30" />
+                <Property Name="shipToCountryRegionCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="shipToCounty" Type="Edm.String" MaxLength="30" />
+                <Property Name="shipToPostCode" Type="Edm.String" MaxLength="20" />
+                <Property Name="billToAddress" Type="Edm.String" MaxLength="100" />
+                <Property Name="billToAddress2" Type="Edm.String" MaxLength="50" />
+                <Property Name="billToCity" Type="Edm.String" MaxLength="30" />
+                <Property Name="billToCountryRegionCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="billToCounty" Type="Edm.String" MaxLength="30" />
+                <Property Name="billToPostCode" Type="Edm.String" MaxLength="20" />
+                <Property Name="currencyCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="pricesIncludingVAT" Type="Edm.Boolean" />
+                <Property Name="paymentTermsCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="shipmentMethodCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="salespersonCode" Type="Edm.String" MaxLength="20" />
+                <Property Name="orderDate" Type="Edm.Date" />
+                <Property Name="requestedDeliveryDate" Type="Edm.Date" />
+                <Property Name="yourReference" Type="Edm.String" MaxLength="35" />
+                <Property Name="locationCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="shortcutDimension1Code" Type="Edm.String" MaxLength="20" />
+                <Property Name="shortcutDimension2Code" Type="Edm.String" MaxLength="20" />
+                <Property Name="shortcutDimension3Code" Type="Edm.String" />
+                <Property Name="shortcutDimension4Code" Type="Edm.String" />
+                <Property Name="shortcutDimension5Code" Type="Edm.String" />
+                <Property Name="shortcutDimension6Code" Type="Edm.String" />
+                <Property Name="shortcutDimension7Code" Type="Edm.String" />
+                <Property Name="shortcutDimension8Code" Type="Edm.String" />
+                <Property Name="customerPostingGroup" Type="Edm.String" MaxLength="20" />
+                <Property Name="genBusPostingGroup" Type="Edm.String" MaxLength="20" />
+                <Property Name="vatBusPostingGroup" Type="Edm.String" MaxLength="20" />
+                <Property Name="sellToContact" Type="Edm.String" MaxLength="100" />
+                <Property Name="billToContact" Type="Edm.String" MaxLength="100" />
+                <Property Name="responsibilityCenter" Type="Edm.String" MaxLength="10" />
+                <Property Name="status" Type="Microsoft.NAV.salesDocumentStatus" />
+                <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+                <NavigationProperty Name="salesReturnOrderLines" Type="Collection(Microsoft.NAV.salesReturnOrderLine)" ContainsTarget="true">
+                    <ReferentialConstraint Property="number" ReferencedProperty="documentNumber" />
+                </NavigationProperty>
+                <NavigationProperty Name="pdfDocument" Type="Microsoft.NAV.pdfDocument" Partner="salesReturnOrder" ContainsTarget="true">
+                    <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+                </NavigationProperty>
+                <NavigationProperty Name="attachments" Type="Collection(Microsoft.NAV.attachment)" Partner="salesReturnOrder" ContainsTarget="true">
+                    <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+                </NavigationProperty>
+                <NavigationProperty Name="documentAttachments" Type="Collection(Microsoft.NAV.documentAttachment)" Partner="salesReturnOrder" ContainsTarget="true">
+                    <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+                </NavigationProperty>
+            </EntityType>
+            <EntityType Name="salesReturnOrderLine">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="documentType" Type="Microsoft.NAV.salesDocumentType" />
+                <Property Name="documentNumber" Type="Edm.String" MaxLength="20" />
+                <Property Name="sequence" Type="Edm.Int32" />
+                <Property Name="lineType" Type="Microsoft.NAV.salesLineType" />
+                <Property Name="lineObjectNumber" Type="Edm.String" MaxLength="20" />
+                <Property Name="variantCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="locationCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="returnReasonCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="description" Type="Edm.String" MaxLength="100" />
+                <Property Name="description2" Type="Edm.String" MaxLength="50" />
+                <Property Name="unitOfMeasureCode" Type="Edm.String" MaxLength="10" />
+                <Property Name="quantity" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="unitPrice" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="lineDiscountPercent" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="lineDiscountAmount" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="lineAmount" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="taxPercent" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="amountIncludingTax" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="returnQtyToReceive" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="returnQtyReceived" Type="Edm.Decimal" Scale="Variable" />
+                <Property Name="shortcutDimension1Code" Type="Edm.String" MaxLength="20" />
+                <Property Name="shortcutDimension2Code" Type="Edm.String" MaxLength="20" />
+                <Property Name="shortcutDimension3Code" Type="Edm.String" />
+                <Property Name="shortcutDimension4Code" Type="Edm.String" />
+                <Property Name="shortcutDimension5Code" Type="Edm.String" />
+                <Property Name="shortcutDimension6Code" Type="Edm.String" />
+                <Property Name="shortcutDimension7Code" Type="Edm.String" />
+                <Property Name="shortcutDimension8Code" Type="Edm.String" />
+                <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+                <NavigationProperty Name="salesReturnOrder" Type="Microsoft.NAV.salesReturnOrder" ContainsTarget="true" />
+            </EntityType>
+            <EntityType Name="pdfDocument">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="parentId" Type="Edm.Guid" />
+                <Property Name="parentType" Type="Microsoft.NAV.attachmentEntityBufferDocumentType" />
+                <Property Name="pdfDocumentContent" Type="Edm.Stream" />
+                <NavigationProperty Name="salesReturnOrder" Type="Microsoft.NAV.salesReturnOrder" Partner="pdfDocument" ContainsTarget="true">
+                    <ReferentialConstraint Property="parentId" ReferencedProperty="id" />
+                </NavigationProperty>
+            </EntityType>
+            <EntityType Name="attachment">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="parentId" Type="Edm.Guid" />
+                <Property Name="fileName" Type="Edm.String" MaxLength="250" />
+                <Property Name="byteSize" Type="Edm.Int32" />
+                <Property Name="attachmentContent" Type="Edm.Stream" />
+                <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+                <Property Name="parentType" Type="Microsoft.NAV.attachmentEntityBufferDocumentType" />
+                <NavigationProperty Name="salesReturnOrder" Type="Microsoft.NAV.salesReturnOrder" Partner="attachments" ContainsTarget="true">
+                    <ReferentialConstraint Property="parentId" ReferencedProperty="id" />
+                </NavigationProperty>
+            </EntityType>
+            <EntityType Name="documentAttachment">
+                <Key>
+                    <PropertyRef Name="id" />
+                </Key>
+                <Property Name="id" Type="Edm.Guid" Nullable="false" />
+                <Property Name="fileName" Type="Edm.String" MaxLength="250" />
+                <Property Name="byteSize" Type="Edm.Int32" />
+                <Property Name="attachmentContent" Type="Edm.Stream" />
+                <Property Name="parentType" Type="Microsoft.NAV.attachmentEntityBufferDocumentType" />
+                <Property Name="parentId" Type="Edm.Guid" Nullable="false" />
+                <Property Name="lineNumber" Type="Edm.Int32" />
+                <Property Name="documentFlowSales" Type="Edm.Boolean" />
+                <Property Name="documentFlowPurchase" Type="Edm.Boolean" />
+                <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+                <NavigationProperty Name="salesReturnOrder" Type="Microsoft.NAV.salesReturnOrder" Partner="documentAttachments" ContainsTarget="true">
+                    <ReferentialConstraint Property="parentId" ReferencedProperty="id" />
+                </NavigationProperty>
+            </EntityType>
+            <EntityContainer Name="NAV">
+                <EntitySet Name="entityDefinitions" EntityType="Microsoft.NAV.entityMetadata" />
+                <EntitySet Name="companies" EntityType="Microsoft.NAV.company">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="subscriptions" EntityType="Microsoft.NAV.subscriptions">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="externaleventsubscriptions" EntityType="Microsoft.NAV.externaleventsubscriptions">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="externalbusinesseventdefinitions" EntityType="Microsoft.NAV.externalbusinesseventdefinitions">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="apicategoryroutes" EntityType="Microsoft.NAV.apicategoryroutes">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="salesOrderReservationEntries" EntityType="Microsoft.NAV.salesOrderReservationEntry">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="salesReturnOrders" EntityType="Microsoft.NAV.salesReturnOrder">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="salesReturnOrderLines" EntityType="Microsoft.NAV.salesReturnOrderLine">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="pdfDocument" EntityType="Microsoft.NAV.pdfDocument">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="attachments" EntityType="Microsoft.NAV.attachment">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+                <EntitySet Name="documentAttachments" EntityType="Microsoft.NAV.documentAttachment">
+                    <Annotation Term="Org.OData.Capabilities.V1.ChangeTracking">
+                        <Record>
+                            <PropertyValue Property="Supported" Bool="false" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.DeleteRestrictions">
+                        <Record>
+                            <PropertyValue Property="Deletable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.InsertRestrictions">
+                        <Record>
+                            <PropertyValue Property="Insertable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.UpdateRestrictions">
+                        <Record>
+                            <PropertyValue Property="Updatable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                    <Annotation Term="Org.OData.Capabilities.V1.SortRestrictions">
+                        <Record>
+                            <PropertyValue Property="Sortable" Bool="true" />
+                        </Record>
+                    </Annotation>
+                </EntitySet>
+            </EntityContainer>
+            <Annotations Target="Microsoft.NAV.externaleventsubscriptions/subscriptionType">
+                <Annotation Term="Org.OData.Core.V1.IsLanguageDependent" Bool="true" />
+            </Annotations>
+            <Annotations Target="Microsoft.NAV.externaleventsubscriptions/subscriptionState">
+                <Annotation Term="Org.OData.Core.V1.IsLanguageDependent" Bool="true" />
+            </Annotations>
+            <Annotations Target="Microsoft.NAV.pdfDocument/salesReturnOrder">
+                <Annotation Term="Microsoft.NAV.IsBidirectionalPartnerNavigation" Bool="true" />
+            </Annotations>
+            <Annotations Target="Microsoft.NAV.attachment/salesReturnOrder">
+                <Annotation Term="Microsoft.NAV.IsBidirectionalPartnerNavigation" Bool="true" />
+            </Annotations>
+            <Annotations Target="Microsoft.NAV.documentAttachment/salesReturnOrder">
+                <Annotation Term="Microsoft.NAV.IsBidirectionalPartnerNavigation" Bool="true" />
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>

@@ -1,43 +1,24 @@
-import {
+import type {
   AuthenticatedMedusaRequest,
   MedusaNextFunction,
   MedusaResponse,
 } from "@medusajs/framework";
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { authorizeCompanyAccessWorkflow } from "../../workflows/company/workflows/authorize-company-access";
 
-export const ensureRole = (role: string) => {
+export function ensureCompanyAccess(requireAdmin: boolean, useCompanyParam = true) {
   return async (
     req: AuthenticatedMedusaRequest,
-    res: MedusaResponse,
+    _res: MedusaResponse,
     next: MedusaNextFunction
-  ) => {
-    const { auth_identity_id } = req.auth_context;
-    const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
-
-    const {
-      data: [company],
-    } = await query.graph({
-      entity: "companies",
-      fields: ["id", "employees.id"],
-      filters: { id: req.params.id },
+  ): Promise<void> => {
+    await authorizeCompanyAccessWorkflow(req.scope).run({
+      input: {
+        customer_id: req.auth_context.actor_id,
+        company_id: useCompanyParam ? req.params.id : undefined,
+        employee_id: req.params.employeeId,
+        require_admin: requireAdmin,
+      },
     });
-
-    if (company?.employees?.length === 0) {
-      return next();
-    }
-
-    const {
-      data: [providerIdentity],
-    } = await query.graph({
-      entity: "provider_identity",
-      fields: ["id", "user_metadata"],
-      filters: { auth_identity_id } as any,
-    });
-
-    if (providerIdentity.user_metadata?.role === role) {
-      return next();
-    }
-
-    return res.status(403).json({ message: "Forbidden" });
+    next();
   };
-};
+}

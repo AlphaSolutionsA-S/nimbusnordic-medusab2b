@@ -1,9 +1,9 @@
 import { Container, Heading } from "@medusajs/ui"
 import { getTranslations } from "next-intl/server"
-import { listBCReturnReasons } from "@/lib/data/business-central"
+import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
 import BcOrderReturn from "@/modules/account/components/bc-order-return"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
-import type { BCOrderDetail } from "@/types/bc-order"
+import type { BCOrderDetail, BCReturnReason } from "@/types/bc-order"
 
 type BcOrderDetailTemplateProps = {
   order: BCOrderDetail
@@ -15,7 +15,9 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
   // already extracted for `@/modules/account/components/bc-order-return`,
   // which renders alongside this template on the same order-detail page.
   const tBcOrderReturn = await getTranslations("Account.bcOrderReturn")
-  const returnReasons = await listBCReturnReasons()
+  const tFulfillment = await getTranslations("Account.bcOrderLineFulfillment")
+  // TEMP (NIMBUS-138): BC reason codes cannot be fetched yet; reason selection is disabled.
+  const returnReasons: BCReturnReason[] = []
   const formattedAmount = (amount: number) =>
     new Intl.NumberFormat("en-GB", {
       style: "currency",
@@ -101,6 +103,9 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
                   {t("quantityColumnLabel")}
                 </th>
                 <th className="pb-2 pr-4 font-normal">
+                  {tFulfillment("statusColumnLabel")}
+                </th>
+                <th className="pb-2 pr-4 font-normal">
                   {tBcOrderReturn("unitPriceColumnLabel")}
                 </th>
                 <th className="pb-2 text-right font-normal">
@@ -113,7 +118,7 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
                 if (line.lineType === "Comment") {
                   return (
                     <tr key={line.id} className="border-b border-ui-border-base">
-                      <td className="py-3 text-ui-fg-subtle" colSpan={4}>
+                      <td className="py-3 text-ui-fg-subtle" colSpan={5}>
                         {line.description}
                       </td>
                     </tr>
@@ -133,6 +138,11 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
                         tBcOrderReturn("itemFallbackLabel")}
                     </td>
                     <td className="py-3 pr-4 text-ui-fg-base">{line.quantity}</td>
+                    <td className="py-3 pr-4">
+                      {line.lineType === "Item" && (
+                        <BcOrderLineFulfillment line={line} showReservations />
+                      )}
+                    </td>
                     <td className="py-3 pr-4 text-ui-fg-base">
                       {formattedAmount(line.unitPrice)}
                     </td>
@@ -145,7 +155,7 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
             </tbody>
             <tfoot className="border-t border-ui-border-strong">
               <tr>
-                <th className="pt-3 pr-4 text-right font-medium text-ui-fg-base" colSpan={3}>
+                <th className="pt-3 pr-4 text-right font-medium text-ui-fg-base" colSpan={4}>
                   {t("totalExcludingTaxLabel")}
                 </th>
                 <td className="pt-3 text-right font-medium text-ui-fg-base">

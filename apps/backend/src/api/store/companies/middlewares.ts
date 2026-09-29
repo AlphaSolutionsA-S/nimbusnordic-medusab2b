@@ -4,7 +4,7 @@ import {
   validateAndTransformQuery,
 } from "@medusajs/framework";
 import { authenticate } from "@medusajs/medusa";
-import { ensureRole } from "../../middlewares/ensure-role";
+import { ensureCompanyAccess } from "../../middlewares/ensure-role";
 import {
   storeCompanyQueryConfig,
   storeEmployeeQueryConfig,
@@ -52,6 +52,7 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
     method: ["GET"],
     matcher: "/store/companies/:id",
     middlewares: [
+      ensureCompanyAccess(false),
       validateAndTransformQuery(
         StoreGetCompanyParams,
         storeCompanyQueryConfig.retrieve
@@ -62,6 +63,7 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/companies/:id",
     middlewares: [
+      ensureCompanyAccess(true),
       validateAndTransformBody(StoreUpdateCompany),
       validateAndTransformQuery(
         StoreGetCompanyParams,
@@ -72,9 +74,15 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
 
   /* Employee middlewares */
   {
+    method: ["DELETE"],
+    matcher: "/store/companies/:id",
+    middlewares: [ensureCompanyAccess(true)],
+  },
+  {
     method: ["GET"],
     matcher: "/store/companies/:id/employees",
     middlewares: [
+      ensureCompanyAccess(false),
       validateAndTransformQuery(
         StoreGetEmployeeParams,
         storeEmployeeQueryConfig.list
@@ -85,7 +93,7 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/companies/:id/employees",
     middlewares: [
-      ensureRole("company_admin"),
+      ensureCompanyAccess(true),
       validateAndTransformBody(StoreCreateEmployee),
       validateAndTransformQuery(
         StoreGetEmployeeParams,
@@ -95,8 +103,9 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
   },
   {
     method: ["GET"],
-    matcher: "/store/companies/:id/employees/:employee_id",
+    matcher: "/store/companies/:id/employees/:employeeId",
     middlewares: [
+      ensureCompanyAccess(false),
       validateAndTransformQuery(
         StoreGetEmployeeParams,
         storeEmployeeQueryConfig.retrieve
@@ -105,9 +114,9 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
   },
   {
     method: ["POST"],
-    matcher: "/store/companies/:id/employees/:employee_id",
+    matcher: "/store/companies/:id/employees/:employeeId",
     middlewares: [
-      ensureRole("company_admin"),
+      ensureCompanyAccess(true),
       validateAndTransformBody(StoreUpdateEmployee),
       validateAndTransformQuery(
         StoreGetEmployeeParams,
@@ -117,9 +126,9 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
   },
   {
     method: ["DELETE"],
-    matcher: "/store/companies/:id/employees/:employee_id",
+    matcher: "/store/companies/:id/employees/:employeeId",
     middlewares: [
-      ensureRole("company_admin"),
+      ensureCompanyAccess(true),
       validateAndTransformBody(StoreDeleteEmployee),
     ],
   },
@@ -127,7 +136,7 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/store/companies/:id/approval-settings",
     middlewares: [
-      ensureRole("company_admin"),
+      ensureCompanyAccess(true),
       validateAndTransformBody(StoreUpdateApprovalSettings),
     ],
   },

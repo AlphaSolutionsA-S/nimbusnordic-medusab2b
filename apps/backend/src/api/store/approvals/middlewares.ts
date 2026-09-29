@@ -8,7 +8,7 @@ import {
   validateAndTransformQuery,
 } from "@medusajs/framework";
 import { MiddlewareRoute } from "@medusajs/medusa";
-import { ensureRole } from "../../middlewares/ensure-role";
+import { ensureCompanyAccess } from "../../middlewares/ensure-role";
 import { ApprovalType } from "../../../types/approval";
 import { approvalTransformQueryConfig } from "./query-config";
 import { StoreGetApprovals, StoreUpdateApproval } from "./validators";
@@ -51,7 +51,7 @@ export const storeApprovalsMiddlewares: MiddlewareRoute[] = [
     matcher: "/store/approvals*",
     middlewares: [
       authenticate("customer", ["session", "bearer"]),
-      ensureRole("company_admin"),
+      ensureCompanyAccess(true, false),
     ],
   },
   {

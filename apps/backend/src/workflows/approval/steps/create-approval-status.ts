@@ -29,7 +29,10 @@ export const createApprovalStatusStep = createStep(
           },
         ]);
 
-      return new StepResponse(approvalStatus, [approvalStatus.id]);
+      return new StepResponse({ ...approvalStatus, already_linked: true }, {
+        id: approvalStatus.id,
+        previous_status: existingApprovalStatus.status as ApprovalStatusType,
+      });
     }
 
     const approvalStatusesToCreate = cartIds.map((cartId) => ({
@@ -41,16 +44,26 @@ export const createApprovalStatusStep = createStep(
       approvalStatusesToCreate
     );
 
-    return new StepResponse(approvalStatus, [approvalStatus.id]);
+    return new StepResponse({ ...approvalStatus, already_linked: false }, {
+      id: approvalStatus.id,
+      previous_status: undefined,
+    });
   },
-  async (statusIds: string[], { container }) => {
-    if (!statusIds) {
+  async (data: { id: string; previous_status?: ApprovalStatusType } | undefined, { container }) => {
+    if (!data) {
       return;
     }
 
     const approvalModuleService =
       container.resolve<IApprovalModuleService>(APPROVAL_MODULE);
 
-    await approvalModuleService.deleteApprovalStatuses(statusIds);
+    if (data.previous_status) {
+      await approvalModuleService.updateApprovalStatuses([{
+        id: data.id,
+        status: data.previous_status,
+      }]);
+    } else {
+      await approvalModuleService.deleteApprovalStatuses([data.id]);
+    }
   }
 );

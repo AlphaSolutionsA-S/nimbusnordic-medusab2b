@@ -40,6 +40,9 @@ An official Medusa starter for B2B ecommerce, built with [Medusa](https://medusa
 
 ## Features
 
+See [security remediation and CMS upgrade notes](docs/security-remediation.md) for
+company authorization, approval behavior, and deployment requirements.
+
 - **Company management** — Create and manage companies, invite employees, and assign roles
 - **Spending limits** — Set per-employee spending limits with configurable reset frequencies
 - **Approval workflows** — Require admin or sales manager approval before orders are placed

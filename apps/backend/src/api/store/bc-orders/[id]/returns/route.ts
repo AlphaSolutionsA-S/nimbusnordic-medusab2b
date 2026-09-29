@@ -40,7 +40,7 @@ export const POST = async (
       input: {
         customerId: customer_id,
         bcCustomerNumber,
-        sourceSalesOrderId: req.params.id,
+        sourceOrderNumber: req.params.id,
         lines: req.validatedBody.lines.map((line) => ({
           sourceLineNo: line.source_line_no,
           quantityToReturn: line.quantity,
@@ -70,6 +70,15 @@ export const POST = async (
         return;
       }
     }
+
+    // TEMP (NIMBUS-138): debug logging of unexpected return errors; remove after sandbox verification.
+    req.scope
+      .resolve(ContainerRegistrationKeys.LOGGER)
+      .error(
+        `BC return request failed: ${
+          error instanceof Error ? `${error.name}: ${error.message}\n${error.stack}` : String(error)
+        }`
+      );
 
     res.status(500).json({
       message: "The return request could not be completed. Please try again later.",

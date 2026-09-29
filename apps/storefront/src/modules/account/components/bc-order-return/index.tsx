@@ -5,6 +5,7 @@ import { FetchError } from "@medusajs/js-sdk"
 import { Button, Container, Heading, Input, Select, Text } from "@medusajs/ui"
 import { useTranslations } from "next-intl"
 import { createBCReturn } from "@/lib/data/business-central"
+import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
 import type {
   BCOrderDetail,
   BCReturnLineInput,
@@ -27,6 +28,7 @@ type ReturnDraft = Record<number, LineDraft>
 
 const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
   const t = useTranslations("Account.bcOrderReturn")
+  const tFulfillment = useTranslations("Account.bcOrderLineFulfillment")
   const eligibleLines = order.lines.filter(
     (line) => line.lineType === "Item" && line.quantity > 0
   )
@@ -82,7 +84,8 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
       .map(([sourceLineNo, line]) => ({
         source_line_no: Number(sourceLineNo),
         quantity: line.quantity,
-        return_reason_code: line.reasonCode,
+        // TEMP (NIMBUS-138): reason selection disabled; always send "NORMAL" until BC reasons are verified.
+        return_reason_code: "NORMAL",
       }))
       .filter((line) => line.quantity > 0)
 
@@ -103,7 +106,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
     setError(null)
 
     try {
-      const returnOrder = await createBCReturn(order.id, { lines })
+      const returnOrder = await createBCReturn(order.number, { lines })
       setResult(returnOrder)
     } catch (error) {
       if (error instanceof FetchError && error.status === 404) {
@@ -122,7 +125,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
     return (
       <>
         {children}
-        {eligibleLines.length > 0 && (
+        {eligibleLines.some((line) => line.returnableQuantity > 0) && (
           <Container data-testid="bc-order-return">
             <Button type="button" onClick={() => setIsReturnFlow(true)}>
               {t("requestReturnLabel")}
@@ -179,6 +182,9 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                   {t("orderedQuantityColumnLabel")}
                 </th>
                 <th className="pb-2 pr-4 font-normal">
+                  {tFulfillment("statusColumnLabel")}
+                </th>
+                <th className="pb-2 pr-4 font-normal">
                   {t("unitPriceColumnLabel")}
                 </th>
                 <th className="pb-2 pr-4 font-normal">
@@ -190,9 +196,17 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
             <tbody>
               {eligibleLines.map((line) => {
                 const lineDraft = draft[line.sequence]
+                const isReturnable = line.returnableQuantity > 0
 
                 return (
-                  <tr key={line.id} className="border-b border-ui-border-base">
+                  <tr
+                    key={line.id}
+                    className={
+                      isReturnable
+                        ? "border-b border-ui-border-base"
+                        : "border-b border-ui-border-base text-ui-fg-disabled"
+                    }
+                  >
                     <td className="py-3 pr-4">
                       {line.itemDisplayName ||
                         line.description ||
@@ -200,19 +214,23 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                         t("itemFallbackLabel")}
                     </td>
                     <td className="py-3 pr-4">{line.quantity}</td>
+                    <td className="py-3 pr-4">
+                      <BcOrderLineFulfillment line={line} />
+                    </td>
                     <td className="py-3 pr-4">{formattedUnitPrice(line.unitPrice)}</td>
                     <td className="py-3 pr-4">
                       <Input
                         type="number"
                         min="0"
-                        max={line.quantity}
+                        max={line.returnableQuantity}
+                        disabled={!isReturnable}
                         step="any"
                         value={lineDraft?.quantity ?? 0}
                         onChange={(event) =>
                           onQuantityChange(
                             line.sequence,
                             event.target.value,
-                            line.quantity
+                            line.returnableQuantity
                           )
                         }
                         aria-label={t("returnQuantityAriaLabel", {
@@ -225,6 +243,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                     </td>
                     <td className="py-3">
                       <Select
+                        disabled
                         value={lineDraft?.reasonCode ?? ""}
                         onValueChange={(reasonCode) =>
                           onReasonChange(line.sequence, reasonCode)

@@ -28,6 +28,19 @@ const order = {
       quantity: 2,
       unitPrice: 40,
       lineAmount: 80,
+      shippedQuantity: 0,
+      returnableQuantity: 0,
+      reservations: [
+        {
+          id: "res-1",
+          quantity: 1,
+          reservedFrom: "Stock",
+          locationCode: "MAIN",
+          freightType: "",
+          expectedReceiptDate: null,
+          shipmentDate: "2026-10-12",
+        },
+      ],
     },
   ],
 } as any
@@ -51,6 +64,19 @@ describe("BcOrderDetailTemplate", () => {
     expect(screen.getByText("Amount")).toBeInTheDocument()
     expect(
       screen.getByText("Total excluding tax", { selector: "th" })
+    ).toBeInTheDocument()
+  })
+
+  it("shows the shipment status and reservations on an order line", async () => {
+    const element = await BcOrderDetailTemplate({ order })
+    render(element)
+
+    expect(screen.getByRole("columnheader", { name: "Status" })).toBeInTheDocument()
+    expect(
+      screen.getByText("Not shipped yet · 1 reserved · 1 awaiting")
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText("1 reserved · From Stock · Location MAIN · Ships 12 Oct 2026")
     ).toBeInTheDocument()
   })
 })

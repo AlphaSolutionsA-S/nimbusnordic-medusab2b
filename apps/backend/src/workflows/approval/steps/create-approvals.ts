@@ -34,6 +34,7 @@ export const createApprovalStep = createStep(
         ],
         filters: {
           id: approvalData[0].cart_id,
+          customer_id: approvalData[0].created_by,
         },
       },
       {
@@ -89,15 +90,27 @@ export const createApprovalStep = createStep(
       approvalsToCreate
     );
 
+    const previousIds = (cart.approvals ?? [])
+      .filter((approval) => approval !== null)
+      .map((approval) => approval.id);
+    try {
+      await approvalModuleService.softDeleteApprovals(previousIds);
+    } catch (error) {
+      await approvalModuleService.deleteApprovals(approvals.map((approval) => approval.id));
+      throw error;
+    }
+
     return new StepResponse(
       approvals,
-      approvals.map((approval) => approval.id)
+      { createdIds: approvals.map((approval) => approval.id), previousIds }
     );
   },
-  async (approvalIds: string[], { container }) => {
+  async (data: { createdIds: string[]; previousIds: string[] } | undefined, { container }) => {
+    if (!data) return;
     const approvalModuleService =
       container.resolve<IApprovalModuleService>(APPROVAL_MODULE);
 
-    await approvalModuleService.deleteApprovals(approvalIds);
+    await approvalModuleService.deleteApprovals(data.createdIds);
+    await approvalModuleService.restoreApprovals(data.previousIds);
   }
 );

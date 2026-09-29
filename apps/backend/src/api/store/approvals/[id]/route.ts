@@ -2,21 +2,19 @@ import {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework";
-import { updateApprovalsWorkflow } from "../../../../workflows/approval/workflows";
+import { updateCompanyApprovalWorkflow } from "../../../../workflows/approval/workflows/update-company-approval";
 import { StoreUpdateApprovalType } from "../validators";
 
 export const POST = async (
   req: AuthenticatedMedusaRequest<StoreUpdateApprovalType>,
   res: MedusaResponse
 ) => {
-  const { customer_id } = req.auth_context.app_metadata as {
-    customer_id: string;
-  };
+  const customer_id = req.auth_context.actor_id;
 
   const { id: approvalId } = req.params;
   const { status } = req.validatedBody;
 
-  const { result: approval, errors } = await updateApprovalsWorkflow.run({
+  const { result: approval, errors } = await updateCompanyApprovalWorkflow.run({
     input: {
       status,
       handled_by: customer_id,

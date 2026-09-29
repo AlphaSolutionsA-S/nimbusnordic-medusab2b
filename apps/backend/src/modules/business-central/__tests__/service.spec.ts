@@ -235,6 +235,173 @@ describe("BusinessCentralModuleService.getOrder", () => {
     );
   });
 
+  describe("shipped quantities and reservations", () => {
+    const openOrder = {
+      id: "order-1",
+      number: "SO-1000",
+      orderDate: "2026-08-14",
+      customerNumber: "10000",
+      customerName: "Nimbus Nordic",
+      status: "Open",
+      currencyCode: "DKK",
+      salesOrderLines: [
+        {
+          id: "line-1",
+          sequence: 10000,
+          lineType: "Item",
+          item: { number: "CDEN-M-MIDNBLUE" },
+          itemVariant: { code: "L" },
+          quantity: 5,
+          shippedQuantity: 3,
+          invoicedQuantity: 1,
+        },
+        {
+          id: "line-2",
+          sequence: 20000,
+          lineType: "Item",
+          item: { number: "CDEN-M-MIDNBLUE" },
+          itemVariant: { code: "M" },
+          quantity: 4,
+        },
+        {
+          id: "line-3",
+          sequence: 30000,
+          lineType: "Item",
+          item: { number: "FREIGHT" },
+          quantity: 1,
+          shippedQuantity: 1,
+        },
+      ],
+    };
+    const invoice = {
+      id: "invoice-1",
+      number: "INV-1",
+      orderNumber: "SO-1000",
+      invoiceDate: "2026-08-20",
+      customerNumber: "10000",
+      customerName: "Nimbus Nordic",
+      status: "Paid",
+      currencyCode: "DKK",
+      salesInvoiceLines: [
+        { id: "invoice-line-1", sequence: 10000, lineType: "Item", quantity: 1 },
+      ],
+    };
+
+    function mockOrderFetch(reservations: Response | Error): jest.Mock {
+      process.env.BUSINESS_CENTRAL_COMPANY_ID = "00000000-0000-0000-0000-0000000000c1";
+      const fetchMock = jest.fn(async (url: string) => {
+        if (url.includes("oauth2")) {
+          return jsonResponse({ access_token: "access-token" });
+        }
+        if (url.includes("/customers()")) {
+          return jsonResponse({ value: [{ id: "customer-id-1" }] });
+        }
+        if (url.includes("/salesOrders()")) {
+          return jsonResponse({ value: [openOrder] });
+        }
+        if (url.includes("/salesInvoices()")) {
+          return jsonResponse({ value: [invoice] });
+        }
+        if (reservations instanceof Error) {
+          throw reservations;
+        }
+        return reservations;
+      });
+      global.fetch = fetchMock as unknown as typeof fetch;
+      return fetchMock;
+    }
+
+    it("derives returnable quantities from shipped and invoiced quantities", async () => {
+      mockOrderFetch(jsonResponse({ value: [] }));
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" });
+
+      expect(result?.lines).toEqual([
+        expect.objectContaining({ id: "line-1", shippedQuantity: 3, returnableQuantity: 2 }),
+        expect.objectContaining({ id: "line-2", shippedQuantity: 0, returnableQuantity: 0 }),
+        expect.objectContaining({ id: "line-3", shippedQuantity: 1, returnableQuantity: 1 }),
+        expect.objectContaining({
+          id: "invoice-line-1",
+          shippedQuantity: 1,
+          returnableQuantity: 1,
+          reservations: [],
+        }),
+      ]);
+    });
+
+    it("attaches Reservation entries to the order line with the same item and variant", async () => {
+      const fetchMock = mockOrderFetch(
+        jsonResponse({
+          value: [
+            {
+              // Supply-side entry: documentNumber/lineNumber point at the purchase order line.
+              id: "res-1",
+              documentNumber: "PO-1",
+              lineNumber: 30000,
+              reservationStatus: "Reservation",
+              itemNumber: "CDEN-M-MIDNBLUE",
+              variantCode: "L",
+              quantityBase: 2,
+              reservedFor: "Sales Order SO-1000",
+              reservedFrom: "Purchase Order PO-1",
+              locationCode: "MAIN",
+              freightType: "Sea",
+              expectedReceiptDate: "2026-10-20",
+              shipmentDate: "0001-01-01",
+            },
+            {
+              id: "res-2",
+              lineNumber: 30000,
+              reservationStatus: "Tracking",
+              itemNumber: "FREIGHT",
+              variantCode: "",
+              quantityBase: 1,
+            },
+          ],
+        })
+      );
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" });
+
+      expect(result?.lines[1].reservations).toEqual([]);
+      expect(result?.lines[2].reservations).toEqual([]);
+      expect(result?.lines[0].reservations).toEqual([
+        {
+          id: "res-1",
+          quantity: 2,
+          reservedFrom: "Purchase Order PO-1",
+          locationCode: "MAIN",
+          freightType: "Sea",
+          expectedReceiptDate: "2026-10-20",
+          shipmentDate: null,
+        },
+      ]);
+
+      const reservationsUrl = new URL(
+        fetchMock.mock.calls.find(([url]) => url.includes("salesOrderReservationEntries"))![0]
+      );
+      expect(reservationsUrl.pathname).toBe(
+        "/v2.0/tenant-id/Sandbox/api/abakion/customerPortal/v2.0/companies(00000000-0000-0000-0000-0000000000c1)/salesOrderReservationEntries"
+      );
+      expect(reservationsUrl.searchParams.get("$filter")).toBe("documentNumber eq 'SO-1000'");
+
+      const orderUrl = new URL(fetchMock.mock.calls.find(([url]) => url.includes("/salesOrders()"))![0]);
+      expect(orderUrl.searchParams.get("$expand")).toBe("salesOrderLines($expand=item,itemVariant)");
+    });
+
+    it("still returns the order when reservations cannot be loaded", async () => {
+      mockOrderFetch(new Error("network down"));
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" });
+
+      expect(result?.number).toBe("SO-1000");
+      expect(result?.lines.every((line) => line.reservations.length === 0)).toBe(true);
+    });
+  });
+
   // TC-3: partially invoiced — order shell wins the header/totals (D3), lines merge from both sources (D7).
   it("merges salesOrderLines and salesInvoiceLines for a partially invoiced order, keeping the order's own totals", async () => {
     global.fetch = jest

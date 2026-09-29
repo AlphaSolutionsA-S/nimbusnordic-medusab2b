@@ -35,6 +35,19 @@ export type BCOrderLine = {
   quantity: number
   unitPrice: number
   lineAmount: number
+  shippedQuantity: number
+  returnableQuantity: number
+  reservations: BCOrderLineReservation[]
+}
+
+export type BCOrderLineReservation = {
+  id: string
+  quantity: number
+  reservedFrom: string
+  locationCode: string
+  freightType: string
+  expectedReceiptDate: string | null
+  shipmentDate: string | null
 }
 
 export type BCOrderInvoiceSummary = {

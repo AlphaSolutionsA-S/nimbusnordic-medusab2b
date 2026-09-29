@@ -1,6 +1,7 @@
 import { createWorkflow, WorkflowResponse } from "@medusajs/framework/workflows-sdk";
 import { ModuleCreateQuoteMessage, ModuleQuoteMessage } from "../../../types";
 import { createQuoteMessageStep } from "../steps/create-quote-message";
+import { validateQuoteMessageAccessStep } from "../steps/validate-quote-message-access";
 
 /*
   A workflow that creates messages within a quote. Messages are used as a communication trail
@@ -12,6 +13,7 @@ export const createQuoteMessageWorkflow = createWorkflow(
   function (
     input: ModuleCreateQuoteMessage
   ): WorkflowResponse<ModuleQuoteMessage> {
-    return new WorkflowResponse(createQuoteMessageStep(input));
+    const authorizedInput = validateQuoteMessageAccessStep(input);
+    return new WorkflowResponse(createQuoteMessageStep(authorizedInput));
   }
 );

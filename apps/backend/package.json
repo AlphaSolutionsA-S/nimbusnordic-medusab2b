@@ -24,9 +24,11 @@
     "test:unit": "cross-env TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
+    "@hookform/resolvers": "5.5.7",
     "@medusajs/admin-sdk": "2.21.0",
     "@medusajs/cli": "2.21.0",
     "@medusajs/admin-shared": "2.21.0",
+    "@medusajs/core-flows": "2.21.0",
     "@medusajs/dashboard": "2.21.0",
     "@medusajs/framework": "2.21.0",
     "@medusajs/js-sdk": "2.21.0",
