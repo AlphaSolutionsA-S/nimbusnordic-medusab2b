@@ -135,6 +135,121 @@
   accommodate the test). After implementation, update this PROGRESS.md with the outcome and hand
   over per this repo's Definition of Done / code-review / commit-message conventions.
 
+- **Date:** 2026-09-29
+- **Updated by:** implementation-planner agent
+- **Outcome:** Re-planned against the merged NIMBUS-129 (144/147) and NIMBUS-149 code on
+  `develop`. PLAN.md, manifest.md and all five task files were revised in place; SCOPE.md is
+  unchanged. Main changes:
+  - **Task 05 unblocked.** `READY_FOR_BUSINESS_CENTRAL_EVENT` exists in `enrich-order.ts` and is
+    emitted with `{ order_id }`; the BLOCKED marker and fallback path are removed.
+  - **Task 01 changed from "create" to "append".** NIMBUS-149 created `bc-integration-state.ts`
+    with this story's contract. Task 01 appends `BcSubmissionFailureReason`,
+    `parseBcIntegrationState` and `hasBusinessCentralOrder`, adds TC-2..TC-5 to the existing spec,
+    and renames nothing. `bc-order-payload.ts` is still new.
+  - **`unitPrice` is not sent to BC.** This follows the user decision recorded in
+    `issues/NIMBUS-129/PROGRESS.md` on 2026-09-16 ("It must **not** be set explicitly on the BC
+    sales-order line"). The old Decision 6 is replaced, and the line input type has no price field.
+  - **Bugs fixed in the old skeletons.** Canonical dates are `DD-MM-YYYY`, and the old helper would
+    have dropped every date; they are now converted. A failing item lookup would have stranded the
+    state at `pending`; it is now recorded as `bc_item_lookup_failed`.
+  - **Test safety.** `.env` holds real BC credentials and `jest.config.js` loads it. Once the
+    subscriber exists, the existing event-chain and orderapi suites would call BC. Task 05 adds a
+    guard in `integration-tests/setup.js` and narrows one racy NIMBUS-149 assertion.
+  - **Other additions:** ambiguous BC outcomes reuse `BusinessCentralAmbiguousOutcomeError` and are
+    recorded as `bc_submission_outcome_unknown`; `requestedShipmentDate` is sent as the line's
+    `shipmentDate`; BC-rejected lines keep their EAN; tests use the shared `__fixtures__`.
+  - **Stale references corrected:** `return-stub.spec.ts` is now `return.spec.ts`, returns are no
+    longer stubs, `SalesOrders()` is now `salesOrders()`, and the spy uncertainty is resolved by
+    `company-sync.spec.ts`. The branch is renamed to `feature/NIMBUS-148`.
+  - **Ready for Dispatch: false.** Seven open questions in PLAN.md need the user's decision:
+    - OQ-1: not sending other BC-owned fields (discounts, tax, description, salesperson,
+      pricesIncludeTax).
+    - OQ-2: not sending `currencyCode`, and no mismatch check.
+    - OQ-3: `unitPrice` discrepancy flagging deferred to NIMBUS-158.
+    - OQ-4: ambiguous-outcome handling.
+    - OQ-5: keeping the `itemNumber`/`custItemNo` fallback.
+    - OQ-6: a guarded short-circuit does not count as an attempt.
+    - OQ-7: the test-safety edits outside this story's new files.
+- **Handover to:** user (plan approval and OQ-1..OQ-7), then implementor agent
+- **Handover prompt:** Implement NIMBUS-148 from the approved re-plan in `issues/NIMBUS-148/`
+  (PLAN.md, manifest.md, task files 01–05) on branch `feature/NIMBUS-148` from `develop`.
+  - **Order:** run tasks strictly 01 → 02 → 03 → 04 → 05. Tasks 02 and 03 edit the same two
+    `business-central` files.
+  - **Follow the skeletons exactly.** Use the building-with-medusa skill, double quotes, named
+    exports (the subscriber's default export is the one exception), and zod from
+    `@medusajs/framework/zod`.
+  - **Task 01:** append to `src/modules/order-ingestion/bc-integration-state.ts`. Do not recreate
+    it or rename anything, since it is a cross-story contract with NIMBUS-149/158.
+  - **Pricing:** never send `unitPrice` to Business Central.
+  - **Task 05:** includes the `integration-tests/setup.js` BC credential guard and the narrowed TC-4
+    assertion in `enrich-order-event-chain.spec.ts`. These are the only edits to files outside this
+    story's new ones.
+  - **Do not touch:** `createReturnFromSalesOrder`/`listReturnReasons`,
+    `src/workflows/order-ingestion/**`, `src/subscribers/order-ingestion-created.ts`,
+    `src/links/order-company.ts`, `medusa-config.ts`, or the storefront.
+  - **Out of scope:** admin UI, retry endpoint, and manual-retry flow (all NIMBUS-158).
+  - **Checks:** run `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http`
+    (individually if the hook-timeout flake appears), `pnpm build` and `pnpm lint`. Report the known
+    pre-existing failures and do not fix them.
+  - **When done:** update this PROGRESS.md and the manifest statuses. Do not commit unless asked.
+
+- **Date:** 2026-09-29
+- **Updated by:** implementation-planner agent
+- **Outcome:** The user approved the re-plan and decided all open questions. PLAN.md, manifest.md
+  and task files 01–05 now reflect those decisions, and the manifest is **Ready for Dispatch:
+  true**. Per user instruction the implementor was **not** started.
+  - **OQ-1 (yes):** do not send line discounts, tax code or description, or header
+    `pricesIncludeTax`, discount fields or `salesperson`. Keep sending `unitOfMeasureCode` and
+    `shipmentDate`.
+  - **OQ-2 (changed from recommendation):** send `currencyCode` only when it differs from the BC
+    customer's currency.
+    - `prepareBcOrderStep` reads the customer with the existing `getCustomer`, using the live BC
+      value because `Company.currency_code` can still be null for companies synced before
+      `d90c26a`.
+    - A blank BC currency means LCY, resolved by the existing `resolveCurrencyCode` from
+      `prepare-company-bc-sync.ts` (NIMBUS-147, commit `d90c26a`). That function gets a one-word
+      `export` and is reused, not duplicated.
+    - The comparison is case-insensitive and the override is uppercased.
+    - New failure reasons: `bc_customer_not_found` and `bc_customer_lookup_failed`.
+    - Tests cover match, differ, blank and LCY-env cases: unit CUR-1..5 and HTTP TC-14..TC-17.
+      Task 03 gains TC-13.
+  - **OQ-3:** `unitPrice` discrepancy flagging is deferred to NIMBUS-158.
+  - **OQ-4 (yes):** record `bc_submission_outcome_unknown`. The check-BC-before-retry belongs to
+    NIMBUS-158.
+  - **OQ-5:** the `itemNumber`/`custItemNo` fallback is kept.
+  - **OQ-6 (yes):** a guard-stopped call does not increment `attempt_count` or touch timestamps.
+  - **OQ-7:**
+    - The `.env` BC tenant is a TEST tenant, so tests may reach it. The `setup.js`
+      fake-credentials guard is dropped.
+    - A fail-closed guard replaces it. A Jest `globalSetup` (`integration-tests/global-setup.ts`,
+      wired in `jest.config.js`) parses the environment segment of `BUSINESS_CENTRAL_DISCOVERY_URL`.
+      It aborts `integration:http`/`integration:modules` runs unless that environment is in
+      `BUSINESS_CENTRAL_TEST_ENVIRONMENTS` (default `TestDK`, documented in `.env.template`).
+    - Missing or malformed URLs are refused. Messages never include the URL, tenant, client id or
+      secret.
+    - A pure util `src/utils/business-central-test-environment.ts` is unit-tested with ENV-1..5.
+    - The narrowed `enrich-order-event-chain.spec.ts` TC-4 assertion is kept for timing
+      robustness.
+    - PLAN.md records that `.env` must never point at production BC when tests run.
+  - **Sandbox-type check deliberately out of scope (user decision).** Checked on 2026-09-29:
+    - The current app registration's token has only `API.ReadWrite.All`.
+    - `GET /admin/v2.24/.../environments` and `GET /admin/v2.21/.../environments` return `401`.
+    - The check would need `AdminCenter.ReadWrite.All`, and no read-only Admin Center scope exists.
+    - A future check must use a separate test-only app registration, never the integration's own
+      app. PLAN.md lists it as possible later hardening.
+  - **CI note:** integration runs now require `BUSINESS_CENTRAL_DISCOVERY_URL` to point at an
+    allowed test environment.
+- **Handover to:** user (dispatch on request), then implementor agent
+- **Handover prompt:** Use the handover prompt in the previous entry, with these changes:
+  - **Task 04:** also calls `getCustomer` and sends `currencyCode` only as an override. It exports
+    `resolveCurrencyCode` from `prepare-company-bc-sync.ts` (one word, nothing else in that file).
+  - **Task 05:** does **not** modify `integration-tests/setup.js`. It adds the fail-closed BC
+    test-environment guard instead: `src/utils/business-central-test-environment.ts`,
+    `integration-tests/global-setup.ts`, the `jest.config.js` `globalSetup` entry, and an
+    `.env.template` line. It also narrows the TC-4 assertion. Verify the guard aborts a run pointed
+    at a non-allowed environment. Set that environment only in the shell and never write it to
+    `.env`.
+
 ## Note on how this scope was produced
 
 The scoper agent was launched as a background sub-agent to interview the user for this story (as

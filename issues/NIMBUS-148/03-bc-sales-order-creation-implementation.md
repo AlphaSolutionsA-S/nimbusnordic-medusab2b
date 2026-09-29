@@ -4,16 +4,14 @@
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 03
-**Date:** 2026-09-02
-**Branch:** feature/NIMBUS-148-bc-order-submission (from develop)
-**Depends on:** None (independent of Task 02; both edit the same two files, so run 02 first to
-avoid a merge conflict in `types.ts` / `service.ts`)
+**Date:** 2026-09-29 (revised; supersedes the 2026-09-02 version)
+**Branch:** feature/NIMBUS-148 (from develop)
+**Depends on:** Task 02 (logically independent, but both edit `types.ts` / `service.ts` — run 02
+first, never in parallel)
 
 ---
 
 ## Project Environment
-
-Identical to Task 02:
 
 - **App root:** `apps/backend`
 - **Build command:** `pnpm build` (from repo root)
@@ -24,111 +22,86 @@ Identical to Task 02:
 - **Test location:** `apps/backend/src/modules/business-central/__tests__/*.spec.ts`
 - **Quote style:** **double quotes**, 2-space indent — match `service.ts`.
 
-## THIS IS A REAL HTTP CALL, NOT A STUB
+## What changed since the 2026-09-02 plan (read first)
 
-`service.ts` already contains `createReturnFromSalesOrder`, marked
-`// STUB (NIMBUS-138 task 09): replace with the real BC custom-action HTTP call.` **Do not follow
-that precedent here.** NIMBUS-148's SCOPE.md is explicit: "unlike `createReturnFromSalesOrder` this
-is implemented as a real HTTP call against Business Central from the start, not a stub", and the
-user confirmed it directly. Returning a fabricated `bcso_stub_...` id would silently poison the
-integration-state metadata that NIMBUS-158's admin widget will display as a real BC order id.
+1. **`unitPrice` is NOT sent to Business Central.** User decision recorded in
+   `issues/NIMBUS-129/PROGRESS.md` (2026-09-16), repeated as binding guidance in
+   `issues/NIMBUS-129/02-canonical-order-contract-implementation.md`:
+   > "a submitted `unitPrice` is a *stated expectation, not an instruction*. It must **not** be set
+   > explicitly on the BC sales-order line — let BC price the line exactly as it does for a manually
+   > keyed order. Setting it explicitly overrides BC's contract price, so a stale price in a
+   > customer's ordering system would silently beat the negotiated one. Use the submitted value only
+   > to detect and flag a discrepancy."
 
-Leave `createReturnFromSalesOrder` and `listReturnReasons` exactly as they are — they are
-NIMBUS-138's concern, not this story's.
+   The line input type therefore has **no `unitPrice` field at all**, so a price cannot be sent by
+   accident. By the same reasoning (BC owns pricing, tax and item master data), this revision also
+   stops sending line `discountPercent` / `discountAmount` / `taxCode` / `description` and header
+   `pricesIncludeTax` / `discountAmount` / `discountAppliedBeforeTax` / `salesperson` (user
+   decision 2026-09-29, PLAN.md Decision 6).
+   **`currencyCode` is an optional override** (user decision 2026-09-29, PLAN.md Decision 15):
+   Task 04 passes it only when the order's currency differs from the BC customer's own currency.
+   This method sends it when given and omits it otherwise.
+2. **Line `shipmentDate` is sent** from the canonical `requestedShipmentDate` (a submitter-owned
+   "when" fact per the same decision). BC `salesOrderLine.shipmentDate` is `Edm.Date`.
+3. **Dates arrive already converted.** Task 04 converts canonical `DD-MM-YYYY` to `YYYY-MM-DD`
+   (Task 01's `canonicalDateToBcDate`) before calling this method. This method sends what it is
+   given.
+4. **Ambiguous outcomes reuse the existing `BusinessCentralAmbiguousOutcomeError`.** NIMBUS-138 added
+   this class to `service.ts` for the same problem on return creation: when a write request times
+   out, returns 5xx/408, or returns 2xx without a usable id, BC may or may not have created the
+   document. Recording that as a plain failure would invite a duplicate on retry. Task 04 records it
+   as `bc_submission_outcome_unknown` (user decision 2026-09-29). `idempotencyKey` is the
+   `externalDocumentNumber`, which NIMBUS-158 can use to look the order up in BC before any retry.
+5. `createReturnFromSalesOrder` is **no longer a stub** (NIMBUS-138 made it real). The old "do not
+   follow the stub precedent" note is obsolete; this method is a real HTTP call, and
+   `createReturnFromSalesOrder` / `listReturnReasons` stay untouched.
 
 ## Verified Business Central facts this task is built on
 
-Checked against `issues/NIMBUS-129/bc metadata/std odata metadata.xml`, not assumed:
+Checked against `issues/NIMBUS-129/bc metadata/std odata metadata.xml`:
 
-- **Entity sets:** `salesOrders` (`Microsoft.NAV.salesOrder`) and `salesOrderLines`
-  (`Microsoft.NAV.salesOrderLine`), both declared in the `<EntityContainer>` at the root of the
-  configured discovery URL — the same root-level addressing the existing `listOrders`/`getOrder`
-  methods already use.
-- **`salesOrder` writable header fields relevant here:** `externalDocumentNumber`
-  (`MaxLength="35"`), `orderDate` (`Edm.Date`), `requestedDeliveryDate` (`Edm.Date`),
-  `customerNumber` (`Nullable="false"`, `MaxLength="20"`), `currencyCode`, `salesperson`
-  (`MaxLength="20"`), `pricesIncludeTax`, `discountAmount`, `discountAppliedBeforeTax`, `email`
-  (`MaxLength="80"`), `phoneNumber` (`MaxLength="30"`), and the flat address field families
-  `billTo{Name,AddressLine1,AddressLine2,City,State,PostCode,Country}` and
-  `shipTo{Name,Contact,AddressLine1,AddressLine2,City,State,PostCode,Country}`. `number` is
-  server-assigned — do not send it. `id` is `Edm.Guid` and is the key.
-- **`salesOrderLine` writable fields relevant here:** `lineType`, `itemId` (`Edm.Guid`),
-  `description` (`MaxLength="100"`), `description2`, `unitOfMeasureCode` (`MaxLength="10"`),
-  `quantity`, `unitPrice`, `discountAmount`, `discountPercent`, `taxCode` (`MaxLength="50"`),
-  `sequence`. `documentId` is set by the parent-collection URL — do not send it.
-- **`lineType` is the enum `Microsoft.NAV.invoiceLineAggLineType`, whose members are `Comment`,
-  `Account`, `Item`, `Resource`, `Fixed_x0020_Asset`, `Charge`, `Allocation_x0020_Account`.** The
-  wire value for an item line is the string `"Item"` — confirmed both by the enum and by this
-  repo's existing `prepare-bc-return.ts`, which already filters on `line.lineType === "Item"`.
-- **BC's standard OData v2.0 API does not support deep insert of `salesOrderLines` inside the
-  `salesOrders` POST body.** Lines are created by POSTing to the containment collection
-  `salesOrders(<guid>)/salesOrderLines`, one request per line. This is why the method below is a
-  header POST followed by N line POSTs, and it is also *why partial submission is naturally
-  expressible* — each line succeeds or fails on its own.
-
-This resolves SCOPE.md's open question "exact BC sales-order-creation endpoint/payload shape (OData
-resource vs. bound action vs. custom API)": **plain OData resource POSTs against the standard
-API v2.0 entity sets.** No bound action and no custom API page is needed or available — the custom
-`metadata masterdata.xml` API surface exposes only customers, prices, contacts, and item
-availability, with zero `<Action>` and zero `<Function>` declarations.
+- **Entity sets:** `salesOrders` and `salesOrderLines`, at the root of the configured discovery URL
+  (the same root-level addressing `listOrders` / `getOrder` use: `${base}/salesOrders()`).
+- **`salesOrder` fields sent:** `customerNumber` (`Nullable="false"`, `MaxLength="20"`),
+  `externalDocumentNumber` (`MaxLength="35"`), `orderDate` / `requestedDeliveryDate` (`Edm.Date`),
+  `currencyCode` (only when Task 04 passes an override), `email`, `phoneNumber`, `billTo{Name,AddressLine1,AddressLine2,City,State,PostCode,Country}`,
+  `shipTo{Name,Contact,AddressLine1,AddressLine2,City,State,PostCode,Country}`. `number` and `id`
+  are server-assigned.
+- **`salesOrderLine` fields sent:** `lineType`, `itemId` (`Edm.Guid`), `quantity`,
+  `unitOfMeasureCode` (`MaxLength="10"`), `shipmentDate` (`Edm.Date`). `documentId` comes from the
+  containment URL.
+- **`lineType` for an item line is the string `"Item"`** (enum `invoiceLineAggLineType`).
+- **No deep insert.** Lines are created by `POST salesOrders(<guid>)/salesOrderLines`, one request
+  per line. That is also what makes partial submission natural.
 
 ## Solution Design
 
-One new method, `createSalesOrder`, on `BusinessCentralModuleService`:
+`createSalesOrder`:
 
-1. Acquire the token once (same `getDiscoveryUrl` → `getTenantId` → `getClientCredentials` →
-   `requestToken` sequence every other method uses).
-2. `POST ${base}/salesOrders` with the header body. A non-2xx or unparseable response **throws
-   `MedusaError`** — no BC order exists, so the caller records `failed` with no BC order id
-   (SCOPE.md: "do not fabricate a BC order id").
-3. For each line, `POST ${base}/salesOrders(<id>)/salesOrderLines`. A per-line failure is
-   **collected, not thrown**.
-4. Return `{ id, number, status, acceptedLineNumbers, rejectedLines }`.
-
-### Decision: line failures after the header exists are collected, not thrown
-
-This is a genuine trade-off and both directions were considered, so it is recorded rather than
-silently chosen:
-
-- *Throwing* on the first rejected line would keep the method's contract simple ("it worked or it
-  didn't"), **but** the BC sales-order header has already been created at that point and cannot be
-  un-created by this code path. The caller would record `failed` with no BC order id, an orphan
-  header would sit in BC, and NIMBUS-158's retry would create a **second** BC order — the exact
-  duplicate this story is required to prevent.
-- *Collecting* keeps the real BC order id available to the caller in every case where a BC order
-  actually exists, so the duplicate-submission guard (Task 01's `hasBusinessCentralOrder`) is
-  always armed correctly.
-
-**Collecting wins**, because preventing a duplicate BC order is an explicit SCOPE.md requirement
-and a tidy method signature is not. The consequence — that an outcome can be `failed` *and* carry a
-real `bc_order_id` (when BC accepted the header but rejected every line) — is handled in Task 04
-and flagged in PLAN.md as something NIMBUS-158's retry story must reckon with.
-
-### Decision: `unitPrice` is sent to BC — flagged as a business question
-
-The canonical contract (NIMBUS-147) deliberately keeps `unitPrice` per line, and the real EDI
-samples populate it (`209,25`). Sending it makes the BC line use the price the customer's system
-stated. **Not** sending it would make BC price the line from the customer's own BC price list.
-These give different answers whenever the two disagree, and which is correct is a business
-decision, not an engineering one. This task sends `unitPrice` (the EDI order states an agreed
-price; dropping submitter-supplied data silently is worse than the alternative), and PLAN.md flags
-it for confirmation. If the answer comes back "let BC price it", the change is one line: stop
-setting `unitPrice` in `buildSalesOrderLineBody`.
+1. Validate inputs (`lines` non-empty, `customerNumber` and `externalDocumentNumber` non-blank)
+   before any network call.
+2. Acquire the token once (`getDiscoveryUrl` → `getTenantId` → `getClientCredentials` →
+   `requestToken`).
+3. `POST ${base}/salesOrders` with the header body and a 30 s `AbortSignal.timeout`.
+   - fetch throws (network / timeout) → `BusinessCentralAmbiguousOutcomeError`
+   - status `>= 500` or `408` → `BusinessCentralAmbiguousOutcomeError`
+   - any other non-2xx → `MedusaError(UNEXPECTED_STATE, "Business Central sales order request failed with status N")`
+     (a definite rejection: no BC order exists)
+   - 2xx but body unparseable or no string `id` → `BusinessCentralAmbiguousOutcomeError`
+4. For each line, `POST ${base}/salesOrders(<id>)/salesOrderLines`. A per-line failure is
+   **collected, not thrown** (PLAN.md Decision 5).
+5. Return `{ id, number, status, acceptedLineNumbers, rejectedLines }`.
 
 ### Not doing: field-length truncation
 
-BC enforces `MaxLength` on several fields (`description` 100, `externalDocumentNumber` 35,
-`unitOfMeasureCode` 10, `salesperson` 20). This task does **not** truncate — over-long values are
-sent as-is and BC rejects them, which surfaces as a recorded line failure or a recorded submission
-failure rather than as silently-corrupted data in BC. Real sample values are far inside the limits.
-Flagged in PLAN.md; adding truncation would be speculative and would hide a data problem.
+Over-long values (`externalDocumentNumber` 35, `unitOfMeasureCode` 10) are sent as-is; BC rejects
+them and the rejection is recorded. Real sample values are far inside the limits.
 
 ## Code Skeletons
 
 ### Modified File: `apps/backend/src/modules/business-central/types.ts`
 
-**Append** these types (after Task 02's additions), then add one member to
-`IBusinessCentralModuleService`:
+**Append** after Task 02's additions:
 
 ```typescript
 export type BCSalesOrderAddressInput = {
@@ -142,28 +115,23 @@ export type BCSalesOrderAddressInput = {
   country?: string;
 };
 
+// Deliberately has no unitPrice / discount / tax / description fields: Business Central prices
+// and describes the line from its own master data (NIMBUS-129 PROGRESS.md, 2026-09-16).
 export type BCCreateSalesOrderLineInput = {
   lineNumber: number;
   itemId: string;
   quantity: number;
-  unitPrice?: number;
-  description?: string;
   unitOfMeasureCode?: string;
-  discountPercent?: number;
-  discountAmount?: number;
-  taxCode?: string;
+  shipmentDate?: string;
 };
 
 export type BCCreateSalesOrderParams = {
   customerNumber: string;
-  externalDocumentNumber?: string;
+  externalDocumentNumber: string;
   orderDate?: string;
   requestedDeliveryDate?: string;
+  // Only set when the order's currency differs from the BC customer's own currency (Task 04).
   currencyCode?: string;
-  salesperson?: string;
-  pricesIncludeTax?: boolean;
-  discountAmount?: number;
-  discountAppliedBeforeTax?: boolean;
   email?: string;
   phoneNumber?: string;
   billTo?: BCSalesOrderAddressInput;
@@ -185,7 +153,7 @@ export type BCCreatedSalesOrder = {
 };
 ```
 
-Interface member to add (after `findItemsForOrderLines` from Task 02):
+Add to `IBusinessCentralModuleService`, after Task 02's `findItemsForOrderLines`:
 
 ```typescript
   createSalesOrder(
@@ -197,17 +165,23 @@ Interface member to add (after `findItemsForOrderLines` from Task 02):
 
 Extend the existing `import type { ... } from "./types";` block with `BCCreatedSalesOrder`,
 `BCCreateSalesOrderLineInput`, `BCCreateSalesOrderParams`, `BCSalesOrderAddressInput`, and
-`BCSalesOrderLineRejection`.
+`BCSalesOrderLineRejection` (one import statement — do not add a second).
+
+Add next to the existing module-level constants (after `BC_EMPTY_DATE`):
+
+```typescript
+const CREATE_SALES_ORDER_TIMEOUT_MS = 30000;
+```
 
 Add these module-level helpers next to `escapeODataString` / `formatAddress`:
 
 ```typescript
-type BCJsonBody = Record<string, string | number | boolean>;
+type BCJsonBody = Record<string, string | number>;
 
 function assignIfDefined(
   body: BCJsonBody,
   key: string,
-  value: string | number | boolean | undefined
+  value: string | number | undefined
 ): void {
   if (value !== undefined) {
     body[key] = value;
@@ -239,20 +213,14 @@ function assignAddress(
 function buildSalesOrderHeaderBody(
   params: BCCreateSalesOrderParams
 ): BCJsonBody {
-  const body: BCJsonBody = { customerNumber: params.customerNumber };
+  const body: BCJsonBody = {
+    customerNumber: params.customerNumber,
+    externalDocumentNumber: params.externalDocumentNumber,
+  };
 
-  assignIfDefined(body, "externalDocumentNumber", params.externalDocumentNumber);
   assignIfDefined(body, "orderDate", params.orderDate);
   assignIfDefined(body, "requestedDeliveryDate", params.requestedDeliveryDate);
   assignIfDefined(body, "currencyCode", params.currencyCode);
-  assignIfDefined(body, "salesperson", params.salesperson);
-  assignIfDefined(body, "pricesIncludeTax", params.pricesIncludeTax);
-  assignIfDefined(body, "discountAmount", params.discountAmount);
-  assignIfDefined(
-    body,
-    "discountAppliedBeforeTax",
-    params.discountAppliedBeforeTax
-  );
   assignIfDefined(body, "email", params.email);
   assignIfDefined(body, "phoneNumber", params.phoneNumber);
   assignAddress(body, "billTo", params.billTo);
@@ -270,19 +238,14 @@ function buildSalesOrderLineBody(
     quantity: line.quantity,
   };
 
-  assignIfDefined(body, "unitPrice", line.unitPrice);
-  assignIfDefined(body, "description", line.description);
   assignIfDefined(body, "unitOfMeasureCode", line.unitOfMeasureCode);
-  assignIfDefined(body, "discountPercent", line.discountPercent);
-  assignIfDefined(body, "discountAmount", line.discountAmount);
-  assignIfDefined(body, "taxCode", line.taxCode);
+  assignIfDefined(body, "shipmentDate", line.shipmentDate);
 
   return body;
 }
 ```
 
-Add these two methods to the class, immediately **before** `createReturnFromSalesOrder` (keeping
-the write-oriented methods together):
+Add these two methods to the class, immediately **before** `createReturnFromSalesOrder`:
 
 ```typescript
   private async postSalesOrderLine(
@@ -303,11 +266,12 @@ the write-oriented methods together):
           "content-type": "application/json",
         },
         body: JSON.stringify(buildSalesOrderLineBody(line)),
+        signal: AbortSignal.timeout(CREATE_SALES_ORDER_TIMEOUT_MS),
       });
     } catch {
       return {
         lineNumber: line.lineNumber,
-        message: "Business Central sales order line request failed",
+        message: "Business Central sales order line request did not complete",
       };
     }
 
@@ -338,6 +302,13 @@ the write-oriented methods together):
       );
     }
 
+    if (!params.externalDocumentNumber) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "A Business Central sales order must include an external document number."
+      );
+    }
+
     const discoveryUrl = this.getDiscoveryUrl();
     const tenantId = this.getTenantId(discoveryUrl);
     const { clientId, clientSecret } = this.getClientCredentials();
@@ -355,11 +326,19 @@ the write-oriented methods together):
           "content-type": "application/json",
         },
         body: JSON.stringify(buildSalesOrderHeaderBody(params)),
+        signal: AbortSignal.timeout(CREATE_SALES_ORDER_TIMEOUT_MS),
       });
     } catch {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        "Business Central sales order request failed"
+      throw new BusinessCentralAmbiguousOutcomeError(
+        "Business Central sales order request did not complete",
+        params.externalDocumentNumber
+      );
+    }
+
+    if (orderResponse.status >= 500 || orderResponse.status === 408) {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        `Business Central sales order request failed with status ${orderResponse.status}`,
+        params.externalDocumentNumber
       );
     }
 
@@ -381,13 +360,18 @@ the write-oriented methods together):
     try {
       created = (await orderResponse.json()) as BCCreatedSalesOrderRaw;
     } catch {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        "Malformed Business Central sales order response"
+      created = {};
+    }
+
+    // A 2xx means BC created the order, so a missing id is an unknown outcome, not a failure.
+    if (typeof created.id !== "string" || created.id === "") {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        "Business Central sales order response did not include an id",
+        params.externalDocumentNumber
       );
     }
 
-    const salesOrderId = requireBusinessCentralString(created.id, "salesOrder.id");
+    const salesOrderId = created.id;
     const acceptedLineNumbers: number[] = [];
     const rejectedLines: BCSalesOrderLineRejection[] = [];
 
@@ -419,102 +403,103 @@ the write-oriented methods together):
 
 Notes for the implementer:
 
-- `requireBusinessCentralString`, `optionalString`, and `MedusaError` are already available in
-  `service.ts` — reuse them.
-- The line loop is sequential on purpose. BC serialises writes against one document anyway, and a
-  `Promise.all` would make the accepted/rejected ordering nondeterministic.
-- The `salesOrders(<guid>)` key predicate takes the raw GUID with **no quotes** — matching the
-  existing `getOrder` filter (`id eq ${escapeODataString(params.orderId)}`), where BC GUID keys are
-  likewise unquoted.
-- No `If-Match` / ETag header is needed: BC requires those for `PATCH`/`DELETE`, not `POST`.
-- `assignIfDefined` is what keeps optional fields out of the JSON body entirely rather than sending
-  `null` — BC treats an explicit `null` differently from an absent field for several of these.
+- `BusinessCentralAmbiguousOutcomeError`, `optionalString`, and `MedusaError` already exist in
+  `service.ts` — reuse them, do not redefine them.
+- The line loop is sequential on purpose (deterministic accepted/rejected ordering; BC serialises
+  writes to one document anyway).
+- The `salesOrders(<guid>)` key takes the raw GUID with no quotes.
+- `assignIfDefined` keeps absent optionals out of the JSON body instead of sending `null`.
+- Do **not** add `unitPrice` back to `buildSalesOrderLineBody` or to the line type.
 
 ## Impacted Files
 
 | File | Change | Signature |
 |---|---|---|
-| `apps/backend/src/modules/business-central/types.ts` | Append 5 new exported types; add 1 member to `IBusinessCentralModuleService` | `createSalesOrder(params: BCCreateSalesOrderParams): Promise<BCCreatedSalesOrder>` |
-| `apps/backend/src/modules/business-central/service.ts` | Extend the `import type` block; add `BCJsonBody`, `assignIfDefined`, `assignAddress`, `buildSalesOrderHeaderBody`, `buildSalesOrderLineBody` at module level; add 2 class methods | `private async postSalesOrderLine(discoveryUrl: URL, accessToken: string, salesOrderId: string, line: BCCreateSalesOrderLineInput): Promise<BCSalesOrderLineRejection \| null>` and `async createSalesOrder(params: BCCreateSalesOrderParams): Promise<BCCreatedSalesOrder>` |
+| `apps/backend/src/modules/business-central/types.ts` | Append 5 exported types; add 1 interface member | `createSalesOrder(params: BCCreateSalesOrderParams): Promise<BCCreatedSalesOrder>` |
+| `apps/backend/src/modules/business-central/service.ts` | Extend the `import type` block; add `CREATE_SALES_ORDER_TIMEOUT_MS`, `BCJsonBody`, `assignIfDefined`, `assignAddress`, `buildSalesOrderHeaderBody`, `buildSalesOrderLineBody`; add 2 class methods | `private async postSalesOrderLine(discoveryUrl: URL, accessToken: string, salesOrderId: string, line: BCCreateSalesOrderLineInput): Promise<BCSalesOrderLineRejection \| null>`; `async createSalesOrder(params: BCCreateSalesOrderParams): Promise<BCCreatedSalesOrder>` |
 
 ## Test Cases
 
 ### TC-1: creates the header then one line per input line (happy path)
-- **Given:** BC returns `201` with `{ id, number, status }` for the header POST and `201` for both
-  line POSTs
+- **Given:** `201` + `{ id, number, status }` for the header, `201` for both lines
 - **When:** `createSalesOrder` is called with a two-line order
-- **Then:** the result carries the BC `id`/`number`/`status`, `acceptedLineNumbers` is `[1, 2]`,
-  `rejectedLines` is empty, and exactly three non-token requests were made — the first to
-  `/salesOrders`, the next two to `/salesOrders(<id>)/salesOrderLines`
+- **Then:** result carries BC `id`/`number`/`status`, `acceptedLineNumbers: [1, 2]`, no
+  rejections; three non-token requests — `/salesOrders`, then two to
+  `/salesOrders(<id>)/salesOrderLines`
 
-### TC-2: maps canonical header fields onto BC's flat field names
-- **Given:** a call carrying `externalDocumentNumber`, `orderDate`, `currencyCode`,
-  `pricesIncludeTax`, and a `shipTo` address with a `contact`
+### TC-2: maps header fields onto BC's flat field names and sends no BC-owned header fields
+- **Given:** a call with `externalDocumentNumber`, `orderDate`, `email`, a `shipTo` with `contact`,
+  and no `currencyCode`
 - **When:** `createSalesOrder` is called
-- **Then:** the header POST body contains `customerNumber`, `externalDocumentNumber`, `orderDate`,
-  `currencyCode`, `pricesIncludeTax`, `shipToName`, `shipToContact`, `shipToAddressLine1`,
-  `shipToCity`, `shipToPostCode`, `shipToCountry` — and does **not** contain a `number`, `id`,
-  `lines`, or `salesOrderLines` key
+- **Then:** the header body contains `customerNumber`, `externalDocumentNumber`, `orderDate`,
+  `email`, `shipToName`, `shipToContact`, `shipToAddressLine1`, `shipToCity`, `shipToPostCode`,
+  `shipToCountry`, and none of `number`, `id`, `lines`, `currencyCode`, `salesperson`,
+  `pricesIncludeTax`, `discountAmount`
 
-### TC-3: sends `lineType: "Item"` and the resolved `itemId` on each line
-- **Given:** a one-line order whose line has an `itemId`, `quantity`, `unitPrice`, `description`,
-  and `unitOfMeasureCode`
+### TC-3: each line carries `lineType: "Item"`, the resolved `itemId`, and nothing BC prices
+- **Given:** a line with `itemId`, `quantity`, `unitOfMeasureCode`, `shipmentDate`
 - **When:** `createSalesOrder` is called
-- **Then:** the line POST body is exactly
-  `{ lineType: "Item", itemId, quantity, unitPrice, description, unitOfMeasureCode }` — with no
-  `documentId` and no `sequence`
+- **Then:** the line body is exactly
+  `{ lineType: "Item", itemId, quantity, unitOfMeasureCode, shipmentDate }` — no `unitPrice`,
+  `description`, `discountPercent`, `discountAmount`, `taxCode`, `documentId`
 
-### TC-4: omits absent optional fields instead of sending nulls (edge case)
-- **Given:** a call with no `orderDate`, no `billTo`, no `shipTo`, and a line with no `unitPrice`
+### TC-4: absent optional fields are omitted, not sent as nulls (edge case)
+- **Given:** only `customerNumber`, `externalDocumentNumber` and one `{ lineNumber, itemId, quantity }` line
 - **When:** `createSalesOrder` is called
-- **Then:** neither body contains an `orderDate`, `billToName`, `shipToName`, or `unitPrice` key at
-  all — `Object.keys` on the parsed bodies proves absence, not `null`
+- **Then:** header keys are exactly `["customerNumber", "externalDocumentNumber"]`; line keys are
+  exactly `["lineType", "itemId", "quantity"]`
 
-### TC-5: a rejected line is collected, not thrown, and the BC order id is still returned
-- **Given:** the header POST succeeds, line 1's POST returns `201`, line 2's returns `400`
-- **When:** `createSalesOrder` is called
-- **Then:** it resolves (does not reject) with `acceptedLineNumbers: [1]` and one entry in
-  `rejectedLines` for line 2, and the real BC `id` is present
+### TC-5: a rejected line is collected and the BC order id is still returned
+- **Given:** header `201`, line 1 `201`, line 2 `400`
+- **Then:** resolves with `acceptedLineNumbers: [1]` and one rejection for line 2
 
 ### TC-6: every line rejected still returns the real BC order id (edge case)
-- **Given:** the header POST succeeds and every line POST returns `400`
-- **When:** `createSalesOrder` is called
-- **Then:** it resolves with an empty `acceptedLineNumbers`, a rejection per line, and a non-empty
-  `id` — this is the case Task 04 records as `failed` *with* a `bc_order_id`
+- **Given:** header `201`, both lines `400`
+- **Then:** resolves with no accepted lines, two rejections, and the real `id`
 
-### TC-7: a failing header POST throws and no line request is attempted (edge case)
-- **Given:** the header POST returns `422`
-- **When:** `createSalesOrder` is called with a two-line order
-- **Then:** it rejects with `Business Central sales order request failed with status 422` and
-  exactly one non-token request was made
+### TC-7: a definite header rejection throws a MedusaError and attempts no line (edge case)
+- **Given:** header `422`
+- **Then:** rejects with `Business Central sales order request failed with status 422`; the error
+  is **not** a `BusinessCentralAmbiguousOutcomeError`; one non-token request
 
-### TC-8: a header response without an `id` throws rather than returning a blank id (edge case)
-- **Given:** the header POST returns `201` with `{ number: "SO-1", status: "Draft" }` and no `id`
-- **When:** `createSalesOrder` is called
-- **Then:** it rejects with a message mentioning `salesOrder.id`
+### TC-8: a 2xx header response without an `id` is an ambiguous outcome (edge case)
+- **Given:** header `201` with `{ number: "SO-1", status: "Draft" }`
+- **Then:** rejects with a `BusinessCentralAmbiguousOutcomeError` whose `idempotencyKey` is the
+  `externalDocumentNumber`
 
-### TC-9: guards its own inputs before touching the network (edge case)
-- **Given:** a call with an empty `lines` array, and separately a call with an empty
-  `customerNumber`
-- **When:** `createSalesOrder` is called
-- **Then:** each rejects with the corresponding `INVALID_DATA` message and `global.fetch` was
-  never called
+### TC-9: guards its inputs before touching the network (edge case)
+- **Given:** empty `lines`; blank `customerNumber`; blank `externalDocumentNumber`
+- **Then:** each rejects with its `INVALID_DATA` message; `fetch` never called
 
-### TC-10: one token serves the header and every line (integration/wiring)
-- **Given:** a three-line order where every request succeeds
-- **When:** `createSalesOrder` is called once
-- **Then:** the Azure AD token endpoint was called exactly once, and every BC request carried
-  `authorization: Bearer access-token`
+### TC-10: one token serves the header and every line (wiring)
+- **Given:** a two-line order, every request succeeds
+- **Then:** the token endpoint is called once; every BC request carries `Bearer access-token`
+
+### TC-11: a 5xx header response is an ambiguous outcome (edge case)
+- **Given:** header `503`
+- **Then:** rejects with `BusinessCentralAmbiguousOutcomeError` (`idempotencyKey: "NKT004061"`)
+
+### TC-12: a header request that never completes is an ambiguous outcome (edge case)
+- **Given:** the header `fetch` rejects (network error)
+- **Then:** rejects with `BusinessCentralAmbiguousOutcomeError`; no line request
+
+### TC-13: a currency override is sent when given
+- **Given:** the two-line order plus `currencyCode: "EUR"`
+- **Then:** the header body contains `currencyCode: "EUR"`
 
 ### New File: `apps/backend/src/modules/business-central/__tests__/sales-order-create.spec.ts`
 
 ```typescript
-import BusinessCentralModuleService from "../service";
+import BusinessCentralModuleService, {
+  BusinessCentralAmbiguousOutcomeError,
+} from "../service";
 import type { BCCreateSalesOrderParams } from "../types";
 
 const originalFetch = global.fetch;
 
 const TOKEN_URL = "https://login.microsoftonline.com";
+const BASE_URL =
+  "https://api.businesscentral.dynamics.com/v2.0/tenant-id/Sandbox/api/v2.0";
 const SALES_ORDER_ID = "22222222-2222-2222-2222-222222222222";
 
 function tokenResponse(): Response {
@@ -570,8 +555,7 @@ const twoLineOrder: BCCreateSalesOrderParams = {
   customerNumber: "579000283084",
   externalDocumentNumber: "NKT004061",
   orderDate: "2026-08-26",
-  currencyCode: "DKK",
-  pricesIncludeTax: false,
+  email: "orders@example.com",
   shipTo: {
     name: "JK Tryk",
     contact: "3. Parts Nimbus",
@@ -585,25 +569,20 @@ const twoLineOrder: BCCreateSalesOrderParams = {
       lineNumber: 1,
       itemId: "11111111-1111-1111-1111-111111111111",
       quantity: 1,
-      unitPrice: 209.25,
-      description: "Telluride Jacket, Unisex, Navy - S",
       unitOfMeasureCode: "PCS",
+      shipmentDate: "2026-09-01",
     },
     {
       lineNumber: 2,
       itemId: "33333333-3333-3333-3333-333333333333",
       quantity: 10,
-      unitPrice: 209.25,
-      description: "Telluride Jacket, Unisex, Navy - M",
-      unitOfMeasureCode: "PCS",
     },
   ],
 };
 
 describe("BusinessCentralModuleService.createSalesOrder", () => {
   beforeEach(() => {
-    process.env.BUSINESS_CENTRAL_DISCOVERY_URL =
-      "https://api.businesscentral.dynamics.com/v2.0/tenant-id/Sandbox/api/v2.0";
+    process.env.BUSINESS_CENTRAL_DISCOVERY_URL = BASE_URL;
     process.env.BUSINESS_CENTRAL_CLIENT_ID =
       "00000000-0000-0000-0000-000000000001";
     process.env.BUSINESS_CENTRAL_CLIENT_SECRET = "client-secret";
@@ -631,16 +610,14 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
 
     const requests = bcRequests(fetchMock);
     expect(requests).toHaveLength(3);
-    expect(requests[0].url).toEqual(
-      "https://api.businesscentral.dynamics.com/v2.0/tenant-id/Sandbox/api/v2.0/salesOrders"
-    );
+    expect(requests[0].url).toEqual(`${BASE_URL}/salesOrders`);
     expect(requests[1].url).toEqual(
-      `https://api.businesscentral.dynamics.com/v2.0/tenant-id/Sandbox/api/v2.0/salesOrders(${SALES_ORDER_ID})/salesOrderLines`
+      `${BASE_URL}/salesOrders(${SALES_ORDER_ID})/salesOrderLines`
     );
     expect(requests[2].url).toEqual(requests[1].url);
   });
 
-  it("TC-2: maps canonical header fields onto BC's flat field names", async () => {
+  it("TC-2: maps header fields and sends no BC-owned header fields", async () => {
     const fetchMock = mockBusinessCentral([
       headerResponse(),
       lineResponse(),
@@ -655,8 +632,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
       customerNumber: "579000283084",
       externalDocumentNumber: "NKT004061",
       orderDate: "2026-08-26",
-      currencyCode: "DKK",
-      pricesIncludeTax: false,
+      email: "orders@example.com",
       shipToName: "JK Tryk",
       shipToContact: "3. Parts Nimbus",
       shipToAddressLine1: "Industrikrogen 11B",
@@ -664,13 +640,21 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
       shipToPostCode: "4683",
       shipToCountry: "DK",
     });
-    expect(Object.keys(header)).not.toContain("number");
-    expect(Object.keys(header)).not.toContain("id");
-    expect(Object.keys(header)).not.toContain("lines");
-    expect(Object.keys(header)).not.toContain("salesOrderLines");
+
+    for (const key of [
+      "number",
+      "id",
+      "lines",
+      "currencyCode",
+      "salesperson",
+      "pricesIncludeTax",
+      "discountAmount",
+    ]) {
+      expect(Object.keys(header)).not.toContain(key);
+    }
   });
 
-  it("TC-3: sends lineType Item plus the resolved itemId on each line", async () => {
+  it("TC-3: sends lineType Item, the itemId, and nothing Business Central prices", async () => {
     const fetchMock = mockBusinessCentral([
       headerResponse(),
       lineResponse(),
@@ -684,16 +668,16 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
       lineType: "Item",
       itemId: "11111111-1111-1111-1111-111111111111",
       quantity: 1,
-      unitPrice: 209.25,
-      description: "Telluride Jacket, Unisex, Navy - S",
       unitOfMeasureCode: "PCS",
+      shipmentDate: "2026-09-01",
     });
   });
 
   it("TC-4: omits absent optional fields rather than sending nulls", async () => {
-    // IMPLEMENT: call createSalesOrder with only customerNumber and a single line carrying just
-    // { lineNumber: 1, itemId, quantity: 1 }. Assert the header body's keys are exactly
-    // ["customerNumber"] and the line body's keys are exactly
+    // IMPLEMENT: call createSalesOrder with { customerNumber: "C1",
+    // externalDocumentNumber: "EXT-1", lines: [{ lineNumber: 1, itemId: "item-guid", quantity: 1 }] }
+    // (mock header + one line response). Assert Object.keys(header body) equals
+    // ["customerNumber", "externalDocumentNumber"] and Object.keys(line body) equals
     // ["lineType", "itemId", "quantity"].
   });
 
@@ -712,8 +696,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     expect(result.rejectedLines).toEqual([
       {
         lineNumber: 2,
-        message:
-          "Business Central rejected the sales order line with status 400",
+        message: "Business Central rejected the sales order line with status 400",
       },
     ]);
     expect(bcRequests(fetchMock)).toHaveLength(3);
@@ -721,29 +704,35 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
 
   it("TC-6: returns the BC order id even when every line is rejected", async () => {
     // IMPLEMENT: mock the header plus two 400 line responses; assert acceptedLineNumbers is [],
-    // rejectedLines has both line numbers, and id equals SALES_ORDER_ID.
+    // rejectedLines lists line numbers 1 and 2, and id equals SALES_ORDER_ID.
   });
 
-  it("TC-7: throws on a failing header post and attempts no line request", async () => {
+  it("TC-7: throws a MedusaError on a definite header rejection and attempts no line", async () => {
     const fetchMock = mockBusinessCentral([headerResponse({}, 422)]);
     const service = new BusinessCentralModuleService();
 
-    await expect(service.createSalesOrder(twoLineOrder)).rejects.toThrow(
+    const error = await service.createSalesOrder(twoLineOrder).catch((e: unknown) => e);
+
+    expect(error).not.toBeInstanceOf(BusinessCentralAmbiguousOutcomeError);
+    expect((error as Error).message).toEqual(
       "Business Central sales order request failed with status 422"
     );
     expect(bcRequests(fetchMock)).toHaveLength(1);
   });
 
-  it("TC-8: throws when the created sales order carries no id", async () => {
+  it("TC-8: treats a created order with no id as an ambiguous outcome", async () => {
     mockBusinessCentral([headerResponse({ number: "SO-1", status: "Draft" })]);
     const service = new BusinessCentralModuleService();
 
-    await expect(service.createSalesOrder(twoLineOrder)).rejects.toThrow(
-      "salesOrder.id"
+    const error = await service.createSalesOrder(twoLineOrder).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(BusinessCentralAmbiguousOutcomeError);
+    expect((error as BusinessCentralAmbiguousOutcomeError).idempotencyKey).toEqual(
+      "NKT004061"
     );
   });
 
-  it("TC-9: rejects an empty line list or a blank customer number without any request", async () => {
+  it("TC-9: rejects invalid input without any request", async () => {
     const fetchMock = jest.fn();
     global.fetch = fetchMock;
     const service = new BusinessCentralModuleService();
@@ -754,6 +743,9 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     await expect(
       service.createSalesOrder({ ...twoLineOrder, customerNumber: "" })
     ).rejects.toThrow("customer number");
+    await expect(
+      service.createSalesOrder({ ...twoLineOrder, externalDocumentNumber: "" })
+    ).rejects.toThrow("external document number");
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -777,23 +769,53 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
       expect(headers.authorization).toEqual("Bearer access-token");
     }
   });
+
+  it("TC-11: treats a 5xx header response as an ambiguous outcome", async () => {
+    // IMPLEMENT: mock headerResponse({}, 503); assert the rejection is a
+    // BusinessCentralAmbiguousOutcomeError with idempotencyKey "NKT004061".
+  });
+
+  it("TC-12: treats a header request that never completes as an ambiguous outcome", async () => {
+    const fetchMock = jest.fn();
+    fetchMock.mockResolvedValueOnce(tokenResponse());
+    fetchMock.mockRejectedValueOnce(new Error("socket hang up"));
+    global.fetch = fetchMock;
+    const service = new BusinessCentralModuleService();
+
+    await expect(service.createSalesOrder(twoLineOrder)).rejects.toBeInstanceOf(
+      BusinessCentralAmbiguousOutcomeError
+    );
+    expect(bcRequests(fetchMock)).toHaveLength(1);
+  });
+
+  it("TC-13: sends the currency override when one is given", async () => {
+    const fetchMock = mockBusinessCentral([
+      headerResponse(),
+      lineResponse(),
+      lineResponse(),
+    ]);
+    const service = new BusinessCentralModuleService();
+
+    await service.createSalesOrder({ ...twoLineOrder, currencyCode: "EUR" });
+
+    expect(bcRequests(fetchMock)[0].body.currencyCode).toEqual("EUR");
+  });
 });
 ```
 
-Run with: `cd apps/backend && pnpm test:integration:modules`.
+Note: `bcRequests` in TC-12 parses the header request body of the rejected call — that is fine,
+the body was still passed to `fetch`.
 
 ## Implementation Steps
 
-1. Append the five new types to `apps/backend/src/modules/business-central/types.ts` and add the
-   `createSalesOrder` member to `IBusinessCentralModuleService`.
+1. Append the five types to `types.ts` and add `createSalesOrder` to `IBusinessCentralModuleService`.
 2. Extend the `import type` block in `service.ts` with the five new type names.
-3. Add `BCJsonBody`, `assignIfDefined`, `assignAddress`, `buildSalesOrderHeaderBody`, and
-   `buildSalesOrderLineBody` at module level in `service.ts`.
-4. Add `postSalesOrderLine` and `createSalesOrder` to the class, immediately before
-   `createReturnFromSalesOrder`. **Do not modify `createReturnFromSalesOrder` or
-   `listReturnReasons`.**
-5. Create `apps/backend/src/modules/business-central/__tests__/sales-order-create.spec.ts` exactly
-   as shown, filling in the two `// IMPLEMENT:` blocks (TC-4 and TC-6).
-6. Run `cd apps/backend && pnpm test:integration:modules` and confirm all ten new test cases pass
-   alongside Task 02's and the two pre-existing BC module specs.
-7. Run `pnpm build` from the repo root and fix any type errors before marking this task done.
+3. Add `CREATE_SALES_ORDER_TIMEOUT_MS`, `BCJsonBody`, `assignIfDefined`, `assignAddress`,
+   `buildSalesOrderHeaderBody`, `buildSalesOrderLineBody` at module level.
+4. Add `postSalesOrderLine` and `createSalesOrder` immediately before `createReturnFromSalesOrder`.
+   Do not modify `createReturnFromSalesOrder` or `listReturnReasons`.
+5. Create `__tests__/sales-order-create.spec.ts` exactly as shown, filling in the three
+   `// IMPLEMENT:` blocks (TC-4, TC-6, TC-11).
+6. Run `cd apps/backend && pnpm test:integration:modules` — all thirteen new cases pass alongside
+   Task 02's spec (known pre-existing `service.spec.ts` failure excepted, report it).
+7. Run `pnpm build` from the repo root and fix any type errors.

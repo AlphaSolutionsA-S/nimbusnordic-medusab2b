@@ -4,11 +4,40 @@
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02
-**Date:** 2026-09-02
-**Branch:** feature/NIMBUS-148-bc-order-submission (from develop)
+**Date:** 2026-09-29 (revised; supersedes the 2026-09-02 version)
+**Branch:** feature/NIMBUS-148 (from develop)
 **Depends on:** None
 
 ---
+
+## What changed since the 2026-09-02 plan
+
+Re-verified against `apps/backend/src/modules/business-central/service.ts` and `types.ts` on
+`develop` (2026-09-29). The algorithm and skeletons below are unchanged; only these facts moved:
+
+- `createReturnFromSalesOrder` and `listReturnReasons` are **no longer stubs** — NIMBUS-138 made
+  them real calls to a custom ODataV4 action / entity set (`getODataV4Url`,
+  `BusinessCentralAmbiguousOutcomeError`). They are still out of scope: do not touch them.
+- The BC module test files are now `__tests__/service.spec.ts` and `__tests__/return.spec.ts`
+  (there is no `return-stub.spec.ts`). NIMBUS-149's PROGRESS.md records a **pre-existing** failure
+  in `service.spec.ts` ("stops filling from salesInvoices after the round-trip guardrail…"). If it
+  still fails, report it as pre-existing — do not fix it in this story.
+- `optionalString` in `service.ts` returns `""` (not `null`) for a non-string — which is what
+  `BCItem`'s `string` fields need. `requireBusinessCentralString`, `escapeODataString` and
+  `MedusaError` are all present at module level. The constructor takes `{ logger }` and
+  `new BusinessCentralModuleService()` still works in tests.
+- Standard API reads address root-level entity sets on the discovery URL (`customers()`,
+  `salesOrders()`, `salesInvoices()` — lowercase). `items()` follows the same pattern. The
+  `BUSINESS_CENTRAL_COMPANY_ID` env var exists but is only used for the custom customer-portal and
+  ODataV4 paths; this task does not need it.
+- **`eanNo` is now always present** on a valid canonical line: `CanonicalOrderSchema` requires it
+  as a 13-digit string (user decision 2026-09-16). `no_identifiers` is therefore unreachable for
+  orders ingested through `/orderapi/orders`; the branch stays because the method takes a generic
+  input and costs nothing.
+- **`itemNumber`/`custItemNo` fallback, recorded caveat:** NIMBUS-129's PROGRESS.md (2026-09-16)
+  found that in both real EDI samples `ItemNo` equals `CustItemNo` and both carry the *customer's*
+  SKU coding, and `itemNumber` is now optional. The SCOPE-mandated fallback is kept, but it only
+  helps when a customer SKU equals a BC `item.number`. The user decided on 2026-09-29 to keep the fallback.
 
 ## Project Environment
 
@@ -39,7 +68,7 @@ v2.0 `$metadata` for this tenant), not assumed:
   `<EntityContainer>` declares `<EntitySet Name="items" EntityType="Microsoft.NAV.item" />`
   alongside `customers` and `salesOrders`. This is the same root-level addressing the existing
   `getCustomer` / `listOrders` / `getOrder` methods already use (`${base}/customers()`,
-  `${base}/SalesOrders()`), so no company-scoping path segment is introduced.
+  `${base}/salesOrders()`), so no company-scoping path segment is introduced.
 - **Other `item` fields available and worth selecting:** `id` (`Edm.Guid`, the key — this is what a
   sales order line's `itemId` needs), `number` (`MaxLength="20"`), `displayName`,
   `baseUnitOfMeasureCode` (`MaxLength="10"`), `blocked` (`Edm.Boolean`).
@@ -370,8 +399,8 @@ Notes for the implementer:
 | `apps/backend/src/modules/business-central/service.ts` | Extend the existing `import type` block; add 2 module-level helpers (`BC_ITEM_SELECT`, `buildItemLookupCandidates`) + 1 type (`BCItemLookupCandidate`); add 2 class methods | `private async findItemsByFilter(discoveryUrl: URL, accessToken: string, field: "gtin" \| "number", value: string): Promise<BCItem[]>` and `async findItemsForOrderLines(lines: BCItemLookupInput[]): Promise<BCItemLookupResult[]>` |
 
 Nothing else is modified. In particular: do **not** touch `createReturnFromSalesOrder` or
-`listReturnReasons` (they remain the NIMBUS-138 stubs they are today — out of scope), and do not
-touch `apps/backend/src/workflows/business-central-return/**`.
+`listReturnReasons` (NIMBUS-138's real return implementation — out of scope), and do not touch
+`apps/backend/src/workflows/business-central-return/**`.
 
 ## Test Cases
 
@@ -689,6 +718,7 @@ inventing a new one.
 5. Create `apps/backend/src/modules/business-central/__tests__/item-lookup.spec.ts` exactly as
    shown, filling in the two `// IMPLEMENT:` blocks (TC-3 and TC-6).
 6. Run `cd apps/backend && pnpm test:integration:modules` and confirm all ten new test cases pass
-   **and** the two pre-existing BC module specs (`service.spec.ts`, `return-stub.spec.ts`) still
-   pass.
+   **and** the two pre-existing BC module specs (`service.spec.ts`, `return.spec.ts`) are no worse
+   than before (the known pre-existing `service.spec.ts` guardrail failure excepted — report it,
+   do not fix it).
 7. Run `pnpm build` from the repo root and fix any type errors before marking this task done.

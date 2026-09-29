@@ -2,329 +2,252 @@
 
 **Issue:** https://alphasolutionsdk.atlassian.net/browse/NIMBUS-148
 (Epic: https://alphasolutionsdk.atlassian.net/browse/NIMBUS-129)
+**Scope:** issues/NIMBUS-148/SCOPE.md (approved 2026-09-02, unchanged)
+**Branch:** `feature/NIMBUS-148` (from `develop`)
+**Revision:** 2026-09-29 re-plan against the merged NIMBUS-129 (144/147) and NIMBUS-149 code on
+`develop`, **approved by the user on 2026-09-29** with the decisions recorded below. Supersedes the
+2026-09-02 plan.
 
 ## Objective
 
-Take the persisted, header-only Medusa order and its retained canonical payload, resolve each order
-line to a real Business Central item, create the corresponding BC sales order, and record the
-outcome — including partial and total failures at both order and line level — back onto the order's
-Business Central integration-state metadata, as a reusable workflow that NIMBUS-158's future manual
-retry will invoke unchanged.
-
-## ⚠️ Biggest risk, read this first: the contract this story "consumes" does not exist
-
-SCOPE.md describes NIMBUS-148 as *updating NIMBUS-149's* BC integration-state metadata object and
-*reading NIMBUS-149's* raw canonical payload key. Neither exists:
-
-- **NIMBUS-149 is scoped but not planned and not implemented.** Its SCOPE.md explicitly defers
-  "exact `metadata` key names and field types" to its own future planner.
-- **NIMBUS-129 (NIMBUS-144 + NIMBUS-147) is planned and approved but also not implemented** —
-  verified by inspection: `apps/backend/src/modules/` contains only `approval`,
-  `business-central`, `company`, `quote`; `apps/backend/src/subscribers/` contains only
-  `README.md`; there is no `/orderapi` route and no `order-ingestion` module or workflow directory.
-
-So NIMBUS-148 is being planned on top of two layers of unbuilt code. This plan handles that two
-ways rather than pretending the contract is settled:
-
-**1. It defines the contract explicitly, here, in one importable file.**
-`apps/backend/src/modules/order-ingestion/bc-integration-state.ts` (Task 01) is the authoritative
-shape:
-
-```
-Order.metadata.business_central_integration = {
-  status:           "pending" | "sent" | "failed",
-  bc_order_id:      string | null,
-  bc_order_number:  string | null,
-  attempt_count:    number,
-  initialized_at:   string | null,   // ISO — set by NIMBUS-149
-  last_attempt_at:  string | null,   // ISO — set by NIMBUS-148 on every attempt
-  sent_at:          string | null,   // ISO — set by NIMBUS-148 on success only
-  partial:          boolean,         // order-level partial-submission flag
-  failure_reason:   string | null,
-  line_failures:    Array<{ line_number, ean_no, item_number, cust_item_no, reason, message }>,
-}
-Order.metadata.canonical_order = <verbatim canonical order JSON, incl. the full lines array>
-Order.metadata.company_id      = <matched Medusa company id>
-```
-
-**ACTION REQUIRED when NIMBUS-149 is planned: it must import
-`createInitialBcIntegrationState` and `BC_INTEGRATION_STATE_METADATA_KEY` from that file rather
-than inventing its own names, and it must write the raw payload under `canonical_order`.**
-NIMBUS-158 must read via `parseBcIntegrationState`. If NIMBUS-149's planner instead invents its own
-shape, NIMBUS-148 silently reads nothing, every order records `failed` with
-`canonical_payload_unavailable`, and no BC order is ever created. This is the single highest-impact
-failure mode in the plan.
-
-Two of the three keys are chosen for maximum compatibility rather than aesthetics:
-`canonical_order` and `company_id` are already the exact key names NIMBUS-129's approved Task 03
-writes, so NIMBUS-149 has nothing to change there. Only
-`business_central_integration` is genuinely new — and NIMBUS-129 never named it, so there is no
-conflict to reconcile.
-
-**2. It designs defensively so that a contract mismatch degrades instead of exploding.** Task 01's
-`parseBcIntegrationState` coerces anything absent, partial, or malformed into a well-formed pending
-state, and `parseBcOrderPayload` validates the metadata payload at runtime with a deliberately
-**narrow, non-strict** zod schema covering only the fields BC submission needs. Consequences:
-NIMBUS-148 never imports NIMBUS-129's `CanonicalOrder` type, so **tasks 01–04 compile, build, and
-test with zero dependency on NIMBUS-129 or NIMBUS-149**; a canonical contract that grows new fields
-does not break this story; and an unusable payload is recorded as a visible `failed` outcome rather
-than crashing a subscriber. Only Task 05 (the trigger subscriber) has a hard dependency on
-NIMBUS-129, and it is marked BLOCKED accordingly.
+Take the persisted, header-only Medusa order and its retained canonical payload, resolve each line
+to a real Business Central item, create the BC sales order, and record the outcome (including
+partial and total failures at order and line level) on the order's
+`business_central_integration` metadata. Build it as a reusable workflow that NIMBUS-158's manual
+retry will call unchanged, triggered automatically by `order_ingestion.ready_for_business_central`.
 
 ## Analysis
 
-### What already exists and is reused
+### What is on `develop` today (verified from code, 2026-09-29)
 
-- **`business-central` module** (`apps/backend/src/modules/business-central/`, NIMBUS-153):
-  OAuth2 client-credentials against Azure AD (`login.microsoftonline.com/{tenant}/oauth2/v2.0/token`,
-  scope `https://api.businesscentral.dynamics.com/.default`), strict discovery-URL validation
-  (https-only, host-pinned, `/v2.0/{tenant}/...` shape), `escapeODataString`, `MedusaError`
-  throwing with no caller-side try/catch, and reads against root-level OData entity sets
-  (`customers()`, `SalesOrders()`). All four new service methods follow this exactly — **no second
-  HTTP client pattern is introduced**, per SCOPE.md's non-functional requirement.
-- **`business-central-return` workflow** (`src/workflows/business-central-return/`): the
-  `steps/` + `workflows/` layout with `index.ts` barrels and the `prepare-*` / `submit-*` step
-  naming. Copied.
-- **`Company.business_central_customer_number`** (nullable text, already present) — the BC customer
-  the order is submitted under.
-- **`Order.metadata.company_id`** as the company reference — already the convention used by
-  `src/workflows/hooks/order-created.ts` and by NIMBUS-129's Task 03.
-- **Backend test infrastructure** — three real jest projects, no scaffolding needed:
-  `pnpm test:unit` (`**/src/**/__tests__/**/*.unit.spec.ts`), `pnpm test:integration:modules`
-  (`**/src/modules/*/__tests__/**/*.ts`), `pnpm test:integration:http`
-  (`**/integration-tests/http/**/*.spec.ts`). The existing
-  `src/modules/business-central/__tests__/service.spec.ts` is the exact pattern for
-  `global.fetch`-mocked service tests, reused verbatim in Tasks 02/03.
+- **Ingestion pipeline (NIMBUS-129 + NIMBUS-149, merged):** `POST /orderapi/orders` validates
+  against the strict `CanonicalOrderSchema` and runs `createOrderFromCanonicalPayloadWorkflow`:
+  `matchCompanyAndCheckDuplicateStep` → `createIngestedOrderStep` (`Modules.ORDER.createOrders`
+  with `mapCanonicalOrderHeader` → native `currency_code`, `email`, `shipping_address`,
+  `billing_address`) → `createRemoteLinkStep` (Order↔Company, `isList: true` on the order side) →
+  `createOrderExternalReferenceStep` (unique index on `order_external_reference(company_id,
+  external_order_number)`). The route then emits `order_ingestion.order_created`; the
+  `order-ingestion-created` subscriber runs `enrichOrderWorkflow`, which sets
+  `order_ingestion_state = "ready_for_business_central"` and emits
+  `order_ingestion.ready_for_business_central` with `{ order_id }`. **No subscriber listens to that
+  event yet — it is this story's trigger.**
+- **Order metadata written at creation:** `company_id`, `canonical_order` (verbatim),
+  `order_ingestion_state`, `order_ingestion_state_updated_at`, and
+  `business_central_integration = createInitialBcIntegrationState(now)`.
+- **`src/modules/order-ingestion/bc-integration-state.ts` exists** (created by NIMBUS-149 with this
+  plan's contract, verbatim): key `business_central_integration`; `status: "pending" | "sent" |
+  "failed"`; `bc_order_id`, `bc_order_number`, `attempt_count`, `initialized_at`,
+  `last_attempt_at`, `sent_at`, `partial`, `failure_reason`, `line_failures[]`; and
+  `createInitialBcIntegrationState`. Its parser and duplicate guard are **not** there — Task 01
+  appends them. Nothing is renamed.
+- **Canonical contract (final after the 2026-09-16 review):** line required set is `lineNumber`,
+  `eanNo` (exactly 13 digits), `quantity`. `itemNumber`, `description`, `unitPrice` are optional.
+  All dates are `DD-MM-YYYY`. Shared fixtures live in
+  `src/modules/order-ingestion/__fixtures__/canonical-order-fixtures.ts`.
+- **`business-central` module:** unchanged conventions (per-call token, discovery-URL validation,
+  root-level `customers()` / `salesOrders()` / `salesInvoices()`, `escapeODataString`,
+  `MedusaError`). New since the old plan: `createReturnFromSalesOrder` / `listReturnReasons` are
+  **real** (NIMBUS-138, custom ODataV4 action), and `BusinessCentralAmbiguousOutcomeError` exists
+  for write requests whose outcome is unknown. `BCOrder.status` is a plain `string`.
+- **Test infrastructure:** unit / modules / HTTP jest projects exist; no scaffolding needed. The
+  container-spy pattern on `BUSINESS_CENTRAL_MODULE` is already proven in
+  `customers/company-sync.spec.ts`. `.env` (loaded by `jest.config.js`) holds credentials for a
+  **test** BC tenant (environment `TestDK`); once the subscriber exists, existing suites reach it
+  (Decision 12).
+- **BC customer currency:** `getCustomer` (NIMBUS-156) returns `currencyCode: string | null` via
+  `$expand=currency`. NIMBUS-147 commit `d90c26a` resolves a blank BC currency to local currency in
+  `resolveCurrencyCode` (`prepare-company-bc-sync.ts`; `BUSINESS_CENTRAL_LCY_CODE`, default `DKK`)
+  and deliberately left `getCustomer` reporting BC faithfully.
 
-### What did not exist and had to be built from BC's real metadata
+### How the old plan was stale
 
-Both of SCOPE.md's BC open questions were **resolved against the actual OData `$metadata`** in
-`issues/NIMBUS-129/bc metadata/std odata metadata.xml`, not guessed:
+| Old plan statement | Reality on `develop` | Change |
+|---|---|---|
+| NIMBUS-129/149 unimplemented; Task 05 BLOCKED | Both merged; event and emitter exist | Blocker and fallback removed |
+| Task 01 creates `bc-integration-state.ts` | NIMBUS-149 created it | Task 01 appends parser + guard + `BcSubmissionFailureReason` |
+| `unitPrice` sent to BC (Decision 6, "open question") | User decided 2026-09-16: must not be sent | Not sent; type has no price field |
+| Payload dates assumed ISO; `toBcDate` kept only `YYYY-MM-DD` | Dates are `DD-MM-YYYY` | Old code would have dropped every date; now converted |
+| Item lookup errors "recorded as failed" | Old prepare step did not catch them | Caught → `bc_item_lookup_failed` |
+| `createReturnFromSalesOrder` is a stub; `return-stub.spec.ts` | Real; `return.spec.ts` | References updated |
+| `SalesOrders()` | `salesOrders()` | Fixed |
+| Inline fixtures to dodge a jest hazard in NIMBUS-129 | NIMBUS-129 moved fixtures to `__fixtures__/` | Shared fixtures used |
+| Spy-on-container uncertainty + fetch fallback | Pattern proven in `company-sync.spec.ts` | Removed |
+| `.rejects.toThrow()` for workflow errors | Workflow rejects with a serialized object | `.rejects.toMatchObject({ type, message })` |
+| `BCOrderStatus` mismatch observation | Type no longer exists | Observation removed |
 
-- **The Item field holding the EAN/GTIN is `gtin`** (`Edm.String`, `MaxLength="14"`) on
-  `<EntityType Name="item">`. Lookup filter: `items()?$filter=gtin eq '<escaped>'&$top=2`. The
-  real EDI samples' `eanNo` values are GTIN-13 strings (`5712094145752`), which fit.
-- **Sales-order creation is plain OData resource POSTs, not a bound action and not a custom API.**
-  The standard API v2.0 exposes `salesOrders` and `salesOrderLines` as root-level entity sets, and
-  BC does **not** support deep-inserting lines inside the header POST — so creation is
-  `POST /salesOrders` followed by one `POST /salesOrders(<guid>)/salesOrderLines` per line. The
-  custom `metadata masterdata.xml` API surface was checked too and is irrelevant here: customers,
-  prices, contacts, item availability, and **zero** `<Action>`/`<Function>` declarations.
-- `lineType` for an item line is the string `"Item"` (enum `Microsoft.NAV.invoiceLineAggLineType`),
-  which also confirms the existing return workflow's `lineType === "Item"` filter.
-- BC's two-call creation API is what makes SCOPE.md's partial-submission requirement natural to
-  implement: each line succeeds or fails independently.
+### Business Central facts (from `issues/NIMBUS-129/bc metadata/std odata metadata.xml`)
 
-### Constraints carried in from sibling stories
-
-- **No `OrderLineItem` records exist** for these orders (Medusa has no product catalog behind the
-  items) — so BC lines are built from `metadata.canonical_order.lines`, never from Medusa order
-  items. Binding constraint from NIMBUS-147/149 scoping.
-- The external caller **never** receives the BC order id or any BC outcome, by any mechanism —
-  confirmed in NIMBUS-129's PROGRESS.md. This story therefore has no response contract at all; its
-  only output is metadata.
-- **`createReturnFromSalesOrder` is a stub** (`// STUB (NIMBUS-138 task 09)`). This story
-  deliberately does **not** follow that precedent — the user confirmed a real HTTP implementation,
-  and a fabricated `bcso_stub_...` id would poison the very field NIMBUS-158's widget displays as a
-  real BC order number.
+- EAN lookup: `items()?$filter=gtin eq '<escaped>'&$top=2` (`gtin`, `Edm.String`, max 14).
+- Creation: `POST salesOrders`, then one `POST salesOrders(<guid>)/salesOrderLines` per line (no
+  deep insert); item line `lineType: "Item"`; `salesOrderLine.shipmentDate` is `Edm.Date`.
+- No item-reference entity is exposed, so `custItemNo` can only be matched against `item.number`.
 
 ## Execution Plan
 
-1. **Task 01 — the contract.** `bc-integration-state.ts` (metadata key, state type, status union,
-   line-failure type, `createInitialBcIntegrationState`, defensive `parseBcIntegrationState`,
-   `hasBusinessCentralOrder` duplicate guard) and `bc-order-payload.ts` (payload/company-id metadata
-   keys, narrow non-strict zod schema, `parseBcOrderPayload`, `readCompanyIdFromMetadata`).
-   9 unit test cases.
-2. **Task 02 — BC item lookup.** One batch method `findItemsForOrderLines` on the
-   `business-central` module: per line, try `gtin eq eanNo` → `number eq itemNumber` →
-   `number eq custItemNo`, `$top=2` to detect ambiguity, first single match wins, duplicate
-   candidates skipped. 10 fetch-mocked module test cases.
-3. **Task 03 — BC sales-order creation.** `createSalesOrder`: real header POST + per-line POSTs,
-   canonical→BC flat field mapping, line rejections collected rather than thrown. 10 fetch-mocked
-   module test cases.
-4. **Task 04 — the reusable workflow.** `prepareBcOrderStep` (read metadata, duplicate guard,
-   resolve company + BC customer number, resolve items, partition resolved/unresolved),
-   `submitBcOrderStep` (the BC write, errors converted to a recorded outcome),
-   `recordBcOrderOutcomeStep` (read-merge-write the integration state, increment `attempt_count`,
-   compensating restore), and `sendOrderToBusinessCentralWorkflow` chaining all three. 10
-   container-backed HTTP-suite test cases.
-5. **Task 05 — the trigger (BLOCKED).** A subscriber on
-   `order_ingestion.ready_for_business_central` running Task 04's workflow. Blocked on NIMBUS-129's
-   Task 04 landing. 4 test cases.
+1. **Task 01 — extend the contract.** Append `BcSubmissionFailureReason` (now including
+   `bc_customer_lookup_failed` / `bc_customer_not_found`), `parseBcIntegrationState` and
+   `hasBusinessCentralOrder` to `bc-integration-state.ts` (TC-2..TC-5 to its spec). Create
+   `bc-order-payload.ts`: narrow non-strict schema (no pricing/description fields; `currencyCode`
+   and `requestedShipmentDate` included; dates via `CanonicalDateSchema`), `parseBcOrderPayload`,
+   `readCompanyIdFromMetadata`, `canonicalDateToBcDate`. 10 unit cases.
+2. **Task 02 — BC item lookup.** `findItemsForOrderLines`: `gtin eq eanNo` → `number eq
+   itemNumber` → `number eq custItemNo`, `$top=2`, one token per batch. 10 module cases.
+3. **Task 03 — BC sales-order creation.** `createSalesOrder`: header + per-line POSTs; line body
+   `lineType`, `itemId`, `quantity`, `unitOfMeasureCode`, `shipmentDate` only; header sends no
+   BC-owned fields and `currencyCode` only when given; timeout/5xx/408/2xx-without-id throw
+   `BusinessCentralAmbiguousOutcomeError`. 13 module cases.
+4. **Task 04 — reusable workflow.** `prepareBcOrderStep` (now also reads the BC customer via
+   `getCustomer` and computes the currency override) → `submitBcOrderStep` →
+   `recordBcOrderOutcomeStep`. Exports the existing `resolveCurrencyCode` (one word) and adds a pure
+   `resolveBcCurrencyOverride` util. 5 unit + 17 HTTP cases.
+5. **Task 05 — trigger + test-environment guard.** Subscriber on `READY_FOR_BUSINESS_CENTRAL_EVENT`;
+   a Jest `globalSetup` that aborts integration runs unless `BUSINESS_CENTRAL_DISCOVERY_URL`
+   targets an allowlisted test environment; one racy NIMBUS-149 assertion narrowed. 5 unit + 4 HTTP
+   cases.
 
+Order: 01 → 02 → 03 → 04 → 05. 02 and 03 edit the same two files — never in parallel.
 ## Decisions & Trade-offs
 
-### 1. The 149→148 trigger is a subscriber on `order_ingestion.ready_for_business_central`
+1. **Trigger = subscriber on `order_ingestion.ready_for_business_central`.** It exists on `develop`
+   as this story's boundary and fires after the 201 is returned. Rejected: calling from
+   `enrichOrderWorkflow` (a BC outage would compensate enrichment); a scheduled poller (a later
+   recovery mechanism).
+2. **Duplicate guard = `bc_order_id` set or `status === "sent"`.** The BC id is the natural
+   idempotency token; no new field, table or migration. Also covers "header created, every line
+   rejected".
+3. **`attempt_count` counts attempts; a guarded short-circuit changes nothing.** NIMBUS-149
+   adopted `attempt_count`. The user confirmed on 2026-09-29 that a guard-stopped call neither
+   increments `attempt_count` nor touches any timestamp.
+4. **Business failures are returned as data, not thrown**, so the record step always runs and
+   nothing is stranded at `pending`. Only a missing Medusa order throws.
+5. **BC line rejections after the header exists are collected, not thrown**, so a real BC id is
+   always recorded and the guard stays armed. Consequence for NIMBUS-158: `failed` can carry a real
+   `bc_order_id` (`all_lines_rejected_by_bc`).
+6. **`unitPrice` is NOT sent to Business Central (user decision, now binding).** Recorded in
+   `issues/NIMBUS-129/PROGRESS.md`, entry dated 2026-09-16:
+   > "**Binding guidance recorded for NIMBUS-148** (in Task 02's doc, so it reaches that story):
+   > a submitted `unitPrice` is a *stated expectation, not an instruction*. It must **not** be set
+   > explicitly on the BC sales-order line — let BC price the line exactly as it does for a manually
+   > keyed order. Setting it explicitly overrides BC's contract price, so a stale price in a
+   > customer's ordering system would silently beat the negotiated one. Use the submitted value only
+   > to detect and flag a discrepancy."
 
-SCOPE.md left this explicitly open and warned against assuming the NIMBUS-144→147 non-awaited-
-workflow convention. It does not apply — **that convention was superseded** by NIMBUS-129's own
-architectural redesign, which replaced fire-and-forget workflow calls with real Medusa domain
-events on an explicit user directive. And NIMBUS-129's Task 04 already emits
-`order_ingestion.ready_for_business_central` **specifically for this story**, with a written note
-that NIMBUS-148's subscriber should use exactly that `config.event`. Choosing anything else would
-strand a deliberately-provisioned boundary event and invent a parallel path.
+   `BCCreateSalesOrderLineInput` has no price field, the narrow payload schema does not read
+   `unitPrice`, and Task 03 TC-3 / Task 04 TC-1 assert no `unitPrice` key reaches BC. The submitted
+   value stays in `metadata.canonical_order`. **Confirmed and extended by the user 2026-09-29:**
+   line `discountPercent`, `discountAmount`, `discountAppliedBeforeTax`, `taxCode`, `description`
+   and header `pricesIncludeTax`, `discountAmount`, `discountAppliedBeforeTax`, `salesperson` are
+   not sent either. `unitOfMeasureCode` and `shipmentDate` are sent. **`unitPrice` discrepancy
+   flagging is deferred to NIMBUS-158** (user decision 2026-09-29).
+7. **No compensation on the BC write, mitigated by logging.** If the record step fails after BC
+   created the order, the state stays `pending` and a later run could duplicate it; the BC id/number
+   are logged at `info` immediately. Durable fix out of scope.
+8. **`custItemNo` can only match `item.number`**, and NIMBUS-129 found `itemNumber`/`custItemNo` both
+   carry the customer's SKU in the real samples. The SCOPE-mandated fallback is kept (user decision
+   2026-09-29).
+9. **Batch item lookup** — one token per order instead of one per line.
+10. **Not doing:** BC field-length truncation, rejecting blocked items. Flagged for the business.
+11. **Ambiguous BC outcomes are recorded as `bc_submission_outcome_unknown`**, reusing the existing
+    `BusinessCentralAmbiguousOutcomeError` (NIMBUS-138 precedent) with `externalDocumentNumber` as
+    the idempotency key. A timeout/5xx may have created the order, so recording it as a plain
+    failure would invite a duplicate on retry. Confirmed by the user 2026-09-29; the
+    check-BC-before-retry belongs to NIMBUS-158.
+12. **Integration tests may call the TEST BC tenant, and fail closed otherwise (user decisions
+    2026-09-29).** The tenant in `apps/backend/.env` is a test tenant (environment `TestDK`), so
+    suites reaching it are acceptable — the event-chain and orderapi suites use fake customer
+    numbers, so their orders are recorded `bc_customer_not_found` and no BC order is created. The
+    earlier fake-credentials guard in `setup.js` is dropped. Instead, a Jest `globalSetup`
+    (`integration-tests/global-setup.ts`, wired in `jest.config.js`) parses the environment segment
+    of `BUSINESS_CENTRAL_DISCOVERY_URL` and, for `integration:http` / `integration:modules` runs,
+    aborts the whole run unless it is in `BUSINESS_CENTRAL_TEST_ENVIRONMENTS` (comma-separated,
+    default `TestDK`), with "Refusing to run integration tests against Business Central environment
+    '<env>' — not an allowed test environment". A missing or unparseable URL is refused too. The
+    messages never contain the URL, tenant id, client id or secret. `globalSetup` rather than
+    `setup.js` because it runs once and a throw aborts the run; `setupFiles` runs per test file.
+    **`.env` must never point at production BC when tests run.**
+    **Environment-type check deliberately out of scope (user decision 2026-09-29).** Confirming the
+    environment is of type `Sandbox` via the BC Admin Center API was verified on 2026-09-29 as not
+    possible with the current app registration: its token has only the `API.ReadWrite.All` role,
+    and `GET /admin/v2.24/.../environments` and `GET /admin/v2.21/.../environments` return `401`.
+    It would need `AdminCenter.ReadWrite.All` (no read-only Admin Center scope exists). Any future
+    type check must use a separate test-only app registration, never the integration's own app.
+    One NIMBUS-149 assertion (`enrich-order-event-chain.spec.ts` TC-4) is narrowed because the
+    asynchronous subscriber can now record an attempt before the test reads the order.
+13. **Dates are converted, not passed through.** Canonical `DD-MM-YYYY` → BC `YYYY-MM-DD` via
+    `canonicalDateToBcDate`; `requestedShipmentDate` → line `shipmentDate`.
+14. **Company and addresses come from metadata, not from the link or native columns.**
+    `metadata.company_id` and `canonical_order` are written in the same step as the order and are
+    the verbatim source; the Order↔Company link and native addresses (NIMBUS-149) are not needed.
+15. **`currencyCode` is sent only as an override (user decision 2026-09-29, replacing the
+    "never send" recommendation).** `prepareBcOrderStep` calls the existing `getCustomer` (live BC
+    value; `Company.currency_code` can still be `null` for companies synced before `d90c26a`). A
+    blank BC currency is local currency, resolved by the company sync's own `resolveCurrencyCode`
+    (exported, not duplicated) so both paths agree. The payload `currencyCode` is uppercased and
+    sent only when it differs case-insensitively from the resolved customer currency; when equal it
+    is omitted so BC applies the customer default. A customer BC does not know is recorded
+    `bc_customer_not_found` (no item lookup, no create); a failing customer request
+    `bc_customer_lookup_failed`. Cost: one extra token and request per order. Manual sandbox check:
+    an override to the LCY code (e.g. `DKK` for a `EUR` customer) — BC's API normally maps the LCY
+    code to blank; confirm.
 
-Rejected, recorded so they are not re-litigated:
-- *Calling the submission workflow from inside `enrichOrderWorkflow`* — makes a BC outage fail (and
-  compensate) ingestion enrichment, and couples two stories' workflows.
-- *A scheduled job polling for `pending` integration states* — no scheduled-job infrastructure is
-  in use, and NIMBUS-129 already flagged that filtering orders by a nested `metadata` JSON key via
-  `query.graph()` is not a verified-reliable pattern in this codebase. Worth building later as a
-  *recovery* mechanism (it would also close NIMBUS-129's "stuck mid-chain" gap); not the primary
-  trigger.
+## Resolved Decisions (user, 2026-09-29)
 
-### 2. Duplicate guard = short-circuit on `bc_order_id` set **or** `status === "sent"`
+| # | Question | Decision |
+|---|---|---|
+| OQ-1 | Stop sending other BC-owned fields | **Yes.** Line discounts, tax code, description; header `pricesIncludeTax`, discount fields, `salesperson` are not sent. `unitOfMeasureCode` and `shipmentDate` are sent. (Decision 6) |
+| OQ-2 | `currencyCode` | **Changed from recommendation:** send it as an override only when it differs from the BC customer's currency (blank BC currency = LCY per `d90c26a`); omit when equal. (Decision 15) |
+| OQ-3 | `unitPrice` discrepancy flagging | **Deferred to NIMBUS-158.** |
+| OQ-4 | Ambiguous BC outcome | **Yes:** record `bc_submission_outcome_unknown`; check-BC-before-retry belongs to NIMBUS-158. (Decision 11) |
+| OQ-5 | `itemNumber`/`custItemNo` fallback | **Keep.** (Decision 8) |
+| OQ-6 | Guard-stopped call | **Does not** increment `attempt_count` or touch timestamps. (Decision 3) |
+| OQ-7 | Test safety | The `.env` BC tenant is a test tenant; tests may reach it. Fake-credentials guard dropped; replaced by the fail-closed environment allowlist in `globalSetup`; Sandbox-type check out of scope. Narrowed TC-4 assertion kept. (Decision 12) |
 
-The BC order id *is* the natural idempotency token: it is already required to be stored for
-NIMBUS-158, so this needs no extra field, no extra table, and no migration — unlike the alternative
-of a dedicated idempotency key. Checking `bc_order_id` as well as `status` also covers the edge
-case where BC accepted the header but rejected every line: a BC order exists, so a re-invocation
-must not create a second one even though the recorded status is `failed`.
+No open decisions remain.
 
-### 3. `attempt_count`, not `retry_count` — and a short-circuited invocation does not increment
+## Observations for other plans (reported, not changed here)
 
-NIMBUS-149's scope calls the field "a retry count"; NIMBUS-148's scope redefines its semantics as
-*total attempts including the first automatic one*. Those two readings conflict, so the field is
-named `attempt_count` to match the behaviour that was actually specified — a successful first send
-leaves it at `1`, and `retry_count: 1` after a first non-retry would be actively misleading.
-**NIMBUS-149 must adopt this name.**
-
-SCOPE.md's phrase "increments on every invocation" is interpreted as *every invocation that makes
-an attempt*. A duplicate-guarded short-circuit increments nothing and touches no status or
-timestamp — consistent with SCOPE.md's own rule that "`pending` is left untouched if this story's
-logic never actually attempts a submission". Flagged rather than assumed, because a literal reading
-of "every invocation" could also mean no-ops count.
-
-### 4. Business failures are returned as data, not thrown
-
-`prepareBcOrderStep` and `submitBcOrderStep` return a discriminated outcome instead of throwing for
-missing companies, unusable payloads, zero resolved lines, or BC rejections. If they threw, the
-workflow would abort before the recording step and the integration state would be stranded at
-`pending` — the exact opposite of SCOPE.md's "on a failed submission … set status to `failed`". Only
-a genuinely exceptional case throws: the Medusa order id not existing (`MedusaError.NOT_FOUND`),
-where there is no metadata to record onto. This also avoids `when()` in the workflow composition:
-each step no-ops on its own discriminator, so no conditional composition is needed and no
-`transform()` is needed either.
-
-### 5. BC line rejections after the header exists are collected, not thrown
-
-Both directions were weighed:
-- *Throwing* on the first rejected line gives a simpler method contract — but the BC header already
-  exists and cannot be un-created, so the caller would record `failed` with no BC order id, an
-  orphan header would sit in BC, and NIMBUS-158's retry would create a **second** BC order.
-- *Collecting* keeps the real BC order id available whenever a BC order actually exists, so the
-  duplicate guard is always armed.
-
-Collecting wins: preventing a duplicate BC order is an explicit requirement; a tidy signature is
-not. **Consequence, flagged for NIMBUS-158:** an outcome can be `failed` *and* carry a real
-`bc_order_id` (`failure_reason: "all_lines_rejected_by_bc"`). NIMBUS-158's retry must decide what
-to do with that — clear the id after manual BC cleanup, or add lines to the existing BC order. Not
-solved here.
-
-### 6. `unitPrice` is sent to BC — **open business question**
-
-The canonical contract deliberately retains per-line `unitPrice` and the real EDI samples populate
-it (`209,25`). Sending it makes BC use the price the customer's system stated; omitting it makes BC
-price from the customer's own BC price list. These differ whenever the two disagree, and which is
-correct is a **business** decision. This plan sends it (silently discarding submitter-supplied data
-is the worse default) and flags it. If the answer is "let BC price it", the change is one line:
-stop setting `unitPrice` in `buildSalesOrderLineBody`.
-
-### 7. No compensation on the BC write, mitigated by logging
-
-`submitBcOrderStep` has no compensation function: a created BC sales order is externally visible
-business data in another system, and silently deleting it on a downstream failure is worse than
-leaving it. **Known limitation:** if `recordBcOrderOutcomeStep` fails after the BC order was
-created, compensation restores the old metadata, the state stays `pending`, and a later invocation
-would duplicate the BC order. Mitigation: the BC order id and number are logged at `info` the
-instant they are known, so the id is recoverable and reconcilable by hand. A durable fix (write the
-id in its own step before computing the rest of the outcome, or an outbox row) is out of scope.
-
-### 8. `custItemNo` can only be matched against `item.number`
-
-BC's Item Reference / Item Cross Reference table is **not** exposed by the standard OData v2.0 API,
-and the custom masterdata API exposes no item-reference entity either. So the `custItemNo` fallback
-SCOPE.md requires resolves against the same `item.number` field as `itemNumber`. In the real EDI
-samples `custItemNo` equals `itemNumber` on every line, so the third attempt is currently a no-op in
-the happy path (and Task 02 skips the duplicate request rather than issuing it twice). It exists
-because SCOPE.md mandates the third attempt. **If genuine customer-item-number resolution is needed,
-it requires a BC-side custom API page** — flagged, not built.
-
-### 9. Batch item lookup rather than per-line
-
-`BusinessCentralModuleService` has no token caching — every public method mints a fresh Azure AD
-token. A per-line lookup would therefore mint one token per order line. `findItemsForOrderLines`
-takes the whole batch, mints one token, and issues only item requests. This keeps SCOPE.md's
-"reuse the existing conventions, don't introduce a second HTTP client" intact without adding a
-caching layer.
-
-### 10. Not doing: BC field-length truncation, blocked-item rejection
-
-BC enforces `MaxLength` on `description` (100), `externalDocumentNumber` (35),
-`unitOfMeasureCode` (10), `salesperson` (20). This plan does not truncate — an over-long value is
-sent as-is and BC rejects it, surfacing as a recorded failure rather than as silently-corrupted BC
-data. Real sample values are far inside the limits. Likewise, `item.blocked` is read but blocked
-items are **not** rejected: SCOPE.md says nothing about it and inventing the rule would be
-speculative. Both flagged for the business, not implemented.
-
-## Observations for other plans (not fixed here)
-
-- **NIMBUS-129 Task 02 has a jest-collection hazard.** Its planned
-  `apps/backend/src/modules/order-ingestion/__tests__/canonical-order-fixtures.ts` sits inside a
-  directory matched by `testMatch: ["**/src/modules/*/__tests__/**/*.[jt]s"]` under
-  `TEST_TYPE=integration:modules`. Jest will collect that non-spec fixture file as a test suite and
-  fail it with "Your test suite must contain at least one test." NIMBUS-148 avoids the trap by
-  declaring every fixture inline in its own spec file; NIMBUS-129 should either move that file out
-  of `__tests__/` or narrow its own testMatch. **Reported, not changed** — it is another plan's
-  file.
-- **`BCOrderStatus` in `types.ts` does not match BC's real enum.** The repo declares
-  `"Open" | "Released" | "Pending Approval" | "Pending Prepayment" | "Shipped" | "Invoiced"`, but
-  `Microsoft.NAV.salesOrderEntityBufferStatus` has exactly three members: `Draft`, `In Review`,
-  `Open`. Pre-existing, out of scope, and this story's `BCCreatedSalesOrder.status` is a plain
-  `string` precisely so it does not inherit the mismatch. Reported for attention.
+- **NIMBUS-158** must reconcile to this contract: read via `parseBcIntegrationState`; switch on
+  `BcSubmissionFailureReason` (including `bc_customer_not_found` / `bc_customer_lookup_failed`);
+  treat `bc_submission_outcome_unknown` as "check BC by `externalDocumentNumber` before retrying";
+  own the deferred `unitPrice` discrepancy flag (compare `canonical_order` prices with BC's line
+  prices via `getOrder`);
+  handle `failed` with a real `bc_order_id` (`all_lines_rejected_by_bc`); a retry of an order whose
+  guard is armed is a no-op by design.
+- `canonical-order-schema.ts` says of `itemNumber` that "nothing downstream resolves anything from
+  it", but NIMBUS-148 keeps the `itemNumber`/`custItemNo` fallback (user decision 2026-09-29).
+  That comment should be aligned in a later NIMBUS-147 touch; it is not changed here.
+- **Possible later hardening (not in this story):** confirm the test BC environment is of type
+  `Sandbox` via the BC Admin Center environments API, using a separate test-only app registration
+  with `AdminCenter.ReadWrite.All` — never the integration's own app (see Decision 12).
+- No automatic recovery exists for orders stuck at `pending` (lost event, subscriber crash). They are
+  visible via `status: "pending"` for NIMBUS-158.
 
 ## Verification
 
-- [ ] `cd apps/backend && pnpm test:unit` — Task 01, 9 cases: initial state is pending/zero; the
-      state parser round-trips a full state; it falls back to pending for `undefined`/`null`/a
-      string/an unrecognized status; it drops malformed line failures and coerces unknown reasons;
-      `hasBusinessCentralOrder` fires on either signal; the payload reader accepts a real
-      EDI-derived order, tolerates unmodelled fields, and reports missing/empty-`lines`/non-object
-      payloads as a result rather than throwing; the company-id reader accepts only non-empty
-      strings.
-- [ ] `cd apps/backend && pnpm test:integration:modules` — Task 02, 10 cases: resolves by `eanNo`
-      without attempting fallbacks; falls back to `itemNumber` on a miss **and** on an ambiguous
-      EAN; falls back to `custItemNo` when it differs; does not repeat an identical filter when
-      `custItemNo === itemNumber`; reports `ambiguous`, `no_identifiers` (with no HTTP call), and
-      `not_found` correctly; resolves a mixed batch with one token in input order; throws on a
-      failing BC request; short-circuits an empty batch with no HTTP call at all.
-- [ ] `cd apps/backend && pnpm test:integration:modules` — Task 03, 10 cases: header POST then one
-      POST per line to the containment URL; canonical→BC flat header mapping (including
-      `shipToContact`) with no `number`/`id`/`lines` keys; `lineType: "Item"` + `itemId` per line;
-      absent optionals omitted rather than sent as `null`; a rejected line collected with the BC
-      order id still returned; every line rejected still returns the id; a failing header POST
-      throws and attempts no line request; a header response with no `id` throws; empty
-      `lines`/blank `customerNumber` rejected before any network call; one token for the whole
-      operation.
-- [ ] `cd apps/backend && pnpm test:integration:http` — Task 04, 10 cases: full submission records
-      `sent` + real BC id + `attempt_count: 1`; partial submission calls BC with the resolved
-      subset only and records `partial: true`, `failure_reason: "partial_lines_submitted"`, and a
-      per-line failure with that line's identifiers; zero resolved lines creates **no** BC order and
-      records `failed`/`no_lines_resolved`/no id; a failing BC call records
-      `failed`/`bc_submission_failed`/no fabricated id; `attempt_count` reaches 1→2→3 across
-      repeated invocations; a second invocation after success calls `createSalesOrder` exactly once
-      in total and leaves the state byte-identical; a missing canonical payload records
-      `failed`/`canonical_payload_unavailable` instead of staying `pending`; a company with no BC
-      customer number records `bc_customer_number_missing`; an unknown order id throws; recording
-      the outcome preserves `canonical_order`, `company_id`, and `order_ingestion_state`.
-- [ ] `cd apps/backend && pnpm test:integration:http` — Task 05, 4 cases: the handler drives the
-      order to `sent`; it resolves rather than throwing when the workflow throws; `config.event`
-      equals `order_ingestion.ready_for_business_central`; running
-      `enrichOrderWorkflow` drives the order to `sent` end to end through the real event bus.
-- [ ] `pnpm build` and `pnpm lint` from the repo root pass after all tasks.
-- [ ] Manual, against a BC sandbox, once tasks 01–04 are merged (the mocked tests cannot prove the
-      wire contract): submit one real order and confirm a BC sales order appears with the expected
-      `externalDocumentNumber`, customer, and lines. **Specifically watch for a `400` on the header
-      POST complaining about `billToCustomerNumber`** — that field is `Nullable="false"` in BC's
-      metadata but is normally server-derived from `customerNumber`; if BC insists on it, the fix is
-      to also set `billToCustomerNumber: params.customerNumber` in `buildSalesOrderHeaderBody`.
+- [ ] `cd apps/backend && pnpm test:unit` — Task 01 (10): state parser/guard; payload reader
+      accepts the EDI fixture incl. `currencyCode`, strips price/description fields, rejects
+      missing/empty/ISO-dated payloads; company-id reader; date conversion. Task 04 (CUR-1..5):
+      currency override omitted on match, case-insensitive, sent uppercased on difference, blank BC
+      currency = LCY (default `DKK`, `BUSINESS_CENTRAL_LCY_CODE` honoured). Task 05 (ENV-1..5):
+      allowed environment passes; non-allowed refused without leaking the tenant; missing and
+      malformed URLs refused; configurable allowlist with blank fallback.
+- [ ] `cd apps/backend && pnpm test:integration:modules` — Task 02 (10) and Task 03 (13): header then
+      per-line POSTs; no price/discount/tax/description/salesperson keys; `currencyCode` only when
+      given; `shipmentDate` sent; optionals omitted; line rejections collected; 422 →
+      `MedusaError`; 5xx / network error / 2xx-without-id → `BusinessCentralAmbiguousOutcomeError`;
+      input guards; one token.
+- [ ] `cd apps/backend && pnpm test:integration:http` — Task 04 (17): full send (converted date, no
+      price keys, no currency on match); partial; zero resolved; definite failure; attempts 1→2→3;
+      duplicate guard; missing payload; missing BC customer number; unknown order; metadata
+      preserved; item-lookup failure; ambiguous outcome; BC-rejected line keeps its EAN; currency
+      differs → override; blank BC currency; BC customer not found; BC customer lookup fails.
+      Task 05 (4): handler drives `sent`; never throws; `config.event`; real event chain → `sent`.
+      Existing event-chain and orderapi suites still pass (reaching the test tenant).
+- [ ] Guard fails closed: an integration run with the discovery URL pointing at a non-allowlisted
+      environment aborts before any suite.
+- [ ] `pnpm build` and `pnpm lint` from the repo root.
+- [ ] Manual, against the test BC tenant after merge: submit one real order and confirm a BC sales
+      order with the expected `externalDocumentNumber`, customer, lines, BC-priced unit prices and
+      the customer's currency; repeat with a differing currency to confirm the override. Watch for a
+      `400` on `billToCustomerNumber` or explicit `billTo*` fields (one-line fix in
+      `buildSalesOrderHeaderBody`).
