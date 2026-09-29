@@ -132,6 +132,15 @@
           "expression": "CREATE INDEX IF NOT EXISTS \"IDX_order_external_reference_deleted_at\" ON \"order_external_reference\" (\"deleted_at\") WHERE deleted_at IS NULL"
         },
         {
+          "keyName": "IDX_order_external_reference_company_external_order_unique",
+          "columnNames": [],
+          "composite": false,
+          "constraint": false,
+          "primary": false,
+          "unique": false,
+          "expression": "CREATE UNIQUE INDEX IF NOT EXISTS \"IDX_order_external_reference_company_external_order_unique\" ON \"order_external_reference\" (\"company_id\", \"external_order_number\") WHERE deleted_at IS NULL"
+        },
+        {
           "keyName": "order_external_reference_pkey",
           "columnNames": [
             "id"

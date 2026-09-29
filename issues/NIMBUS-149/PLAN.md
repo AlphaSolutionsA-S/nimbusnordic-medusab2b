@@ -1,333 +1,195 @@
 # NIMBUS-149: Create and Persist the Medusa Order
 
 **Issue:** https://alphasolutionsdk.atlassian.net/browse/NIMBUS-149
-**Scope:** issues/NIMBUS-149/SCOPE.md (approved)
+**Scope:** issues/NIMBUS-149/SCOPE.md (approved 2026-09-02)
 **Branch:** `feature/NIMBUS-149` (from `develop`)
+**Revision:** 2026-09-29 re-plan against the implemented NIMBUS-129 code on `develop`. Supersedes
+the 2026-09-02 plan.
 
 ## Objective
 
-Complete the Medusa order persistence that NIMBUS-129 Task 03 started as a minimal synchronous
-slice. NIMBUS-129 Task 03 creates a header-only order with `currency_code`, `email`, and a
-`metadata` blob containing `company_id`, `canonical_order`, and `order_ingestion_state`. This
-story adds what that slice deliberately omitted:
-
-1. **Canonical header field mapping** — map `billTo`/`shipTo` addresses, `phoneNumber`, and
-   other canonical fields onto native Medusa Order columns/relations.
-2. **BC integration-state metadata** — the `bc_integration_state` object (BC order id, status,
-   timestamp, retry count) that NIMBUS-148 and NIMBUS-158 depend on.
-3. **Idempotency** — defense against double-creating an order for the same validated canonical
-   order.
-4. **Failure handling** — recoverable failure mechanism for order-creation errors.
+Finish Medusa order persistence on top of what NIMBUS-129 Task 03 already built. Make order
+creation roll back cleanly on failure and hold up against concurrent duplicates, initialize the
+Business Central integration state that NIMBUS-148 and NIMBUS-158 depend on, and map the remaining
+canonical header fields onto native Order columns.
 
 ## Analysis
 
-### What NIMBUS-129 Task 03 already built
+### What is on `develop` today (verified from code, not from the old plan)
 
-NIMBUS-129 Task 03 (`issues/NIMBUS-129/03-create-order-workflow-implementation.md`) implements
-`createOrderFromCanonicalPayloadWorkflow`, which:
+`POST /orderapi/orders` (`src/api/orderapi/orders/route.ts`) validates the body against the strict
+`CanonicalOrderSchema` and awaits `createOrderFromCanonicalPayloadWorkflow`:
 
-- Matches the company via `Company.business_central_customer_number` (synchronous, in-request).
-- Creates a header-only `Order` via `orderModuleService.createOrders({ currency_code, email,
-  metadata: { company_id, canonical_order, order_ingestion_state: 'created',
-  order_ingestion_state_updated_at } })`.
-- Creates the Order↔Company remote link (replicating `order-created.ts` hook logic directly).
-- Creates the `OrderExternalReference` dedupe row (per-company `externalOrderNumber` check).
+1. `matchCompanyAndCheckDuplicateStep`: resolves the company via
+   `business_central_customer_number` (404 if none). It then lists `OrderExternalReference` rows
+   for `(company_id, external_order_number)` and rejects with 422 if one exists.
+2. `createOrderAndReferenceStep`: one step doing three mutations. It calls
+   `Modules.ORDER.createOrders({ currency_code, email, metadata: { company_id, canonical_order,
+   order_ingestion_state: "created", order_ingestion_state_updated_at } })`, then
+   `remoteLink.create` for Order↔Company, then `createOrderExternalReferences`. Its compensation
+   undoes all three using data from its own `StepResponse`.
 
-**What it deliberately omitted** (per its own PLAN.md "Decisions & Trade-offs"):
+After that, the route fires `order_ingestion.order_created` without awaiting it. The subscriber
+then runs `enrichOrderWorkflow`, which read-merge-writes `order_ingestion_state =
+"ready_for_business_central"` and emits `order_ingestion.ready_for_business_central`.
 
-> This plan's order creation does not address NIMBUS-149's traceability/normalized-source-
-> information requirements, nor the Business-Central-integration-state fields NIMBUS-158's admin
-> widget will eventually need to display.
+### Requirement reconciliation
 
-NIMBUS-129 Task 04 (`04-order-ingestion-event-chain-implementation.md`) implements the async
-event chain that runs after order creation. Its `enrichOrderWorkflow` has a placeholder
-`// IMPLEMENT:` block that explicitly flags address mapping as a candidate enrichment step:
+| NIMBUS-149 requirement | Status on `develop` | This plan |
+|---|---|---|
+| Create a Medusa order from the validated canonical order | **Done** | — |
+| No `OrderLineItem` records | **Done** (not asserted by any test) | Test added (Task 03) |
+| Verbatim canonical payload in its own metadata key | **Done**: `metadata.canonical_order`. It is the zod output of a strict schema with no transforms or defaults, so it is structurally identical to the submitted JSON (not asserted) | Test added (Task 03) |
+| Associate with matched company/customer | **Done for company** (`metadata.company_id` + link). No customer is resolved upstream, so `customer_id` stays unset | — |
+| Map header fields onto native columns | **Partial**: `currency_code`, `email` only | Addresses + phone (Task 03) |
+| BC integration-state object, separate metadata key | **Missing** | Task 02 |
+| Failures surfaced and recoverable | **Partial**: step errors reach the caller as 404/422/5xx. A failure *inside* the 3-mutation step leaves orphans (below) | Task 01 |
+| No double-creation (defense in depth) | **Partial**: sequential duplicates are rejected. Concurrent duplicates can both pass the read-then-write check, and there is no DB constraint | Task 01 |
+| No secrets in metadata | **Done** | — |
 
-> A concrete candidate flagged for consideration: mapping the canonical `billTo`/`shipTo`
-> address objects onto the Order's proper address relations — but the exact `CreateOrderDTO`/
-> update-address field shape for this was not verified in this planning pass, so it is **not**
-> implemented here.
+### Gap 1: partial failure orphans the order (verified in Medusa 2.21 orchestrator)
 
-### What NIMBUS-149 adds
+When a step throws, the orchestrator does run that step's compensation (`flagStepsToRevert`
+includes `PERMANENT_FAILURE` steps). It passes `undefined` compensation data, though, because no
+`StepResponse` was returned. The existing compensation starts with `if (!compensationData)
+return;`. So if the link or reference insert fails after `createOrders` succeeded, the order
+stays behind. The caller then retries and gets a second order. The Medusa-idiomatic fix is one
+mutation per step, each with its own compensation.
 
-This story fills the gap between what Task 03 built (bare `createOrders` with `currency_code`,
-`email`, and metadata) and what NIMBUS-149's SCOPE requires (full header field mapping + BC
-integration-state metadata + idempotency + failure handling).
+### Gap 2: no atomic duplicate guard
 
-**Key architectural decision: modify the existing workflow, not create a new one.** NIMBUS-129
-Task 03's `createOrderFromCanonicalPayloadWorkflow` and its `createOrderAndReferenceStep` already
-exist (as plans — all NIMBUS-129 tasks are TODO). This story's implementation modifies those
-existing step/workflow files to add the missing pieces, rather than creating a parallel
-order-creation workflow. This avoids duplication and keeps a single source of truth for order
-creation.
+NIMBUS-129's PLAN.md recorded this: "no DB-level uniqueness constraint on
+`OrderExternalReference(company_id, external_order_number)` … flagged as a follow-up hardening
+item". The syntax it was unsure about has now been verified. The DML's
+`.indexes([{ on: [...], unique: true, where: "deleted_at IS NULL" }])` is the same form used by
+`@medusajs/order`'s own models.
 
-If NIMBUS-129 has already been implemented by the time this story starts, the implementor
-modifies the existing files. If NIMBUS-129 has not yet been implemented, the implementor adds
-this story's requirements to the NIMBUS-129 task files (or implements them together).
+### Contracts sibling stories expect from NIMBUS-149
 
-### Medusa Order model — available columns and address types
-
-Verified from `@medusajs/order` and `@medusajs/types` (installed packages):
-
-**Order entity columns** (relevant for header mapping):
-
-| Column | Type | Nullable | Canonical source |
-|--------|------|----------|-----------------|
-| `currency_code` | string | No | `canonicalOrder.currencyCode` |
-| `email` | string | Yes | `canonicalOrder.email` |
-| `customer_id` | string | Yes | (not directly from canonical — company context) |
-| `status` | enum | No | Default `"pending"` (not set from canonical) |
-| `metadata` | JSON | Yes | `canonical_order`, `bc_integration_state`, etc. |
-
-**OrderAddress entity** (for `billTo`/`shipTo` mapping):
-
-| Field | Canonical source |
-|-------|-----------------|
-| `first_name` / `last_name` | `billTo.name` / `shipTo.name` (split or use `first_name`) |
-| `address_1` | `billTo.addressLine1` / `shipTo.addressLine1` |
-| `address_2` | `billTo.addressLine2` / `shipTo.addressLine2` |
-| `city` | `billTo.city` / `shipTo.city` |
-| `country_code` | `billTo.country` / `shipTo.country` |
-| `province` | `billTo.state` / `shipTo.state` |
-| `postal_code` | `billTo.postCode` / `shipTo.postCode` |
-| `phone` | `canonicalOrder.phoneNumber` (on shipping address) |
-
-**`CreateOrderDTO`** accepts inline `shipping_address` and `billing_address` as
-`CreateOrderAddressDTO` objects — no need to create addresses separately first.
-
-**`updateOrders`** uses a two-argument form: `updateOrders(id, data)` — verified from
-`apps/backend/src/workflows/order/steps/update-order.ts`.
-
-### Fields that cannot map to native Order columns
-
-| Canonical field | Why it can't map | Where it goes instead |
-|----------------|------------------|----------------------|
-| `orderDate` | No `order_date` column; `created_at` is auto-set | Metadata (already in `canonical_order`) |
-| `requestedDeliveryDate` | No such column on Order | Metadata (already in `canonical_order`) |
-| `salesperson` | No such column | Metadata (already in `canonical_order`) |
-| `discountAmount` / `discountAppliedBeforeTax` / `pricesIncludeTax` | No such columns | Metadata (already in `canonical_order`) |
-| `company_id` | Not a column; linked via remote link | `metadata.company_id` (already done by Task 03) |
-
-All of these are already preserved verbatim in the `canonical_order` metadata key — no
-additional work needed for fields that don't map to native columns.
-
-### Key design decisions
-
-**D1 — Add BC integration-state metadata to the order-creation step, not as a separate step.**
-
-The `bc_integration_state` object is initialized at order creation time. Adding it to the
-`createOrderAndReferenceStep`'s `metadata` object (alongside the existing `company_id`,
-`canonical_order`, and `order_ingestion_state` keys) is the simplest approach — it's one
-`createOrders` call with a richer metadata blob. A separate step would require an immediate
-`updateOrders` call, adding complexity for no benefit.
-
-**D2 — Map `billTo`/`shipTo` as inline `CreateOrderAddressDTO` objects in `createOrders`.**
-
-The `CreateOrderDTO` accepts `shipping_address` and `billing_address` as inline objects. This
-is simpler than creating addresses separately and passing IDs. The mapping is:
-
-- `canonicalOrder.shipTo` → `shipping_address` (if present)
-- `canonicalOrder.billTo` → `billing_address` (if present)
-- `canonicalOrder.phoneNumber` → `shipping_address.phone` (if shipping address exists)
-- `canonicalOrder.email` → `order.email` (already done by Task 03)
-
-If `billTo`/`shipTo` are absent (they're optional per the canonical contract), no address is
-set — the Order is created without addresses, and BC's default master data is used downstream
-(per NIMBUS-147's SCOPE).
-
-**D3 — `name` field mapping: use `first_name` on `OrderAddress`.**
-
-The canonical address has a single `name` field (e.g. "JK Tryk"). The `OrderAddress` has
-`first_name` and `last_name`. The simplest mapping is to put the entire `name` value in
-`first_name` and leave `last_name` empty. Splitting on space would be fragile (company names
-don't have a reliable first/last name split).
-
-**D4 — `country` → `country_code` mapping: lowercase the value.**
-
-The canonical contract uses `country` (e.g. "DK"). The `OrderAddress` uses `country_code`,
-which Medusa stores as a lowercase ISO 3166-1 alpha-2 code (e.g. "dk"). The mapping lowercases
-the value.
-
-**D5 — Idempotency: rely on the existing `OrderExternalReference` dedupe row.**
-
-NIMBUS-129 Task 03's `matchCompanyAndCheckDuplicateStep` already checks the
-`OrderExternalReference` table for an existing `(company_id, external_order_number)` pair and
-throws `DUPLICATE_ERROR` if one exists. This is the primary idempotency mechanism. NIMBUS-149's
-SCOPE asks for "defense in depth alongside NIMBUS-147's per-company `externalOrderNumber`
-duplicate check upstream" — the `OrderExternalReference` check IS that defense in depth. No
-additional idempotency mechanism is needed for this story.
-
-**D6 — Failure handling: let the workflow step's compensation handle rollback.**
-
-NIMBUS-129 Task 03's `createOrderAndReferenceStep` already has a compensation function that
-deletes the `OrderExternalReference`, dismisses the remote link, and deletes the order on
-failure. This is the recoverable failure mechanism — if order creation fails, the compensation
-rolls back all three artifacts, and the route returns an error to the caller. No additional
-failure-handling mechanism (logging, error state, alerting) is needed for this story's scope;
-the existing workflow error propagation is sufficient.
-
-**D7 — BC integration-state object shape.**
-
-```typescript
-interface BcIntegrationState {
-  bc_order_id: string | null;     // null until NIMBUS-148 sets it
-  status: 'pending';              // initial value — NIMBUS-148 changes to 'sent' | 'failed'
-  timestamp: string;              // ISO timestamp of initialization
-  retry_count: 0;                 // initial value — NIMBUS-148 increments
-}
-```
-
-Metadata key: `bc_integration_state` (separate from `canonical_order` and
-`order_ingestion_state`).
-
-This shape is the stable contract that NIMBUS-148 (updates `status`, `bc_order_id`,
-`retry_count`, `timestamp`) and NIMBUS-158 (reads `status`, `bc_order_id`, `retry_count`) depend
-on. The NIMBUS-158 plan already uses this shape as its placeholder.
+- **NIMBUS-148** (plan pending approval) reads `metadata.canonical_order` and
+  `metadata.company_id`, which are already written with those exact names. It also defines the
+  integration-state contract in `src/modules/order-ingestion/bc-integration-state.ts`: key
+  `business_central_integration`, with `status`, `bc_order_id`, `bc_order_number`,
+  `attempt_count`, `initialized_at`, `last_attempt_at`, `sent_at`, `partial`, `failure_reason` and
+  `line_failures`. It says NIMBUS-149 must initialize via `createInitialBcIntegrationState` rather
+  than invent names. With a mismatched key, NIMBUS-148 would ignore the initialized state and
+  write its outcome to a different key than the one NIMBUS-149 created. It triggers on
+  `order_ingestion.ready_for_business_central`, which already exists.
+- **NIMBUS-158** (planned; conditional) uses the old placeholder `bc_integration_state` /
+  `retry_count` / `timestamp`. It has a mandatory reconciliation checklist against whatever 148 and
+  149 actually implement. It relies on the state starting at `pending` so an admin can see and
+  submit orders the automatic path never delivered.
+- The old 2026-09-02 NIMBUS-149 plan used `bc_integration_state` / `retry_count` / `timestamp`.
+  That conflicts with NIMBUS-148 and is superseded here.
 
 ## Execution Plan
 
-### Task 01: Header field mapping + BC integration-state metadata
-
-Modify the existing `createOrderAndReferenceStep` (from NIMBUS-129 Task 03) to:
-
-1. Map `canonicalOrder.shipTo` → `shipping_address` (inline `CreateOrderAddressDTO`).
-2. Map `canonicalOrder.billTo` → `billing_address` (inline `CreateOrderAddressDTO`).
-3. Map `canonicalOrder.phoneNumber` → `shipping_address.phone`.
-4. Add `bc_integration_state` to the `metadata` object with initial values.
-
-If NIMBUS-129 Task 03 has not yet been implemented, add these requirements to its task file. If
-it has been implemented, modify the existing step file.
-
-### Task 02: Idempotency verification + failure handling documentation
-
-1. Verify that the existing `OrderExternalReference` dedupe check (from NIMBUS-129 Task 03's
-   `matchCompanyAndCheckDuplicateStep`) satisfies NIMBUS-149's idempotency requirement.
-2. Verify that the existing compensation function (from `createOrderAndReferenceStep`) satisfies
-   NIMBUS-149's failure-handling requirement.
-3. Document the failure-handling behavior in the task file — no additional code needed if the
-   existing mechanisms are sufficient.
-
-### Task 03: Integration tests
-
-Test the order-creation workflow with the new header mapping and BC integration-state metadata:
-
-1. Order with `shipTo` address → address mapped to `shipping_address`.
-2. Order with `billTo` address → address mapped to `billing_address`.
-3. Order without `billTo`/`shipTo` → no addresses set, order still created.
-4. `phoneNumber` mapped to `shipping_address.phone`.
-5. `bc_integration_state` metadata present with correct initial values.
-6. `canonical_order` metadata present and verbatim.
-7. No `OrderLineItem` records created.
-8. Duplicate `externalOrderNumber` for same company → rejected (existing idempotency).
-9. Order creation failure → compensation rolls back (existing behavior).
-
-## Cross-Task Wiring Summary
-
-- Task 01 modifies the existing `createOrderAndReferenceStep` from NIMBUS-129 Task 03. The
-  workflow's input/output shape does not change — only the `createOrders` call's arguments are
-  enriched with address mapping and the `metadata` object gains the `bc_integration_state` key.
-- Task 02 is a verification/documentation task — no code changes. It confirms that the existing
-  idempotency and failure-handling mechanisms from NIMBUS-129 Task 03 satisfy NIMBUS-149's
-  requirements.
-- Task 03 tests the modified workflow. It extends NIMBUS-129 Task 03's existing test cases
-  (which test order creation, company link, and external reference) with assertions for address
-  mapping and BC integration-state metadata.
-
-## Environment / Config Changes
-
-- No `medusa-config.ts` changes.
-- No new modules, no DB migrations, no env vars.
-- No `pnpm` package installs.
-- The only code changes are to files that NIMBUS-129 Task 03 already plans to create (or has
-  created): `createOrderAndReferenceStep` and its test file.
+1. **Task 01: Atomic order-creation steps + DB-level duplicate guard.** Split
+   `createOrderAndReferenceStep` into `createIngestedOrderStep` (compensation: `deleteOrders`),
+   Medusa's `createRemoteLinkStep` (built-in dismiss) and `createOrderExternalReferenceStep`
+   (compensation: delete reference). Recompose the workflow and delete the old step. Add a
+   composite unique index on `order_external_reference(company_id, external_order_number)` and
+   generate its migration. Tests cover the unique index at module level, rollback of an order
+   when a later step fails, and two concurrent identical submissions producing exactly one order.
+2. **Task 02: BC integration-state contract + initialization.** Create
+   `bc-integration-state.ts` with NIMBUS-148's exact key, types and
+   `createInitialBcIntegrationState`. Write
+   `metadata.business_central_integration = createInitialBcIntegrationState(now)` at order
+   creation, sharing the timestamp with `order_ingestion_state_updated_at`. Tests: a unit test of
+   the initial state, the state being present on a created order, and the state surviving
+   `enrichOrderWorkflow`.
+3. **Task 03: Header field mapping.** A pure `mapCanonicalOrderHeader` maps `currencyCode`,
+   `email`, `shipTo`→`shipping_address` and `billTo`→`billing_address`. On each address,
+   `name`→`company`, `contact`→`first_name`, `country`→lowercase `country_code`, and
+   `phoneNumber`→`phone`. It is spread inline into `createOrders`. The stale placeholder comment
+   in `enrich-order.ts` is replaced. Tests: mapper unit tests, a persisted shipping address with
+   no line items and a verbatim `canonical_order`, and an order with no addresses.
 
 ## Decisions & Trade-offs
 
-### D1: Modify existing workflow vs. create a new one
+- **D1: Build on the existing workflow rather than write a parallel one.** Its name, input and
+  output stay the same, so the route, the subscriber and NIMBUS-148/158 are unaffected.
+- **D2: One mutation per step.** This fixes the orphaned-order gap using Medusa's own
+  compensation model instead of a try/catch inside one step. `createRemoteLinkStep` is already
+  used in this repo (`create-companies.ts`, `create-approvals.ts`). Trade-off: the workflow has
+  four steps instead of two.
+- **D3: DB unique index as the atomic duplicate guard.** The existing check stays for the
+  friendly 422 on sequential duplicates. The index catches a genuine concurrent race at the
+  reference insert, and the preceding steps then roll back. Trade-off: the race loser gets a 400
+  (`INVALID_DATA "… already exists"`, Medusa's DB error mapper) rather than 422. It is only
+  reachable under true concurrency. Rejected alternative: `acquireLockStep` keyed on
+  company + number. It relies on the locking provider being shared across instances (none is
+  configured in `medusa-config.ts`), while the index holds regardless of deployment topology.
+  Deployment risk: the migration fails if a target DB already holds a duplicate pair; Task 01
+  includes the pre-check query.
+- **D4: Adopt NIMBUS-148's integration-state contract verbatim.** This means key
+  `business_central_integration`, `attempt_count` rather than the scope's "retry count", and three
+  timestamps. NIMBUS-148 is the writer with the most complex semantics, and its rationale holds:
+  `attempt_count` counts total attempts, so `retry_count: 1` after a first send would mislead.
+  NIMBUS-149 creates the file with only what it uses (key, types, factory). NIMBUS-148 appends
+  its parser and guard. Trade-off: NIMBUS-148 Task 01 needs a small reconciliation from "create"
+  to "append" (listed in manifest.md). The alternative, creating NIMBUS-148's whole file here,
+  would ship unused parser code in this story.
+- **D5: Map addresses synchronously and inline in `createOrders`.** This is atomic, and
+  `deleteOrders` removes the addresses on compensation. It is used instead of the
+  `enrichOrderWorkflow` placeholder, which would leave a window with an address-less order and add
+  a second write.
+- **D6: `name → company`, `contact → first_name`, `last_name` unset.** `OrderAddress` has a
+  `company` column, so the business name and the attention person both keep their meaning. This
+  replaces the old plan's `name → first_name`, which dropped `contact`.
+- **D7: `phoneNumber` goes on every created address.** The order has no header phone column, and
+  the phone belongs to the order contact, not to one address. If there are no addresses, it lives
+  only in `canonical_order`.
+- **D8: `country` is lowercased without validation.** `order_address.country_code` has no FK, so
+  a non-ISO value is stored as given and cannot fail order creation. Both EDI samples use `"DK"`.
+  Validating the code is NIMBUS-147's contract, and it was deliberately left as a free string.
+- **D9: Post-creation recovery stays out of scope.** A lost `order_ingestion.order_created` event
+  or a failed enrichment leaves `order_ingestion_state: "created"`, and nothing currently
+  re-drives it. This is NIMBUS-129's recorded known limitation. Such orders are now visible with
+  `business_central_integration.status: "pending"`, which is exactly what NIMBUS-158's admin
+  submit/retry acts on. A scheduled recovery job is not built here.
 
-**Chosen:** Modify the existing `createOrderFromCanonicalPayloadWorkflow` from NIMBUS-129 Task
-03. **Why:** Creating a parallel workflow would duplicate the company-matching, order-creation,
-link-creation, and dedupe-row-creation logic. The existing workflow is the single source of truth
-for order creation — this story enriches it, not replaces it.
+## Open Questions (resolved — both approved by the user on 2026-09-29)
 
-**Trade-off:** This story's implementation is coupled to NIMBUS-129 Task 03's implementation. If
-Task 03's design changes, this story's changes must track it. This is acceptable — the
-alternative (a separate workflow) would be worse.
+1. **Confirm D4 (approved):** NIMBUS-149 adopts NIMBUS-148's `business_central_integration` contract
+   (`attempt_count`, not `retry_count`) and owns creating `bc-integration-state.ts`. NIMBUS-148
+   Task 01 changes from "create" to "append". NIMBUS-148's plan is still pending approval, so this
+   ties the two plans together. Recommended: yes.
+2. **Confirm D6/D7 (approved):** the address mapping `name → company`, `contact → first_name`, and phone on
+   both addresses. Recommended: yes.
 
-### D2: Inline addresses in `createOrders` vs. separate address creation
+## Observations for other plans (reported, not changed here)
 
-**Chosen:** Inline `CreateOrderAddressDTO` objects in the `createOrders` call. **Why:** The
-`CreateOrderDTO` supports inline addresses — no need to create addresses separately and pass
-IDs. This is simpler and atomic (addresses are created with the order, no orphan addresses on
-failure).
+- NIMBUS-148's plan still says NIMBUS-129 is unimplemented and marks its Task 05 BLOCKED on
+  NIMBUS-129 Task 04. That task is DONE on `develop`, so the blocker is gone.
+- NIMBUS-148 Decision 6 still sends `unitPrice` to BC as an open question. NIMBUS-129's PROGRESS.md
+  (2026-09-16) records a user decision that a submitted `unitPrice` must **not** be sent as a BC
+  line-price override.
+- NIMBUS-158's placeholder field names need reconciling as described in manifest.md.
 
-**Trade-off:** If the address creation fails, the entire `createOrders` call fails and the
-compensation deletes the order. This is the desired behavior.
+## Verification
 
-### D3: `name` → `first_name` mapping (no split)
-
-**Chosen:** Put the entire `name` value in `first_name`, leave `last_name` empty. **Why:**
-Company names (e.g. "JK Tryk") don't have a reliable first/last name split. Splitting on space
-would produce incorrect results for multi-word company names.
-
-**Trade-off:** The `last_name` field is always empty for these orders. This is cosmetic — the
-admin UI displays `first_name` + `last_name` concatenated, so the full name still appears
-correctly.
-
-### D4: `country` → `country_code` lowercasing
-
-**Chosen:** Lowercase the `country` value (e.g. "DK" → "dk"). **Why:** Medusa stores
-`country_code` as a lowercase ISO 3166-1 alpha-2 code. The canonical contract uses uppercase
-(e.g. "DK" from the EDI samples). The mapping is a simple `.toLowerCase()`.
-
-**Trade-off:** If the canonical contract ever uses full country names (e.g. "Denmark"), this
-mapping would produce an invalid country code. The canonical contract's `country` field is
-defined as a string with no format constraint — the implementor should verify that real
-submissions always use ISO 3166-1 alpha-2 codes.
-
-### D5: Idempotency via existing `OrderExternalReference`
-
-**Chosen:** Rely on the existing per-company `externalOrderNumber` dedupe check. **Why:**
-NIMBUS-129 Task 03's `matchCompanyAndCheckDuplicateStep` already checks the
-`OrderExternalReference` table and throws `DUPLICATE_ERROR` on a match. This is the "defense in
-depth" the SCOPE asks for — the primary check is NIMBUS-147's upstream validation, and the
-`OrderExternalReference` check is the secondary check. No additional mechanism is needed.
-
-**Trade-off:** There is no tertiary check (e.g. a unique constraint on the Order table itself).
-This is acceptable — two checks (upstream validation + dedupe row) are sufficient for this
-story's scope.
-
-### D6: Failure handling via existing compensation
-
-**Chosen:** Rely on the existing workflow compensation. **Why:** The
-`createOrderAndReferenceStep`'s compensation function already deletes the
-`OrderExternalReference`, dismisses the remote link, and deletes the order on failure. This is
-the "recoverable failure" mechanism the SCOPE asks for — the caller gets an error response, and
-no partial artifacts are left behind.
-
-**Trade-off:** No explicit error-state logging or alerting is added. The workflow engine's
-built-in error propagation (which surfaces errors to the route handler, which returns a 4xx/5xx
-response) is sufficient. A future story could add structured logging or alerting, but that is
-out of scope here.
-
-## Open Items for the Implementor
-
-1. **Reconcile with NIMBUS-129 Task 03's implementation status** — if Task 03 has already been
-   implemented, modify the existing files. If not, add this story's requirements to Task 03's
-   task file or implement them together.
-
-2. **Verify `country` field format** — confirm that real submissions always use ISO 3166-1
-   alpha-2 codes (e.g. "DK"). If full country names are possible, add a country-code lookup.
-
-3. **Verify `name` mapping** — confirm that putting the full name in `first_name` is acceptable
-   for the admin UI's display. If the admin UI requires `last_name` for proper display, adjust
-   the mapping.
-
-4. **Verify `phoneNumber` placement** — the canonical `phoneNumber` is an order-header field,
-   not an address field. This plan maps it to `shipping_address.phone`. If it should go on
-   `billing_address.phone` instead (or both), adjust the mapping.
-
-5. **Reconcile BC integration-state key name** — this plan uses `bc_integration_state`. The
-   NIMBUS-158 plan also uses `bc_integration_state` as its placeholder. Verify that NIMBUS-148's
-   plan uses the same key name (it has not been planned yet, but its SCOPE references the same
-   metadata object).
+- [ ] `cd apps/backend && pnpm test:unit` covers two cases:
+      - `createInitialBcIntegrationState` returns the full pending object.
+      - `mapCanonicalOrderHeader` maps shipTo/billTo/phone (company, contact, lowercased country,
+        nulls for absent optionals) and leaves both addresses undefined when none are given.
+- [ ] `cd apps/backend && pnpm test:integration:modules`: the unique index rejects a second
+      `(company_id, external_order_number)` row and accepts the same number for another company.
+      The existing TC-1..TC-3 still pass.
+- [ ] `cd apps/backend && pnpm test:integration:http` covers:
+      - All existing order-ingestion, orderapi and event-chain cases pass unchanged.
+      - A failure after order creation leaves no orphaned order.
+      - Two concurrent identical submissions create exactly one order and one reference.
+      - A created order carries `metadata.business_central_integration` in its pending state,
+        with `initialized_at` equal to `order_ingestion_state_updated_at`, and no
+        `bc_integration_state` key.
+      - `enrichOrderWorkflow` leaves the integration state untouched.
+      - `multiLineCanonicalOrder` persists a shipping address (`company: "JK Tryk"`,
+        `country_code: "dk"`, …), no billing address, zero line items, and
+        `metadata.canonical_order` deep-equal to the submitted payload.
+      - An order with no addresses is still created.
+- [ ] `pnpm build` and `pnpm lint` from the repo root pass.
+- [ ] Generated migration contains only the new unique index; the duplicate-pair pre-check query
+      returns no rows on each target DB before deploy.
+- [ ] Manual: `POST /orderapi/orders` with `order2.xml`-derived JSON shows the ship-to address on
+      the order in Medusa Admin.
