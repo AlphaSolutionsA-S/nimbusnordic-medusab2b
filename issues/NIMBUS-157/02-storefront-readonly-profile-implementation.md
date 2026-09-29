@@ -53,3 +53,15 @@ company mutation behavior.
   \`apps/storefront/package.json\`.
 - Check desktop and narrow layout manually: labels and values must remain legible without an
   edit-state interaction.
+
+## Status
+
+**DONE (2026-09-29).** `CompanyCard` is now a server-rendered, read-only `dl` grid (no client
+state, form controls, buttons, or toasts). Financial rows render only when their keys exist in
+the server response. `updateCompany` and `StoreUpdateCompany` removed; `retrieveCompany` no
+longer sends a `fields` override. Types mark `credit_limit`, `blocked`,
+`spending_limit_reset_frequency`, and employee `spending_limit` as optional. Added seven
+`Account.companyCard` keys and removed the five now-unused edit/toast keys in all 8 locales.
+Also guarded `employees-card/employee.tsx` against a redacted `spending_limit` (it would
+otherwise crash for non-admins). Validation: focused Jest 33/33 passed; storefront tsc shows
+no new errors; `next lint` clean on changed files.

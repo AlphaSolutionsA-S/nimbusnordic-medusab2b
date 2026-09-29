@@ -27,10 +27,6 @@ export type StoreCreateCompany = {
   spending_limit_reset_frequency?: ModuleCompanySpendingLimitResetFrequency | null
 }
 
-export type StoreUpdateCompany = Partial<StoreCreateCompany> & {
-  id: string
-}
-
 export type StoreCreateEmployee = {
   company_id: string
   customer_id?: string

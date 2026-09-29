@@ -6,6 +6,8 @@ export enum ModuleCompanySpendingLimitResetFrequency {
   YEARLY = "yearly",
 }
 
+export type ModuleCompanyBlockedState = "not_blocked" | "Ship" | "Invoice" | "All"
+
 export type ModuleCompany = {
   id: string
   name: string
@@ -19,7 +21,11 @@ export type ModuleCompany = {
   logo_url: string | null
   currency_code: string | null
   business_central_customer_number: string | null
-  spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency
+  vat_number: string | null
+  // Company-admin-only fields: the store API omits them for other employees.
+  credit_limit?: number | null
+  blocked?: ModuleCompanyBlockedState
+  spending_limit_reset_frequency?: ModuleCompanySpendingLimitResetFrequency
   created_at: string
   updated_at: string
   deleted_at: string | null

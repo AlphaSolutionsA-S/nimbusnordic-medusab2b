@@ -58,3 +58,16 @@ company. Test direct company retrieval and each retained employee read endpoint.
 - \`pnpm --filter @b2b-starter/backend test:integration:http\`
 - \`pnpm --filter @b2b-starter/backend build\`
 - Review every returned JSON object and error body for restricted values, tokens, or raw BC data.
+
+## Status
+
+**DONE (2026-09-29).** Added `apps/backend/src/api/store/companies/company-projection.ts`
+(actor resolver + allowlisted company/employee projection with internal query fields). Applied
+it to `GET /store/companies/:id`, `GET /store/companies/:id/employees`, and
+`GET /store/companies/:id/employees/:employeeId`. Removed `POST /store/companies/:id`, its
+middleware, and the unused `StoreUpdateCompany` validator. Deviation: the admin flag is read
+from `employee.is_admin`, the same source `ensureCompanyAccess` now uses (the
+`company_admin` identity metadata named in the plan is no longer the store authorization
+source; the security suite asserts a stale metadata role is ignored). The employee list no
+longer pages via the unused query config and returns all company employees.
+Validation: companies + security integration suites 43/43 passed; backend build passed.

@@ -1,5 +1,14 @@
-import { MedusaRequest, MedusaResponse } from "@medusajs/framework";
+import {
+  AuthenticatedMedusaRequest,
+  MedusaRequest,
+  MedusaResponse,
+} from "@medusajs/framework";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import {
+  resolveCompanyActor,
+  storeEmployeeProfileQueryFields,
+  toStoreEmployee,
+} from "../../../company-projection";
 import {
   deleteEmployeesWorkflow,
   updateEmployeesWorkflow,
@@ -11,28 +20,25 @@ import {
 } from "../../../validators";
 
 export const GET = async (
-  req: MedusaRequest<StoreGetEmployeeParamsType>,
+  req: AuthenticatedMedusaRequest<StoreGetEmployeeParamsType>,
   res: MedusaResponse
 ) => {
-  const { employeeId } = req.params;
+  const { id, employeeId } = req.params;
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
+  const { isAdmin } = await resolveCompanyActor(req);
 
   const {
     data: [employee],
   } = await query.graph(
     {
       entity: "employee",
-      // TODO: fix this
-      fields: req.queryConfig.fields,
-      filters: {
-        ...req.filterableFields,
-        id: employeeId,
-      },
+      fields: storeEmployeeProfileQueryFields,
+      filters: { id: employeeId, company_id: id },
     },
     { throwIfKeyNotFound: true }
   );
 
-  res.json({ employee });
+  res.json({ employee: toStoreEmployee(employee, isAdmin) });
 };
 
 export const POST = async (

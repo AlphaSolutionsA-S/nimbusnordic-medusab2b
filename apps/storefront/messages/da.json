@@ -235,11 +235,13 @@
       "currencyLabel": "Valuta",
       "spendingLimitResetFrequencyLabel": "Nulstillingsfrekvens for forbrugsgrænse",
       "bcCustomerNumberLabel": "BC-kundenummer",
-      "cancelLabel": "Annuller",
-      "saveLabel": "Gem",
-      "editLabel": "Rediger",
-      "companyUpdatedToast": "Virksomhed opdateret",
-      "companyUpdateErrorToast": "Fejl ved opdatering af virksomhed"
+      "vatNumberLabel": "Momsnummer",
+      "creditLimitLabel": "Kreditmaksimum",
+      "blockedLabel": "Spærret",
+      "blockedNotBlockedValue": "Ikke spærret",
+      "blockedShipValue": "Spærret for levering",
+      "blockedInvoiceValue": "Spærret for fakturering",
+      "blockedAllValue": "Helt spærret"
     },
     "securityCard": {
       "passwordLabel": "Adgangskode",

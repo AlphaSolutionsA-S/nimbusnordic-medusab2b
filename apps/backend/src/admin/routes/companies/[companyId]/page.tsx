@@ -1,5 +1,6 @@
 import { ExclamationCircle } from "@medusajs/icons";
 import {
+  Alert,
   Avatar,
   Badge,
   Container,
@@ -12,7 +13,15 @@ import { QueryEmployee } from "../../../../types";
 import { useParams } from "react-router-dom";
 import { useAdminCustomerGroups, useCompany } from "../../../hooks/api";
 import { formatAmount } from "../../../utils";
+import {
+  BC_MANAGED_COMPANY_FIELDS,
+  BC_MANAGED_WARNING_DESCRIPTION,
+  BC_MANAGED_WARNING_TITLE,
+  BcManagedCompanyField,
+  BLOCKED_STATE_LABELS,
+} from "../bc-managed-fields";
 import { CompanyActionsMenu } from "../components";
+import { BcManagedIndicator } from "../components/bc-managed-indicator";
 import {
   EmployeeCreateDrawer,
   EmployeesActionsMenu,
@@ -33,8 +42,43 @@ const CompanyDetails = () => {
     return <div>Company not found</div>;
   }
 
+  const managedRows: Record<
+    BcManagedCompanyField,
+    { label: string; value: string | null | undefined }
+  > = {
+    name: { label: "Name", value: company.name },
+    email: { label: "Email", value: company.email },
+    phone: { label: "Phone", value: company.phone },
+    address: { label: "Address", value: company.address },
+    city: { label: "City", value: company.city },
+    state: { label: "State", value: company.state },
+    zip: { label: "Zip", value: company.zip },
+    country: { label: "Country", value: company.country?.toUpperCase() },
+    blocked: {
+      label: "Blocked",
+      value: BLOCKED_STATE_LABELS[company.blocked] ?? company.blocked,
+    },
+    credit_limit: {
+      label: "Credit Limit",
+      value:
+        company.credit_limit != null
+          ? formatAmount(company.credit_limit, company.currency_code || "USD")
+          : null,
+    },
+    vat_number: { label: "VAT Number", value: company.vat_number },
+    currency_code: { label: "Currency", value: company.currency_code?.toUpperCase() },
+  };
+
   return (
     <div className="flex flex-col gap-4">
+      <Alert variant="warning">
+        <Text size="small" weight="plus" leading="compact">
+          {BC_MANAGED_WARNING_TITLE}
+        </Text>
+        <Text size="small" leading="compact" className="text-ui-fg-subtle">
+          {BC_MANAGED_WARNING_DESCRIPTION}
+        </Text>
+      </Alert>
       <Container className="flex flex-col p-0 overflow-hidden">
         {!isPending && (
           <>
@@ -55,44 +99,17 @@ const CompanyDetails = () => {
             </div>
             <Table>
               <Table.Body>
-                <Table.Row>
-                  <Table.Cell className="font-medium font-sans txt-compact-small max-w-fit">
-                    Phone
-                  </Table.Cell>
-                  <Table.Cell>{company?.phone}</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell className="font-medium font-sans txt-compact-small">
-                    Email
-                  </Table.Cell>
-                  <Table.Cell>{company?.email}</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell className="font-medium font-sans txt-compact-small">
-                    Address
-                  </Table.Cell>
-                  <Table.Cell>{company?.address}</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell className="font-medium font-sans txt-compact-small">
-                    City
-                  </Table.Cell>
-                  <Table.Cell>{company?.city}</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell className="font-medium font-sans txt-compact-small">
-                    State
-                  </Table.Cell>
-                  <Table.Cell>{company?.state}</Table.Cell>
-                </Table.Row>
-                <Table.Row>
-                  <Table.Cell className="font-medium font-sans txt-compact-small">
-                    Currency
-                  </Table.Cell>
-                  <Table.Cell>
-                    {company?.currency_code?.toUpperCase()}
-                  </Table.Cell>
-                </Table.Row>
+                {BC_MANAGED_COMPANY_FIELDS.map((field) => (
+                  <Table.Row key={field}>
+                    <Table.Cell className="font-medium font-sans txt-compact-small max-w-fit">
+                      <div className="flex items-center gap-2">
+                        {managedRows[field].label}
+                        <BcManagedIndicator />
+                      </div>
+                    </Table.Cell>
+                    <Table.Cell>{managedRows[field].value || "-"}</Table.Cell>
+                  </Table.Row>
+                ))}
                 <Table.Row>
                   <Table.Cell className="font-medium font-sans txt-compact-small">
                     BC Customer Number

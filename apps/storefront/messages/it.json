@@ -235,11 +235,13 @@
       "currencyLabel": "Valuta",
       "spendingLimitResetFrequencyLabel": "Frequenza di reimpostazione del limite di spesa",
       "bcCustomerNumberLabel": "Numero cliente BC",
-      "cancelLabel": "Annulla",
-      "saveLabel": "Salva",
-      "editLabel": "Modifica",
-      "companyUpdatedToast": "Azienda aggiornata",
-      "companyUpdateErrorToast": "Errore durante l'aggiornamento dell'azienda"
+      "vatNumberLabel": "Partita IVA",
+      "creditLimitLabel": "Limite di credito",
+      "blockedLabel": "Bloccato",
+      "blockedNotBlockedValue": "Non bloccato",
+      "blockedShipValue": "Bloccato per la spedizione",
+      "blockedInvoiceValue": "Bloccato per la fatturazione",
+      "blockedAllValue": "Completamente bloccato"
     },
     "securityCard": {
       "passwordLabel": "Password",

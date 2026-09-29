@@ -43,6 +43,23 @@ describe("Employee", () => {
     expect(screen.getByText(/spent/)).toBeInTheDocument()
   })
 
+  it("omits the spend message when the server redacts the spending limit", () => {
+    const { spending_limit, ...redactedEmployee } = employee
+
+    render(
+      <Employee
+        employee={redactedEmployee}
+        company={company}
+        orders={[]}
+        customer={{ id: "customer-1" } as any}
+      />
+    )
+
+    expect(screen.getByText("jane@example.com")).toBeInTheDocument()
+    expect(screen.queryByText(/No limit/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/spent/)).not.toBeInTheDocument()
+  })
+
   it("renders the extracted edit-mode field labels unchanged", () => {
     render(
       <Employee

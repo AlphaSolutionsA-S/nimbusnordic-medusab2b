@@ -235,11 +235,13 @@
       "currencyLabel": "Valuta",
       "spendingLimitResetFrequencyLabel": "Återställningsfrekvens för utgiftsgräns",
       "bcCustomerNumberLabel": "BC-kundnummer",
-      "cancelLabel": "Avbryt",
-      "saveLabel": "Spara",
-      "editLabel": "Redigera",
-      "companyUpdatedToast": "Företag uppdaterat",
-      "companyUpdateErrorToast": "Fel vid uppdatering av företag"
+      "vatNumberLabel": "Momsregistreringsnummer",
+      "creditLimitLabel": "Kreditgräns",
+      "blockedLabel": "Spärrad",
+      "blockedNotBlockedValue": "Inte spärrad",
+      "blockedShipValue": "Spärrad för leverans",
+      "blockedInvoiceValue": "Spärrad för fakturering",
+      "blockedAllValue": "Helt spärrad"
     },
     "securityCard": {
       "passwordLabel": "Lösenord",

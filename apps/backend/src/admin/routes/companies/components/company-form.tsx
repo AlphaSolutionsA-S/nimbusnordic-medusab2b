@@ -2,6 +2,8 @@ import { Button, Drawer, Input, Label, Select, Text } from "@medusajs/ui";
 import { AdminUpdateCompany } from "../../../../types";
 import { useState } from "react";
 import { useRegions } from "../../../hooks/api";
+import { BLOCKED_STATE_LABELS } from "../bc-managed-fields";
+import { BcManagedIndicator } from "./bc-managed-indicator";
 
 export function CompanyForm({
   company,
@@ -35,11 +37,29 @@ export function CompanyForm({
     setFormData({ ...formData, country: value });
   };
 
+  const handleBlockedChange = (value: string) => {
+    setFormData({
+      ...formData,
+      blocked: value as AdminUpdateCompany["blocked"],
+    });
+  };
+
+  const handleCreditLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setFormData({
+      ...formData,
+      credit_limit: value === "" ? null : Number(value),
+    });
+  };
+
   return (
     <form>
       <Drawer.Body className="p-4">
         <div className="flex flex-col gap-2">
-          <Label size="xsmall">Company Name</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company Name</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="text"
             name="name"
@@ -47,7 +67,10 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="Medusa"
           />
-          <Label size="xsmall">Company Phone</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company Phone</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="text"
             name="phone"
@@ -55,7 +78,10 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="1234567890"
           />
-          <Label size="xsmall">Company Email</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company Email</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="email"
             name="email"
@@ -63,7 +89,10 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="medusa@medusa.com"
           />
-          <Label size="xsmall">Company Address</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company Address</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="text"
             name="address"
@@ -71,7 +100,10 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="1234 Main St"
           />
-          <Label size="xsmall">Company City</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company City</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="text"
             name="city"
@@ -79,7 +111,10 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="New York"
           />
-          <Label size="xsmall">Company State</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company State</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="text"
             name="state"
@@ -87,7 +122,10 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="NY"
           />
-          <Label size="xsmall">Company Zip</Label>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Company Zip</Label>
+            <BcManagedIndicator />
+          </div>
           <Input
             type="text"
             name="zip"
@@ -97,7 +135,10 @@ export function CompanyForm({
           />
           <div className="flex gap-4 w-full">
             <div className="flex flex-col gap-2 w-1/2">
-              <Label size="xsmall">Company Country</Label>
+              <div className="flex items-center gap-2">
+                <Label size="xsmall">Company Country</Label>
+                <BcManagedIndicator />
+              </div>
               <Select
                 name="country"
                 value={formData.country || ""}
@@ -120,7 +161,10 @@ export function CompanyForm({
               </Select>
             </div>
             <div className="flex flex-col gap-2 w-1/2">
-              <Label size="xsmall">Currency</Label>
+              <div className="flex items-center gap-2">
+                <Label size="xsmall">Currency</Label>
+                <BcManagedIndicator />
+              </div>
 
               <Select
                 name="currency_code"
@@ -159,6 +203,49 @@ export function CompanyForm({
             value={formData.business_central_customer_number || ""}
             onChange={handleChange}
             placeholder="123456"
+          />
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Blocked</Label>
+            <BcManagedIndicator />
+          </div>
+          <Select
+            name="blocked"
+            value={formData.blocked || "not_blocked"}
+            onValueChange={handleBlockedChange}
+          >
+            <Select.Trigger>
+              <Select.Value />
+            </Select.Trigger>
+            <Select.Content className="z-50">
+              {Object.entries(BLOCKED_STATE_LABELS).map(([value, label]) => (
+                <Select.Item key={value} value={value}>
+                  {label}
+                </Select.Item>
+              ))}
+            </Select.Content>
+          </Select>
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">Credit Limit</Label>
+            <BcManagedIndicator />
+          </div>
+          <Input
+            type="number"
+            step="0.01"
+            name="credit_limit"
+            value={formData.credit_limit ?? ""}
+            onChange={handleCreditLimitChange}
+            placeholder="10000.00"
+          />
+          <div className="flex items-center gap-2">
+            <Label size="xsmall">VAT Number</Label>
+            <BcManagedIndicator />
+          </div>
+          <Input
+            type="text"
+            name="vat_number"
+            value={formData.vat_number || ""}
+            onChange={handleChange}
+            placeholder="DK12345678"
           />
         </div>
       </Drawer.Body>

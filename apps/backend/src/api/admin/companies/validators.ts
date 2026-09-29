@@ -23,6 +23,9 @@ export const AdminCreateCompany = z
       .regex(/^\d+$/, "Business Central customer number must be numeric only")
       .optional()
       .nullable(),
+    blocked: z.enum(["not_blocked", "Ship", "Invoice", "All"]).optional(),
+    credit_limit: z.number().nonnegative().optional().nullable(),
+    vat_number: z.string().optional().nullable(),
   })
   .strict();
 
@@ -44,6 +47,9 @@ export const AdminUpdateCompany = z
       .regex(/^\d+$/, "Business Central customer number must be numeric only")
       .optional()
       .nullable(),
+    blocked: z.enum(["not_blocked", "Ship", "Invoice", "All"]).optional(),
+    credit_limit: z.number().nonnegative().optional().nullable(),
+    vat_number: z.string().optional().nullable(),
   })
   .strict();
 

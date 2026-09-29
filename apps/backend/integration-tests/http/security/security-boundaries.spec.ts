@@ -73,14 +73,18 @@ medusaIntegrationTestRunner({
       expect(second.status).toBe(403);
     });
 
-    it.each(['GET', 'POST', 'DELETE'])('denies %s access to another company', async (method) => {
-      const response = await api.request({
-        url: `/store/companies/${foreignCompanyId}`, method, ...headers,
-        data: method === 'POST' ? { name: 'Stolen' } : undefined,
-        validateStatus: () => true,
-      });
-      expect(response.status).toBe(403);
-    });
+    it.each([['GET', 403], ['POST', 404], ['DELETE', 403]] as const)(
+      'denies %s access to another company', async (method, status) => {
+        const response = await api.request({
+          url: `/store/companies/${foreignCompanyId}`, method, ...headers,
+          data: method === 'POST' ? { name: 'Stolen' } : undefined,
+          validateStatus: () => true,
+        });
+        expect(response.status).toBe(status);
+        expect((await companyService.retrieveCompany(foreignCompanyId)).name)
+          .toBe('Foreign empty company');
+      },
+    );
 
     it('denies joining an empty foreign company as its administrator', async () => {
       const response = await api.post(`/store/companies/${foreignCompanyId}/employees`, {
@@ -93,8 +97,8 @@ medusaIntegrationTestRunner({
       const [employee] = await companyService.listEmployees({ company_id: companyId });
       await companyService.updateEmployees({ id: employee.id, is_admin: false });
       expect((await api.get(`/store/companies/${companyId}`, headers)).status).toBe(200);
-      const response = await api.post(`/store/companies/${companyId}`, { name: 'Changed' },
-        { ...headers, validateStatus: () => true });
+      const response = await api.post(`/store/companies/${companyId}/approval-settings`,
+        { requires_admin_approval: true }, { ...headers, validateStatus: () => true });
       expect(response.status).toBe(403);
     });
 

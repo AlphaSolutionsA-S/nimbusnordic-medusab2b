@@ -47,3 +47,15 @@ to edit all Business Central-managed fields.
 - Run focused Admin tests and \`pnpm --filter @b2b-starter/backend build\`.
 - Manually edit a managed field as an Admin, save it, refresh the detail page, and confirm the
   warning/indicator remain visible.
+
+## Status
+
+**DONE (2026-09-29).** Admin query config, validators (create + update), and
+`AdminCreateCompany`/`AdminUpdateCompany` types accept `blocked`, `credit_limit`, and
+`vat_number`. Detail page shows a persistent (non-dismissible) warning `Alert` and a
+`Business Central-managed` badge beside all twelve managed fields, driven by
+`src/admin/routes/companies/bc-managed-fields.ts`. The update/create form adds editable
+Blocked, Credit Limit, and VAT Number controls; managed labels carry the same badge; no
+control is disabled. Deviation: the backend has no DOM/React test tooling, so Admin coverage
+is a unit test of the managed-field list and warning copy plus an HTTP integration test of the
+Admin update route; rendered UI was verified by `medusa build`, not by a component test.

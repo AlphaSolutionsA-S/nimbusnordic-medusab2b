@@ -4,15 +4,14 @@ import {
   MedusaResponse,
 } from "@medusajs/framework";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
-import {
-  deleteCompaniesWorkflow,
-  updateCompaniesWorkflow,
-} from "../../../../workflows/company/workflows/";
+import { deleteCompaniesWorkflow } from "../../../../workflows/company/workflows/";
 import { syncCompanyFromBusinessCentralWorkflow } from "../../../../workflows/company/workflows/sync-company-from-business-central";
 import {
-  StoreGetCompanyParamsType,
-  StoreUpdateCompanyType,
-} from "../validators";
+  resolveCompanyActor,
+  storeCompanyProfileQueryFields,
+  toStoreCompany,
+} from "../company-projection";
+import { StoreGetCompanyParamsType } from "../validators";
 
 const BUSINESS_CENTRAL_FRESHNESS_WINDOW_MS = 10 * 60 * 1000;
 
@@ -39,6 +38,7 @@ export const GET = async (
   const { customer_id } = req.auth_context.app_metadata as {
     customer_id: string;
   };
+  const { isAdmin } = await resolveCompanyActor(req);
 
   const {
     data: [existing],
@@ -61,45 +61,18 @@ export const GET = async (
     }
   }
 
-  const { data } = await query.graph(
-    {
-      entity: "companies",
-      fields: req.queryConfig.fields,
-      filters: { id },
-    },
-    { throwIfKeyNotFound: true }
-  );
-
-  res.json({ company: data[0] });
-};
-
-export const POST = async (
-  req: MedusaRequest<StoreUpdateCompanyType>,
-  res: MedusaResponse
-) => {
-  const { id } = req.params;
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
-
-  await updateCompaniesWorkflow.run({
-    input: {
-      id,
-      ...req.validatedBody,
-    },
-    container: req.scope,
-  });
-
   const {
     data: [company],
   } = await query.graph(
     {
       entity: "companies",
-      fields: req.queryConfig.fields,
+      fields: storeCompanyProfileQueryFields,
       filters: { id },
     },
     { throwIfKeyNotFound: true }
   );
 
-  res.json({ company });
+  res.json({ company: toStoreCompany(company, isAdmin) });
 };
 
 export const DELETE = async (req: MedusaRequest, res: MedusaResponse) => {
