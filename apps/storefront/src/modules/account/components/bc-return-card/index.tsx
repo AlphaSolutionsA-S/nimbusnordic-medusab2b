@@ -1,9 +1,10 @@
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import CalendarIcon from "@/modules/common/icons/calendar"
 import DocumentIcon from "@/modules/common/icons/document"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import type { BCReturnListItem } from "@/types/bc-order"
 import { Container } from "@medusajs/ui"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 type BcReturnCardProps = {
   item: BCReturnListItem
@@ -11,6 +12,7 @@ type BcReturnCardProps = {
 
 const BcReturnCard = async ({ item }: BcReturnCardProps) => {
   const t = await getTranslations("Account.bcReturnCard")
+  const locale = await getLocale()
   const documentDate = new Date(item.documentDate)
 
   return (
@@ -19,7 +21,7 @@ const BcReturnCard = async ({ item }: BcReturnCardProps) => {
         <div className="flex pr-2 text-small-regular items-center">
           <CalendarIcon className="inline-block mr-1" />
           <span data-testid="bc-return-date">
-            {documentDate.toLocaleDateString("en-GB", {
+            {documentDate.toLocaleDateString(getFormattingLocale(locale), {
               year: "numeric",
               month: "numeric",
               day: "numeric",

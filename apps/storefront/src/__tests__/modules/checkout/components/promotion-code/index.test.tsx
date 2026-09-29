@@ -1,10 +1,18 @@
 import { fireEvent, render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
+import { useActionState } from "react"
 import { usePathname } from "next/navigation"
 import type { B2BCart } from "@/types"
 
 jest.mock("next/navigation", () => ({
   usePathname: jest.fn(() => "/us/cart"),
 }))
+
+// Delegates to the real hook unless a test overrides it (TC-6).
+jest.mock("react", () => {
+  const actual = jest.requireActual("react")
+  return { ...actual, useActionState: jest.fn(actual.useActionState) }
+})
 
 jest.mock("@/lib/data/cart", () => ({
   applyPromotions: jest.fn(),
@@ -50,5 +58,29 @@ describe("PromotionCode", () => {
     render(<PromotionCode cart={cart} />)
 
     expect(screen.getByText("Promotions applied:")).toBeInTheDocument()
+  })
+
+  it("shows the translated promotion error instead of the raw message (TC-6)", async () => {
+    // The form's action is addPromotionCode, so submitPromotionForm's action
+    // state cannot be reached through the UI; stub the state it would return.
+    ;(useActionState as jest.Mock).mockReturnValue([
+      "The promotion code X is invalid.",
+      jest.fn(),
+      false,
+    ])
+    const cart = { promotions: [] } as unknown as B2BCart
+    render(<PromotionCode cart={cart} />)
+
+    await userEvent.click(
+      screen.getByRole("button", { name: /Enter Promotion Code/ })
+    )
+
+    expect(screen.getByTestId("discount-error-message")).toHaveTextContent(
+      "This code could not be applied. Check the code and try again."
+    )
+    expect(screen.queryByText(/is invalid/)).not.toBeInTheDocument()
+    ;(useActionState as jest.Mock).mockImplementation(
+      jest.requireActual("react").useActionState
+    )
   })
 })

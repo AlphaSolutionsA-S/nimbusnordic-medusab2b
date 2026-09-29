@@ -1,10 +1,11 @@
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import { convertToLocale } from "@/lib/util/money"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import CalendarIcon from "@/modules/common/icons/calendar"
 import DocumentIcon from "@/modules/common/icons/document"
 import { HttpTypes } from "@medusajs/types"
 import { Button, clx, Container } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import Image from "next/image"
 import { useMemo } from "react"
 
@@ -14,6 +15,7 @@ type OrderCardProps = {
 
 const OrderCard = ({ order }: OrderCardProps) => {
   const t = useTranslations("Account.orderCard")
+  const locale = useLocale()
   const createdAt = new Date(order.created_at)
   const numberOfLines = useMemo(() => {
     return (
@@ -70,7 +72,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
             data-testid="order-created-at"
           >
             <CalendarIcon className="inline-block mr-1" />
-            {createdAt.toLocaleDateString("en-GB", {
+            {createdAt.toLocaleDateString(getFormattingLocale(locale), {
               year: "numeric",
               month: "numeric",
               day: "numeric",
@@ -89,6 +91,7 @@ const OrderCard = ({ order }: OrderCardProps) => {
               {convertToLocale({
                 amount: order.total,
                 currency_code: order.currency_code,
+                locale,
               })}
             </span>
             {"·"}

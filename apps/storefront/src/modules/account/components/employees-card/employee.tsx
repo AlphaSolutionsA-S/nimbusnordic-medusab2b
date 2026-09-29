@@ -25,7 +25,7 @@ import {
   clx,
   toast,
 } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useState } from "react"
 
 const RemoveEmployeePrompt = ({ employee }: { employee: QueryEmployee }) => {
@@ -103,6 +103,7 @@ const Employee = ({
   customer: B2BCustomer | null
 }) => {
   const t = useTranslations("Account.employeeCard")
+  const locale = useLocale()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [employeeData, setEmployeeData] = useState({
@@ -132,7 +133,7 @@ const Employee = ({
   }
 
   const spent = getOrderTotalInSpendWindow(orders, getSpendWindow(company)) || 0
-  const amountSpent = formatAmount(spent, company.currency_code!)
+  const amountSpent = formatAmount(spent, company.currency_code!, locale)
 
   return (
     <div className="flex flex-col">
@@ -164,7 +165,8 @@ const Employee = ({
                   employee.spending_limit > 0
                     ? formatAmount(
                         employee.spending_limit,
-                        company.currency_code!
+                        company.currency_code!,
+                        locale
                       )
                     : t("noLimitLabel"),
               })}

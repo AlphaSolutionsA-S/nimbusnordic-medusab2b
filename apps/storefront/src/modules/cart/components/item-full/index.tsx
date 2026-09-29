@@ -98,6 +98,7 @@ const ItemFull = ({
         <LocalizedClientLink href={`/products/${item.product_handle}`}>
           <Thumbnail
             thumbnail={item.thumbnail}
+            alt={item.product?.title}
             size="square"
             type="full"
             className="bg-neutral-100 rounded-lg w-20 h-20"

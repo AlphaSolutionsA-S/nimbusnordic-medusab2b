@@ -16,7 +16,7 @@ jest.mock("@/modules/account/components/bc-return-overview", () => ({
   default: () => null,
 }))
 
-import Returns from "@/app/[countryCode]/(main)/account/@dashboard/returns/page"
+import Returns, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/returns/page"
 
 describe("Returns page", () => {
   it("renders the extracted heading unchanged", async () => {
@@ -24,5 +24,12 @@ describe("Returns page", () => {
     render(element)
 
     expect(screen.getByText("Returns")).toBeInTheDocument()
+  })
+
+  it("translates the page metadata (TC-1)", async () => {
+    expect(await generateMetadata()).toEqual({
+      title: "Returns",
+      description: "Company-wide Business Central return history.",
+    })
   })
 })

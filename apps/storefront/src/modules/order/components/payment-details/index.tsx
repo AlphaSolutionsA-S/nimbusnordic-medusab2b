@@ -2,9 +2,10 @@ import { Container, Heading, Text } from "@medusajs/ui"
 
 import { isStripeLike, paymentInfoMap } from "@/lib/constants"
 import Divider from "@/modules/common/components/divider"
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import { convertToLocale } from "@/lib/util/money"
 import { HttpTypes } from "@medusajs/types"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 type PaymentDetailsProps = {
   order: HttpTypes.StoreOrder
@@ -12,6 +13,8 @@ type PaymentDetailsProps = {
 
 const PaymentDetails = async ({ order }: PaymentDetailsProps) => {
   const t = await getTranslations("Order.paymentDetails")
+  const tPaymentMethods = await getTranslations("Common.paymentMethods")
+  const locale = await getLocale()
   const payment = order.payment_collections?.[0].payments?.[0]
 
   return (
@@ -30,7 +33,7 @@ const PaymentDetails = async ({ order }: PaymentDetailsProps) => {
                 className="txt-medium text-ui-fg-subtle"
                 data-testid="payment-method"
               >
-                {paymentInfoMap[payment.provider_id].title}
+                {tPaymentMethods(paymentInfoMap[payment.provider_id].titleKey)}
               </Text>
             </div>
             <div className="flex flex-col w-2/3">
@@ -50,10 +53,11 @@ const PaymentDetails = async ({ order }: PaymentDetailsProps) => {
                         amount: convertToLocale({
                           amount: payment.amount,
                           currency_code: order.currency_code,
+                          locale,
                         }),
                         date: new Date(
                           payment.created_at ?? ""
-                        ).toLocaleString(),
+                        ).toLocaleString(getFormattingLocale(locale)),
                       })}
                 </Text>
               </div>

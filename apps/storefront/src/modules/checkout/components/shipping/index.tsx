@@ -1,6 +1,7 @@
 "use client"
 
 import { setShippingMethod } from "@/lib/data/cart"
+import { useCustomerErrorMessage } from "@/lib/hooks/use-customer-error-message"
 import { convertToLocale } from "@/lib/util/money"
 import ErrorMessage from "@/modules/checkout/components/error-message"
 import Button from "@/modules/common/components/button"
@@ -11,7 +12,7 @@ import { RadioGroup, Radio as RadioGroupOption } from "@headlessui/react"
 import { CheckCircleSolid } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Heading, Text, clx } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState } from "react"
 
@@ -25,6 +26,8 @@ const Shipping: React.FC<ShippingProps> = ({
   availableShippingMethods,
 }) => {
   const t = useTranslations("Checkout.shipping")
+  const toCustomerMessage = useCustomerErrorMessage()
+  const locale = useLocale()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -54,7 +57,7 @@ const Shipping: React.FC<ShippingProps> = ({
     setIsLoading(true)
     await setShippingMethod({ cartId: cart.id, shippingMethodId: id })
       .catch((err) => {
-        setError(err.message)
+        setError(toCustomerMessage(err, "checkout.shipping"))
       })
       .finally(() => {
         setIsLoading(false)
@@ -128,6 +131,7 @@ const Shipping: React.FC<ShippingProps> = ({
                       {convertToLocale({
                         amount: option.amount!,
                         currency_code: cart?.currency_code,
+                        locale,
                       })}
                     </span>
                   </RadioGroupOption>
@@ -164,6 +168,7 @@ const Shipping: React.FC<ShippingProps> = ({
                 {convertToLocale({
                   amount: selectedShippingMethod?.amount!,
                   currency_code: cart?.currency_code,
+                  locale,
                 })}
               </Text>
             </div>

@@ -3,6 +3,7 @@ import { clx } from "@medusajs/ui"
 import { getPercentageDiff } from "@/lib/util/get-precentage-diff"
 import { convertToLocale } from "@/lib/util/money"
 import { HttpTypes } from "@medusajs/types"
+import { useLocale } from "next-intl"
 
 type ItemTotalPriceProps = {
   item: HttpTypes.StoreCartLineItem | HttpTypes.StoreOrderLineItem
@@ -10,6 +11,7 @@ type ItemTotalPriceProps = {
 }
 
 const ItemTotalPrice = ({ item, currencyCode }: ItemTotalPriceProps) => {
+  const locale = useLocale()
   const originalPrice = item.original_total || item.total || 0
   const currentPrice = item.total || 0
   const hasReducedPrice = currentPrice < originalPrice
@@ -24,6 +26,7 @@ const ItemTotalPrice = ({ item, currencyCode }: ItemTotalPriceProps) => {
                 {convertToLocale({
                   amount: originalPrice,
                   currency_code: currencyCode,
+                  locale,
                 })}
               </span>
             </p>
@@ -41,6 +44,7 @@ const ItemTotalPrice = ({ item, currencyCode }: ItemTotalPriceProps) => {
           {convertToLocale({
             amount: currentPrice,
             currency_code: currencyCode,
+            locale,
           })}
         </span>
       </div>

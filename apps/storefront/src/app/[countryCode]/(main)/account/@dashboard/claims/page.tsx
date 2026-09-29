@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 
 import {
   getClaimsPageDocument,
@@ -9,10 +10,14 @@ import { ClaimsLivePreview } from '@/modules/account/components/claims-live-prev
 import { ClaimsPageContent } from '@/modules/account/components/claims-page-content';
 import type { PayloadClaimsPage } from '@/types/cms';
 
-export const metadata: Metadata = {
-  title: 'Claims',
-  description: 'Guidance for submitting a claim.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('Metadata.claims');
+
+  return {
+    title: t('title'),
+    description: t('description'),
+  };
+}
 
 type ClaimsProps = {
   searchParams: Promise<{
@@ -21,7 +26,6 @@ type ClaimsProps = {
 };
 
 const EMPTY_CLAIMS_PAGE: PayloadClaimsPage = {
-  title: 'Claims',
   layout: [],
 };
 

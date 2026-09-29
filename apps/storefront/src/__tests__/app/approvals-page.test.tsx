@@ -14,7 +14,7 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ push: jest.fn() })),
 }))
 
-import Approvals from "@/app/[countryCode]/(main)/account/@dashboard/approvals/page"
+import Approvals, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/approvals/page"
 
 describe("Approvals page", () => {
   it("renders the extracted headings unchanged", async () => {
@@ -27,5 +27,12 @@ describe("Approvals page", () => {
     expect(screen.getByText("Pending")).toBeInTheDocument()
     expect(screen.getByText("Approved")).toBeInTheDocument()
     expect(screen.getByText("Rejected")).toBeInTheDocument()
+  })
+
+  it("translates the page metadata (TC-1)", async () => {
+    expect(await generateMetadata()).toEqual({
+      title: "Approvals",
+      description: "Overview of your pending approvals.",
+    })
   })
 })

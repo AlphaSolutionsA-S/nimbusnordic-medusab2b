@@ -38,7 +38,7 @@ export type ClaimsKnownBlock =
 export type ClaimsBlock = ClaimsKnownBlock | { blockType: 'unknown' };
 
 export type ClaimsPage = {
-  title: string;
+  title?: string;
   layout: ReadonlyArray<ClaimsBlock>;
 };
 

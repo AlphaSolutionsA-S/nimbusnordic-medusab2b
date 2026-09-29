@@ -1,5 +1,6 @@
 import { Text } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import type { BCOrderLine } from "@/types/bc-order"
 
 type BcOrderLineFulfillmentProps = {
@@ -7,21 +8,20 @@ type BcOrderLineFulfillmentProps = {
   showReservations?: boolean
 }
 
-const dateFormatter = new Intl.DateTimeFormat("en-GB", {
-  dateStyle: "medium",
-  timeZone: "UTC",
-})
-
 // BC uses 2099-01-01 as a placeholder for an unknown shipment date.
 const UNKNOWN_SHIPMENT_DATE = "2099-01-01"
-
-const formatDate = (date: string) => dateFormatter.format(new Date(date))
 
 const BcOrderLineFulfillment = ({
   line,
   showReservations = false,
 }: BcOrderLineFulfillmentProps) => {
   const t = useTranslations("Account.bcOrderLineFulfillment")
+  const locale = useLocale()
+  const dateFormatter = new Intl.DateTimeFormat(getFormattingLocale(locale), {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  })
+  const formatDate = (date: string) => dateFormatter.format(new Date(date))
   const unshippedQuantity = Math.max(0, line.quantity - line.shippedQuantity)
   const reservedQuantity = Math.min(
     unshippedQuantity,

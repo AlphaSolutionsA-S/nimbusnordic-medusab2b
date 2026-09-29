@@ -22,4 +22,11 @@ describe("BcOrderFilters", () => {
     ).toBeInTheDocument()
     expect(screen.getByText("Clear")).toBeInTheDocument()
   })
+
+  it("translates the status labels but keeps the BC filter values (TC-7)", () => {
+    render(<BcOrderFilters />)
+
+    expect(screen.getByRole("option", { name: "Open" })).toHaveAttribute("value", "Open")
+    expect(screen.getByRole("option", { name: "Draft" })).toHaveAttribute("value", "Draft")
+  })
 })

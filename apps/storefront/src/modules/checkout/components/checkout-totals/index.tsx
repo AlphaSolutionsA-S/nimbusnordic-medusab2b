@@ -4,7 +4,7 @@ import { convertToLocale } from "@/lib/util/money"
 import Divider from "@/modules/common/components/divider"
 import { B2BCart, B2BOrder } from "@/types"
 import { Text } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import React from "react"
 
 // Reuses the `Cart.cartTotals` translation keys — this component renders the
@@ -14,6 +14,7 @@ const CheckoutTotals: React.FC<{
   cartOrOrder: B2BCart | B2BOrder
 }> = ({ cartOrOrder }) => {
   const t = useTranslations("Cart.cartTotals")
+  const locale = useLocale()
 
   if (!cartOrOrder) return null
 
@@ -38,7 +39,7 @@ const CheckoutTotals: React.FC<{
             data-testid="cart-item-subtotal"
             data-value={item_subtotal || 0}
           >
-            {convertToLocale({ amount: item_subtotal ?? 0, currency_code })}
+            {convertToLocale({ amount: item_subtotal ?? 0, currency_code, locale })}
           </Text>
         </div>
         {!!discount_total && (
@@ -50,20 +51,20 @@ const CheckoutTotals: React.FC<{
               data-value={discount_total || 0}
             >
               -{" "}
-              {convertToLocale({ amount: discount_total ?? 0, currency_code })}
+              {convertToLocale({ amount: discount_total ?? 0, currency_code, locale })}
             </Text>
           </div>
         )}
         <div className="flex items-center justify-between">
           <Text>{t("shippingLabel")}</Text>
           <Text data-testid="cart-shipping" data-value={shipping_total || 0}>
-            {convertToLocale({ amount: shipping_total ?? 0, currency_code })}
+            {convertToLocale({ amount: shipping_total ?? 0, currency_code, locale })}
           </Text>
         </div>
         <div className="flex justify-between">
           <Text className="flex gap-x-1 items-center ">{t("taxesLabel")}</Text>
           <Text data-testid="cart-taxes" data-value={tax_total || 0}>
-            {convertToLocale({ amount: tax_total ?? 0, currency_code })}
+            {convertToLocale({ amount: tax_total ?? 0, currency_code, locale })}
           </Text>
         </div>
         {!!gift_card_total && (
@@ -75,7 +76,7 @@ const CheckoutTotals: React.FC<{
               data-value={gift_card_total || 0}
             >
               -{" "}
-              {convertToLocale({ amount: gift_card_total ?? 0, currency_code })}
+              {convertToLocale({ amount: gift_card_total ?? 0, currency_code, locale })}
             </Text>
           </div>
         )}
@@ -88,7 +89,7 @@ const CheckoutTotals: React.FC<{
           data-testid="cart-total"
           data-value={total || 0}
         >
-          {convertToLocale({ amount: total ?? 0, currency_code })}
+          {convertToLocale({ amount: total ?? 0, currency_code, locale })}
         </Text>
       </div>
     </div>

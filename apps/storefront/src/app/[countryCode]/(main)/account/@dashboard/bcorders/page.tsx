@@ -6,9 +6,13 @@ import { Heading } from "@medusajs/ui"
 import { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
-export const metadata: Metadata = {
-  title: "BC Orders",
-  description: "Company-wide Business Central order history.",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Metadata.bcOrders")
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  }
 }
 
 const LIMIT = 20

@@ -84,6 +84,11 @@ export async function getMessages() {
   return messages
 }
 
+// Mirrors useLocale() in the client mock — tests run against the `en` catalog.
+export async function getLocale() {
+  return "en"
+}
+
 export function setRequestLocale() {}
 
 export function getRequestConfig(fn: unknown) {

@@ -7,7 +7,7 @@ import Trash from "@/modules/common/icons/trash"
 import { B2BCart } from "@/types"
 import { ChevronDownMini, ChevronUpMini } from "@medusajs/icons"
 import { Badge, Heading, Input, Text } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { usePathname } from "next/navigation"
 import React, { useActionState } from "react"
 import ErrorMessage from "../error-message"
@@ -19,6 +19,7 @@ type PromotionCodeProps = {
 
 const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
   const t = useTranslations("Checkout.promotionCode")
+  const locale = useLocale()
   const [isOpen, setIsOpen] = React.useState(false)
   const pathname = usePathname()
 
@@ -98,7 +99,7 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                 </div>
 
                 <ErrorMessage
-                  error={message}
+                  error={message ? t("applyErrorMessage") : null}
                   data-testid="discount-error-message"
                 />
               </>
@@ -143,6 +144,7 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                                     currency_code:
                                       promotion.application_method
                                         .currency_code,
+                                    locale,
                                   })}
                             </>
                           )}

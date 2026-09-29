@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@/lib/config"
+import { CART_NOT_FOUND_ERROR } from "@/lib/util/customer-error"
 import medusaError from "@/lib/util/medusa-error"
 import { StoreApprovalResponse } from "@/types/approval"
 import { B2BCart } from "@/types/global"
@@ -97,7 +98,7 @@ export async function updateCart(data: HttpTypes.StoreUpdateCart) {
   const cartId = await getCartId()
 
   if (!cartId) {
-    throw new Error("No existing cart found, please create one before updating")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   const headers = {
@@ -131,7 +132,7 @@ export async function addToCart({
 
   const cart = await getOrSetCart(countryCode)
   if (!cart) {
-    throw new Error("Error retrieving or creating cart")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   const headers = {
@@ -167,7 +168,7 @@ export async function addToCartBulk({
   const cart = await getOrSetCart(countryCode)
 
   if (!cart) {
-    throw new Error("Error retrieving or creating cart")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   const headers = {
@@ -211,7 +212,7 @@ export async function updateLineItem({
   const cartId = await getCartId()
 
   if (!cartId) {
-    throw new Error("Missing cart ID when updating line item")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   const headers = {
@@ -236,7 +237,7 @@ export async function deleteLineItem(lineId: string) {
 
   const cartId = await getCartId()
   if (!cartId) {
-    throw new Error("Missing cart ID when deleting line item")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   const headers = {
@@ -257,7 +258,7 @@ export async function deleteLineItem(lineId: string) {
 export async function emptyCart() {
   const cart = await retrieveCart()
   if (!cart) {
-    throw new Error("No existing cart found when emptying cart")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   for (const item of cart.items || []) {
@@ -312,7 +313,7 @@ export async function initiatePaymentSession(
 export async function applyPromotions(codes: string[]) {
   const cartId = await getCartId()
   if (!cartId) {
-    throw new Error("No existing cart found")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   await updateCart({ promo_codes: codes })
@@ -376,6 +377,10 @@ export async function submitPromotionForm(
   try {
     await applyPromotions([code])
   } catch (e: any) {
+    console.error("[customer-error]", {
+      context: "cart.submit-promotion",
+      message: e.message,
+    })
     return e.message
   }
 }
@@ -391,7 +396,7 @@ export async function setShippingAddress(formData: FormData) {
     const customer = await retrieveCustomer()
 
     if (!cartId) {
-      throw new Error("No existing cart found when setting addresses")
+      throw new Error(CART_NOT_FOUND_ERROR)
     }
 
     const data = {
@@ -420,7 +425,7 @@ export async function setBillingAddress(formData: FormData) {
   try {
     const cartId = getCartId()
     if (!cartId) {
-      throw new Error("No existing cart found when setting billing address")
+      throw new Error(CART_NOT_FOUND_ERROR)
     }
 
     const data = {
@@ -451,7 +456,7 @@ export async function setContactDetails(
   try {
     const cartId = getCartId()
     if (!cartId) {
-      throw new Error("No existing cart found when setting contact details")
+      throw new Error(CART_NOT_FOUND_ERROR)
     }
     const data = {
       email: formData.get("email") as string,
@@ -465,6 +470,10 @@ export async function setContactDetails(
     }
     await updateCart(data)
   } catch (e: any) {
+    console.error("[customer-error]", {
+      context: "cart.set-contact-details",
+      message: e.message,
+    })
     return e.message
   }
 }
@@ -475,7 +484,7 @@ export async function placeOrder(
   const id = cartId || (await getCartId())
 
   if (!id) {
-    throw new Error("No existing cart found when placing an order")
+    throw new Error(CART_NOT_FOUND_ERROR)
   }
 
   const headers = {

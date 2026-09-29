@@ -2,9 +2,14 @@ import InteractiveLink from "@/modules/common/components/interactive-link"
 import { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 
-export const metadata: Metadata = {
-  title: "404",
-  description: "Something went wrong",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Common.notFound")
+  const tCart = await getTranslations("Cart.notFound")
+
+  return {
+    title: t("headingLabel"),
+    description: tCart("cartMessage"),
+  }
 }
 
 export default async function NotFound() {

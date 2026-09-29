@@ -9,17 +9,31 @@
       "continueLabel": "Continuer"
     },
     "thumbnail": {
-      "altFallback": "test"
+      "altFallback": "Image du produit"
     },
     "notFound": {
       "headingLabel": "Page introuvable",
       "pageMessage": "La page que vous avez essayé de consulter n'existe pas.",
       "goToFrontpageLabel": "Aller à la page d'accueil"
+    },
+    "paymentMethods": {
+      "creditCard": "Carte bancaire",
+      "ideal": "iDeal",
+      "bancontact": "Bancontact",
+      "paypal": "PayPal",
+      "invoice": "Paiement sur facture"
+    },
+    "paymentIcon": {
+      "title": "Icône {brand}"
+    },
+    "errors": {
+      "generic": "Une erreur s'est produite. Veuillez réessayer.",
+      "cartNotFound": "Nous n'avons pas trouvé votre panier. Actualisez la page et réessayez."
     }
   },
   "Layout": {
     "nav": {
-      "brandName": "Medusa B2B Starter",
+      "brandName": "Nimbus Nordic",
       "searchPlaceholder": "Rechercher des produits",
       "searchDisabledTooltip": "Installez un fournisseur de recherche pour activer la recherche de produits",
       "quoteLabel": "Devis",
@@ -96,7 +110,8 @@
       "approvalRequiredSalesManager": "Cette commande nécessite l'approbation d'un responsable commercial.",
       "approvalRequestedLabel": "Approbation demandée",
       "requestApprovalLabel": "Demander une approbation",
-      "placeOrderLabel": "Passer la commande"
+      "placeOrderLabel": "Passer la commande",
+      "paymentDeclinedMessage": "Votre paiement n'a pas pu être effectué. Vérifiez vos informations de paiement ou choisissez un autre moyen de paiement."
     },
     "paymentTest": {
       "attentionLabel": "Attention :",
@@ -116,7 +131,8 @@
       "applyLabel": "Appliquer",
       "promotionAppliedOne": "Promotion appliquée :",
       "promotionAppliedOther": "Promotions appliquées :",
-      "removeDiscountSrLabel": "Retirer le code de réduction de la commande"
+      "removeDiscountSrLabel": "Retirer le code de réduction de la commande",
+      "applyErrorMessage": "Ce code n'a pas pu être appliqué. Vérifiez le code et réessayez."
     },
     "review": {
       "agreementText": "En finalisant cette commande, j'accepte les <termsLink>conditions de vente ↗</termsLink> et la <privacyLink>politique de confidentialité ↗</privacyLink> de Medusa",
@@ -454,7 +470,8 @@
       "pickQuoteItemLabel": "Choisir un article du devis",
       "pickQuoteItemDescription": "Sélectionnez un article du devis autour duquel rédiger un message",
       "selectItemPlaceholder": "Sélectionner un article",
-      "sendLabel": "Envoyer"
+      "sendLabel": "Envoyer",
+      "textRequiredMessage": "Saisissez un message."
     },
     "quoteTable": {
       "newLabel": "Nouveau",
@@ -523,6 +540,11 @@
       "reservationExpectedLabel": "Prévu le {date}",
       "reservationShipsLabel": "Expédition le {date}",
       "reservationFreightLabel": "Fret : {freightType}"
+    },
+    "bcStatus": {
+      "open": "Ouvert",
+      "draft": "Brouillon",
+      "released": "Lancé"
     }
   },
   "Cart": {
@@ -593,6 +615,13 @@
     },
     "notFound": {
       "cartMessage": "Le panier que vous avez essayé de consulter n'existe pas. Videz vos cookies et réessayez."
+    },
+    "cartContext": {
+      "lockedForApprovalToast": "Le panier est verrouillé en attente d'approbation.",
+      "addToCartFailedToast": "Impossible d'ajouter au panier",
+      "deleteItemFailedToast": "Impossible de supprimer l'article",
+      "updateQuantityFailedToast": "Impossible de mettre à jour la quantité du panier",
+      "emptyCartFailedToast": "Impossible de vider le panier"
     }
   },
   "Products": {
@@ -748,12 +777,68 @@
       "backLabel": "Retour"
     }
   },
-  "BcTest": {
-    "heading": "Opérations de l'API Business Central",
-    "errorLabel": "Erreur",
-    "unknownErrorMessage": "Erreur inconnue"
-  },
   "MetaDescription": {
     "storeSuffix": "| Nimbus Nordic"
+  },
+  "Metadata": {
+    "home": {
+      "title": "Nimbus Nordic",
+      "description": "Commandez des vêtements professionnels pour votre entreprise sur la boutique B2B de Nimbus Nordic."
+    },
+    "account": {
+      "title": "Compte",
+      "description": "Aperçu de l'activité de votre compte."
+    },
+    "addresses": {
+      "title": "Adresses",
+      "description": "Consultez vos adresses."
+    },
+    "approvals": {
+      "title": "Approbations",
+      "description": "Aperçu de vos approbations en attente."
+    },
+    "bcOrders": {
+      "title": "Commandes BC",
+      "description": "Historique des commandes de toute l'entreprise dans Business Central."
+    },
+    "returns": {
+      "title": "Retours",
+      "description": "Historique des retours de toute l'entreprise dans Business Central."
+    },
+    "claims": {
+      "title": "Réclamations",
+      "description": "Conseils pour soumettre une réclamation."
+    },
+    "orders": {
+      "title": "Commandes",
+      "description": "Aperçu de vos commandes précédentes."
+    },
+    "orderDetails": {
+      "title": "Commande #{displayId}",
+      "description": "Consultez votre commande."
+    },
+    "profile": {
+      "title": "Profil",
+      "description": "Consultez et modifiez votre profil."
+    },
+    "login": {
+      "title": "Se connecter",
+      "description": "Connectez-vous à votre compte Nimbus Nordic."
+    },
+    "cart": {
+      "title": "Panier",
+      "description": "Consultez votre panier."
+    },
+    "checkout": {
+      "title": "Paiement"
+    },
+    "store": {
+      "title": "Boutique",
+      "description": "Découvrez tous nos produits."
+    },
+    "orderConfirmed": {
+      "title": "Commande confirmée",
+      "description": "Votre achat a bien été effectué."
+    }
   }
 }

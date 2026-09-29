@@ -8,6 +8,6 @@ describe("Thumbnail (common, unused)", () => {
   it("renders the extracted alt-text fallback unchanged", () => {
     render(<Thumbnail src="/image.png" />)
 
-    expect(screen.getByAltText("test")).toBeInTheDocument()
+    expect(screen.getByAltText("Product image")).toBeInTheDocument()
   })
 })

@@ -1,16 +1,17 @@
-import { isManual } from "@/lib/constants"
+import { isManual, type PaymentInfo } from "@/lib/constants"
 import PaymentTest from "@/modules/checkout/components/payment-test"
 import Divider from "@/modules/common/components/divider"
 import Radio from "@/modules/common/components/radio"
 import { RadioGroup } from "@headlessui/react"
 import { Text, clx } from "@medusajs/ui"
-import React, { type JSX } from "react"
+import { useTranslations } from "next-intl"
+import React from "react"
 
 type PaymentContainerProps = {
   paymentProviderId: string
   selectedPaymentOptionId: string | null
   disabled?: boolean
-  paymentInfoMap: Record<string, { title: string; icon: JSX.Element }>
+  paymentInfoMap: Record<string, PaymentInfo>
 }
 
 const PaymentContainer: React.FC<PaymentContainerProps> = ({
@@ -19,6 +20,7 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
   paymentInfoMap,
   disabled = false,
 }) => {
+  const tPaymentMethods = useTranslations("Common.paymentMethods")
   const isDevelopment = process.env.NODE_ENV === "development"
 
   return (
@@ -39,7 +41,9 @@ const PaymentContainer: React.FC<PaymentContainerProps> = ({
           <div className="flex items-center gap-x-4">
             <Radio checked={selectedPaymentOptionId === paymentProviderId} />
             <Text className="text-base-regular">
-              {paymentInfoMap[paymentProviderId]?.title || paymentProviderId}
+              {paymentInfoMap[paymentProviderId]
+                ? tPaymentMethods(paymentInfoMap[paymentProviderId].titleKey)
+                : paymentProviderId}
             </Text>
             {isManual(paymentProviderId) && isDevelopment && (
               <PaymentTest className="hidden small:block" />

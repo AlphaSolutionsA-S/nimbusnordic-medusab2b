@@ -1,10 +1,13 @@
+import { convertToLocale } from "@/lib/util/money"
 import { clx } from "@medusajs/ui"
+import { useLocale } from "next-intl"
 
-export const formatAmount = (amount: number, currency_code: string) => {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: currency_code,
-  }).format(amount)
+export const formatAmount = (
+  amount: number,
+  currency_code: string,
+  locale: string
+) => {
+  return convertToLocale({ amount, currency_code, locale })
 }
 
 type AmountCellProps = {
@@ -22,7 +25,8 @@ export const AmountCell = ({
   align = "left",
   className,
 }: AmountCellProps) => {
-  const formatted = formatAmount(amount!, currencyCode)
+  const locale = useLocale()
+  const formatted = formatAmount(amount!, currencyCode, locale)
   const originalAmountPresent = typeof originalAmount === "number"
   const originalAmountDiffers = originalAmount !== amount
   const shouldShowAmountDiff = originalAmountPresent && originalAmountDiffers
@@ -42,7 +46,7 @@ export const AmountCell = ({
       {shouldShowAmountDiff ? (
         <>
           <span className="truncate line-through text-xs">
-            {formatAmount(originalAmount!, currencyCode)}
+            {formatAmount(originalAmount!, currencyCode, locale)}
           </span>
           <span className="truncate text-blue-400 txt-small">{formatted}</span>
         </>

@@ -10,6 +10,7 @@ import { B2BCart, B2BCustomer } from "@/types"
 import { ApprovalStatusType } from "@/types/approval"
 import { CheckCircleSolid } from "@medusajs/icons"
 import { Container, Heading, Text } from "@medusajs/ui"
+import { useCustomerErrorMessage } from "@/lib/hooks/use-customer-error-message"
 import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useCallback, useState } from "react"
@@ -22,6 +23,7 @@ const ShippingAddress = ({
   customer: B2BCustomer | null
 }) => {
   const t = useTranslations("Checkout.shippingAddress")
+  const toCustomerMessage = useCustomerErrorMessage()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -49,7 +51,7 @@ const ShippingAddress = ({
 
   const handleSubmit = async (formData: FormData) => {
     await setShippingAddress(formData).catch((e) => {
-      setError(e.message)
+      setError(toCustomerMessage(e, "checkout.shipping-address"))
       return
     })
 

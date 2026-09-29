@@ -16,7 +16,7 @@ jest.mock("@/modules/account/components/bc-order-overview", () => ({
   default: () => null,
 }))
 
-import BCOrders from "@/app/[countryCode]/(main)/account/@dashboard/bcorders/page"
+import BCOrders, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/bcorders/page"
 
 describe("BCOrders page", () => {
   it("renders the extracted heading unchanged", async () => {
@@ -24,5 +24,12 @@ describe("BCOrders page", () => {
     render(element)
 
     expect(screen.getByText("BC Orders")).toBeInTheDocument()
+  })
+
+  it("translates the page metadata (TC-1)", async () => {
+    expect(await generateMetadata()).toEqual({
+      title: "BC Orders",
+      description: "Company-wide Business Central order history.",
+    })
   })
 })

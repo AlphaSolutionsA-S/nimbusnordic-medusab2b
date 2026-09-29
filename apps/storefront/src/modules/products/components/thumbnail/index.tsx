@@ -1,4 +1,5 @@
 import { clx } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import Image from "next/image"
 import React from "react"
 
@@ -12,6 +13,9 @@ type ThumbnailProps = {
   isFeatured?: boolean
   className?: string
   type?: "preview" | "full"
+  // Accessible image description, e.g. the product title. Falls back to a
+  // translated generic "Product image".
+  alt?: string | null
   "data-testid"?: string
 }
 
@@ -23,6 +27,7 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
   className,
   "data-testid": dataTestid,
   type,
+  alt,
 }) => {
   const initialImage = thumbnail || images?.[0]?.url
 
@@ -39,7 +44,12 @@ const Thumbnail: React.FC<ThumbnailProps> = ({
       })}
       data-testid={dataTestid}
     >
-      <ImageOrPlaceholder image={initialImage} size={size} type={type} />
+      <ImageOrPlaceholder
+        image={initialImage}
+        size={size}
+        type={type}
+        alt={alt}
+      />
     </div>
   )
 }
@@ -48,13 +58,16 @@ const ImageOrPlaceholder = ({
   image,
   size,
   type,
-}: Pick<ThumbnailProps, "size" | "type"> & {
+  alt,
+}: Pick<ThumbnailProps, "size" | "type" | "alt"> & {
   image?: string
 }) => {
+  const t = useTranslations("Common.thumbnail")
+
   return image ? (
     <Image
       src={image}
-      alt="Thumbnail"
+      alt={alt || t("altFallback")}
       className={clx("absolute inset-0 object-contain", {
         "p-4": type === "full",
         "p-2": type === "preview",

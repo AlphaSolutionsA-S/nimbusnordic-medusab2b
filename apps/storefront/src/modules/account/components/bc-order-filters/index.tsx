@@ -11,6 +11,12 @@ const BC_ORDER_STATUSES: BCOrderStatus[] = [
   "Draft",
 ]
 
+// Visible labels only — option values stay as the BC API filter values.
+const STATUS_LABEL_KEYS = {
+  Open: "open",
+  Draft: "draft",
+} as const satisfies Partial<Record<BCOrderStatus, string>>
+
 type BcOrderFiltersProps = {
   currentStatus?: string
   currentDateFrom?: string
@@ -25,6 +31,7 @@ const BcOrderFilters = ({
   currentSearch,
 }: BcOrderFiltersProps) => {
   const t = useTranslations("Account.bcOrderFilters")
+  const tStatus = useTranslations("Account.bcStatus")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -84,7 +91,7 @@ const BcOrderFilters = ({
           <option value="">{t("allStatusesOption")}</option>
           {BC_ORDER_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {tStatus(STATUS_LABEL_KEYS[s as keyof typeof STATUS_LABEL_KEYS])}
             </option>
           ))}
         </select>

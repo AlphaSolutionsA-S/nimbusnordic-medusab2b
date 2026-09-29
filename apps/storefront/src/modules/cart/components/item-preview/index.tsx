@@ -32,6 +32,7 @@ const ItemPreview = ({ item, showBorders = true, currencyCode }: ItemProps) => {
         <LocalizedClientLink href={`/products/${handle}`}>
           <Thumbnail
             thumbnail={item.thumbnail}
+            alt={item.product?.title}
             size="square"
             className="bg-neutral-100 rounded-lg w-10 h-10"
           />

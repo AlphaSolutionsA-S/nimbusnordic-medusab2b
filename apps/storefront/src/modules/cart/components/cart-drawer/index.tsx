@@ -17,7 +17,7 @@ import { ExclamationCircle, LockClosedSolidMini } from "@medusajs/icons"
 import { StoreCart } from "@medusajs/types"
 import { Drawer, Text } from "@medusajs/ui"
 import { usePathname } from "next/navigation"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useEffect, useMemo, useRef, useState } from "react"
 
 type CartDrawerProps = {
@@ -31,6 +31,7 @@ const CartDrawer = ({
   ...props
 }: CartDrawerProps) => {
   const t = useTranslations("Cart.cartDrawer")
+  const locale = useLocale()
   const [activeTimer, setActiveTimer] = useState<NodeJS.Timer | undefined>(
     undefined
   )
@@ -133,6 +134,7 @@ const CartDrawer = ({
                 ? convertToLocale({
                     amount: subtotal,
                     currency_code: cart.currency_code,
+                    locale,
                   })
                 : t("cartLabel")}
             </span>
@@ -184,6 +186,7 @@ const CartDrawer = ({
                       {convertToLocale({
                         amount: subtotal,
                         currency_code: cart?.currency_code,
+                        locale,
                       })}
                     </Text>
                   </div>

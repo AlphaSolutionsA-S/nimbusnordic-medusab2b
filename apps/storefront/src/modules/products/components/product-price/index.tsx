@@ -1,7 +1,7 @@
 import { clx, Text } from "@medusajs/ui"
 import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 export default function ProductPrice({
   product,
@@ -9,8 +9,10 @@ export default function ProductPrice({
   product: HttpTypes.StoreProduct
 }) {
   const t = useTranslations("Products.price")
+  const locale = useLocale()
   const { cheapestPrice } = getProductPrice({
     product,
+    locale,
   })
 
   if (!cheapestPrice) {

@@ -9,17 +9,31 @@
       "continueLabel": "Fortsett"
     },
     "thumbnail": {
-      "altFallback": "test"
+      "altFallback": "Produktbilde"
     },
     "notFound": {
       "headingLabel": "Siden ble ikke funnet",
       "pageMessage": "Siden du prøvde å besøke, finnes ikke.",
       "goToFrontpageLabel": "Gå til forsiden"
+    },
+    "paymentMethods": {
+      "creditCard": "Kredittkort",
+      "ideal": "iDeal",
+      "bancontact": "Bancontact",
+      "paypal": "PayPal",
+      "invoice": "Betal med faktura"
+    },
+    "paymentIcon": {
+      "title": "{brand}-ikon"
+    },
+    "errors": {
+      "generic": "Noe gikk galt. Prøv igjen.",
+      "cartNotFound": "Vi fant ikke handlekurven din. Last inn siden på nytt og prøv igjen."
     }
   },
   "Layout": {
     "nav": {
-      "brandName": "Medusa B2B Starter",
+      "brandName": "Nimbus Nordic",
       "searchPlaceholder": "Søk etter produkter",
       "searchDisabledTooltip": "Installer en søkeleverandør for å aktivere produktsøk",
       "quoteLabel": "Tilbud",
@@ -96,7 +110,8 @@
       "approvalRequiredSalesManager": "Denne bestillingen krever godkjenning av en salgssjef.",
       "approvalRequestedLabel": "Godkjenning forespurt",
       "requestApprovalLabel": "Be om godkjenning",
-      "placeOrderLabel": "Legg inn bestilling"
+      "placeOrderLabel": "Legg inn bestilling",
+      "paymentDeclinedMessage": "Betalingen kunne ikke fullføres. Kontroller betalingsopplysningene eller velg en annen betalingsmåte."
     },
     "paymentTest": {
       "attentionLabel": "Obs:",
@@ -116,7 +131,8 @@
       "applyLabel": "Bruk",
       "promotionAppliedOne": "Kampanje anvendt:",
       "promotionAppliedOther": "Kampanjer anvendt:",
-      "removeDiscountSrLabel": "Fjern rabattkode fra bestillingen"
+      "removeDiscountSrLabel": "Fjern rabattkode fra bestillingen",
+      "applyErrorMessage": "Koden kunne ikke brukes. Kontroller koden og prøv igjen."
     },
     "review": {
       "agreementText": "Ved å fullføre denne bestillingen godtar jeg Medusas <termsLink>salgsvilkår ↗</termsLink> og <privacyLink>personvernerklæring ↗</privacyLink>",
@@ -454,7 +470,8 @@
       "pickQuoteItemLabel": "Velg tilbudsvare",
       "pickQuoteItemDescription": "Velg en tilbudsvare å skrive en melding om",
       "selectItemPlaceholder": "Velg vare",
-      "sendLabel": "Send"
+      "sendLabel": "Send",
+      "textRequiredMessage": "Skriv en melding."
     },
     "quoteTable": {
       "newLabel": "Ny",
@@ -523,6 +540,11 @@
       "reservationExpectedLabel": "Forventet {date}",
       "reservationShipsLabel": "Sendes {date}",
       "reservationFreightLabel": "Frakt: {freightType}"
+    },
+    "bcStatus": {
+      "open": "Åpen",
+      "draft": "Utkast",
+      "released": "Frigitt"
     }
   },
   "Cart": {
@@ -593,6 +615,13 @@
     },
     "notFound": {
       "cartMessage": "Handlekurven du prøvde å besøke, finnes ikke. Fjern informasjonskapslene dine og prøv igjen."
+    },
+    "cartContext": {
+      "lockedForApprovalToast": "Handlekurven er låst mens den venter på godkjenning.",
+      "addToCartFailedToast": "Kunne ikke legge til i handlekurven",
+      "deleteItemFailedToast": "Kunne ikke fjerne varen",
+      "updateQuantityFailedToast": "Kunne ikke oppdatere antallet i handlekurven",
+      "emptyCartFailedToast": "Kunne ikke tømme handlekurven"
     }
   },
   "Products": {
@@ -748,12 +777,68 @@
       "backLabel": "Tilbake"
     }
   },
-  "BcTest": {
-    "heading": "Business Central API-operasjoner",
-    "errorLabel": "Feil",
-    "unknownErrorMessage": "Ukjent feil"
-  },
   "MetaDescription": {
     "storeSuffix": "| Nimbus Nordic"
+  },
+  "Metadata": {
+    "home": {
+      "title": "Nimbus Nordic",
+      "description": "Bestill firmaklær til bedriften din i Nimbus Nordics B2B-nettbutikk."
+    },
+    "account": {
+      "title": "Konto",
+      "description": "Oversikt over kontoaktiviteten din."
+    },
+    "addresses": {
+      "title": "Adresser",
+      "description": "Se adressene dine."
+    },
+    "approvals": {
+      "title": "Godkjenninger",
+      "description": "Oversikt over ventende godkjenninger."
+    },
+    "bcOrders": {
+      "title": "BC-bestillinger",
+      "description": "Bedriftens samlede ordrehistorikk fra Business Central."
+    },
+    "returns": {
+      "title": "Returer",
+      "description": "Bedriftens samlede returhistorikk fra Business Central."
+    },
+    "claims": {
+      "title": "Reklamasjoner",
+      "description": "Veiledning for å sende inn en reklamasjon."
+    },
+    "orders": {
+      "title": "Bestillinger",
+      "description": "Oversikt over dine tidligere bestillinger."
+    },
+    "orderDetails": {
+      "title": "Bestilling #{displayId}",
+      "description": "Se bestillingen din."
+    },
+    "profile": {
+      "title": "Profil",
+      "description": "Se og rediger profilen din."
+    },
+    "login": {
+      "title": "Logg inn",
+      "description": "Logg inn på Nimbus Nordic-kontoen din."
+    },
+    "cart": {
+      "title": "Handlekurv",
+      "description": "Se handlekurven din."
+    },
+    "checkout": {
+      "title": "Kasse"
+    },
+    "store": {
+      "title": "Butikk",
+      "description": "Utforsk alle produktene våre."
+    },
+    "orderConfirmed": {
+      "title": "Bestillingen er bekreftet",
+      "description": "Kjøpet ditt er fullført."
+    }
   }
 }

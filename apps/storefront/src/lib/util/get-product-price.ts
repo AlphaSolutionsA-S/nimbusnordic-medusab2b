@@ -13,7 +13,10 @@ export type VariantPrice = {
   percentage_diff: string
 }
 
-export const getPricesForVariant = (variant: any): VariantPrice | null => {
+export const getPricesForVariant = (
+  variant: any,
+  locale: string
+): VariantPrice | null => {
   if (!variant?.calculated_price?.calculated_amount) {
     return null
   }
@@ -23,11 +26,13 @@ export const getPricesForVariant = (variant: any): VariantPrice | null => {
     calculated_price: convertToLocale({
       amount: variant.calculated_price.calculated_amount,
       currency_code: variant.calculated_price.currency_code,
+      locale,
     }),
     original_price_number: variant.calculated_price.original_amount,
     original_price: convertToLocale({
       amount: variant.calculated_price.original_amount,
       currency_code: variant.calculated_price.currency_code,
+      locale,
     }),
     currency_code: variant.calculated_price.currency_code,
     price_type: variant.calculated_price.calculated_price.price_list_type,
@@ -41,9 +46,11 @@ export const getPricesForVariant = (variant: any): VariantPrice | null => {
 export function getProductPrice({
   product,
   variantId,
+  locale,
 }: {
   product: HttpTypes.StoreProduct
   variantId?: string
+  locale: string
 }) {
   if (!product || !product.id) {
     throw new Error("No product provided")
@@ -63,7 +70,7 @@ export function getProductPrice({
         )
       })[0]
 
-    return getPricesForVariant(cheapestVariant)
+    return getPricesForVariant(cheapestVariant, locale)
   }
 
   const variantPrice = () => {
@@ -79,7 +86,7 @@ export function getProductPrice({
       return null
     }
 
-    return getPricesForVariant(variant)
+    return getPricesForVariant(variant, locale)
   }
 
   return {

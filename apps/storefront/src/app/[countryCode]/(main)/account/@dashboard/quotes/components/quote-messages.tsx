@@ -11,10 +11,11 @@ import { Controller, useForm } from "react-hook-form"
 import { z } from "zod"
 import { QuoteTableItem } from "./quote-table"
 
-export const CreateQuoteMessageForm = z.object({
-  text: z.string().min(1),
-  item_id: z.string().nullish(),
-})
+export const createQuoteMessageFormSchema = (textRequiredMessage: string) =>
+  z.object({
+    text: z.string().min(1, { message: textRequiredMessage }),
+    item_id: z.string().nullish(),
+  })
 
 const defaultValues = {
   text: "",
@@ -29,6 +30,10 @@ const QuoteMessages = ({
   preview: AdminOrderPreview
 }) => {
   const t = useTranslations("Account.quoteMessages")
+  const schema = useMemo(
+    () => createQuoteMessageFormSchema(t("textRequiredMessage")),
+    [t]
+  )
   const {
     register,
     handleSubmit,
@@ -37,7 +42,7 @@ const QuoteMessages = ({
     reset,
   } = useForm({
     defaultValues,
-    resolver: zodResolver(CreateQuoteMessageForm),
+    resolver: zodResolver(schema),
   })
 
   const [isCreatingMessage, setIsCreatingMessage] = useState(false)

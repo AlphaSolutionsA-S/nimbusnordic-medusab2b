@@ -4,7 +4,7 @@ import { HttpTypes, StoreProduct, StoreProductVariant } from "@medusajs/types"
 import { clx, Table } from "@medusajs/ui"
 import Button from "@/modules/common/components/button"
 import ShoppingBag from "@/modules/common/icons/shopping-bag"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useState } from "react"
 import BulkTableQuantity from "../bulk-table-quantity"
 
@@ -16,6 +16,7 @@ const ProductVariantsTable = ({
   region: HttpTypes.StoreRegion
 }) => {
   const t = useTranslations("Products.variantsTable")
+  const locale = useLocale()
   const [isAdding, setIsAdding] = useState(false)
   const [lineItemsMap, setLineItemsMap] = useState<
     Map<
@@ -105,6 +106,7 @@ const ProductVariantsTable = ({
               const { variantPrice } = getProductPrice({
                 product,
                 variantId: variant.id,
+                locale,
               })
 
               return (

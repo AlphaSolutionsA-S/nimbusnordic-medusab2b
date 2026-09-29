@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react"
 import CountrySelect from "@/modules/checkout/components/country-select"
 
 describe("CountrySelect", () => {
-  it("falls back to the hardcoded English placeholder when the caller passes none", () => {
+  it("falls back to the translated catalog placeholder when the caller passes none", () => {
     render(<CountrySelect name="country_code" onChange={() => {}} />)
 
     expect(

@@ -3,8 +3,9 @@
 import { type ReactNode, useState } from "react"
 import { FetchError } from "@medusajs/js-sdk"
 import { Button, Container, Heading, Input, Select, Text } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { createBCReturn } from "@/lib/data/business-central"
+import { convertToLocale } from "@/lib/util/money"
 import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
 import type {
   BCOrderDetail,
@@ -29,6 +30,7 @@ type ReturnDraft = Record<number, LineDraft>
 const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
   const t = useTranslations("Account.bcOrderReturn")
   const tFulfillment = useTranslations("Account.bcOrderLineFulfillment")
+  const locale = useLocale()
   const eligibleLines = order.lines.filter(
     (line) => line.lineType === "Item" && line.quantity > 0
   )
@@ -38,10 +40,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
   const [result, setResult] = useState<BCReturnOrder | null>(null)
   const [error, setError] = useState<string | null>(null)
   const formattedUnitPrice = (amount: number) =>
-    new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: order.currencyCode,
-    }).format(amount)
+    convertToLocale({ amount, currency_code: order.currencyCode, locale })
   const renderAddress = (address: string[]) =>
     address.length > 0
       ? address.map((line) => <div key={line}>{line}</div>)

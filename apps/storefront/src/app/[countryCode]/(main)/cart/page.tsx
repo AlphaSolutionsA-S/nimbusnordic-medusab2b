@@ -3,10 +3,15 @@ import { retrieveCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
 import CartTemplate from "@/modules/cart/templates"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 
-export const metadata: Metadata = {
-  title: "Cart",
-  description: "View your cart",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Metadata.cart")
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  }
 }
 
 export default async function Cart() {
