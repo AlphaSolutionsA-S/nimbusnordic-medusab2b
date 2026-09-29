@@ -1,12 +1,21 @@
-# Task 05: Returns page route, account nav entry, and translations — Implementation Plan
+# Task 05: Returns page route and account nav entry — Implementation Plan
 
 **Status:** TODO
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 05
-**Date:** 2026-09-15
+**Date:** 2026-09-15 (reconciled 2026-09-29 against develop)
 **Branch:** feature/NIMBUS-140 (from develop)
 **Depends on:** Task 04
+
+> **Reconciliation note (2026-09-29):** The message-catalog edits moved to **Task 04**. That
+> task now covers all 8 locales, including the `Account.nav.returnsLabel` and
+> `Account.bcReturnsPage.heading` keys this task uses, so this task edits **no** JSON files.
+> The following were re-verified on develop: the `account-nav/index.tsx` anchors (the BC Orders
+> `<li>` followed by the Claims `<li>`, in both the mobile and desktop lists), the `Package`
+> import anchor, the `@/modules/common/icons/u-turn-arrow-right` icon, the last test in
+> `account-nav.test.tsx`, and the `bcorders/page.tsx`/`loading.tsx` templates. No
+> `/account/returns` route exists yet.
 
 ---
 
@@ -18,13 +27,13 @@
 - **Test command:** `cd apps/storefront && pnpm test`
 - **Test framework:** Jest + React Testing Library
 - **Test location:** `apps/storefront/src/__tests__/app/`, `apps/storefront/src/__tests__/modules/account/components/`
-- **Naming conventions:** kebab-case directories, PascalCase component names, double-quoted strings, no trailing semicolons. JSON message files use 2-space indentation, matching existing formatting exactly.
+- **Naming conventions:** kebab-case directories, PascalCase component names, double-quoted strings, no trailing semicolons (the existing `account-nav.test.tsx` uses single quotes and semicolons, so match that file's style when editing it).
 
 ## Solution Design
 
 1. Add the `/account/returns` page route (list + filters + overview, mirroring `bcorders/page.tsx`) and its `loading.tsx`.
 2. Add a new **top-level** "Returns" entry to `AccountNav` (both the mobile and desktop nav lists), positioned after "BC Orders" and before "Claims" — **not** nested under Orders, per SCOPE.md's explicit requirement.
-3. Add the required translation keys to **all 5** locale message files (`en`, `da`, `de`, `fr`, `it`) to keep locale parity with the rest of the `Account` namespace.
+3. No translation work. The keys already exist from Task 04.
 
 The return **detail** page itself (`/account/returns/[id]/page.tsx`) is explicitly out of scope — that is NIMBUS-141. This task only wires the `LocalizedClientLink` in `BcReturnCard` (already done in Task 04) to point at `/account/returns/{number}`, and the nav link to `/account/returns`. Do not create a `[id]` route under `returns/`.
 
@@ -367,411 +376,6 @@ New:
 });
 ```
 
-### `apps/storefront/messages/en.json` (edit)
-
-**Edit 1 — add `returnsLabel` to the `Account.nav` namespace.**
-
-Old:
-```json
-    "nav": {
-      "accountLabel": "Account",
-      "helloLabel": "Hello {name}",
-      "profileLabel": "Profile",
-      "companyLabel": "Company",
-      "addressesLabel": "Addresses",
-      "ordersLabel": "Orders",
-      "bcOrdersLabel": "BC Orders",
-      "claimsLabel": "Claims",
-      "approvalsLabel": "Approvals",
-      "quotesLabel": "Quotes",
-      "logoutLabel": "Log out",
-      "overviewLabel": "Overview"
-```
-
-New:
-```json
-    "nav": {
-      "accountLabel": "Account",
-      "helloLabel": "Hello {name}",
-      "profileLabel": "Profile",
-      "companyLabel": "Company",
-      "addressesLabel": "Addresses",
-      "ordersLabel": "Orders",
-      "bcOrdersLabel": "BC Orders",
-      "returnsLabel": "Returns",
-      "claimsLabel": "Claims",
-      "approvalsLabel": "Approvals",
-      "quotesLabel": "Quotes",
-      "logoutLabel": "Log out",
-      "overviewLabel": "Overview"
-```
-
-**Edit 2 — add the new `Account.bcReturnsPage`, `Account.bcReturnOverview`, `Account.bcReturnFilters`, `Account.bcReturnCard` namespaces, right after `bcOrdersPage` (the last key before the `Account` namespace closes).**
-
-Old:
-```json
-    "bcOrdersPage": {
-      "heading": "BC Orders"
-    }
-  },
-```
-
-New:
-```json
-    "bcOrdersPage": {
-      "heading": "BC Orders"
-    },
-    "bcReturnsPage": {
-      "heading": "Returns"
-    },
-    "bcReturnOverview": {
-      "errorHeading": "Something went wrong",
-      "errorMessage": "We were unable to load your returns. Please try again.",
-      "tryAgainLabel": "Try again",
-      "emptyHeading": "No returns found",
-      "emptyMessage": "You haven't submitted any returns yet."
-    },
-    "bcReturnFilters": {
-      "statusLabel": "Status",
-      "allStatusesOption": "All statuses",
-      "fromLabel": "From",
-      "toLabel": "To",
-      "searchLabel": "Search",
-      "searchPlaceholder": "Return number…",
-      "clearLabel": "Clear"
-    },
-    "bcReturnCard": {
-      "detailsLabel": "Details",
-      "relatedOrderLabel": "Order #{number}",
-      "itemCountLabel": "{count} items"
-    }
-  },
-```
-
-### `apps/storefront/messages/da.json` (edit)
-
-**Edit 1 — `Account.nav`:**
-
-Old:
-```json
-    "nav": {
-      "accountLabel": "Konto",
-      "helloLabel": "Hej {name}",
-      "profileLabel": "Profil",
-      "companyLabel": "Virksomhed",
-      "addressesLabel": "Adresser",
-      "ordersLabel": "Ordrer",
-      "bcOrdersLabel": "BC-ordrer",
-      "claimsLabel": "Reklamationer",
-      "approvalsLabel": "Godkendelser",
-      "quotesLabel": "Tilbud",
-      "logoutLabel": "Log ud",
-      "overviewLabel": "Oversigt"
-```
-
-New:
-```json
-    "nav": {
-      "accountLabel": "Konto",
-      "helloLabel": "Hej {name}",
-      "profileLabel": "Profil",
-      "companyLabel": "Virksomhed",
-      "addressesLabel": "Adresser",
-      "ordersLabel": "Ordrer",
-      "bcOrdersLabel": "BC-ordrer",
-      "returnsLabel": "Returneringer",
-      "claimsLabel": "Reklamationer",
-      "approvalsLabel": "Godkendelser",
-      "quotesLabel": "Tilbud",
-      "logoutLabel": "Log ud",
-      "overviewLabel": "Oversigt"
-```
-
-**Edit 2 — new namespaces after `bcOrdersPage`:**
-
-Old:
-```json
-    "bcOrdersPage": {
-      "heading": "BC-ordrer"
-    }
-  },
-```
-
-New:
-```json
-    "bcOrdersPage": {
-      "heading": "BC-ordrer"
-    },
-    "bcReturnsPage": {
-      "heading": "Returneringer"
-    },
-    "bcReturnOverview": {
-      "errorHeading": "Noget gik galt",
-      "errorMessage": "Vi kunne ikke indlæse dine returneringer. Prøv igen.",
-      "tryAgainLabel": "Prøv igen",
-      "emptyHeading": "Ingen returneringer fundet",
-      "emptyMessage": "Du har endnu ikke indsendt nogen returneringer."
-    },
-    "bcReturnFilters": {
-      "statusLabel": "Status",
-      "allStatusesOption": "Alle statusser",
-      "fromLabel": "Fra",
-      "toLabel": "Til",
-      "searchLabel": "Søg",
-      "searchPlaceholder": "Returnummer…",
-      "clearLabel": "Ryd"
-    },
-    "bcReturnCard": {
-      "detailsLabel": "Detaljer",
-      "relatedOrderLabel": "Ordre #{number}",
-      "itemCountLabel": "{count} varer"
-    }
-  },
-```
-
-### `apps/storefront/messages/de.json` (edit)
-
-**Edit 1 — `Account.nav`:**
-
-Old:
-```json
-    "nav": {
-      "accountLabel": "Konto",
-      "helloLabel": "Hallo {name}",
-      "profileLabel": "Profil",
-      "companyLabel": "Unternehmen",
-      "addressesLabel": "Adressen",
-      "ordersLabel": "Bestellungen",
-      "bcOrdersLabel": "BC-Bestellungen",
-      "claimsLabel": "Reklamationen",
-      "approvalsLabel": "Genehmigungen",
-      "quotesLabel": "Angebote",
-      "logoutLabel": "Abmelden",
-      "overviewLabel": "Übersicht"
-```
-
-New:
-```json
-    "nav": {
-      "accountLabel": "Konto",
-      "helloLabel": "Hallo {name}",
-      "profileLabel": "Profil",
-      "companyLabel": "Unternehmen",
-      "addressesLabel": "Adressen",
-      "ordersLabel": "Bestellungen",
-      "bcOrdersLabel": "BC-Bestellungen",
-      "returnsLabel": "Retouren",
-      "claimsLabel": "Reklamationen",
-      "approvalsLabel": "Genehmigungen",
-      "quotesLabel": "Angebote",
-      "logoutLabel": "Abmelden",
-      "overviewLabel": "Übersicht"
-```
-
-**Edit 2 — new namespaces after `bcOrdersPage`:**
-
-Old:
-```json
-    "bcOrdersPage": {
-      "heading": "BC-Bestellungen"
-    }
-  },
-```
-
-New:
-```json
-    "bcOrdersPage": {
-      "heading": "BC-Bestellungen"
-    },
-    "bcReturnsPage": {
-      "heading": "Retouren"
-    },
-    "bcReturnOverview": {
-      "errorHeading": "Etwas ist schiefgelaufen",
-      "errorMessage": "Ihre Retouren konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
-      "tryAgainLabel": "Erneut versuchen",
-      "emptyHeading": "Keine Retouren gefunden",
-      "emptyMessage": "Sie haben noch keine Retouren eingereicht."
-    },
-    "bcReturnFilters": {
-      "statusLabel": "Status",
-      "allStatusesOption": "Alle Status",
-      "fromLabel": "Von",
-      "toLabel": "Bis",
-      "searchLabel": "Suche",
-      "searchPlaceholder": "Retourennummer…",
-      "clearLabel": "Löschen"
-    },
-    "bcReturnCard": {
-      "detailsLabel": "Details",
-      "relatedOrderLabel": "Bestellung #{number}",
-      "itemCountLabel": "{count} Artikel"
-    }
-  },
-```
-
-### `apps/storefront/messages/fr.json` (edit)
-
-**Edit 1 — `Account.nav`:**
-
-Old:
-```json
-    "nav": {
-      "accountLabel": "Compte",
-      "helloLabel": "Bonjour {name}",
-      "profileLabel": "Profil",
-      "companyLabel": "Entreprise",
-      "addressesLabel": "Adresses",
-      "ordersLabel": "Commandes",
-      "bcOrdersLabel": "Commandes BC",
-      "claimsLabel": "Réclamations",
-      "approvalsLabel": "Approbations",
-      "quotesLabel": "Devis",
-      "logoutLabel": "Se déconnecter",
-      "overviewLabel": "Aperçu"
-```
-
-New:
-```json
-    "nav": {
-      "accountLabel": "Compte",
-      "helloLabel": "Bonjour {name}",
-      "profileLabel": "Profil",
-      "companyLabel": "Entreprise",
-      "addressesLabel": "Adresses",
-      "ordersLabel": "Commandes",
-      "bcOrdersLabel": "Commandes BC",
-      "returnsLabel": "Retours",
-      "claimsLabel": "Réclamations",
-      "approvalsLabel": "Approbations",
-      "quotesLabel": "Devis",
-      "logoutLabel": "Se déconnecter",
-      "overviewLabel": "Aperçu"
-```
-
-**Edit 2 — new namespaces after `bcOrdersPage`:**
-
-Old:
-```json
-    "bcOrdersPage": {
-      "heading": "Commandes BC"
-    }
-  },
-```
-
-New:
-```json
-    "bcOrdersPage": {
-      "heading": "Commandes BC"
-    },
-    "bcReturnsPage": {
-      "heading": "Retours"
-    },
-    "bcReturnOverview": {
-      "errorHeading": "Une erreur s'est produite",
-      "errorMessage": "Nous n'avons pas pu charger vos retours. Veuillez réessayer.",
-      "tryAgainLabel": "Réessayer",
-      "emptyHeading": "Aucun retour trouvé",
-      "emptyMessage": "Vous n'avez soumis aucun retour pour le moment."
-    },
-    "bcReturnFilters": {
-      "statusLabel": "Statut",
-      "allStatusesOption": "Tous les statuts",
-      "fromLabel": "De",
-      "toLabel": "À",
-      "searchLabel": "Rechercher",
-      "searchPlaceholder": "Numéro de retour…",
-      "clearLabel": "Effacer"
-    },
-    "bcReturnCard": {
-      "detailsLabel": "Détails",
-      "relatedOrderLabel": "Commande #{number}",
-      "itemCountLabel": "{count} articles"
-    }
-  },
-```
-
-### `apps/storefront/messages/it.json` (edit)
-
-**Edit 1 — `Account.nav`:**
-
-Old:
-```json
-    "nav": {
-      "accountLabel": "Account",
-      "helloLabel": "Ciao {name}",
-      "profileLabel": "Profilo",
-      "companyLabel": "Azienda",
-      "addressesLabel": "Indirizzi",
-      "ordersLabel": "Ordini",
-      "bcOrdersLabel": "Ordini BC",
-      "claimsLabel": "Reclami",
-      "approvalsLabel": "Approvazioni",
-      "quotesLabel": "Preventivi",
-      "logoutLabel": "Esci",
-      "overviewLabel": "Panoramica"
-```
-
-New:
-```json
-    "nav": {
-      "accountLabel": "Account",
-      "helloLabel": "Ciao {name}",
-      "profileLabel": "Profilo",
-      "companyLabel": "Azienda",
-      "addressesLabel": "Indirizzi",
-      "ordersLabel": "Ordini",
-      "bcOrdersLabel": "Ordini BC",
-      "returnsLabel": "Resi",
-      "claimsLabel": "Reclami",
-      "approvalsLabel": "Approvazioni",
-      "quotesLabel": "Preventivi",
-      "logoutLabel": "Esci",
-      "overviewLabel": "Panoramica"
-```
-
-**Edit 2 — new namespaces after `bcOrdersPage`:**
-
-Old:
-```json
-    "bcOrdersPage": {
-      "heading": "Ordini BC"
-    }
-  },
-```
-
-New:
-```json
-    "bcOrdersPage": {
-      "heading": "Ordini BC"
-    },
-    "bcReturnsPage": {
-      "heading": "Resi"
-    },
-    "bcReturnOverview": {
-      "errorHeading": "Qualcosa è andato storto",
-      "errorMessage": "Non è stato possibile caricare i tuoi resi. Riprova.",
-      "tryAgainLabel": "Riprova",
-      "emptyHeading": "Nessun reso trovato",
-      "emptyMessage": "Non hai ancora inviato alcun reso."
-    },
-    "bcReturnFilters": {
-      "statusLabel": "Stato",
-      "allStatusesOption": "Tutti gli stati",
-      "fromLabel": "Da",
-      "toLabel": "A",
-      "searchLabel": "Cerca",
-      "searchPlaceholder": "Numero di reso…",
-      "clearLabel": "Cancella"
-    },
-    "bcReturnCard": {
-      "detailsLabel": "Dettagli",
-      "relatedOrderLabel": "Ordine #{number}",
-      "itemCountLabel": "{count} articoli"
-    }
-  },
-```
-
 ## Test Cases
 
 ### TC-1: Happy path — page renders the heading
@@ -795,9 +399,9 @@ New:
 2. Create `apps/storefront/src/app/[countryCode]/(main)/account/@dashboard/returns/loading.tsx` exactly as specified.
 3. Edit `apps/storefront/src/modules/account/components/account-nav/index.tsx`: apply Edit 1 (import), Edit 2 (mobile nav), and Edit 3 (desktop nav) exactly as specified.
 4. Edit `apps/storefront/src/__tests__/modules/account/components/account-nav.test.tsx` to add the new "Returns link is a top-level entry" test exactly as specified.
-5. Edit all 5 message files (`en.json`, `da.json`, `de.json`, `fr.json`, `it.json`) under `apps/storefront/messages/` exactly as specified — each has 2 edits (nav label, new namespaces). Preserve exact JSON formatting (2-space indent) and comma placement.
-6. Create `apps/storefront/src/__tests__/app/bcreturns-page.test.tsx` exactly as specified.
-7. Do **not** create a `returns/[id]/page.tsx` — that is NIMBUS-141's responsibility.
-8. Run `cd apps/storefront && pnpm test` and confirm all new and modified tests pass, including all of Task 04's component tests (their translation-dependent assertions depend on this task's message-file edits).
+5. Create `apps/storefront/src/__tests__/app/bcreturns-page.test.tsx` exactly as specified.
+6. Do **not** create a `returns/[id]/page.tsx`. That is NIMBUS-141's responsibility.
+7. Do **not** edit `apps/storefront/messages/*.json`. Task 04 already added `Account.nav.returnsLabel` and `Account.bcReturnsPage.heading` for all 8 locales.
+8. Run `cd apps/storefront && pnpm test` and confirm that all new and modified tests pass and that the full storefront suite is green, including Task 04's tests and `message-catalogs.test.ts`.
 9. Run `pnpm build` from the repo root and confirm no TypeScript errors.
-10. Run `pnpm lint` from the repo root and confirm no new lint errors, and validate all 5 JSON message files are syntactically valid (e.g. `node -e "JSON.parse(require('fs').readFileSync('apps/storefront/messages/en.json'))"` for each locale).
+10. Run `pnpm lint` from the repo root and confirm no new lint errors.

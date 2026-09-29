@@ -4,9 +4,21 @@
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 03
-**Date:** 2026-09-15
+**Date:** 2026-09-15 (reconciled 2026-09-29 against develop)
 **Branch:** feature/NIMBUS-140 (from develop)
 **Depends on:** Task 02
+
+> **Reconciliation note (2026-09-29):** NIMBUS-138 already added the *create*-return types to
+> `src/types/bc-order.ts` (`BCReturnReason`, `BCReturnLineInput`, `BCReturnRequestBody`,
+> `BCReturnLine`, `BCReturnOrder`). It also added `listBCReturnReasons` and `createBCReturn`
+> to `src/lib/data/business-central.ts`. Nothing in the repo lists returns yet, so the new
+> `BCReturnListItem`/`BCReturnListParams`/`BCReturnListResponse` types and `listBCReturns`
+> duplicate nothing. Keep the names exactly as below so they do not clash with the existing
+> `BCReturn*` types. Both edit anchors (end of `bc-order.ts` = `BCReturnOrder`; `listBCOrders`
+> followed by `type StoreBCOrderDetailResponse`) were re-verified on develop.
+> **Test file:** `src/__tests__/lib/data/business-central.test.ts` does not exist yet, so
+> create it. `business-central.ts` imports `FetchError` from `@medusajs/js-sdk`, and the
+> skeleton mocks that import so the test does not depend on the SDK build.
 
 ---
 
@@ -58,7 +70,6 @@ export type BCReturnOrder = {
 export type BCReturnListItem = {
   id: string
   number: string
-  relatedOrderNumber: string
   documentDate: string
   status: string
   itemCount: number
@@ -208,6 +219,10 @@ jest.mock("@/lib/config", () => ({
 
 jest.mock("@/lib/data/cookies", () => ({
   getAuthHeaders: jest.fn(() => Promise.resolve({})),
+}))
+
+jest.mock("@medusajs/js-sdk", () => ({
+  FetchError: class FetchError extends Error {},
 }))
 
 import { listBCReturns } from "@/lib/data/business-central"

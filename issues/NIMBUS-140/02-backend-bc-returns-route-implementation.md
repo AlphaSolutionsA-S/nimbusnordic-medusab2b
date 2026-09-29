@@ -4,9 +4,21 @@
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02
-**Date:** 2026-09-15
+**Date:** 2026-09-15 (reconciled 2026-09-29 against develop)
 **Branch:** feature/NIMBUS-140 (from develop)
 **Depends on:** Task 01
+
+> **Reconciliation note (2026-09-29):** Re-verified on develop after NIMBUS-138/170 and the
+> Medusa 2.21 upgrade. `apps/backend/src/api/store/middlewares.ts`, `bc-orders/route.ts`,
+> `bc-orders/validators.ts` (`z` from `@medusajs/framework/zod`) and the
+> `authenticate`/`validateAndTransformQuery` imports from `@medusajs/framework` are unchanged,
+> so every skeleton and anchor below is still valid.
+> **Route naming:** NIMBUS-138 added `GET /store/bc-orders/return-reasons` and
+> `POST /store/bc-orders/:id/returns` under the existing `bc-orders` tree. It added no list
+> route. `/store/bc-returns` is a new top-level store path with its own `/store/bc-returns*`
+> auth matcher, so it does not collide with the `/store/bc-orders*` matcher. It also avoids the
+> static-vs-dynamic clash that `/store/bc-orders/returns` would have with `/store/bc-orders/[id]`.
+> Do not nest the list route under `bc-orders`.
 
 ---
 

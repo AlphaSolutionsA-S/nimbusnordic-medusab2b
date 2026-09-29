@@ -54,3 +54,86 @@
   gate. After all 5 tasks: run `pnpm build` and `pnpm lint` from the repo root, run
   `cd apps/backend && pnpm test:integration:modules && pnpm test:unit`, and run
   `cd apps/storefront && pnpm test`, per PLAN.md's Verification checklist.
+
+- **Date:** 2026-09-29
+- **Updated by:** implementation-planner agent (reconciliation)
+- **Outcome:** Reconciled the plan with develop after NIMBUS-138 (real BC return action,
+  reservations, shipped-only returns; all committed directly on develop), NIMBUS-170,
+  NIMBUS-163..169 (8-locale next-intl), NIMBUS-157 and Medusa 2.21. Updated `PLAN.md`
+  (new "Reconciliation" table and open questions), `manifest.md`, and task files 01–05.
+  - **Still valid:** `listReturns` is still missing, so the plan duplicates nothing that 138
+    built. Also valid: the `sellToCustomerNumber` filter without a GUID lookup, the
+    `/store/bc-returns` route (no collision with 138's `/store/bc-orders/return-reasons` and
+    `/store/bc-orders/:id/returns`), the storefront list types and `listBCReturns`, and the
+    top-level "Returns" nav entry.
+  - **Stale and fixed:**
+    - Task 01: the `service.ts` import anchor (`BCGetOrderBySalesOrderIdParams` removed,
+      `BCOrderLineReservation` added) and the `listReturnReasons` anchor (the stub was replaced
+      by the real implementation).
+    - Translations: 5 locales became 8, and the `Account` insertion anchor moved because
+      `bcOrderLineFulfillment` was added. All catalog edits moved from Task 05 to Task 04, so
+      each task's tests pass on their own.
+    - Status filter: now `Open`/`Released` only, with XML-encoded statuses (`_x0020_`) decoded
+      and a new TC-5.
+    - Item-count copy: now `"Items: {count}"` (no ICU plural).
+    - German term aligned to 138's "Rücksendung".
+    - Documented the known pre-existing `listOrders` guardrail test failure (verified on
+      develop).
+  - **Endpoint:** standard v2.0 `salesReturnOrders`. The Abakion `customerPortal` API has an
+    identical schema and is documented as a one-line fallback.
+  - **Ready for Dispatch set to false.** Q1: which BC header field
+    `CustomerPortalReturns_CreateReturnOrder` writes `sourceOrderNo` into (default
+    `externalDocumentNumber`). Q2: accept unposted returns only (BC deletes fully posted return
+    orders), with a follow-up story for posted-return history (recommended), or expand scope.
+  - **NIMBUS-138 dependency:** none in code. Rebase before merging, because 138 is still editing
+    `service.ts`, `types.ts` and `messages/*.json` on develop. Q1 is best answered through 138's
+    BC sandbox and BC-team channel.
+- **Handover to:** user (answer Q1/Q2), then implementor agent
+- **Handover prompt:** After the user has answered Q1 and Q2 in `issues/NIMBUS-140/PLAN.md`
+  (with the recommended answers, no task changes are needed) and `manifest.md` shows
+  `Ready for Dispatch: true`, implement NIMBUS-140 ("Create Return Overview") from
+  `issues/NIMBUS-140/manifest.md` and task files 01–05 in the same folder. Work on
+  `feature/NIMBUS-140` from `develop`, in dependency order 01 → 02 → 03 → 04 → 05. Each task
+  contains verbatim skeletons and edit anchors verified against develop on 2026-09-29. Task 04
+  adds all message keys for all 8 locales (`en, da, de, fr, it, no, pl, sv`), and Task 05 edits
+  no JSON. Do not touch NIMBUS-138's `TEMP (NIMBUS-138)` code or the existing
+  `listOrders`/`getOrder`/`createReturnFromSalesOrder`/`listReturnReasons` methods. Preserve
+  CRLF line endings in the `.ts`/`.tsx` files. The `listOrders` round-trip-guardrail test
+  failure in `service.spec.ts` is pre-existing, so do not fix it. Rebase on develop before
+  merging. When all tasks are done, run `pnpm build` and `pnpm lint` from the root,
+  `cd apps/backend && pnpm test:integration:modules && pnpm test:unit`, and
+  `cd apps/storefront && pnpm test`, per the Verification section of PLAN.md.
+
+- **Date:** 2026-09-29
+- **Updated by:** implementation-planner agent (open questions resolved)
+- **Outcome:** The user answered Q1 and Q2. `PLAN.md` (new "Resolved Questions" section and
+  Decisions), `manifest.md`, and tasks 01, 03 and 04 are updated.
+  **Ready for Dispatch is now true.**
+  - **Q1** ("for the same customer (with requestId stored in External Document No.)"): returns
+    are filtered on `sellToCustomerNumber`, as planned. BC's External Document No. holds the
+    portal `requestId` (`RET-<hash>` from `prepare-bc-return.ts`), not an order number. The
+    related-order-number field is removed from the backend and storefront types, the mapper, the
+    card UI and the tests. The `relatedOrderLabel` key is removed from all 8 locale blocks, which
+    stay key-identical. `externalDocumentNumber` is not mapped, not even as a hidden `requestId`,
+    because nothing consumes it. TC-1 now asserts that it is not mapped, and card TC-4 guards
+    that no related-order element is rendered.
+  - **Q2** ("just open"): only unposted `salesReturnOrders` are listed, with no posted-return
+    history and no follow-up story. The limitation is recorded for NIMBUS-141: a return
+    disappears from the list once BC posts or credits it.
+  - The status filter stays `Open`/`Released`.
+- **Handover to:** implementor agent (not started; awaiting the user's go-ahead)
+- **Handover prompt:** Implement NIMBUS-140 ("Create Return Overview") from
+  `issues/NIMBUS-140/manifest.md` (`Ready for Dispatch: true`) and task files 01–05 in the same
+  folder. Work on `feature/NIMBUS-140` from `develop`, in dependency order
+  01 → 02 → 03 → 04 → 05, following each task's verbatim skeletons and verified anchors.
+  - There is **no related order number** anywhere. Do not map or display
+    `externalDocumentNumber`, which holds the portal `requestId`.
+  - Only open (unposted) BC return orders are listed.
+  - Task 04 adds all message keys for all 8 locales. Task 05 edits no JSON.
+  - Do not touch NIMBUS-138's `TEMP (NIMBUS-138)` code or the existing BC service methods.
+  - Preserve CRLF line endings in `.ts`/`.tsx` files.
+  - The `listOrders` round-trip-guardrail test failure is pre-existing; do not fix it.
+  - Rebase on develop before merging.
+  - Finally, run `pnpm build` and `pnpm lint` from the root,
+    `cd apps/backend && pnpm test:integration:modules && pnpm test:unit`, and
+    `cd apps/storefront && pnpm test`, per the Verification section of PLAN.md.
