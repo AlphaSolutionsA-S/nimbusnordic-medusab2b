@@ -176,6 +176,7 @@
       "addressesLabel": "Adresser",
       "ordersLabel": "Bestillinger",
       "bcOrdersLabel": "BC-bestillinger",
+      "returnsLabel": "Returer",
       "claimsLabel": "Reklamasjoner",
       "approvalsLabel": "Godkjenninger",
       "quotesLabel": "Tilbud",
@@ -485,6 +486,29 @@
     },
     "bcOrdersPage": {
       "heading": "BC-bestillinger"
+    },
+    "bcReturnsPage": {
+      "heading": "Returer"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Noe gikk galt",
+      "errorMessage": "Vi kunne ikke laste inn returene dine. Prøv igjen.",
+      "tryAgainLabel": "Prøv igjen",
+      "emptyHeading": "Ingen returer funnet",
+      "emptyMessage": "Du har ikke sendt inn noen returer ennå."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alle statuser",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "searchLabel": "Søk",
+      "searchPlaceholder": "Returnummer…",
+      "clearLabel": "Fjern"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Detaljer",
+      "itemCountLabel": "Varer: {count}"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",

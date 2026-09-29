@@ -1,6 +1,6 @@
 # Task 05: Returns page route and account nav entry — Implementation Plan
 
-**Status:** TODO
+**Status:** Done
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 05

@@ -109,3 +109,27 @@ export type BCReturnOrder = {
   sourceOrderNo: string
   lines: BCReturnLine[]
 }
+
+export type BCReturnListItem = {
+  id: string
+  number: string
+  documentDate: string
+  status: string
+  itemCount: number
+}
+
+export type BCReturnListParams = {
+  limit?: number
+  offset?: number
+  status?: string
+  date_from?: string
+  date_to?: string
+  search?: string
+}
+
+export type BCReturnListResponse = {
+  returns: BCReturnListItem[]
+  count: number
+  offset: number
+  limit: number
+}

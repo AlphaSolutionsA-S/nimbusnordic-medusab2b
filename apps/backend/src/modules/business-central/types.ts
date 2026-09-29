@@ -132,6 +132,31 @@ export type BCReturnReason = {
   description: string;
 };
 
+export type BCListReturnsParams = {
+  customerNumber: string;
+  limit: number;
+  offset: number;
+  status?: string;
+  date_from?: string;
+  date_to?: string;
+  search?: string;
+};
+
+export type BCReturnListItem = {
+  id: string;
+  number: string;
+  documentDate: string;
+  status: string;
+  itemCount: number;
+};
+
+export type BCListReturnsResult = {
+  returns: BCReturnListItem[];
+  count: number;
+  offset: number;
+  limit: number;
+};
+
 export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
@@ -147,6 +172,7 @@ export interface IBusinessCentralModuleService {
     params: BCCreateReturnParams
   ): Promise<BCReturnOrder>;
   listReturnReasons(): Promise<BCReturnReason[]>;
+  listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult>;
 }
 
 export type BCItem = {

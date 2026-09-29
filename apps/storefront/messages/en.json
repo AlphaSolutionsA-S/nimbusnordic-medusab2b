@@ -176,6 +176,7 @@
       "addressesLabel": "Addresses",
       "ordersLabel": "Orders",
       "bcOrdersLabel": "BC Orders",
+      "returnsLabel": "Returns",
       "claimsLabel": "Claims",
       "approvalsLabel": "Approvals",
       "quotesLabel": "Quotes",
@@ -485,6 +486,29 @@
     },
     "bcOrdersPage": {
       "heading": "BC Orders"
+    },
+    "bcReturnsPage": {
+      "heading": "Returns"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Something went wrong",
+      "errorMessage": "We were unable to load your returns. Please try again.",
+      "tryAgainLabel": "Try again",
+      "emptyHeading": "No returns found",
+      "emptyMessage": "You haven't submitted any returns yet."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "All statuses",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Return number…",
+      "clearLabel": "Clear"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Details",
+      "itemCountLabel": "Items: {count}"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",

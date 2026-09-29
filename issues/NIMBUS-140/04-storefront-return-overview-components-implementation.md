@@ -1,6 +1,6 @@
 # Task 04: Return overview components (card, filters, overview) and all-locale translations — Implementation Plan
 
-**Status:** TODO
+**Status:** Done
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 04

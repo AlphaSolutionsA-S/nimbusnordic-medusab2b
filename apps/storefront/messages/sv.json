@@ -176,6 +176,7 @@
       "addressesLabel": "Adresser",
       "ordersLabel": "Beställningar",
       "bcOrdersLabel": "BC-beställningar",
+      "returnsLabel": "Returer",
       "claimsLabel": "Reklamationer",
       "approvalsLabel": "Godkännanden",
       "quotesLabel": "Offerter",
@@ -485,6 +486,29 @@
     },
     "bcOrdersPage": {
       "heading": "BC-beställningar"
+    },
+    "bcReturnsPage": {
+      "heading": "Returer"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Något gick fel",
+      "errorMessage": "Vi kunde inte läsa in dina returer. Försök igen.",
+      "tryAgainLabel": "Försök igen",
+      "emptyHeading": "Inga returer hittades",
+      "emptyMessage": "Du har inte skickat in några returer ännu."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alla statusar",
+      "fromLabel": "Från",
+      "toLabel": "Till",
+      "searchLabel": "Sök",
+      "searchPlaceholder": "Returnummer…",
+      "clearLabel": "Rensa"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Detaljer",
+      "itemCountLabel": "Artiklar: {count}"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",

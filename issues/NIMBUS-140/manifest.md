@@ -18,11 +18,11 @@
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Add `listReturns` to the Business Central module service | `01-backend-list-returns-service-implementation.md` | backend | None | TODO |
-| 02 | Add `GET /store/bc-returns` API route | `02-backend-bc-returns-route-implementation.md` | backend | 01 | TODO |
-| 03 | Storefront return list types and data-fetching layer | `03-storefront-return-types-data-layer-implementation.md` | storefront | 02 | TODO |
-| 04 | Return overview components (card, filters, overview) and all-locale translations | `04-storefront-return-overview-components-implementation.md` | storefront | 03 | TODO |
-| 05 | Returns page route and account nav entry | `05-storefront-returns-page-nav-implementation.md` | storefront | 04 | TODO |
+| 01 | Add `listReturns` to the Business Central module service | `01-backend-list-returns-service-implementation.md` | backend | None | Done |
+| 02 | Add `GET /store/bc-returns` API route | `02-backend-bc-returns-route-implementation.md` | backend | 01 | Done |
+| 03 | Storefront return list types and data-fetching layer | `03-storefront-return-types-data-layer-implementation.md` | storefront | 02 | Done |
+| 04 | Return overview components (card, filters, overview) and all-locale translations | `04-storefront-return-overview-components-implementation.md` | storefront | 03 | Done |
+| 05 | Returns page route and account nav entry | `05-storefront-returns-page-nav-implementation.md` | storefront | 04 | Done |
 
 ## Notes
 
