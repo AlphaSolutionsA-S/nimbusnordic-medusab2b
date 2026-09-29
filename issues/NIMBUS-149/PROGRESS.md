@@ -214,3 +214,13 @@
 - **Handover prompt:** Before deploying the migration, run the Task 01 duplicate-pair check on
   each shared database. Carry the `bc-integration-state.ts` reconciliation into NIMBUS-148
   Task 01 and NIMBUS-158.
+
+## 2026-09-29 - Merged to develop, moved to Internal review
+
+- **Outcome:** `feature/NIMBUS-149` merged into `develop` (merge commit `dca2852`) and pushed.
+  Jira NIMBUS-149 moved To Do → In Progress → Internal review, with a summary comment.
+- **Handover to:** reviewer / release owner
+- **Handover prompt:** Validate NIMBUS-149 on `develop`. Before deploying
+  `Migration20260929100426`, run the Task 01 duplicate-pair check on each shared database and
+  report any rows. Carry the `bc-integration-state.ts` reconciliation into NIMBUS-148 Task 01
+  and NIMBUS-158.
