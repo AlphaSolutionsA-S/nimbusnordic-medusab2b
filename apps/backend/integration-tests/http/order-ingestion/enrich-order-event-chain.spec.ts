@@ -7,6 +7,7 @@ import { emitOrderIngestionCreatedEventWorkflow } from "../../../src/workflows/o
 import { COMPANY_MODULE } from "../../../src/modules/company";
 import type { ICompanyModuleService } from "../../../src/types";
 import { singleLineCanonicalOrder } from "../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures";
+import { BC_INTEGRATION_STATE_METADATA_KEY } from "../../../src/modules/order-ingestion/bc-integration-state";
 
 jest.setTimeout(60 * 1000);
 
@@ -127,6 +128,37 @@ medusaIntegrationTestRunner({
         });
         expect(updatedOrder.metadata?.order_ingestion_state).toEqual(
           "ready_for_business_central"
+        );
+      });
+
+      it("TC-4: enrichOrderWorkflow preserves the Business Central integration state (read-merge-write)", async () => {
+        const container = getContainer();
+        const orderModuleService = container.resolve<IOrderModuleService>(
+          Modules.ORDER
+        );
+        const order = await createTestOrder(
+          container,
+          "tc4-bc-state-customer",
+          "TC4-BC-STATE-ORDER"
+        );
+
+        const before = await orderModuleService.retrieveOrder(order.id, {
+          select: ["id", "metadata"],
+        });
+
+        await enrichOrderWorkflow(container).run({
+          input: { order_id: order.id },
+        });
+
+        const after = await orderModuleService.retrieveOrder(order.id, {
+          select: ["id", "metadata"],
+        });
+
+        expect(after.metadata?.order_ingestion_state).toEqual(
+          "ready_for_business_central"
+        );
+        expect(after.metadata?.[BC_INTEGRATION_STATE_METADATA_KEY]).toEqual(
+          before.metadata?.[BC_INTEGRATION_STATE_METADATA_KEY]
         );
       });
     });

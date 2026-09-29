@@ -16,14 +16,9 @@ export type EnrichOrderInput = {
 export const enrichOrderWorkflow = createWorkflow(
   "enrich-order",
   function (input: EnrichOrderInput) {
-    // IMPLEMENT: this is where further data mapping / enrichment onto the order's header
-    // fields belongs — content intentionally not specified yet. Candidate work items to confirm
-    // during implementation: mapping canonical billTo/shipTo onto the Order's real address
-    // relations (verify the exact field shape in @medusajs/types before attempting), or any
-    // other header-field mapping that turned out not to be needed for the synchronous response.
-    // Add further steps here, before the state transition below, once the content is decided.
-    // If it's a single mutation, it may be simpler to fold directly into
-    // updateOrderIngestionStateStep's own metadata write instead of adding a new step.
+    // Header fields (currency, email, shipping/billing address, phone) are mapped onto the order
+    // at creation time — see createIngestedOrderStep. Add further enrichment steps here, before
+    // the state transition below, if a later story needs them.
     const stateInput = transform({ input }, (data) => ({
       order_id: data.input.order_id,
       state: "ready_for_business_central",

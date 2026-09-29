@@ -3,6 +3,6 @@ import OrderModule from "@medusajs/medusa/order";
 import CompanyModule from "../modules/company";
 
 export default defineLink(
-  OrderModule.linkable.order,
+  { linkable: OrderModule.linkable.order, isList: true },
   CompanyModule.linkable.company
 );

@@ -63,6 +63,29 @@ moduleIntegrationTestRunner<OrderIngestionModuleService>({
 
         expect(all).toHaveLength(2);
       });
+
+      it("TC-4: rejects a second reference for the same (company_id, external_order_number) but accepts the same number for another company (unique index)", async () => {
+        await service.createOrderExternalReferences({
+          external_order_number: "UNIQUE-1",
+          company_id: "comp_U",
+          order_id: "order_U1",
+        });
+
+        await expect(
+          service.createOrderExternalReferences({
+            external_order_number: "UNIQUE-1",
+            company_id: "comp_U",
+            order_id: "order_U2",
+          })
+        ).rejects.toBeDefined();
+
+        const other = await service.createOrderExternalReferences({
+          external_order_number: "UNIQUE-1",
+          company_id: "comp_V",
+          order_id: "order_V1",
+        });
+        expect(other.id).toEqual(expect.stringMatching(/^oref_/));
+      });
     });
   },
 });
