@@ -271,3 +271,117 @@ infrastructure, and the real EDI line-shape sample), combined it with the user's
 the 9 open questions, and wrote `issues/NIMBUS-148/SCOPE.md` following the same structure and
 level of detail as NIMBUS-144/147/149's scope documents. The user reviewed and approved the
 resulting scope's summary before this file was written.
+
+- **Date:** 2026-09-29
+- **Updated by:** implementor agent
+- **Outcome:** All five tasks (01 → 05) are implemented on `feature/NIMBUS-148` and marked DONE in
+  manifest.md and the task files. Nothing is committed.
+  - **Task 01:** appended `BcSubmissionFailureReason`, `parseBcIntegrationState` and
+    `hasBusinessCentralOrder` to `bc-integration-state.ts`, with no existing line changed. Added
+    `bc-order-payload.ts`.
+  - **Task 02:** added `findItemsForOrderLines` to the `business-central` module.
+  - **Task 03:** added `createSalesOrder`. It sends no `unitPrice`, discount, tax, description,
+    salesperson or `pricesIncludeTax`. It sends `currencyCode` only when given, and it sends
+    `unitOfMeasureCode` and `shipmentDate`.
+  - **Task 04:** added the `business-central-order` workflow (prepare, submit, record), the
+    `resolveBcCurrencyOverride` util, and the one-word `export` on `resolveCurrencyCode`.
+  - **Task 05:** added the `business-central-order-ready` subscriber and the fail-closed Jest
+    `globalSetup` guard (util, unit spec, `global-setup.ts`, `jest.config.js` entry, `.env.template`
+    line). Narrowed the TC-4 assertion in `enrich-order-event-chain.spec.ts`. `setup.js` is
+    unchanged.
+  - **One deviation from the skeletons:** in `prepare-bc-order.ts`, `aborted()` returns a plain
+    `PreparedBcOrder`, and each call site is `return new StepResponse(aborted(...))`. The Medusa lint
+    rule `@medusajs/step-must-return-step-response` rejected the skeleton's
+    `return aborted(...)` (8 errors). Behaviour is the same.
+  - **Environment used for validation:**
+    - This checkout had no `node_modules`, no `apps/backend/.env` and no running Postgres.
+    - Ran `pnpm install --frozen-lockfile` (lockfile unchanged).
+    - Started a throwaway `postgres:16` Docker container using the `.env.template` DB defaults. It
+      was removed afterwards.
+    - DB and BC discovery-URL variables were set only in the shell. No `.env` was written.
+    - No BC credentials were present, so no suite reached a real BC tenant.
+  - **Validation:**
+    - `pnpm test:unit`: 7/7 suites, 43/43 tests pass.
+    - `pnpm test:integration:modules`: 77/78 pass. The 1 failure is the known pre-existing
+      `service.spec.ts` "round-trip guardrail" test.
+    - `pnpm test:integration:http`: 9/11 suites, 89/97 tests pass. The 8 failures are the known
+      pre-existing quotes `cartSeeder` 400: 7 in `quotes/quotes.spec.ts` and 1 in
+      `admin/quotes/quotes.spec.ts`. The security-boundaries hook timeout did not occur.
+    - The Task 04 suite (17) and the Task 05 suite (4) were re-run after the lint fix: 21/21 pass.
+    - The guard fails closed. With `BUSINESS_CENTRAL_DISCOVERY_URL` set to a `NotAllowed`
+      environment in the shell, `pnpm test:integration:modules` aborted in `globalSetup` before
+      any suite ran, with the environment-only refusal message. A missing URL was also refused.
+    - `pnpm build`: backend and cms build pass. The storefront build fails only on the missing
+      `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` (no storefront `.env` in this checkout; storefront
+      untouched).
+    - `pnpm lint`: backend has 0 errors and 13 warnings. Two warnings are new, both
+      `use-medusa-error-not-generic-error` in `business-central-test-environment.ts`, which is
+      deliberately Medusa-free for Jest `globalSetup`. The storefront lint fails on the same
+      missing env variable.
+  - **Open items:**
+    - Jira could not be transitioned to In Progress or Internal Review. The Atlassian MCP returned
+      `403 "The app is not installed on this instance"`. Move NIMBUS-148 manually.
+    - The new HTTP specs use the same `createCompanies({ name, email,
+      business_central_customer_number })` shape as the existing `create-order-workflow.spec.ts`.
+      Full `tsc` therefore reports the same pre-existing `ModuleCreateCompany` type error there.
+      Jest uses SWC and the build is unaffected.
+    - CI must set `BUSINESS_CENTRAL_DISCOVERY_URL` to an allowed test environment for integration
+      runs.
+- **Handover to:** user (code review and commit)
+- **Handover prompt:** Review the uncommitted NIMBUS-148 changes on `feature/NIMBUS-148`. The
+  change list is in `issues/NIMBUS-148/manifest.md`, and the only skeleton deviation is the
+  `prepare-bc-order.ts` StepResponse wrapping described above.
+  - Move NIMBUS-148 to Internal Review in Jira manually (the MCP could not reach Jira).
+  - Commit using the commit-messages skill.
+  - After merge, do the manual test-tenant check from PLAN.md "Verification": submit one real
+    order, confirm the BC-priced lines and the customer's currency, and repeat with a differing
+    currency to confirm the override.
+
+- **Date:** 2026-09-29
+- **Updated by:** main session (code review)
+- **Outcome:** Code review of the uncommitted NIMBUS-148 changes was completed with 0 must-fix,
+  4 should-fix and 3 nits. None blocks commit. Jira now works again: NIMBUS-148 was moved To Do →
+  In Progress. The workflow has no direct "Internal Review" transition (only Stop work / Finish
+  work / Park / Closed), so the final move is pending the user's confirmation.
+  - **should-1:** the duplicate guard is check-then-act. Two concurrent runs for one order (for
+    example NIMBUS-158's retry racing the subscriber) can both create a BC order. Add a lock
+    (Locking module) or a per-order workflow `transactionId`, at the latest with NIMBUS-158.
+  - **should-2:** a line POST that times out or has a network error is recorded as
+    `rejected_by_bc`, but BC may have created the line. That is an ambiguous outcome, like the
+    header case.
+  - **should-3:** `recordBcOrderOutcomeStep` overwrites all of `Order.metadata` from its own read
+    (read-merge-write). Any concurrent metadata write in between is lost. This is the same pattern
+    as NIMBUS-149, so it is acceptable for now; note it for NIMBUS-158.
+  - **should-4:** `partial` is `true` for `no_lines_resolved` even though nothing was sent.
+    NIMBUS-158 should not read `partial` as "some lines reached BC".
+  - **nits:** the record step's compensation is unreachable (it is the last step). The BC
+    `salesOrderId` is interpolated into the lines URL unescaped (BC GUID, low risk). The 2 new lint
+    warnings are justified.
+- **Handover to:** user (confirm Jira "Finish work" → Internal Review, then commit)
+- **Handover prompt:** Commit the NIMBUS-148 changes on `feature/NIMBUS-148` using the
+  commit-messages skill. Decide whether should-1/2 are fixed now or carried into NIMBUS-158.
+
+- **Date:** 2026-09-29
+- **Updated by:** main session (review follow-up)
+- **Outcome:** The user's review decisions were applied.
+  - **should-1 fixed with a transactionId.** `sendOrderToBusinessCentralWorkflow` now uses
+    `store: true`. The new exported `getSendOrderToBusinessCentralTransactionId(orderId)` gives
+    the per-order transaction id, and the subscriber passes it via `run({ context: { transactionId } })`.
+    - While one run is in flight, the workflow engine refuses a second run with the same id
+      (`SkipExecutionError`). This was verified in the in-memory and Redis engine sources.
+    - Finished runs are not retained, so a later retry with the same id runs normally.
+    - The subscriber logs a refused run at info level and does not treat it as an error.
+    - New tests: TC-18 (two overlapping runs make one BC order), TC-19 (a later retry with the same
+      id works), and subscriber TC-5 (the event handled twice at once makes one BC order).
+    - **NIMBUS-158 must run the workflow with the same transaction id helper.**
+    - The in-memory engine only protects within one process. Multi-instance deployments need the
+      Redis workflow engine.
+  - **should-2:** not fixed (user: "dont count").
+  - **should-3, should-4:** accepted as is.
+  - **Validation:**
+    - `integration-tests/http/business-central-order`: 24/24 pass.
+    - `integration-tests/http/order-ingestion`: 14/14 pass.
+    - `integration-tests/http/orderapi`: 7/7 pass.
+    - eslint on the changed files is clean.
+    - `tsc` shows only the known `createCompanies` TS2769 errors.
+- **Handover to:** user (Jira "Finish work" → Internal Review, commit)

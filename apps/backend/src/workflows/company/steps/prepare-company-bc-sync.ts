@@ -28,7 +28,7 @@ function joinAddressLines(line1: string, line2: string): string {
   customer transacts in the local currency (LCY), which is the normal state for domestic
   customers. Resolve it to an explicit code so Company.currency_code is always populated.
 */
-function resolveCurrencyCode(bcCurrencyCode: string | null): string {
+export function resolveCurrencyCode(bcCurrencyCode: string | null): string {
   if (bcCurrencyCode && bcCurrencyCode.trim()) {
     return bcCurrencyCode.trim();
   }

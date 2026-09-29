@@ -1,6 +1,6 @@
 # Task 04: Reusable BC Order-Submission Workflow (`prepare` / `submit` / `record`) — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 04
