@@ -4,9 +4,20 @@
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01
-**Date:** 2026-09-15
+**Date:** 2026-09-15 (reconciled 2026-09-29 against develop after NIMBUS-138/170)
 **Branch:** feature/NIMBUS-140 (from develop)
 **Depends on:** None
+
+> **Reconciliation note (2026-09-29):** `service.ts` changed substantially since the first
+> plan (NIMBUS-170 merged order history, NIMBUS-138 real return action + reservations). The
+> import-block and `listReturnReasons` anchors below were re-verified against develop. Do
+> **not** touch any `TEMP (NIMBUS-138)` code or the existing `listOrders`/`getOrder`/
+> `createReturnFromSalesOrder`/`listReturnReasons` methods.
+> **User decisions (2026-09-29):** Q1: there is **no related-order-number field**. BC's
+> External Document No. holds the portal's `requestId` (`RET-<hash>` from
+> `prepare-bc-return.ts`), not an order number, so it is neither mapped nor displayed. Q2:
+> only open (unposted) `salesReturnOrders` are listed, and posted-return history is out of
+> scope.
 
 ---
 
@@ -26,7 +37,13 @@ Business Central exposes a `salesReturnOrders` OData entity set (`Microsoft.NAV.
 
 **Key deviation from `listOrders`, and why:** `listOrders` first resolves the company's `customerNumber` to a BC customer GUID (`getCustomerId`) because the `salesOrder` entity type has a `customerId` (`Edm.Guid`) property that it filters on. The `salesReturnOrder` entity type has **no `customerId` field at all** — only `sellToCustomerNumber` (`Edm.String`, directly filterable). So `listReturns` filters `sellToCustomerNumber eq '<customerNumber>'` directly, with **no customer-GUID lookup round trip**. This is simpler than `listOrders`, not a shortcut — verified against the metadata, not assumed.
 
-**Known ambiguity (documented, not blocking):** The requirements ask for a "related order number" per return row. The `salesReturnOrder` entity type has no explicit "source sales order number" field. The best available field is `externalDocumentNumber` (`Edm.String`, MaxLength 35) — a general-purpose external reference field. `createReturnFromSalesOrder` (in this same service) is currently a STUB (see `// STUB (NIMBUS-138 task 09)` comment already in `service.ts`) — the real BC custom action that creates a return from a sales order has not been implemented yet, so which field the real BC action populates with the source order number is not yet confirmed. Map `relatedOrderNumber` from `externalDocumentNumber` now, with a code comment flagging this for revisit once NIMBUS-138 lands the real integration. Do not attempt to resolve this further — it is out of scope for NIMBUS-140.
+**Which endpoint (decided):** Use the standard v2.0 path `${discoveryUrl}/salesReturnOrders()`, the same base URL, token and company scoping as `listOrders`/`getOrder`. The tenant's Abakion customer-portal API (`api/abakion/customerPortal/v2.0/companies({BUSINESS_CENTRAL_COMPANY_ID})/salesReturnOrders`, see `issues/NIMBUS-138/abakion api metadata.xml`, which NIMBUS-138 uses for `salesOrderReservationEntries`) exposes an **identical** `salesReturnOrder` schema. Use it only if the sandbox walkthrough shows that the tenant's v2.0 API does not serve `salesReturnOrders`. The switch would change only the URL line. It would add a `BUSINESS_CENTRAL_COMPANY_ID` dependency through `this.getEnvironmentBaseUrl(...)` and `this.getCompanyId()`, the same way `listOrderReservations` does.
+
+**No related order number (decided, Q1):** `salesReturnOrder` has no source-sales-order field. The user confirmed that BC's `externalDocumentNumber` (External Document No.) holds the portal's `requestId`, the `RET-<hash>` idempotency key generated in `apps/backend/src/workflows/business-central-return/steps/prepare-bc-return.ts`. It is **not** an order number. `BCReturnListItem` therefore has no `relatedOrderNumber`, and `externalDocumentNumber` is neither requested nor mapped. It is not kept as a hidden `requestId` either, because nothing consumes it. TC-1's strict `toEqual` fails if an extra property is ever mapped.
+
+**Status wire values (decided):** BC serialises enum members by their XML-encoded names. The existing code already handles this for `customer.blocked` (`"_x0020_"`, see `BC_BLOCKED_UNBLOCKED_WIRE_VALUE`). `salesDocumentStatus` has `Pending_x0020_Approval` and `Pending_x0020_Prepayment`. The mapper therefore decodes `_x0020_` to a space so that the storefront shows "Pending Approval". The storefront status filter offers only `Open` and `Released`, whose wire values need no encoding (Task 04). This mirrors how `bc-order-filters` limits its options to `Open`/`Draft`.
+
+**Only open (unposted) returns are listed (decided, Q2):** BC deletes a Sales Return Order once it is fully received and credited, the same way it deletes fully posted sales orders. A return therefore disappears from the list once BC posts it. The user chose "just open": list `salesReturnOrders` only, with no posted-return history and no follow-up story for now.
 
 Item count per return (for the "Item count" list column) is computed by expanding `salesReturnOrderLines` on the same list query (`$expand=salesReturnOrderLines`) and counting only lines where `lineType === "Item"` (excluding comment/other line types) — mirroring how `prepare-bc-return.ts` already distinguishes real item lines via `line.lineType === "Item"`.
 
@@ -65,15 +82,9 @@ export type BCListReturnsParams = {
   search?: string;
 };
 
-// The related order number a return was created against. Business Central's
-// salesReturnOrder entity has no dedicated "source order" field, so this is
-// sourced from externalDocumentNumber (see NIMBUS-140 planning notes) —
-// revisit once NIMBUS-138 wires createReturnFromSalesOrder to the real BC
-// custom action and confirms which field it populates on the created return.
 export type BCReturnListItem = {
   id: string;
   number: string;
-  relatedOrderNumber: string;
   documentDate: string;
   status: string;
   itemCount: number;
@@ -114,10 +125,9 @@ New:
 
 **Edit 1 — add new type imports.**
 
-Old:
+Old (verified on develop 2026-09-29; `BCGetOrderBySalesOrderIdParams` was removed by NIMBUS-138, `BCOrderLineReservation` was added):
 ```typescript
 import type {
-  BCGetOrderBySalesOrderIdParams,
   BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
@@ -125,6 +135,7 @@ import type {
   BCOrderDetail,
   BCOrderInvoiceSummary,
   BCOrderLine,
+  BCOrderLineReservation,
   BCCreateReturnParams,
   BCCustomer,
   BCCustomerBlockedState,
@@ -137,7 +148,6 @@ import type {
 New:
 ```typescript
 import type {
-  BCGetOrderBySalesOrderIdParams,
   BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
@@ -147,6 +157,7 @@ import type {
   BCOrderDetail,
   BCOrderInvoiceSummary,
   BCOrderLine,
+  BCOrderLineReservation,
   BCCreateReturnParams,
   BCCustomer,
   BCCustomerBlockedState,
@@ -196,7 +207,6 @@ type BCSalesReturnOrderLineRaw = {
 type BCSalesReturnOrderRaw = {
   id: string;
   number: unknown;
-  externalDocumentNumber?: string;
   documentDate: string;
   status: string;
   salesReturnOrderLines?: BCSalesReturnOrderLineRaw[];
@@ -208,9 +218,9 @@ function mapSalesReturnOrderToListItem(
   return {
     id: item.id,
     number: requireBusinessCentralString(item.number, "number"),
-    relatedOrderNumber: optionalString(item.externalDocumentNumber),
     documentDate: item.documentDate,
-    status: item.status,
+    // BC sends enum members XML-encoded, e.g. "Pending_x0020_Approval".
+    status: optionalString(item.status).replace(/_x0020_/g, " "),
     itemCount: (item.salesReturnOrderLines ?? []).filter(
       (line) => line.lineType === "Item"
     ).length,
@@ -220,22 +230,11 @@ function mapSalesReturnOrderToListItem(
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
 ```
 
-**Edit 3 — add the `listReturns` method, right after `listReturnReasons` and before the `getCustomerId` private helper.**
+**Edit 3 — add the `listReturns` method, right after the end of the (real, NIMBUS-138) `listReturnReasons` method and before the `getCustomerId` private helper.**
 
-Old:
+Old (the tail of `listReturnReasons`, verified on develop 2026-09-29):
 ```typescript
-  // STUB (NIMBUS-138 task 09): replace with the verified BC return-reason source.
-  async listReturnReasons(): Promise<BCReturnReason[]> {
-    return [
-      { id: "DAMAGED", description: "Item arrived damaged or defective" },
-      { id: "WRONGITEM", description: "Wrong item was delivered" },
-      {
-        id: "NOTORDERED",
-        description: "Item was not ordered by the customer",
-      },
-      { id: "QUALITY", description: "Item does not meet expected quality" },
-      { id: "OTHER", description: "Other reason (specified separately)" },
-    ];
+    return [...reasons.values()];
   }
 
   private async getCustomerId(
@@ -243,18 +242,7 @@ Old:
 
 New:
 ```typescript
-  // STUB (NIMBUS-138 task 09): replace with the verified BC return-reason source.
-  async listReturnReasons(): Promise<BCReturnReason[]> {
-    return [
-      { id: "DAMAGED", description: "Item arrived damaged or defective" },
-      { id: "WRONGITEM", description: "Wrong item was delivered" },
-      {
-        id: "NOTORDERED",
-        description: "Item was not ordered by the customer",
-      },
-      { id: "QUALITY", description: "Item does not meet expected quality" },
-      { id: "OTHER", description: "Other reason (specified separately)" },
-    ];
+    return [...reasons.values()];
   }
 
   // Filters directly on sellToCustomerNumber: unlike salesOrder, the
@@ -356,7 +344,8 @@ describe("BusinessCentralModuleService.listReturns", () => {
             {
               id: "return-1",
               number: "RET-1000",
-              externalDocumentNumber: "SO-1000",
+              // External Document No. holds the portal requestId; it must not be mapped.
+              externalDocumentNumber: "RET-3f2a9c1b",
               documentDate: "2026-08-01",
               status: "Open",
               salesReturnOrderLines: [
@@ -378,7 +367,6 @@ describe("BusinessCentralModuleService.listReturns", () => {
         {
           id: "return-1",
           number: "RET-1000",
-          relatedOrderNumber: "SO-1000",
           documentDate: "2026-08-01",
           status: "Open",
           itemCount: 2,
@@ -450,6 +438,42 @@ describe("BusinessCentralModuleService.listReturns", () => {
     expect(returnsRequest).toContain("contains%28number%2C%27RET-1%27%29");
     expect(returnsRequest).toContain("%24expand=salesReturnOrderLines");
   });
+
+  // TC-5: edge case — XML-encoded enum statuses are decoded; missing lines give itemCount 0.
+  it("decodes XML-encoded status values and counts zero items when no lines are expanded", async () => {
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ access_token: "access-token" }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          "@odata.count": 1,
+          value: [
+            {
+              id: "return-2",
+              number: "RET-1001",
+              documentDate: "2026-08-02",
+              status: "Pending_x0020_Approval",
+            },
+          ],
+        })
+      );
+
+    const service = new BusinessCentralModuleService();
+
+    const result = await service.listReturns({
+      customerNumber: "10000",
+      limit: 20,
+      offset: 0,
+    });
+
+    expect(result.returns[0]).toEqual({
+      id: "return-2",
+      number: "RET-1001",
+      documentDate: "2026-08-02",
+      status: "Pending Approval",
+      itemCount: 0,
+    });
+  });
 });
 ```
 
@@ -458,7 +482,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
 ### TC-1: Happy path — maps a return with mixed line types
 - **Given:** BC returns one `salesReturnOrder` row with 2 "Item" lines and 1 "Comment" line, for a customer number.
 - **When:** `listReturns({ customerNumber, limit: 20, offset: 0 })` is called.
-- **Then:** The result contains one `BCReturnListItem` with `itemCount: 2` (comment line excluded), `relatedOrderNumber` sourced from `externalDocumentNumber`, and exactly 2 `fetch` calls are made (token + list — no customer-GUID lookup).
+- **Then:** The result contains one `BCReturnListItem` with `itemCount: 2` (comment line excluded) and no property derived from `externalDocumentNumber` (which holds the portal `requestId`), and exactly 2 `fetch` calls are made (token + list — no customer-GUID lookup).
 
 ### TC-2: Edge case — customer has no returns
 - **Given:** BC returns `{ "@odata.count": 0, value: [] }` for the filtered query.
@@ -475,11 +499,16 @@ describe("BusinessCentralModuleService.listReturns", () => {
 - **When:** `listReturns` is called.
 - **Then:** The outgoing request URL's `$filter` contains all five conditions ANDed together, and `$expand=salesReturnOrderLines` is present.
 
+### TC-5: Edge case — encoded status and no lines
+- **Given:** BC returns a row with `status: "Pending_x0020_Approval"` and no expanded lines.
+- **When:** `listReturns` is called.
+- **Then:** The item has `status: "Pending Approval"` and `itemCount: 0`.
+
 ## Implementation Steps
 
 1. Open `apps/backend/src/modules/business-central/types.ts` and apply Edit 1 and Edit 2 exactly as specified above.
 2. Open `apps/backend/src/modules/business-central/service.ts` and apply Edit 1, Edit 2, and Edit 3 exactly as specified above. Do not modify any other method.
 3. Open `apps/backend/src/modules/business-central/__tests__/service.spec.ts` and append the new `describe("BusinessCentralModuleService.listReturns", ...)` block at the end of the file, after the existing `describe("BusinessCentralModuleService.listOrders", ...)` block's closing `});`.
-4. Run `cd apps/backend && pnpm test:integration:modules` and confirm all tests pass, including the 4 new `listReturns` tests and all pre-existing tests in the file (unchanged).
+4. Run `cd apps/backend && pnpm test:integration:modules` and confirm the 5 new `listReturns` tests pass. Known baseline (verified 2026-09-29 on develop): `listOrders › stops filling from salesInvoices after the round-trip guardrail even if the page stays short` already fails, and it is reported twice because Jest also picks up the compiled copy under `.medusa/server/`. Do not fix it in this task. Every other pre-existing BC module test must still pass.
 5. Run `pnpm build` from the repo root (or `cd apps/backend && pnpm build`) and confirm no TypeScript errors.
 6. Run `pnpm lint` from the repo root and confirm no new lint errors in the changed files.

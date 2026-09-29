@@ -1,12 +1,29 @@
-# Task 04: Return overview components (card, filters, overview) — Implementation Plan
+# Task 04: Return overview components (card, filters, overview) and all-locale translations — Implementation Plan
 
 **Status:** TODO
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 04
-**Date:** 2026-09-15
+**Date:** 2026-09-15 (reconciled 2026-09-29 against develop)
 **Branch:** feature/NIMBUS-140 (from develop)
 **Depends on:** Task 03
+
+> **Reconciliation note (2026-09-29):**
+> - **All message-catalog edits moved here from Task 05**, so this task's tests pass on their
+>   own. The storefront now has **8** locales (`en, da, de, fr, it, no, pl, sv`; NIMBUS-163..169).
+>   `src/__tests__/lib/i18n/message-catalogs.test.ts` fails if any locale's key paths differ
+>   from `en.json`. The NIMBUS-167 DeepL script was never built (NIMBUS-167 PROGRESS
+>   2026-09-01), so translations are hand-authored and given verbatim below.
+> - The insertion anchor changed. `Account.bcOrdersPage` is no longer the last `Account` key,
+>   because NIMBUS-138 added `Account.bcOrderLineFulfillment` after it. The old
+>   `"bcOrdersPage": {...} }` closing anchor no longer exists.
+> - **User decisions (2026-09-29):** no related-order-number column, and no `relatedOrderLabel`
+>   key in any locale (Q1). Only open (unposted) returns are listed (Q2).
+> - The status filter offers only `Open` and `Released` (see Task 01, "Status wire values").
+> - The item-count label is `"Items: {count}"` rather than `"{count} items"`. This avoids ICU
+>   plural rules (Polish has three forms), which the Jest `next-intl` mock does not evaluate.
+> - German uses "Rücksendung(en)", matching NIMBUS-138's existing `Account.bcOrderReturn`
+>   copy. Every other locale reuses the return term already used in its `bcOrderReturn`.
 
 ---
 
@@ -24,13 +41,14 @@
 
 `apps/storefront/__mocks__/next-intl.tsx` and `apps/storefront/__mocks__/next-intl/server.ts` are applied automatically by Jest to every test in this app (no `jest.mock("next-intl")` call needed). They resolve `useTranslations`/`getTranslations` against the **real `messages/en.json`** catalog. This means:
 - Component tests can assert literal English copy (e.g. `screen.getByText("Something went wrong")`) and it will only pass once the real key exists in `messages/en.json`.
-- **Task 05 adds the `en.json` (and other locale) keys.** If you run this task's tests before Task 05's message-file edits land, the translation-dependent assertions will fail (the mock falls back to returning the raw key string, e.g. `"errorHeading"`, when a key is missing). Implement Task 05's message file edits together with or before running this task's tests, or accept the tests will not pass until Task 05 is merged. The manifest lists Task 04 as depending only on Task 03 because the *code* only needs Task 03's types — but test execution needs Task 05's translation keys to be present. If working sequentially, do Tasks 04 and 05 back-to-back before running either task's test suite standalone.
+- The mock's interpolation is a plain `{name}` string replace. It does not evaluate ICU `plural`/`select`, which is why no ICU plural syntax is used below.
+- **This task adds all the keys** (the components' keys plus `Account.nav.returnsLabel` and `Account.bcReturnsPage.heading`, which Task 05 consumes) to all 8 catalogs. Apply the message-catalog edits (step 1 of Implementation Steps) before running the tests.
 
 ## Solution Design
 
 Build three components that together render the return list, mirroring the existing `bc-order-card` / `bc-order-filters` / `bc-order-overview` family in `apps/storefront/src/modules/account/components/` field-for-field, adapted for `BCReturnListItem` (from Task 03) instead of `BCOrder`. The existing `resource-pagination` component (`apps/storefront/src/modules/account/components/resource-pagination/index.tsx`) is **generic and reused as-is** — no changes needed there.
 
-Per SCOPE.md, each return row must show: return number, related order number, status, date requested, item count — plus a details link to the (future, NIMBUS-141) return detail route `/account/returns/{number}`.
+Each return row shows the return number, status, date requested and item count, plus a details link to the (future, NIMBUS-141) return detail route `/account/returns/{number}`. **There is no related-order-number column** (user decision Q1, 2026-09-29): BC's External Document No. holds the portal's `requestId`, not an order number, and BC has no source-order field on the return header. This deliberately deviates from SCOPE.md's field list.
 
 **Known test-renderer limitation (do not fight it):** `BcReturnOverview` and `BcReturnCard` are both `async` Server Components. The existing `bc-order-overview` test file only tests the `error` and `empty` states of `BcOrderOverview` — it deliberately does **not** test the non-empty/list-rendering path, because React Testing Library's renderer cannot render an unresolved async component nested as a JSX child (see the comment in `apps/storefront/src/__tests__/app/bcorders-page.test.tsx`). Mirror this exactly: do not add a "renders a list of cards" test to `BcReturnOverview`'s test file. `BcReturnCard` itself can be tested directly because its own tests `await` it directly before rendering (same pattern as the existing `bc-order-card` test).
 
@@ -81,17 +99,6 @@ const BcReturnCard = async ({ item }: BcReturnCardProps) => {
             data-testid="bc-return-status"
           >
             {item.status}
-          </span>
-        </div>
-
-        <div className="flex items-center pl-4">
-          <span
-            className="text-small-regular text-ui-fg-base"
-            data-testid="bc-return-related-order"
-          >
-            {item.relatedOrderNumber
-              ? t("relatedOrderLabel", { number: item.relatedOrderNumber })
-              : "—"}
           </span>
         </div>
 
@@ -208,12 +215,8 @@ import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
 
-const BC_RETURN_STATUSES = [
-  "Open",
-  "Released",
-  "Pending Approval",
-  "Pending Prepayment",
-] as const
+// Only statuses whose BC wire value has no XML-encoded space (see Task 01).
+const BC_RETURN_STATUSES = ["Open", "Released"] as const
 
 type BcReturnFiltersProps = {
   currentStatus?: string
@@ -395,7 +398,6 @@ import BcReturnCard from "@/modules/account/components/bc-return-card"
 const item = {
   id: "return-1",
   number: "RET-1",
-  relatedOrderNumber: "SO-1000",
   documentDate: "2026-01-01T00:00:00.000Z",
   status: "Open",
   itemCount: 2,
@@ -439,27 +441,22 @@ describe("BcReturnCard", () => {
   })
 
   // TC-3: integration — all required list fields are rendered.
-  it("renders return number, related order number, status, date and item count", async () => {
+  it("renders return number, status, date and item count", async () => {
     const element = await BcReturnCard({ item })
     render(element)
 
     expect(screen.getByTestId("bc-return-number")).toHaveTextContent("RET-1")
-    expect(screen.getByTestId("bc-return-related-order")).toHaveTextContent(
-      "SO-1000"
-    )
+    expect(screen.getByTestId("bc-return-date")).not.toBeEmptyDOMElement()
     expect(screen.getByTestId("bc-return-status")).toHaveTextContent("Open")
-    expect(screen.getByTestId("bc-return-item-count")).toHaveTextContent("2")
+    expect(screen.getByTestId("bc-return-item-count")).toHaveTextContent("Items: 2")
   })
 
-  // TC-4: edge case — a missing related order number falls back to an em dash instead of a blank "Order #".
-  it("shows a fallback when there is no related order number", async () => {
-    const itemWithoutOrder = { ...item, relatedOrderNumber: "" }
-    const element = await BcReturnCard({ item: itemWithoutOrder })
+  // TC-4: regression guard — no related-order column (External Document No. is the portal requestId).
+  it("does not render a related order number", async () => {
+    const element = await BcReturnCard({ item })
     render(element)
 
-    expect(screen.getByTestId("bc-return-related-order")).toHaveTextContent(
-      "—"
-    )
+    expect(screen.queryByTestId("bc-return-related-order")).toBeNull()
   })
 })
 ```
@@ -533,15 +530,13 @@ describe("BcReturnFilters", () => {
     expect(screen.getByText("Clear")).toBeInTheDocument()
   })
 
-  // TC-1: integration — the status dropdown lists all four BC return statuses.
-  it("lists all Business Central return statuses in the status filter", () => {
+  // TC-1: integration — the status dropdown lists "All statuses" plus Open and Released only.
+  it("lists the filterable Business Central return statuses", () => {
     render(<BcReturnFilters />)
 
-    const statusSelect = screen.getByLabelText("Status")
-    expect(statusSelect).toContainHTML("Open")
-    expect(statusSelect).toContainHTML("Released")
-    expect(statusSelect).toContainHTML("Pending Approval")
-    expect(statusSelect).toContainHTML("Pending Prepayment")
+    const statusSelect = screen.getByLabelText("Status") as HTMLSelectElement
+    const optionValues = Array.from(statusSelect.options).map((o) => o.value)
+    expect(optionValues).toEqual(["", "Open", "Released"])
   })
 })
 ```
@@ -559,14 +554,14 @@ describe("BcReturnFilters", () => {
 - **Then:** The details link `href` contains the URL-encoded form of that number.
 
 ### TC-3: `BcReturnCard` integration — all required fields render
-- **Given:** An item with all five list fields populated.
+- **Given:** An item with number, date, status and item count populated.
 - **When:** The card is rendered.
-- **Then:** Return number, related order number, status, and item count each appear in their respective `data-testid` element.
+- **Then:** Return number, date, status and item count each appear in their respective `data-testid` element.
 
-### TC-4: `BcReturnCard` edge case — missing related order number
-- **Given:** `relatedOrderNumber: ""`.
+### TC-4: `BcReturnCard` regression guard — no related order number
+- **Given:** A standard `BCReturnListItem` (the type has no related-order field).
 - **When:** The card is rendered.
-- **Then:** The related-order element shows a `"—"` fallback instead of an empty/malformed label.
+- **Then:** No `bc-return-related-order` element is rendered.
 
 ### TC-5: `BcReturnOverview` happy path — error state
 - **Given:** `error: true`.
@@ -581,16 +576,281 @@ describe("BcReturnFilters", () => {
 ### TC-7: `BcReturnFilters` integration — status options match the BC enum
 - **Given:** The filters component is rendered with no props.
 - **When:** The status `<select>` is inspected.
-- **Then:** It lists `Open`, `Released`, `Pending Approval`, and `Pending Prepayment`.
+- **Then:** Its option values are exactly `""` (All statuses), `Open`, and `Released`.
+
+### TC-8: Message catalogs — key parity across all 8 locales (existing test, must stay green)
+- **Given:** The new keys have been added to `en, da, de, fr, it, no, pl, sv`.
+- **When:** `src/__tests__/lib/i18n/message-catalogs.test.ts` runs.
+- **Then:** Every locale parses, and its key paths equal `en.json`'s key paths.
+
+## Message Catalogs (all 8 locales)
+
+Apply two edits to **each** of `apps/storefront/messages/{en,da,de,fr,it,no,pl,sv}.json`. Preserve 2-space indentation and the existing key order. Only insert keys; do not reformat anything else.
+
+**Edit A — `Account.nav`:** insert a `returnsLabel` line directly after the existing `"bcOrdersLabel": "…",` line (so it sits between `bcOrdersLabel` and `claimsLabel`), for example in `en.json`:
+
+```json
+      "bcOrdersLabel": "BC Orders",
+      "returnsLabel": "Returns",
+      "claimsLabel": "Claims",
+```
+
+**Edit B — new `Account` namespaces:** insert the four new namespaces directly after the `Account.bcOrdersPage` object and before `Account.bcOrderLineFulfillment`, which is now the last `Account` key. The anchor in every locale is:
+
+```json
+    "bcOrdersPage": {
+      "heading": "<locale bcOrdersPage heading>"
+    },
+    "bcOrderLineFulfillment": {
+```
+
+and becomes `bcOrdersPage`, then the four blocks below, then `"bcOrderLineFulfillment": {` unchanged.
+
+| Locale | `bcOrdersPage.heading` (anchor) | `nav.returnsLabel` |
+|---|---|---|
+| `en` | BC Orders | Returns |
+| `da` | BC-ordrer | Returneringer |
+| `de` | BC-Bestellungen | Rücksendungen |
+| `fr` | Commandes BC | Retours |
+| `it` | Ordini BC | Resi |
+| `no` | BC-bestillinger | Returer |
+| `pl` | Zamówienia BC | Zwroty |
+| `sv` | BC-beställningar | Returer |
+
+### `en.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Returns"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Something went wrong",
+      "errorMessage": "We were unable to load your returns. Please try again.",
+      "tryAgainLabel": "Try again",
+      "emptyHeading": "No returns found",
+      "emptyMessage": "You haven't submitted any returns yet."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "All statuses",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "searchLabel": "Search",
+      "searchPlaceholder": "Return number…",
+      "clearLabel": "Clear"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Details",
+      "itemCountLabel": "Items: {count}"
+    },
+```
+
+### `da.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Returneringer"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Noget gik galt",
+      "errorMessage": "Vi kunne ikke indlæse dine returneringer. Prøv igen.",
+      "tryAgainLabel": "Prøv igen",
+      "emptyHeading": "Ingen returneringer fundet",
+      "emptyMessage": "Du har endnu ikke indsendt nogen returneringer."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alle statusser",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "searchLabel": "Søg",
+      "searchPlaceholder": "Returnummer…",
+      "clearLabel": "Ryd"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Detaljer",
+      "itemCountLabel": "Varer: {count}"
+    },
+```
+
+### `de.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Rücksendungen"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Etwas ist schiefgelaufen",
+      "errorMessage": "Ihre Rücksendungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "tryAgainLabel": "Erneut versuchen",
+      "emptyHeading": "Keine Rücksendungen gefunden",
+      "emptyMessage": "Sie haben noch keine Rücksendungen eingereicht."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alle Status",
+      "fromLabel": "Von",
+      "toLabel": "Bis",
+      "searchLabel": "Suche",
+      "searchPlaceholder": "Rücksendenummer…",
+      "clearLabel": "Löschen"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Details",
+      "itemCountLabel": "Artikel: {count}"
+    },
+```
+
+### `fr.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Retours"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Une erreur s'est produite",
+      "errorMessage": "Nous n'avons pas pu charger vos retours. Veuillez réessayer.",
+      "tryAgainLabel": "Réessayer",
+      "emptyHeading": "Aucun retour trouvé",
+      "emptyMessage": "Vous n'avez encore soumis aucun retour."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Statut",
+      "allStatusesOption": "Tous les statuts",
+      "fromLabel": "De",
+      "toLabel": "À",
+      "searchLabel": "Rechercher",
+      "searchPlaceholder": "Numéro de retour…",
+      "clearLabel": "Effacer"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Détails",
+      "itemCountLabel": "Articles : {count}"
+    },
+```
+
+### `it.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Resi"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Qualcosa è andato storto",
+      "errorMessage": "Non è stato possibile caricare i tuoi resi. Riprova.",
+      "tryAgainLabel": "Riprova",
+      "emptyHeading": "Nessun reso trovato",
+      "emptyMessage": "Non hai ancora inviato alcun reso."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Stato",
+      "allStatusesOption": "Tutti gli stati",
+      "fromLabel": "Da",
+      "toLabel": "A",
+      "searchLabel": "Cerca",
+      "searchPlaceholder": "Numero reso…",
+      "clearLabel": "Cancella"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Dettagli",
+      "itemCountLabel": "Articoli: {count}"
+    },
+```
+
+### `no.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Returer"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Noe gikk galt",
+      "errorMessage": "Vi kunne ikke laste inn returene dine. Prøv igjen.",
+      "tryAgainLabel": "Prøv igjen",
+      "emptyHeading": "Ingen returer funnet",
+      "emptyMessage": "Du har ikke sendt inn noen returer ennå."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alle statuser",
+      "fromLabel": "Fra",
+      "toLabel": "Til",
+      "searchLabel": "Søk",
+      "searchPlaceholder": "Returnummer…",
+      "clearLabel": "Fjern"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Detaljer",
+      "itemCountLabel": "Varer: {count}"
+    },
+```
+
+### `pl.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Zwroty"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Coś poszło nie tak",
+      "errorMessage": "Nie udało się załadować Twoich zwrotów. Spróbuj ponownie.",
+      "tryAgainLabel": "Spróbuj ponownie",
+      "emptyHeading": "Nie znaleziono zwrotów",
+      "emptyMessage": "Nie zgłoszono jeszcze żadnych zwrotów."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Wszystkie statusy",
+      "fromLabel": "Od",
+      "toLabel": "Do",
+      "searchLabel": "Szukaj",
+      "searchPlaceholder": "Numer zwrotu…",
+      "clearLabel": "Wyczyść"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Szczegóły",
+      "itemCountLabel": "Pozycje: {count}"
+    },
+```
+
+### `sv.json` — Edit B insert (after `bcOrdersPage`, before `bcOrderLineFulfillment`)
+
+```json
+    "bcReturnsPage": {
+      "heading": "Returer"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Något gick fel",
+      "errorMessage": "Vi kunde inte läsa in dina returer. Försök igen.",
+      "tryAgainLabel": "Försök igen",
+      "emptyHeading": "Inga returer hittades",
+      "emptyMessage": "Du har inte skickat in några returer ännu."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alla statusar",
+      "fromLabel": "Från",
+      "toLabel": "Till",
+      "searchLabel": "Sök",
+      "searchPlaceholder": "Returnummer…",
+      "clearLabel": "Rensa"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Detaljer",
+      "itemCountLabel": "Artiklar: {count}"
+    },
+```
+
+Check after editing: `node -e "for (const l of ['en','da','de','fr','it','no','pl','sv']) JSON.parse(require('fs').readFileSync('apps/storefront/messages/'+l+'.json','utf8'))"` must exit 0 (run it from the repo root), and `message-catalogs.test.ts` must pass.
 
 ## Implementation Steps
 
-1. Create `apps/storefront/src/modules/account/components/bc-return-card/index.tsx` exactly as specified.
-2. Create `apps/storefront/src/modules/account/components/bc-return-overview/index.tsx` exactly as specified.
-3. Create `apps/storefront/src/modules/account/components/bc-return-filters/index.tsx` exactly as specified.
-4. Do **not** create a new pagination component — `resource-pagination` is reused as-is via import.
-5. Create the three new test files exactly as specified.
-6. This task's translation-dependent test assertions (e.g. `"Something went wrong"`, `"No returns found"`, `"Return number…"`, `"Status"`) will only pass once Task 05's message-file edits (adding `Account.bcReturnOverview`, `Account.bcReturnFilters`, `Account.bcReturnCard` keys to `messages/en.json`) are also in place. If implementing sequentially, apply Task 05's message-file edits before running this task's test suite.
-7. Run `cd apps/storefront && pnpm test` and confirm all new tests pass.
+1. Apply Edits A and B from "Message Catalogs" to all 8 catalogs and run the JSON parse check.
+2. Create `apps/storefront/src/modules/account/components/bc-return-card/index.tsx` exactly as specified.
+3. Create `apps/storefront/src/modules/account/components/bc-return-overview/index.tsx` exactly as specified.
+4. Create `apps/storefront/src/modules/account/components/bc-return-filters/index.tsx` exactly as specified.
+5. Do **not** create a new pagination component. `resource-pagination` is reused as-is through an import.
+6. Create the three new test files exactly as specified.
+7. Run `cd apps/storefront && pnpm test` and confirm that all new tests pass, together with `src/__tests__/lib/i18n/message-catalogs.test.ts` (key parity for all 8 locales).
 8. Run `pnpm build` from the repo root and confirm no TypeScript errors.
 9. Run `pnpm lint` from the repo root and confirm no new lint errors.

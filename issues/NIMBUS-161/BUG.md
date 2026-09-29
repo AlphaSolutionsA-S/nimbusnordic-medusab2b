@@ -1,13 +1,16 @@
 # Company freshness sync can refresh the wrong company
 
 - **Tracker:** JIRA — [NIMBUS-161](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-161) (relates to NIMBUS-160)
-- **Severity:** Major
+- **Severity:** Medium (downgraded 2026-09-29 — no ownership gap exists, see Correction)
 - **Area:** Backend — `apps/backend/src/api/store/companies/[id]/route.ts` (Business Central freshness sync, introduced in NIMBUS-160)
 - **Reported by:** Claude Code (code review of NIMBUS-160), on behalf of klp@alpha-solutions.dk
 - **Reported at:** 2026-08-24T11:59:36Z
 
 ## Summary
 The `GET /store/companies/:id` freshness check reads the staleness of the company identified by the URL `:id`, but the Business Central sync it triggers always refreshes the company linked to the **authenticated customer** (via `customer.employee.company`), not the company identified by `:id`. There is no check that these are the same company, and `/store/companies/:id` has no ownership/role middleware restricting `:id` to the caller's own company. In today's single-flow storefront usage the two happen to always match, but nothing enforces it, so the route silently does the wrong thing whenever they diverge.
+
+## Correction (2026-09-29)
+The claim below that `/store/companies/:id` has no ownership check is **incorrect**. `GET /store/companies/:id` is protected by `ensureCompanyAccess(false)` ([`middlewares.ts:53-60`](../../apps/backend/src/api/store/companies/middlewares.ts)), which runs `authorizeCompanyAccessWorkflow` against `:id`. A customer cannot read another company or trigger a sync through it, so the reproduction steps below are rejected by access control today. The sync-target mismatch in the route is still real but latent: it only misbehaves if company access is relaxed in the future. See `SCOPE.md`.
 
 ## Steps to reproduce
 1. Authenticate as a customer belonging to Company A, with `business_central_synced_at` fresh (< 10 minutes old).
