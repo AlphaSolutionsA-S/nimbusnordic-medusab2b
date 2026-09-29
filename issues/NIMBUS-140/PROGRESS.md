@@ -137,3 +137,62 @@
   - Finally, run `pnpm build` and `pnpm lint` from the root,
     `cd apps/backend && pnpm test:integration:modules && pnpm test:unit`, and
     `cd apps/storefront && pnpm test`, per the Verification section of PLAN.md.
+
+- **Date:** 2026-09-29
+- **Updated by:** implementor agent
+- **Outcome:** Implemented all five tasks (01 → 05) on `feature/NIMBUS-140`. All task files
+  and `manifest.md` are marked Done. Nothing is committed or pushed, and Jira is untouched.
+  - **Backend:** `listReturns` (types, service, mapper, 5 tests); `GET /store/bc-returns`
+    (validators, middlewares, route, registration in `store/middlewares.ts`, 3 validator tests).
+  - **Storefront:** `BCReturnList*` types and `listBCReturns` (3 tests); `bc-return-card`,
+    `bc-return-filters` and `bc-return-overview` (with tests); new keys in all 8 catalogs,
+    which stay key-identical; `/account/returns` page and `loading.tsx` (1 test); a
+    top-level "Returns" nav entry in both nav variants (1 test).
+  - No related order number; `externalDocumentNumber` is not mapped. Only open
+    `salesReturnOrders` are listed. NIMBUS-138 `TEMP` code and the existing BC methods are
+    untouched.
+  - **Skeleton deviation (1):** the Task 01 `service.ts` import anchor was stale, because
+    the block also imports `BCCreatedSalesOrder`, `BCItem*`, `BCSalesOrder*` and more. The
+    three new type names were inserted into the real block in alphabetical position. All
+    other skeletons were applied verbatim.
+  - **Line endings:** `core.autocrlf=true`, so the index is LF and the working tree is CRLF
+    for `.ts`/`.tsx` and `messages/*.json` alike. Every edited and new file keeps a
+    consistent CRLF working-tree ending, matching its siblings. The seven non-`en`
+    catalogs keep their missing trailing newline.
+- **Validation:**
+  - `apps/backend pnpm test:integration:modules` (throwaway Postgres; test BC discovery URL
+    set in the shell only): 159 passed, 2 failed. Both failures are the known pre-existing
+    `listOrders` round-trip-guardrail test (src and `.medusa/server` copies). The 5 new
+    `listReturns` tests pass.
+  - `apps/backend pnpm test:unit`: 15 suites, 89/89 passed, including the 3 new ones.
+  - `apps/storefront pnpm test` (dummy `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` in the shell):
+    138/140 suites and 263/266 tests passed. The 3 failures are pre-existing and unrelated.
+    I reproduced them with this change stashed: `product-tabs` (x2, "React Element from an
+    older version of React") and `main-layout` (promo-banner copy). `message-catalogs.test.ts`
+    and all new or extended tests pass.
+  - Root `pnpm lint`: exit 0, 0 errors. All warnings are pre-existing, in files not touched
+    here.
+  - Root `pnpm build`: backend and admin built successfully. The storefront compiled, then
+    failed at "Collecting page data" for `/[countryCode]/categories/[...category]`
+    (`generateStaticParams`: "fetch failed", because no Medusa backend is running). That is
+    environmental and not caused by this change. `next build` skips type validation here,
+    so `tsc --noEmit` was run for both apps. There are no errors in the new or changed
+    code; the remaining errors are pre-existing (backend `integration-tests/`; storefront
+    fixtures in `account-nav.test.tsx` lines 27/34/101, `company-card-bc-readonly.test.tsx`,
+    `profile-card`, `cart-drawer`).
+  - `pnpm` was not on PATH (only `corepack`), so turbo was run through a temporary
+    scratchpad `pnpm` shim. No global or repo config changed.
+- **Open items:** Rebase on develop before merging, because NIMBUS-138 is still editing
+  `service.ts`, `types.ts` and `messages/*.json`. Still to do: the sandbox smoke test from the
+  PLAN.md Verification section (the v2.0 tenant serves `salesReturnOrders`; a return created
+  through NIMBUS-138 appears; empty and error states), and a full storefront build against a
+  running backend. NIMBUS-141 builds `/account/returns/{number}`.
+- **Handover to:** user (code review and commit)
+- **Handover prompt:** Review the uncommitted NIMBUS-140 changes on `feature/NIMBUS-140`
+  (`git status`: 16 modified source files plus the updated issue docs, 14 new files under `apps/backend/src/api/store/bc-returns/`
+  and `apps/storefront/src/...bc-return-*`/`returns/`). Check them against
+  `issues/NIMBUS-140/PLAN.md` and tasks 01–05, then commit using the commit-messages
+  convention and rebase on develop. Run the sandbox smoke test from PLAN.md's Verification
+  section with a B2B customer that has a BC customer number. If the tenant's v2.0 API does
+  not serve `salesReturnOrders`, switch the URL line in `listReturns` to the Abakion
+  `customerPortal` path (Task 01). Then move NIMBUS-140 to Internal Review in Jira.

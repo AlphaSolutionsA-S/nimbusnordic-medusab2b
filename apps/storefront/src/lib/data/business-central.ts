@@ -6,6 +6,8 @@ import type {
   BCOrderDetail,
   BCOrderListParams,
   BCOrderListResponse,
+  BCReturnListParams,
+  BCReturnListResponse,
   BCReturnOrder,
   BCReturnReason,
   BCReturnRequestBody,
@@ -39,6 +41,28 @@ export const listBCOrders = async (
   }
 
   return sdk.client.fetch<BCOrderListResponse>("/store/bc-orders", {
+    method: "GET",
+    headers,
+    query: {
+      limit: params.limit ?? 20,
+      offset: params.offset ?? 0,
+      ...(params.status ? { status: params.status } : {}),
+      ...(params.date_from ? { date_from: params.date_from } : {}),
+      ...(params.date_to ? { date_to: params.date_to } : {}),
+      ...(params.search ? { search: params.search } : {}),
+    },
+    credentials: "include",
+  })
+}
+
+export const listBCReturns = async (
+  params: BCReturnListParams = {}
+): Promise<BCReturnListResponse> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  return sdk.client.fetch<BCReturnListResponse>("/store/bc-returns", {
     method: "GET",
     headers,
     query: {

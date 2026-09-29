@@ -127,4 +127,20 @@ describe('AccountNav', () => {
     expect(bcOrdersLink).toHaveAttribute('href', expect.stringContaining('/account/bcorders'));
     expect(claimsLink).toHaveAttribute('href', expect.stringContaining('/account/claims'));
   });
+
+  // TC-1 (integration/wiring): Returns is a top-level nav entry (not nested under
+  // Orders), present in both nav variants with the correct href.
+  it('Returns link is a top-level entry in both nav variants', () => {
+    render(<AccountNav customer={mockCustomer} numPendingApprovals={0} />);
+
+    const desktopNav = screen.getByTestId('account-nav');
+    const desktopReturnsLink = within(desktopNav).getByTestId('returns-link');
+    expect(desktopReturnsLink).toBeInTheDocument();
+    expect(desktopReturnsLink).toHaveAttribute('href', expect.stringContaining('/account/returns'));
+
+    const mobileNav = screen.getByTestId('mobile-account-nav');
+    const mobileReturnsLink = within(mobileNav).getByTestId('returns-link');
+    expect(mobileReturnsLink).toBeInTheDocument();
+    expect(mobileReturnsLink).toHaveAttribute('href', expect.stringContaining('/account/returns'));
+  });
 });

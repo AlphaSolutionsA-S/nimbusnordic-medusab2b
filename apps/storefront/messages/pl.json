@@ -176,6 +176,7 @@
       "addressesLabel": "Adresy",
       "ordersLabel": "Zamówienia",
       "bcOrdersLabel": "Zamówienia BC",
+      "returnsLabel": "Zwroty",
       "claimsLabel": "Reklamacje",
       "approvalsLabel": "Zatwierdzenia",
       "quotesLabel": "Wyceny",
@@ -485,6 +486,29 @@
     },
     "bcOrdersPage": {
       "heading": "Zamówienia BC"
+    },
+    "bcReturnsPage": {
+      "heading": "Zwroty"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Coś poszło nie tak",
+      "errorMessage": "Nie udało się załadować Twoich zwrotów. Spróbuj ponownie.",
+      "tryAgainLabel": "Spróbuj ponownie",
+      "emptyHeading": "Nie znaleziono zwrotów",
+      "emptyMessage": "Nie zgłoszono jeszcze żadnych zwrotów."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Wszystkie statusy",
+      "fromLabel": "Od",
+      "toLabel": "Do",
+      "searchLabel": "Szukaj",
+      "searchPlaceholder": "Numer zwrotu…",
+      "clearLabel": "Wyczyść"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Szczegóły",
+      "itemCountLabel": "Pozycje: {count}"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",

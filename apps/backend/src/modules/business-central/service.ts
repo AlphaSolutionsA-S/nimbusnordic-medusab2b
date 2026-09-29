@@ -7,6 +7,8 @@ import type {
   BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
+  BCListReturnsParams,
+  BCListReturnsResult,
   BCOrder,
   BCOrderDetail,
   BCOrderInvoiceSummary,
@@ -19,6 +21,7 @@ import type {
   BCItemLookupInput,
   BCItemLookupResult,
   BCItemMatchSource,
+  BCReturnListItem,
   BCReturnOrder,
   BCReturnReason,
   BCSalesOrderAddressInput,
@@ -507,6 +510,34 @@ function mapSalesInvoiceToSummary(invoice: BCSalesInvoiceRaw): BCOrderInvoiceSum
     status: invoice.status,
     totalAmountExcludingTax: invoice.totalAmountExcludingTax ?? 0,
     totalAmountIncludingTax: invoice.totalAmountIncludingTax ?? 0,
+  };
+}
+
+type BCSalesReturnOrderLineRaw = {
+  id: string;
+  lineType?: string;
+};
+
+type BCSalesReturnOrderRaw = {
+  id: string;
+  number: unknown;
+  documentDate: string;
+  status: string;
+  salesReturnOrderLines?: BCSalesReturnOrderLineRaw[];
+};
+
+function mapSalesReturnOrderToListItem(
+  item: BCSalesReturnOrderRaw
+): BCReturnListItem {
+  return {
+    id: item.id,
+    number: requireBusinessCentralString(item.number, "number"),
+    documentDate: item.documentDate,
+    // BC sends enum members XML-encoded, e.g. "Pending_x0020_Approval".
+    status: optionalString(item.status).replace(/_x0020_/g, " "),
+    itemCount: (item.salesReturnOrderLines ?? []).filter(
+      (line) => line.lineType === "Item"
+    ).length,
   };
 }
 
@@ -1392,6 +1423,68 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     return [...reasons.values()];
+  }
+
+  // Filters directly on sellToCustomerNumber: unlike salesOrder, the
+  // salesReturnOrder OData entity has no customerId (GUID) field, so there is
+  // no customer lookup round trip to make here (contrast with listOrders,
+  // which must resolve customerNumber -> customerId first).
+  async listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+
+    const returnFilters: string[] = [
+      `sellToCustomerNumber eq '${escapeODataString(params.customerNumber)}'`,
+    ];
+    if (params.status) {
+      returnFilters.push(`status eq '${escapeODataString(params.status)}'`);
+    }
+    if (params.date_from) {
+      returnFilters.push(`documentDate ge ${params.date_from}`);
+    }
+    if (params.date_to) {
+      returnFilters.push(`documentDate le ${params.date_to}`);
+    }
+    if (params.search) {
+      returnFilters.push(`contains(number,'${escapeODataString(params.search)}')`);
+    }
+
+    const odataUrl = new URL(`${discoveryUrl.toString()}/salesReturnOrders()`);
+    odataUrl.searchParams.set("$filter", returnFilters.join(" and "));
+    odataUrl.searchParams.set("$top", String(params.limit));
+    odataUrl.searchParams.set("$skip", String(params.offset));
+    odataUrl.searchParams.set("$count", "true");
+    odataUrl.searchParams.set("$orderby", "documentDate desc");
+    odataUrl.searchParams.set("$expand", "salesReturnOrderLines");
+
+    const returnsResponse = await fetch(odataUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!returnsResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central returns request failed with status ${returnsResponse.status}`
+      );
+    }
+
+    const returnsBody = (await returnsResponse.json()) as {
+      "@odata.count"?: number;
+      value: BCSalesReturnOrderRaw[];
+    };
+
+    return {
+      returns: (returnsBody.value ?? []).map(mapSalesReturnOrderToListItem),
+      count: returnsBody["@odata.count"] ?? 0,
+      offset: params.offset,
+      limit: params.limit,
+    };
   }
 
   private async getCustomerId(
