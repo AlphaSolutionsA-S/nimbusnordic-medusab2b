@@ -176,6 +176,7 @@
       "addressesLabel": "Indirizzi",
       "ordersLabel": "Ordini",
       "bcOrdersLabel": "Ordini BC",
+      "returnsLabel": "Resi",
       "claimsLabel": "Reclami",
       "approvalsLabel": "Approvazioni",
       "quotesLabel": "Preventivi",
@@ -485,6 +486,29 @@
     },
     "bcOrdersPage": {
       "heading": "Ordini BC"
+    },
+    "bcReturnsPage": {
+      "heading": "Resi"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Qualcosa è andato storto",
+      "errorMessage": "Non è stato possibile caricare i tuoi resi. Riprova.",
+      "tryAgainLabel": "Riprova",
+      "emptyHeading": "Nessun reso trovato",
+      "emptyMessage": "Non hai ancora inviato alcun reso."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Stato",
+      "allStatusesOption": "Tutti gli stati",
+      "fromLabel": "Da",
+      "toLabel": "A",
+      "searchLabel": "Cerca",
+      "searchPlaceholder": "Numero reso…",
+      "clearLabel": "Cancella"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Dettagli",
+      "itemCountLabel": "Articoli: {count}"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Stato",

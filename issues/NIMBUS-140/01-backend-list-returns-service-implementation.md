@@ -1,6 +1,6 @@
 # Task 01: Add `listReturns` to the Business Central module service — Implementation Plan
 
-**Status:** TODO
+**Status:** Done
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01

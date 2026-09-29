@@ -176,6 +176,7 @@
       "addressesLabel": "Adressen",
       "ordersLabel": "Bestellungen",
       "bcOrdersLabel": "BC-Bestellungen",
+      "returnsLabel": "Rücksendungen",
       "claimsLabel": "Reklamationen",
       "approvalsLabel": "Genehmigungen",
       "quotesLabel": "Angebote",
@@ -485,6 +486,29 @@
     },
     "bcOrdersPage": {
       "heading": "BC-Bestellungen"
+    },
+    "bcReturnsPage": {
+      "heading": "Rücksendungen"
+    },
+    "bcReturnOverview": {
+      "errorHeading": "Etwas ist schiefgelaufen",
+      "errorMessage": "Ihre Rücksendungen konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+      "tryAgainLabel": "Erneut versuchen",
+      "emptyHeading": "Keine Rücksendungen gefunden",
+      "emptyMessage": "Sie haben noch keine Rücksendungen eingereicht."
+    },
+    "bcReturnFilters": {
+      "statusLabel": "Status",
+      "allStatusesOption": "Alle Status",
+      "fromLabel": "Von",
+      "toLabel": "Bis",
+      "searchLabel": "Suche",
+      "searchPlaceholder": "Rücksendenummer…",
+      "clearLabel": "Löschen"
+    },
+    "bcReturnCard": {
+      "detailsLabel": "Details",
+      "itemCountLabel": "Artikel: {count}"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",

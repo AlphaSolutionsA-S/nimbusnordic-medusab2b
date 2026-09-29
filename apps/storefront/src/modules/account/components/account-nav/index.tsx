@@ -6,6 +6,7 @@ import ChevronDown from "@/modules/common/icons/chevron-down"
 import FilePlus from "@/modules/common/icons/file-plus"
 import MapPin from "@/modules/common/icons/map-pin"
 import Package from "@/modules/common/icons/package"
+import UTurnArrowRight from "@/modules/common/icons/u-turn-arrow-right"
 import User from "@/modules/common/icons/user"
 import { B2BCustomer } from "@/types/global"
 import { ArrowRightOnRectangle, BuildingStorefront } from "@medusajs/icons"
@@ -117,6 +118,19 @@ const AccountNav = ({
                     <div className="flex items-center gap-x-2">
                       <Package size={20} />
                       <span>{t("bcOrdersLabel")}</span>
+                    </div>
+                    <ChevronDown className="transform -rotate-90" />
+                  </LocalizedClientLink>
+                </li>
+                <li>
+                  <LocalizedClientLink
+                    href="/account/returns"
+                    className="flex items-center justify-between py-4 border-b border-gray-200 px-8"
+                    data-testid="returns-link"
+                  >
+                    <div className="flex items-center gap-x-2">
+                      <UTurnArrowRight size={20} />
+                      <span>{t("returnsLabel")}</span>
                     </div>
                     <ChevronDown className="transform -rotate-90" />
                   </LocalizedClientLink>
@@ -236,6 +250,15 @@ const AccountNav = ({
                 data-testid="bc-orders-link"
               >
                 {t("bcOrdersLabel")}
+              </AccountNavLink>
+            </li>
+            <li>
+              <AccountNavLink
+                href="/account/returns"
+                route={route!}
+                data-testid="returns-link"
+              >
+                {t("returnsLabel")}
               </AccountNavLink>
             </li>
             <li>
