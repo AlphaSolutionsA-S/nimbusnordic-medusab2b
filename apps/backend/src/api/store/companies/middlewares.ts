@@ -16,7 +16,6 @@ import {
   StoreGetCompanyParams,
   StoreGetEmployeeParams,
   StoreUpdateApprovalSettings,
-  StoreUpdateCompany,
   StoreUpdateEmployee,
 } from "./validators";
 
@@ -53,18 +52,6 @@ export const storeCompaniesMiddlewares: MiddlewareRoute[] = [
     matcher: "/store/companies/:id",
     middlewares: [
       ensureCompanyAccess(false),
-      validateAndTransformQuery(
-        StoreGetCompanyParams,
-        storeCompanyQueryConfig.retrieve
-      ),
-    ],
-  },
-  {
-    method: ["POST"],
-    matcher: "/store/companies/:id",
-    middlewares: [
-      ensureCompanyAccess(true),
-      validateAndTransformBody(StoreUpdateCompany),
       validateAndTransformQuery(
         StoreGetCompanyParams,
         storeCompanyQueryConfig.retrieve

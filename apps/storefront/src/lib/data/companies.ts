@@ -12,7 +12,6 @@ import {
   StoreCreateCompany,
   StoreCreateEmployee,
   StoreEmployeeResponse,
-  StoreUpdateCompany,
   StoreUpdateEmployee,
 } from "@/types"
 import { track } from "@vercel/analytics/server"
@@ -31,10 +30,6 @@ export const retrieveCompany = async (companyId: string) => {
   const { company } = await sdk.client.fetch<StoreCompanyResponse>(
     `/store/companies/${companyId}`,
     {
-      query: {
-        fields:
-          "+spending_limit_reset_frequency,*employees.customer,*approval_settings",
-      },
       method: "GET",
       headers,
       next,
@@ -61,28 +56,6 @@ export const createCompany = async (data: StoreCreateCompany) => {
     company_id: company.id,
     company_name: company.name,
   })
-
-  const cacheTag = await getCacheTag("companies")
-  revalidateTag(cacheTag)
-
-  return company
-}
-
-export const updateCompany = async (data: StoreUpdateCompany) => {
-  const { id, ...companyData } = data
-
-  const headers = {
-    ...(await getAuthHeaders()),
-  }
-
-  const company = await sdk.client.fetch<StoreCompanyResponse>(
-    `/store/companies/${id}`,
-    {
-      method: "POST",
-      body: companyData,
-      headers,
-    }
-  )
 
   const cacheTag = await getCacheTag("companies")
   revalidateTag(cacheTag)

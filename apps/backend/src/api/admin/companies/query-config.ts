@@ -12,6 +12,9 @@ export const adminCompanyFields = [
   "country",
   "currency_code",
   "business_central_customer_number",
+  "blocked",
+  "credit_limit",
+  "vat_number",
   "*employees",
 ];
 

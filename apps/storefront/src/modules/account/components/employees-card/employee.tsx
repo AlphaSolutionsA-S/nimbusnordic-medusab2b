@@ -108,7 +108,7 @@ const Employee = ({
   const [employeeData, setEmployeeData] = useState({
     id: employee.id,
     company_id: employee.company_id,
-    spending_limit: employee.spending_limit.toString(),
+    spending_limit: employee.spending_limit?.toString() ?? "",
     is_admin: employee.is_admin,
   })
 
@@ -154,21 +154,25 @@ const Employee = ({
               {" • "}
             </Text>
             <Text className=" text-neutral-500">{employee.customer.phone}</Text>
-            <Text className=" text-neutral-500 hidden small:block">
-              {" • "}
-            </Text>
-            <Text className=" text-neutral-500">
-              {t("amountSpentMessage", {
-                amountSpent,
-                limit:
-                  employee.spending_limit > 0
-                    ? formatAmount(
-                        employee.spending_limit,
-                        company.currency_code!
-                      )
-                    : t("noLimitLabel"),
-              })}
-            </Text>
+            {employee.spending_limit !== undefined && (
+              <>
+                <Text className=" text-neutral-500 hidden small:block">
+                  {" • "}
+                </Text>
+                <Text className=" text-neutral-500">
+                  {t("amountSpentMessage", {
+                    amountSpent,
+                    limit:
+                      employee.spending_limit > 0
+                        ? formatAmount(
+                            employee.spending_limit,
+                            company.currency_code!
+                          )
+                        : t("noLimitLabel"),
+                  })}
+                </Text>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center justify-end gap-2">

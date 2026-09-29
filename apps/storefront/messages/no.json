@@ -235,11 +235,13 @@
       "currencyLabel": "Valuta",
       "spendingLimitResetFrequencyLabel": "Tilbakestillingsfrekvens for forbruksgrense",
       "bcCustomerNumberLabel": "BC-kundenummer",
-      "cancelLabel": "Avbryt",
-      "saveLabel": "Lagre",
-      "editLabel": "Rediger",
-      "companyUpdatedToast": "Bedrift oppdatert",
-      "companyUpdateErrorToast": "Feil ved oppdatering av bedrift"
+      "vatNumberLabel": "MVA-nummer",
+      "creditLimitLabel": "Kredittgrense",
+      "blockedLabel": "Sperret",
+      "blockedNotBlockedValue": "Ikke sperret",
+      "blockedShipValue": "Sperret for levering",
+      "blockedInvoiceValue": "Sperret for fakturering",
+      "blockedAllValue": "Fullstendig sperret"
     },
     "securityCard": {
       "passwordLabel": "Passord",

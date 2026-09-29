@@ -11,7 +11,6 @@ const company = {
 
 jest.mock("@/lib/data/companies", () => ({
   retrieveCompany: jest.fn(() => Promise.resolve(company)),
-  updateCompany: jest.fn(),
   updateApprovalSettings: jest.fn(),
   createEmployee: jest.fn(),
 }))
@@ -46,5 +45,14 @@ describe("Company page", () => {
     expect(screen.getByText("Approval Settings")).toBeInTheDocument()
     expect(screen.getByText("Employees")).toBeInTheDocument()
     expect(screen.getByText("Invite Employees")).toBeInTheDocument()
+  })
+
+  it("TC-5: renders the read-only company details within the account page", async () => {
+    const element = await Company()
+    render(element)
+
+    expect(screen.getByText("Company Name")).toBeInTheDocument()
+    expect(screen.getByText("Acme")).toBeInTheDocument()
+    expect(screen.queryByText("Credit Limit")).not.toBeInTheDocument()
   })
 })

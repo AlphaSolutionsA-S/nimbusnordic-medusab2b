@@ -16,8 +16,11 @@ export default defineMiddlewares({
     {
       matcher: "/store/carts/:id",
       middlewares: [
+        // Company fields are listed one by one: allowing the `company` relation would let any
+        // employee select `*company` and read the admin-only financial fields.
         allowFields(
-          "company",
+          "company.id",
+          "company.name",
           "company.approval_settings",
           "approvals",
           "approval_status"

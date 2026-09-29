@@ -18,10 +18,10 @@ starting this issue.
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Store company authorization and response projection | \`01-store-company-authorization-implementation.md\` | backend | NIMBUS-156 | TODO |
-| 02 | Read-only storefront company profile | \`02-storefront-readonly-profile-implementation.md\` | storefront | 01 | TODO |
-| 03 | Admin BC warning, indicators, and editable fields | \`03-admin-bc-indicators-implementation.md\` | backend Admin | NIMBUS-156 | TODO |
-| 04 | Cross-application tests and validation | \`04-validation-implementation.md\` | backend + storefront | 01, 02, 03 | TODO |
+| 01 | Store company authorization and response projection | \`01-store-company-authorization-implementation.md\` | backend | NIMBUS-156 | DONE |
+| 02 | Read-only storefront company profile | \`02-storefront-readonly-profile-implementation.md\` | storefront | 01 | DONE |
+| 03 | Admin BC warning, indicators, and editable fields | \`03-admin-bc-indicators-implementation.md\` | backend Admin | NIMBUS-156 | DONE |
+| 04 | Cross-application tests and validation | \`04-validation-implementation.md\` | backend + storefront | 01, 02, 03 | DONE |
 
 ## Dispatch order
 

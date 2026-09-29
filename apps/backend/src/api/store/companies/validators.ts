@@ -26,26 +26,6 @@ export const StoreCreateCompany = z
   })
   .strict();
 
-export type StoreUpdateCompanyType = z.infer<typeof StoreUpdateCompany>;
-export const StoreUpdateCompany = z
-  .object({
-    name: z.string().optional(),
-    email: z.string().optional(),
-    currency_code: z.string().optional(),
-    phone: z.string().optional().nullable(),
-    address: z.string().optional().nullable(),
-    city: z.string().optional().nullable(),
-    state: z.string().optional().nullable(),
-    zip: z.string().optional().nullable(),
-    country: z.string().optional().nullable(),
-    logo_url: z.string().optional().nullable(),
-    spending_limit_reset_frequency: z
-      .enum(["never", "daily", "weekly", "monthly", "yearly"])
-      .optional()
-      .nullable(),
-  })
-  .strict();
-
 /* Employee Validators */
 export type StoreGetEmployeeParamsType = z.infer<typeof StoreGetEmployeeParams>;
 export const StoreGetEmployeeParams = createSelectParams();

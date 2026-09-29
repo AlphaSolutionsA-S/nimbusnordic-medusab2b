@@ -28,3 +28,8 @@ and informative-but-editable in Admin.
 Record the commands and outcomes in \`issues/NIMBUS-157/PROGRESS.md\`. If an existing unrelated
 test failure prevents a full suite, record the exact command, failure, and focused tests that
 did pass; do not mark this task validated without that distinction.
+
+## Status
+
+**DONE (2026-09-29).** See the 2026-09-29 entry in `PROGRESS.md` for commands, results,
+pre-existing failures, and the OWASP access-control review.
