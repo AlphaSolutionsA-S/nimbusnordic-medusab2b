@@ -29,9 +29,9 @@ step performed by the environment owner afterward, per Task 02's `deployment-ins
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Canonical order schemas (JSON Schema + XSD) | `01-canonical-order-schemas-implementation.md` | azure-integration | NIMBUS-147 | TODO |
-| 02 | APIM inbound policy XML | `02-apim-inbound-policy-implementation.md` | azure-integration | 01, NIMBUS-146 | TODO |
-| 03 | Test payloads and manual verification plan | `03-test-payloads-implementation.md` | azure-integration | 01, 02 | TODO |
+| 01 | Canonical order schemas (JSON Schema + XSD) | `01-canonical-order-schemas-implementation.md` | azure-integration | NIMBUS-147 | DONE |
+| 02 | APIM inbound policy XML | `02-apim-inbound-policy-implementation.md` | azure-integration | 01, NIMBUS-146 | DONE |
+| 03 | Test payloads and manual verification plan | `03-test-payloads-implementation.md` | azure-integration | 01, 02 | DONE |
 
 ## Deliverables (written under `issues/NIMBUS-145/artifacts/`)
 
@@ -72,21 +72,24 @@ an HTTP client. This is the same approach as NIMBUS-146.
 
 Before implementation, the implementor MUST verify and reconcile the following:
 
-- [ ] **XML tag naming convention** — whether NIMBUS-147's XML uses camelCase or PascalCase tags.
+- [x] **XML tag naming convention** — whether NIMBUS-147's XML uses camelCase or PascalCase tags.
       Determines `kind="javascript-friendly"` vs `kind="direct"` for `xml-to-json` and the XSD
       element names.
-- [ ] **XML root element name** — the XSD uses `<canonicalOrder>` as the root. Verify this
+- [x] **XML root element name** — the XSD uses `<canonicalOrder>` as the root. Verify this
       matches NIMBUS-147's finalized XML representation.
-- [ ] **Decimal comma normalization** — whether the XML wire format uses comma decimals
+- [x] **Decimal comma normalization** — whether the XML wire format uses comma decimals
       (e.g. `209,25`). If so, an additional normalization step is needed in the policy after
       `xml-to-json`.
 - [ ] **APIM tier** — `validate-content` is available on all tiers but has performance
       implications on Consumption/Developer tiers. Confirm the APIM tier.
-- [ ] **Logic App HTTP trigger URL** — replace the placeholder in `apim-policy.xml` with the
+- [ ] **Logic App HTTP trigger URL** (structure resolved via named values; real values open) — replace the placeholder in `apim-policy.xml` with the
       actual URL from NIMBUS-146's deployment.
 - [ ] **APIM API/operation structure** — whether this policy attaches to a new API or an
       existing API revision, and the naming/versioning conventions.
-- [ ] **JSON Schema draft version** — verify APIM's supported draft version and adjust the
+- [ ] **JSON Schema draft version** (decided: draft-07; confirm on first deployment) — verify APIM's supported draft version and adjust the
       `$schema` URI if needed.
-- [ ] **`schema-ref` for JSON validation** — verify whether `schema-ref="#"` or omitting
+- [ ] **`schema-ref` for JSON validation** (decided: omitted; confirm on first deployment) — verify whether `schema-ref="#"` or omitting
       `schema-ref` works for a top-level JSON schema in the APIM version in use.
+
+Reconciliation outcomes (2026-09-29) are recorded in `artifacts/deployment-instructions.md` →
+"Reconciliation decisions". Items left unchecked are open for the Azure environment owner.

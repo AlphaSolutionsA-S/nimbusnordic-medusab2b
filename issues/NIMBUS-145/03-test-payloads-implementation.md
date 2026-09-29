@@ -1,6 +1,6 @@
 # Task 03: Test Payloads and Manual Verification Plan
 
-**Status:** TODO
+**Status:** DONE (2026-09-29)
 **App:** azure-integration
 **Task ID:** 03
 **Date:** 2026-09-02

@@ -1,6 +1,6 @@
 # Task 01: Canonical Order Schemas (JSON Schema + XSD)
 
-**Status:** TODO
+**Status:** DONE (2026-09-29)
 **App:** azure-integration
 **Task ID:** 01
 **Date:** 2026-09-02

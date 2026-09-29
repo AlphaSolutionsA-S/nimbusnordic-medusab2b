@@ -1,6 +1,6 @@
 # Task 02: APIM Inbound Policy XML
 
-**Status:** TODO
+**Status:** DONE (2026-09-29)
 **App:** azure-integration
 **Task ID:** 02
 **Date:** 2026-09-02

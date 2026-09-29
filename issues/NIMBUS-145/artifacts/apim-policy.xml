@@ -1,0 +1,173 @@
+<!--
+  NIMBUS-145 - order-ingestion APIM policy (operation: POST /orders/{token}).
+
+  Apply manually in the Azure Portal per deployment-instructions.md. This is APIM policy syntax:
+  C# policy expressions (@(...) / @{...}) are written as in Microsoft's policy docs and are not
+  meant to be parsed as strict XML.
+
+  Required APIM configuration before this policy works:
+    Schemas:      canonical-order-json  (canonical-order-schema.json)
+                  canonical-order-xml   (canonical-order-schema.xsd)
+    Named values: nimbus-order-logicapp-base-url     Logic App callback URL up to (not including)
+                                                     "/orders/{token}", without the query string
+                  nimbus-order-logicapp-api-version  "api-version" value from the callback URL
+                  nimbus-order-logicapp-sig          "sig" value from the callback URL (Secret)
+
+  The customer's path token is forwarded unchanged in the path for NIMBUS-146 to validate.
+  Path-token log redaction is out of scope for this story.
+-->
+<policies>
+    <inbound>
+        <base />
+
+        <!-- Media type without parameters such as "; charset=utf-8". -->
+        <set-variable name="orderMediaType" value="@(context.Request.Headers.GetValueOrDefault("Content-Type", "").Split(';')[0].Trim().ToLowerInvariant())" />
+
+        <choose>
+            <!-- JSON: validate only; the body is already canonical JSON. -->
+            <when condition="@((string)context.Variables["orderMediaType"] == "application/json")">
+                <validate-content unspecified-content-type-action="prevent" max-size="524288" size-exceeded-action="prevent" errors-variable-name="orderValidationErrors">
+                    <content type="application/json" validate-as="json" schema-id="canonical-order-json" action="prevent" allow-additional-properties="false" />
+                </validate-content>
+            </when>
+
+            <!-- XML: validate against the canonical XML representation, then convert to canonical JSON. -->
+            <when condition="@((string)context.Variables["orderMediaType"] == "application/xml" || (string)context.Variables["orderMediaType"] == "text/xml")">
+                <validate-content unspecified-content-type-action="prevent" max-size="524288" size-exceeded-action="prevent" errors-variable-name="orderValidationErrors">
+                    <content type="application/xml" validate-as="xml" schema-id="canonical-order-xml" action="prevent" />
+                    <content type="text/xml" validate-as="xml" schema-id="canonical-order-xml" action="prevent" />
+                </validate-content>
+
+                <xml-to-json kind="javascript-friendly" apply="always" consider-accept-header="false" always-array-child-elements="false" />
+
+                <!--
+                  xml-to-json yields {"canonicalOrder": {..., "lines": {"line": {...} | [...]}}} with
+                  every leaf as a string. Reshape it to the canonical contract: unwrap the root, turn
+                  lines/line into a lines array (one line gives an object, several give an array),
+                  type the numeric and boolean fields, and drop empty optional elements (null).
+                  The XSD has already guaranteed every value parses.
+                -->
+                <set-body>@{
+                    var converted = context.Request.Body.As<JObject>(preserveContent: true);
+                    var order = (JObject)converted["canonicalOrder"];
+
+                    var integerFields = new string[] { "lineNumber" };
+                    var decimalFields = new string[] { "quantity", "unitPrice", "discountAmount", "discountPercent", "taxPercent" };
+                    var booleanFields = new string[] { "discountAppliedBeforeTax", "pricesIncludeTax" };
+
+                    var lineToken = ((JObject)order["lines"])["line"];
+                    order["lines"] = lineToken is JArray ? lineToken : new JArray(lineToken);
+                    // Re-read: assigning an already-parented token stores a copy, not the original.
+                    var lines = (JArray)order["lines"];
+
+                    var targets = new List<JObject> { order };
+                    foreach (var addressField in new string[] { "billTo", "shipTo" })
+                    {
+                        if (order[addressField] is JObject)
+                        {
+                            targets.Add((JObject)order[addressField]);
+                        }
+                    }
+                    foreach (var line in lines)
+                    {
+                        targets.Add((JObject)line);
+                    }
+
+                    foreach (var target in targets)
+                    {
+                        foreach (var property in target.Properties().ToList())
+                        {
+                            if (property.Value.Type == JTokenType.Null)
+                            {
+                                property.Remove();
+                                continue;
+                            }
+                            if (property.Value.Type != JTokenType.String)
+                            {
+                                continue;
+                            }
+                            var text = ((string)property.Value).Trim();
+                            if (integerFields.Contains(property.Name))
+                            {
+                                property.Value = long.Parse(text, System.Globalization.CultureInfo.InvariantCulture);
+                            }
+                            else if (decimalFields.Contains(property.Name))
+                            {
+                                property.Value = decimal.Parse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                            }
+                            else if (booleanFields.Contains(property.Name))
+                            {
+                                property.Value = text == "true" || text == "1";
+                            }
+                        }
+                    }
+
+                    return order.ToString();
+                }</set-body>
+
+                <set-header name="Content-Type" exists-action="override">
+                    <value>application/json</value>
+                </set-header>
+            </when>
+
+            <!-- Missing or unsupported Content-Type. -->
+            <otherwise>
+                <return-response>
+                    <set-status code="415" reason="Unsupported Media Type" />
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>{"error":"Unsupported content type","message":"Use application/json, application/xml or text/xml."}</set-body>
+                </return-response>
+            </otherwise>
+        </choose>
+
+        <!--
+          Forward to the NIMBUS-146 Logic App Request trigger (relativePath "orders/{token}").
+          Callback URL shapes (from the Logic App trigger, "HTTP URL"):
+            Consumption: https://<host>/workflows/<id>/triggers/manual/paths/invoke/orders/{token}?api-version=2016-10-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=<sig>
+            Standard:    https://<app>.azurewebsites.net/api/<workflow>/triggers/manual/invoke/orders/{token}?api-version=2022-05-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=<sig>
+          base-url is the part before "/orders/{token}". rewrite-uri substitutes this request's
+          token and drops any caller query parameters; the SAS query parameters are then re-added.
+        -->
+        <set-backend-service base-url="{{nimbus-order-logicapp-base-url}}" />
+        <rewrite-uri template="/orders/{token}" copy-unmatched-params="false" />
+        <set-query-parameter name="api-version" exists-action="override">
+            <value>{{nimbus-order-logicapp-api-version}}</value>
+        </set-query-parameter>
+        <set-query-parameter name="sp" exists-action="override">
+            <value>/triggers/manual/run</value>
+        </set-query-parameter>
+        <set-query-parameter name="sv" exists-action="override">
+            <value>1.0</value>
+        </set-query-parameter>
+        <set-query-parameter name="sig" exists-action="override">
+            <value>{{nimbus-order-logicapp-sig}}</value>
+        </set-query-parameter>
+    </inbound>
+
+    <backend>
+        <base />
+    </backend>
+
+    <!-- The Logic App's response (Medusa's status/body, or its own 401) is returned unchanged. -->
+    <outbound>
+        <base />
+    </outbound>
+
+    <on-error>
+        <base />
+        <!-- Contract validation failure: generic body only. Details stay in orderValidationErrors / trace. -->
+        <choose>
+            <when condition="@(context.Variables.ContainsKey("orderValidationErrors") || context.LastError?.Source == "validate-content")">
+                <return-response>
+                    <set-status code="400" reason="Bad Request" />
+                    <set-header name="Content-Type" exists-action="override">
+                        <value>application/json</value>
+                    </set-header>
+                    <set-body>{"error":"Request validation failed","message":"The submitted payload does not conform to the canonical order contract."}</set-body>
+                </return-response>
+            </when>
+        </choose>
+    </on-error>
+</policies>

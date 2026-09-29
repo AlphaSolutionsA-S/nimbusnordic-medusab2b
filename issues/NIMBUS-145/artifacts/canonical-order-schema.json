@@ -1,0 +1,71 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CanonicalOrder",
+  "description": "Canonical order contract for APIM validate-content (schema-id: canonical-order-json). Mirrors CanonicalOrderSchema in apps/backend/src/modules/order-ingestion/canonical-order-schema.ts. Rules JSON Schema cannot express (real-calendar dates, unique lineNumber within an order) are enforced by the Medusa endpoint.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["externalOrderNumber", "orderDate", "currencyCode", "lines"],
+  "properties": {
+    "externalOrderNumber": { "type": "string", "minLength": 1 },
+    "orderDate": { "$ref": "#/definitions/canonicalDate" },
+    "requestedDeliveryDate": { "$ref": "#/definitions/canonicalDate" },
+    "currencyCode": { "type": "string", "pattern": "^[A-Za-z]{3}$" },
+    "salesperson": { "type": "string" },
+    "email": { "type": "string", "format": "email" },
+    "phoneNumber": { "type": "string" },
+    "discountAmount": { "type": "number" },
+    "discountAppliedBeforeTax": { "type": "boolean" },
+    "pricesIncludeTax": { "type": "boolean" },
+    "billTo": { "$ref": "#/definitions/address" },
+    "shipTo": { "$ref": "#/definitions/address" },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/definitions/orderLine" }
+    }
+  },
+  "definitions": {
+    "canonicalDate": {
+      "type": "string",
+      "pattern": "^\\d{2}-\\d{2}-\\d{4}$",
+      "description": "DD-MM-YYYY. The real-calendar check (e.g. rejecting 31-02-2026) is done by the Medusa endpoint."
+    },
+    "address": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "addressLine1", "city", "postCode", "country"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "contact": { "type": "string" },
+        "addressLine1": { "type": "string", "minLength": 1 },
+        "addressLine2": { "type": "string" },
+        "city": { "type": "string", "minLength": 1 },
+        "state": { "type": "string" },
+        "postCode": { "type": "string", "minLength": 1 },
+        "country": { "type": "string", "minLength": 1 }
+      }
+    },
+    "orderLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["lineNumber", "eanNo", "quantity"],
+      "properties": {
+        "lineNumber": { "type": "integer", "minimum": 0 },
+        "itemNumber": { "type": "string", "minLength": 1 },
+        "custItemNo": { "type": "string" },
+        "eanNo": { "type": "string", "pattern": "^\\d{13}$" },
+        "description": { "type": "string", "minLength": 1 },
+        "description2": { "type": "string" },
+        "unitOfMeasureCode": { "type": "string" },
+        "quantity": { "type": "number", "exclusiveMinimum": 0 },
+        "unitPrice": { "type": "number", "minimum": 0 },
+        "discountPercent": { "type": "number", "minimum": 0, "maximum": 100 },
+        "discountAmount": { "type": "number" },
+        "discountAppliedBeforeTax": { "type": "boolean" },
+        "taxCode": { "type": "string" },
+        "taxPercent": { "type": "number", "minimum": 0 },
+        "requestedShipmentDate": { "$ref": "#/definitions/canonicalDate" }
+      }
+    }
+  }
+}

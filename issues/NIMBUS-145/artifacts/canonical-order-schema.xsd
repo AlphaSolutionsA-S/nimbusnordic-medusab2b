@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Canonical order XML representation for APIM validate-content (schema-id: canonical-order-xml).
+
+  Mirrors CanonicalOrderSchema in apps/backend/src/modules/order-ingestion/canonical-order-schema.ts
+  1:1: element names are the JSON property names (camelCase), no namespace, root <canonicalOrder>,
+  and the lines array is <lines> holding one or more <line> elements.
+
+  Numbers use the XSD decimal lexical form (dot decimal separator). Comma decimals such as
+  "134,75" are rejected here, so no comma-to-dot normalization is needed after xml-to-json.
+
+  Rules not expressible in XSD 1.0 (real-calendar dates, e.g. rejecting 31-02-2026) are enforced by
+  the Medusa endpoint. Unique lineNumber within an order is enforced here by xs:unique.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+
+  <xs:element name="canonicalOrder">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="externalOrderNumber" type="nonEmptyString" minOccurs="1"/>
+        <xs:element name="orderDate" type="canonicalDate" minOccurs="1"/>
+        <xs:element name="requestedDeliveryDate" type="canonicalDate" minOccurs="0"/>
+        <xs:element name="currencyCode" type="currencyCode" minOccurs="1"/>
+        <xs:element name="salesperson" type="xs:string" minOccurs="0"/>
+        <xs:element name="email" type="email" minOccurs="0"/>
+        <xs:element name="phoneNumber" type="xs:string" minOccurs="0"/>
+        <xs:element name="discountAmount" type="xs:decimal" minOccurs="0"/>
+        <xs:element name="discountAppliedBeforeTax" type="xs:boolean" minOccurs="0"/>
+        <xs:element name="pricesIncludeTax" type="xs:boolean" minOccurs="0"/>
+        <xs:element name="billTo" type="addressType" minOccurs="0"/>
+        <xs:element name="shipTo" type="addressType" minOccurs="0"/>
+        <xs:element name="lines" minOccurs="1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="line" type="orderLineType" minOccurs="1" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+          <xs:unique name="uniqueLineNumber">
+            <xs:selector xpath="line"/>
+            <xs:field xpath="lineNumber"/>
+          </xs:unique>
+        </xs:element>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="addressType">
+    <xs:all>
+      <xs:element name="name" type="nonEmptyString" minOccurs="1"/>
+      <xs:element name="contact" type="xs:string" minOccurs="0"/>
+      <xs:element name="addressLine1" type="nonEmptyString" minOccurs="1"/>
+      <xs:element name="addressLine2" type="xs:string" minOccurs="0"/>
+      <xs:element name="city" type="nonEmptyString" minOccurs="1"/>
+      <xs:element name="state" type="xs:string" minOccurs="0"/>
+      <xs:element name="postCode" type="nonEmptyString" minOccurs="1"/>
+      <xs:element name="country" type="nonEmptyString" minOccurs="1"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="orderLineType">
+    <xs:all>
+      <xs:element name="lineNumber" type="xs:nonNegativeInteger" minOccurs="1"/>
+      <xs:element name="itemNumber" type="nonEmptyString" minOccurs="0"/>
+      <xs:element name="custItemNo" type="xs:string" minOccurs="0"/>
+      <xs:element name="eanNo" type="eanNo" minOccurs="1"/>
+      <xs:element name="description" type="nonEmptyString" minOccurs="0"/>
+      <xs:element name="description2" type="xs:string" minOccurs="0"/>
+      <xs:element name="unitOfMeasureCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="quantity" type="positiveDecimal" minOccurs="1"/>
+      <xs:element name="unitPrice" type="nonNegativeDecimal" minOccurs="0"/>
+      <xs:element name="discountPercent" type="percent" minOccurs="0"/>
+      <xs:element name="discountAmount" type="xs:decimal" minOccurs="0"/>
+      <xs:element name="discountAppliedBeforeTax" type="xs:boolean" minOccurs="0"/>
+      <xs:element name="taxCode" type="xs:string" minOccurs="0"/>
+      <xs:element name="taxPercent" type="nonNegativeDecimal" minOccurs="0"/>
+      <xs:element name="requestedShipmentDate" type="canonicalDate" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:simpleType name="nonEmptyString">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="canonicalDate">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{2}-\d{2}-\d{4}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="currencyCode">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Za-z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="email">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[^@\s]+@[^@\s]+\.[^@\s]+"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="eanNo">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="\d{13}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="positiveDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minExclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="nonNegativeDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="percent">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+      <xs:maxInclusive value="100"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>
