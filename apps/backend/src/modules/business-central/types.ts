@@ -137,8 +137,97 @@ export interface IBusinessCentralModuleService {
   listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
   getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
   getCustomer(customerNumber: string): Promise<BCCustomer | null>;
+  findItemsForOrderLines(
+    lines: BCItemLookupInput[]
+  ): Promise<BCItemLookupResult[]>;
+  createSalesOrder(
+    params: BCCreateSalesOrderParams
+  ): Promise<BCCreatedSalesOrder>;
   createReturnFromSalesOrder(
     params: BCCreateReturnParams
   ): Promise<BCReturnOrder>;
   listReturnReasons(): Promise<BCReturnReason[]>;
 }
+
+export type BCItem = {
+  id: string;
+  number: string;
+  displayName: string;
+  gtin: string;
+  baseUnitOfMeasureCode: string;
+};
+
+export type BCItemMatchSource = "eanNo" | "itemNumber" | "custItemNo";
+
+export type BCItemLookupFailureReason =
+  | "no_identifiers"
+  | "not_found"
+  | "ambiguous";
+
+export type BCItemLookupInput = {
+  lineNumber: number;
+  eanNo?: string;
+  itemNumber?: string;
+  custItemNo?: string;
+};
+
+export type BCItemLookupResult =
+  | {
+      lineNumber: number;
+      matched: true;
+      item: BCItem;
+      matchedBy: BCItemMatchSource;
+    }
+  | {
+      lineNumber: number;
+      matched: false;
+      reason: BCItemLookupFailureReason;
+    };
+
+export type BCSalesOrderAddressInput = {
+  name?: string;
+  contact?: string;
+  addressLine1?: string;
+  addressLine2?: string;
+  city?: string;
+  state?: string;
+  postCode?: string;
+  country?: string;
+};
+
+// Deliberately has no unitPrice / discount / tax / description fields: Business Central prices
+// and describes the line from its own master data (NIMBUS-129 PROGRESS.md, 2026-09-16).
+export type BCCreateSalesOrderLineInput = {
+  lineNumber: number;
+  itemId: string;
+  quantity: number;
+  unitOfMeasureCode?: string;
+  shipmentDate?: string;
+};
+
+export type BCCreateSalesOrderParams = {
+  customerNumber: string;
+  externalDocumentNumber: string;
+  orderDate?: string;
+  requestedDeliveryDate?: string;
+  // Only set when the order's currency differs from the BC customer's own currency (Task 04).
+  currencyCode?: string;
+  email?: string;
+  phoneNumber?: string;
+  billTo?: BCSalesOrderAddressInput;
+  shipTo?: BCSalesOrderAddressInput;
+  lines: BCCreateSalesOrderLineInput[];
+};
+
+export type BCSalesOrderLineRejection = {
+  lineNumber: number;
+  message: string;
+};
+
+export type BCCreatedSalesOrder = {
+  id: string;
+  number: string;
+  status: string;
+  acceptedLineNumbers: number[];
+  rejectedLines: BCSalesOrderLineRejection[];
+};

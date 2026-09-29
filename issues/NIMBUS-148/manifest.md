@@ -15,11 +15,11 @@ to match the `feature/<project-id>` convention NIMBUS-149 used; no branch has be
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Extend BC integration-state contract + defensive payload reader | `01-bc-integration-state-contract-implementation.md` | backend | None | TODO |
-| 02 | Business Central item lookup (`business-central` module) | `02-bc-item-lookup-implementation.md` | backend | None | TODO |
-| 03 | Business Central sales-order creation (`business-central` module) | `03-bc-sales-order-creation-implementation.md` | backend | 02 (same two files — sequence) | TODO |
-| 04 | Reusable BC order-submission workflow (`prepare`/`submit`/`record`, currency override) | `04-bc-order-submission-workflow-implementation.md` | backend | 01, 02, 03 | TODO |
-| 05 | Trigger subscriber + fail-closed BC test-environment guard | `05-bc-submission-trigger-implementation.md` | backend | 04 | TODO |
+| 01 | Extend BC integration-state contract + defensive payload reader | `01-bc-integration-state-contract-implementation.md` | backend | None | DONE |
+| 02 | Business Central item lookup (`business-central` module) | `02-bc-item-lookup-implementation.md` | backend | None | DONE |
+| 03 | Business Central sales-order creation (`business-central` module) | `03-bc-sales-order-creation-implementation.md` | backend | 02 (same two files — sequence) | DONE |
+| 04 | Reusable BC order-submission workflow (`prepare`/`submit`/`record`, currency override) | `04-bc-order-submission-workflow-implementation.md` | backend | 01, 02, 03 | DONE |
+| 05 | Trigger subscriber + fail-closed BC test-environment guard | `05-bc-submission-trigger-implementation.md` | backend | 04 | DONE |
 
 Execution order: **01 → 02 → 03 → 04 → 05**. Tasks 02 and 03 both modify
 `apps/backend/src/modules/business-central/types.ts` and `service.ts` — never run them in parallel.

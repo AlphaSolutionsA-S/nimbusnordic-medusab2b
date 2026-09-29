@@ -1,6 +1,6 @@
 # Task 02: Business Central Item Lookup (`business-central` module) — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02

@@ -1,6 +1,6 @@
 # Task 01: Extend the BC Integration-State Contract + Add the Defensive Payload Reader — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01
