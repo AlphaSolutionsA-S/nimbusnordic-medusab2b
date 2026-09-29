@@ -73,3 +73,46 @@
   - **Build on NIMBUS-140** (`issues/NIMBUS-140/PLAN.md`), which must be implemented first.
   - **Do not duplicate NIMBUS-172:** it owns posted/processed returns. Do not show
     `externalDocumentNumber`. Do not touch the `TEMP (NIMBUS-138)` code. Rebase on develop.
+
+- **Date:** 2026-09-29
+- **Updated by:** implementation-planner agent (run as a sub-agent; the plan review goes to the
+  user through the calling agent)
+- **Outcome:** The implementation plan is ready and waiting for the user's plan review.
+  `PLAN.md`, `manifest.md` and five task files (`01`–`05-*-implementation.md`) were written.
+  **Ready for Dispatch: false**, for two reasons: NIMBUS-140 (a hard prerequisite) is not
+  implemented or merged yet, and the user still needs to approve the plan and answer OQ-1 to
+  OQ-3.
+  - **Planner questions, resolved read-only against TestDK** (7 open return orders):
+    - Σ `lineAmount` / Σ `amountIncludingTax` over all lines equal BC's header Amount / Amount
+      Incl. VAT. Freight is an `Item` line; blank `_x0020_` text lines have 0 amounts and are
+      hidden.
+    - Excl. VAT is `null` when `pricesIncludingVAT` is true. No such document, and no invoice
+      discount, exists in the tenant.
+    - A blank `currencyCode` (LCY customers) is resolved to `BUSINESS_CENTRAL_LCY_CODE`
+      (default DKK).
+  - **Detail endpoint:** the Abakion `customerPortal` `salesReturnOrders`. The standard v2.0
+    lines lack `variantCode` and `returnReasonCode`.
+  - **Open for the user:**
+    - OQ-1: confirm that Q4 means no per-line prices.
+    - OQ-2: show the reason as the BC code.
+    - OQ-3: hide BC text lines.
+  - Nothing was committed and Jira was not changed.
+- **Handover to:** user (plan review), then the implementor agent, once NIMBUS-140 is merged to
+  develop.
+- **Handover prompt:** Implement NIMBUS-141 ("See Existing Return Status") from
+  `issues/NIMBUS-141/`: `manifest.md`, `PLAN.md` and tasks `01`–`05-*-implementation.md`, in
+  order 01 → 05.
+  - **Before starting:**
+    - Confirm that `manifest.md` says `Ready for Dispatch: true`. That requires NIMBUS-140 to be
+      merged to develop and the user to have approved the plan (OQ-1 to OQ-3).
+    - Create `feature/NIMBUS-141` from an up-to-date develop.
+  - **Per task:**
+    - Run the NIMBUS-140 prerequisite check at the top of the task file, and stop if it fails.
+    - Apply the edits exactly as written.
+    - Run the task's tests, `pnpm build` and `pnpm lint`.
+  - **Constraints:**
+    - Do not touch `TEMP (NIMBUS-138)` code.
+    - Do not add authentication for `/store/bc-returns/:number`; NIMBUS-140's matcher covers it.
+    - Keep the 8 locale catalogs key-identical.
+    - Preserve line endings: CRLF for `.ts`/`.tsx`, LF for `messages/*.json`.
+  - **Finish with the TestDK walkthrough** in Task 05, TC-7, and record the results here.
