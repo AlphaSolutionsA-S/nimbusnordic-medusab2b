@@ -157,9 +157,18 @@ medusaIntegrationTestRunner({
         expect(after.metadata?.order_ingestion_state).toEqual(
           "ready_for_business_central"
         );
-        expect(after.metadata?.[BC_INTEGRATION_STATE_METADATA_KEY]).toEqual(
-          before.metadata?.[BC_INTEGRATION_STATE_METADATA_KEY]
-        );
+        // enrichOrderWorkflow emits order_ingestion.ready_for_business_central, whose NIMBUS-148
+        // subscriber may already have recorded a Business Central attempt by now. What enrichment
+        // itself guarantees is that it neither drops nor resets the integration state.
+        const beforeState = before.metadata?.[BC_INTEGRATION_STATE_METADATA_KEY] as {
+          initialized_at: string | null;
+        };
+        const afterState = after.metadata?.[BC_INTEGRATION_STATE_METADATA_KEY] as
+          | { initialized_at: string | null }
+          | undefined;
+
+        expect(afterState).toBeDefined();
+        expect(afterState?.initialized_at).toEqual(beforeState.initialized_at);
       });
     });
   },

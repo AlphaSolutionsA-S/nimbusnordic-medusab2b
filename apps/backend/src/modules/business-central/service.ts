@@ -1,6 +1,9 @@
 import type { Logger } from "@medusajs/framework/types";
 import { MedusaError } from "@medusajs/framework/utils";
 import type {
+  BCCreatedSalesOrder,
+  BCCreateSalesOrderLineInput,
+  BCCreateSalesOrderParams,
   BCGetOrderParams,
   BCListOrdersParams,
   BCListOrdersResult,
@@ -12,8 +15,14 @@ import type {
   BCCreateReturnParams,
   BCCustomer,
   BCCustomerBlockedState,
+  BCItem,
+  BCItemLookupInput,
+  BCItemLookupResult,
+  BCItemMatchSource,
   BCReturnOrder,
   BCReturnReason,
+  BCSalesOrderAddressInput,
+  BCSalesOrderLineRejection,
   IBusinessCentralModuleService,
 } from "./types";
 
@@ -39,6 +48,7 @@ const ENABLED_REASON_CODES_ENTITY_SET = "CS_EnabledReasonCodes";
 const CREATE_RETURN_TIMEOUT_MS = 30000;
 const CUSTOMER_PORTAL_API_PATH = "api/abakion/customerPortal/v2.0";
 const BC_EMPTY_DATE = "0001-01-01";
+const CREATE_SALES_ORDER_TIMEOUT_MS = 30000;
 
 type BusinessCentralTokenResponse = {
   access_token: string;
@@ -131,6 +141,117 @@ function formatAddress(
   return [name, addressLine1, addressLine2, cityLine, country].filter(
     (value): value is string => Boolean(value)
   );
+}
+
+const BC_ITEM_SELECT = "id,number,displayName,gtin,baseUnitOfMeasureCode";
+
+type BCItemLookupCandidate = {
+  source: BCItemMatchSource;
+  field: "gtin" | "number";
+  value: string;
+};
+
+function buildItemLookupCandidates(
+  line: BCItemLookupInput
+): BCItemLookupCandidate[] {
+  const ordered: BCItemLookupCandidate[] = [
+    { source: "eanNo", field: "gtin", value: (line.eanNo ?? "").trim() },
+    {
+      source: "itemNumber",
+      field: "number",
+      value: (line.itemNumber ?? "").trim(),
+    },
+    {
+      source: "custItemNo",
+      field: "number",
+      value: (line.custItemNo ?? "").trim(),
+    },
+  ];
+  const seen = new Set<string>();
+
+  return ordered.filter((candidate) => {
+    if (!candidate.value) {
+      return false;
+    }
+
+    const key = `${candidate.field}:${candidate.value}`;
+
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+
+    return true;
+  });
+}
+
+type BCJsonBody = Record<string, string | number>;
+
+function assignIfDefined(
+  body: BCJsonBody,
+  key: string,
+  value: string | number | undefined
+): void {
+  if (value !== undefined) {
+    body[key] = value;
+  }
+}
+
+function assignAddress(
+  body: BCJsonBody,
+  prefix: "billTo" | "shipTo",
+  address: BCSalesOrderAddressInput | undefined
+): void {
+  if (!address) {
+    return;
+  }
+
+  assignIfDefined(body, `${prefix}Name`, address.name);
+  assignIfDefined(body, `${prefix}AddressLine1`, address.addressLine1);
+  assignIfDefined(body, `${prefix}AddressLine2`, address.addressLine2);
+  assignIfDefined(body, `${prefix}City`, address.city);
+  assignIfDefined(body, `${prefix}State`, address.state);
+  assignIfDefined(body, `${prefix}PostCode`, address.postCode);
+  assignIfDefined(body, `${prefix}Country`, address.country);
+
+  if (prefix === "shipTo") {
+    assignIfDefined(body, "shipToContact", address.contact);
+  }
+}
+
+function buildSalesOrderHeaderBody(
+  params: BCCreateSalesOrderParams
+): BCJsonBody {
+  const body: BCJsonBody = {
+    customerNumber: params.customerNumber,
+    externalDocumentNumber: params.externalDocumentNumber,
+  };
+
+  assignIfDefined(body, "orderDate", params.orderDate);
+  assignIfDefined(body, "requestedDeliveryDate", params.requestedDeliveryDate);
+  assignIfDefined(body, "currencyCode", params.currencyCode);
+  assignIfDefined(body, "email", params.email);
+  assignIfDefined(body, "phoneNumber", params.phoneNumber);
+  assignAddress(body, "billTo", params.billTo);
+  assignAddress(body, "shipTo", params.shipTo);
+
+  return body;
+}
+
+function buildSalesOrderLineBody(
+  line: BCCreateSalesOrderLineInput
+): BCJsonBody {
+  const body: BCJsonBody = {
+    lineType: "Item",
+    itemId: line.itemId,
+    quantity: line.quantity,
+  };
+
+  assignIfDefined(body, "unitOfMeasureCode", line.unitOfMeasureCode);
+  assignIfDefined(body, "shipmentDate", line.shipmentDate);
+
+  return body;
 }
 
 type BCSalesOrderRaw = {
@@ -814,6 +935,287 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       taxRegistrationNumber: optionalString(raw.taxRegistrationNumber),
       currencyCode:
         typeof raw.currency?.code === "string" ? raw.currency.code : null,
+    };
+  }
+
+  private async findItemsByFilter(
+    discoveryUrl: URL,
+    accessToken: string,
+    field: "gtin" | "number",
+    value: string
+  ): Promise<BCItem[]> {
+    const itemsUrl = new URL(`${discoveryUrl.toString()}/items()`);
+    itemsUrl.searchParams.set(
+      "$filter",
+      `${field} eq '${escapeODataString(value)}'`
+    );
+    itemsUrl.searchParams.set("$select", BC_ITEM_SELECT);
+    itemsUrl.searchParams.set("$top", "2");
+
+    let itemsResponse: Response;
+
+    try {
+      itemsResponse = await fetch(itemsUrl.toString(), {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+        },
+      });
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central item request failed"
+      );
+    }
+
+    if (!itemsResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central item request failed with status ${itemsResponse.status}`
+      );
+    }
+
+    type BCItemRaw = {
+      id?: unknown;
+      number?: unknown;
+      displayName?: unknown;
+      gtin?: unknown;
+      baseUnitOfMeasureCode?: unknown;
+    };
+
+    let body: { value?: BCItemRaw[] };
+
+    try {
+      body = (await itemsResponse.json()) as { value?: BCItemRaw[] };
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Malformed Business Central item response"
+      );
+    }
+
+    return (body.value ?? []).map((raw) => ({
+      id: requireBusinessCentralString(raw.id, "item.id"),
+      number: optionalString(raw.number),
+      displayName: optionalString(raw.displayName),
+      gtin: optionalString(raw.gtin),
+      baseUnitOfMeasureCode: optionalString(raw.baseUnitOfMeasureCode),
+    }));
+  }
+
+  async findItemsForOrderLines(
+    lines: BCItemLookupInput[]
+  ): Promise<BCItemLookupResult[]> {
+    if (lines.length === 0) {
+      return [];
+    }
+
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const results: BCItemLookupResult[] = [];
+
+    for (const line of lines) {
+      const candidates = buildItemLookupCandidates(line);
+
+      if (candidates.length === 0) {
+        results.push({
+          lineNumber: line.lineNumber,
+          matched: false,
+          reason: "no_identifiers",
+        });
+        continue;
+      }
+
+      let sawAmbiguousMatch = false;
+      let resolved: BCItemLookupResult | null = null;
+
+      for (const candidate of candidates) {
+        const items = await this.findItemsByFilter(
+          discoveryUrl,
+          accessToken,
+          candidate.field,
+          candidate.value
+        );
+
+        if (items.length === 1) {
+          resolved = {
+            lineNumber: line.lineNumber,
+            matched: true,
+            item: items[0],
+            matchedBy: candidate.source,
+          };
+          break;
+        }
+
+        if (items.length > 1) {
+          sawAmbiguousMatch = true;
+        }
+      }
+
+      results.push(
+        resolved ?? {
+          lineNumber: line.lineNumber,
+          matched: false,
+          reason: sawAmbiguousMatch ? "ambiguous" : "not_found",
+        }
+      );
+    }
+
+    return results;
+  }
+
+  private async postSalesOrderLine(
+    discoveryUrl: URL,
+    accessToken: string,
+    salesOrderId: string,
+    line: BCCreateSalesOrderLineInput
+  ): Promise<BCSalesOrderLineRejection | null> {
+    const linesUrl = `${discoveryUrl.toString()}/salesOrders(${salesOrderId})/salesOrderLines`;
+    let lineResponse: Response;
+
+    try {
+      lineResponse = await fetch(linesUrl, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(buildSalesOrderLineBody(line)),
+        signal: AbortSignal.timeout(CREATE_SALES_ORDER_TIMEOUT_MS),
+      });
+    } catch {
+      return {
+        lineNumber: line.lineNumber,
+        message: "Business Central sales order line request did not complete",
+      };
+    }
+
+    if (!lineResponse.ok) {
+      return {
+        lineNumber: line.lineNumber,
+        message: `Business Central rejected the sales order line with status ${lineResponse.status}`,
+      };
+    }
+
+    return null;
+  }
+
+  async createSalesOrder(
+    params: BCCreateSalesOrderParams
+  ): Promise<BCCreatedSalesOrder> {
+    if (params.lines.length === 0) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "A Business Central sales order must include at least one line."
+      );
+    }
+
+    if (!params.customerNumber) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "A Business Central sales order must include a customer number."
+      );
+    }
+
+    if (!params.externalDocumentNumber) {
+      throw new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "A Business Central sales order must include an external document number."
+      );
+    }
+
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+    const salesOrdersUrl = `${discoveryUrl.toString()}/salesOrders`;
+
+    let orderResponse: Response;
+
+    try {
+      orderResponse = await fetch(salesOrdersUrl, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify(buildSalesOrderHeaderBody(params)),
+        signal: AbortSignal.timeout(CREATE_SALES_ORDER_TIMEOUT_MS),
+      });
+    } catch {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        "Business Central sales order request did not complete",
+        params.externalDocumentNumber
+      );
+    }
+
+    if (orderResponse.status >= 500 || orderResponse.status === 408) {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        `Business Central sales order request failed with status ${orderResponse.status}`,
+        params.externalDocumentNumber
+      );
+    }
+
+    if (!orderResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central sales order request failed with status ${orderResponse.status}`
+      );
+    }
+
+    type BCCreatedSalesOrderRaw = {
+      id?: unknown;
+      number?: unknown;
+      status?: unknown;
+    };
+
+    let created: BCCreatedSalesOrderRaw;
+
+    try {
+      created = (await orderResponse.json()) as BCCreatedSalesOrderRaw;
+    } catch {
+      created = {};
+    }
+
+    // A 2xx means BC created the order, so a missing id is an unknown outcome, not a failure.
+    if (typeof created.id !== "string" || created.id === "") {
+      throw new BusinessCentralAmbiguousOutcomeError(
+        "Business Central sales order response did not include an id",
+        params.externalDocumentNumber
+      );
+    }
+
+    const salesOrderId = created.id;
+    const acceptedLineNumbers: number[] = [];
+    const rejectedLines: BCSalesOrderLineRejection[] = [];
+
+    for (const line of params.lines) {
+      const rejection = await this.postSalesOrderLine(
+        discoveryUrl,
+        accessToken,
+        salesOrderId,
+        line
+      );
+
+      if (rejection) {
+        rejectedLines.push(rejection);
+        continue;
+      }
+
+      acceptedLineNumbers.push(line.lineNumber);
+    }
+
+    return {
+      id: salesOrderId,
+      number: optionalString(created.number),
+      status: optionalString(created.status),
+      acceptedLineNumbers,
+      rejectedLines,
     };
   }
 

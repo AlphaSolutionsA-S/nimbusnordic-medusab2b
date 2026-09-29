@@ -1,6 +1,6 @@
 # Task 05: Trigger — Subscriber on `order_ingestion.ready_for_business_central` — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 05
