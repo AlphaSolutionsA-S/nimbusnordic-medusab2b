@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Details",
-      "itemCountLabel": "Items: {count}"
+      "itemCountLabel": "Items: {count}",
+      "receiptLabel": "Receipt",
+      "receivedLabel": "Received",
+      "externalRefLabel": "External ref"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Back to returns",
       "returnNumberHeading": "Return #{number}",
       "requestedDateLabel": "Requested on",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "receiptNumberHeading": "Return receipt #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Items",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Return not found",
-      "message": "This return is unavailable. Returns that have been fully processed are no longer shown here."
+      "message": "This return is unavailable. Check the return number and try again."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Something went wrong",
@@ -579,6 +583,18 @@
       "open": "Open",
       "draft": "Draft",
       "released": "Released"
+    },
+    "bcReturnState": {
+      "open": "Open",
+      "processed": "Processed"
+    },
+    "bcReturnReceipts": {
+      "heading": "Receipts",
+      "receiptNumberHeading": "Receipt #{number}",
+      "receivedDateLabel": "Received on",
+      "externalRefLabel": "External ref",
+      "quantityColumnLabel": "Quantity",
+      "emptyLinesMessage": "This receipt has no item lines."
     }
   },
   "Cart": {

@@ -110,18 +110,31 @@ export type BCReturnOrder = {
   lines: BCReturnLine[]
 }
 
+export type BCReturnState = "open" | "processed"
+
+export type BCReturnSource = "return_order" | "posted_receipt"
+
+export type BCPostedReturnReceiptSummary = {
+  number: string
+  receivedDate: string
+  externalDocumentNumber: string
+}
+
 export type BCReturnListItem = {
   id: string
   number: string
   documentDate: string
   status: string
+  state: BCReturnState
+  source: BCReturnSource
   itemCount: number
+  receipts: BCPostedReturnReceiptSummary[]
 }
 
 export type BCReturnListParams = {
   limit?: number
   offset?: number
-  status?: string
+  state?: BCReturnState
   date_from?: string
   date_to?: string
   search?: string
@@ -132,6 +145,20 @@ export type BCReturnListResponse = {
   count: number
   offset: number
   limit: number
+}
+
+export type BCPostedReturnReceiptLine = {
+  lineNumber: number
+  itemNumber: string
+  variantCode: string
+  description: string
+  quantity: number
+  unitOfMeasureCode: string
+  returnReasonCode: string
+}
+
+export type BCPostedReturnReceipt = BCPostedReturnReceiptSummary & {
+  lines: BCPostedReturnReceiptLine[]
 }
 
 export type BCReturnDetailLine = {
@@ -158,6 +185,9 @@ export type BCReturnDetail = {
   number: string
   documentDate: string
   status: string
+  state: BCReturnState
+  source: BCReturnSource
   lines: BCReturnDetailLine[]
-  expectedCredit: BCReturnExpectedCredit
+  expectedCredit: BCReturnExpectedCredit | null
+  receipts: BCPostedReturnReceipt[]
 }

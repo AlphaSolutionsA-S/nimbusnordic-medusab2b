@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Details",
-      "itemCountLabel": "Artikel: {count}"
+      "itemCountLabel": "Artikel: {count}",
+      "receiptLabel": "Wareneingang",
+      "receivedLabel": "Eingegangen",
+      "externalRefLabel": "Externe Ref."
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Zurück zu den Rücksendungen",
       "returnNumberHeading": "Rücksendung #{number}",
       "requestedDateLabel": "Angefordert am",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "receiptNumberHeading": "Rücksendeeingang #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Artikel",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Rücksendung nicht gefunden",
-      "message": "Diese Rücksendung ist nicht verfügbar. Vollständig bearbeitete Rücksendungen werden hier nicht mehr angezeigt."
+      "message": "Diese Rücksendung ist nicht verfügbar. Prüfen Sie die Rücksendenummer und versuchen Sie es erneut."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Etwas ist schiefgelaufen",
@@ -579,6 +583,18 @@
       "open": "Offen",
       "draft": "Entwurf",
       "released": "Freigegeben"
+    },
+    "bcReturnState": {
+      "open": "Offen",
+      "processed": "Bearbeitet"
+    },
+    "bcReturnReceipts": {
+      "heading": "Wareneingänge",
+      "receiptNumberHeading": "Wareneingang #{number}",
+      "receivedDateLabel": "Eingegangen am",
+      "externalRefLabel": "Externe Ref.",
+      "quantityColumnLabel": "Menge",
+      "emptyLinesMessage": "Dieser Wareneingang enthält keine Artikelpositionen."
     }
   },
   "Cart": {

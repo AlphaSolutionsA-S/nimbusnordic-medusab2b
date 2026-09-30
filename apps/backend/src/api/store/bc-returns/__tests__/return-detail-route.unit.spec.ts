@@ -48,12 +48,15 @@ const bcReturn = {
   number: "31502910",
   documentDate: "2026-09-27",
   status: "Open",
+  state: "open",
+  source: "return_order",
   lines: [],
   expectedCredit: {
     currencyCode: "DKK",
     amountIncludingTax: 1598.75,
     amountExcludingTax: 1279,
   },
+  receipts: [],
 };
 
 describe("GET /store/bc-returns/:number", () => {
@@ -82,7 +85,33 @@ describe("GET /store/bc-returns/:number", () => {
     expect(res.json).toHaveBeenCalledWith({ return: bcReturn });
   });
 
-  // TC-2: security — a foreign/unknown/processed return gives a non-disclosing 404.
+  // TC-14 (NIMBUS-172): a processed return is passed through as 200.
+  it("returns a processed return with 200", async () => {
+    const processedReturn = {
+      ...bcReturn,
+      id: "return-order:31400001",
+      number: "31400001",
+      status: "",
+      state: "processed",
+      lines: [],
+      expectedCredit: null,
+      receipts: [],
+    };
+    const getReturn = jest.fn().mockResolvedValue(processedReturn);
+    const { req } = createRequest({
+      returnNumber: "31400001",
+      bcCustomerNumber: "10000",
+      getReturn,
+    });
+    const res = createResponse();
+
+    await GET(req as never, res as never);
+
+    expect(res.status).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith({ return: processedReturn });
+  });
+
+  // TC-2: security — a foreign/unknown return gives a non-disclosing 404.
   it("responds 404 when the return is not found for this customer", async () => {
     const getReturn = jest.fn().mockResolvedValue(null);
     const { req } = createRequest({

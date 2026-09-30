@@ -1,7 +1,7 @@
 # Show processed (posted) returns in the return overview
 
 - **Date:** 2026-09-30
-- **Status:** Draft — pending user approval
+- **Status:** Approved by user 2026-09-30
 - **Type:** Story
 - **Tracker:** JIRA — https://alphasolutionsdk.atlassian.net/browse/NIMBUS-172
 - **Priority:** Medium
@@ -34,6 +34,10 @@ overview becomes a complete return history.
 | Detail page | **Yes, link to detail.** Extend the NIMBUS-141 return detail page to handle processed returns and posted receipts. |
 | Sequencing / base branch | **Wait for NIMBUS-140, base on develop.** Start after NIMBUS-140 is merged to develop, then branch `feature/NIMBUS-172` from develop. |
 | Priority | **Medium.** Nothing is waiting on this. |
+| Posted receipts with no return order | **Show them.** Each becomes its own processed row, identified by its receipt number, with date and items taken from the receipt itself. The detail page opens it by receipt number. |
+| Sort order | **Latest activity first.** Newest first by the row's latest date: order date for open returns, latest received date (`Document_Date`) for processed returns and stand-alone receipts. |
+| Item details per receipt line | Item number, **description, quantity, unit of measure, variant and return reason.** |
+| External document number | **Show as "External ref".** `External_Document_No` is displayed as a separate reference field (hidden when empty), never as the return or receipt number. |
 
 ## Requirements
 
@@ -50,7 +54,13 @@ overview becomes a complete return history.
 - Each row has a status badge (open / processed). The list has a filter for all / open /
   processed.
 - For each posted receipt, the customer can see the receipt number, the received date
-  (`Document_Date`), and the items with quantities.
+  (`Document_Date`), the external reference (`External_Document_No`, labelled "External ref",
+  hidden when empty), and the items with description, quantity, unit of measure, variant and
+  return reason.
+- A posted receipt whose return order number is empty or does not match a return order is
+  shown as its own **processed** row, identified by its receipt number. Its date, external ref
+  and items come from the receipt header and lines. Its detail page is opened by receipt number
+  and is subject to the same company scoping.
 - A processed return opens the return detail page (NIMBUS-141). That page is extended to show
   processed returns and their posted receipts with items and quantities.
 - A customer only ever sees returns that belong to their own company, in the list and on the
@@ -63,7 +73,8 @@ overview becomes a complete return history.
 - The Business Central customer number is always taken from the signed-in customer's company on
   the server and is never accepted from the client.
 - The free-text external document number (for example `AX 209475` or the portal's `RET-...`
-  request id) is not shown as an order or return number.
+  request id) is shown only as "External ref", never as an order, return or receipt number, and
+  is rendered as plain text.
 - Performance is in line with the existing return overview and order history (NIMBUS-170).
 
 ## Affected Apps
@@ -86,7 +97,8 @@ Story. Expected high-level breakdown (the implementation-planner decides the det
 3. Storefront: combined list with status badge, open/processed filter and grouped receipts.
 4. Storefront: extend the NIMBUS-141 detail page for processed returns and posted receipts.
 5. Translations for all storefront languages.
-6. Tests: customer scoping, no duplicates, partial receipts, processed-only return orders.
+6. Tests: customer scoping, no duplicates, partial receipts, processed-only return orders,
+   receipts without a return order, external ref shown/hidden.
 
 ## Out of Scope
 
@@ -95,17 +107,7 @@ Story. Expected high-level breakdown (the implementation-planner decides the det
 
 ## Open Questions
 
-- **Scope approval:** the user has not approved this draft yet.
-- **Sort order:** the combined list could be sorted by return order date or by latest received
-  date. This question was not raised with the user. Default assumption to confirm: keep the
-  NIMBUS-140 sort order.
-- **Posted receipts with no matching return order:** older historic data may have posted
-  receipts whose return order number is empty or unknown. It is not decided whether these are
-  shown, for example as a processed row per receipt, or left out. This question was not raised
-  with the user.
-- **Item details shown per receipt:** the acceptance criteria say "items with quantities". It is
-  not decided whether the return reason, unit of measure and variant are shown as well. The
-  implementation-planner can propose a set that matches the NIMBUS-141 detail page.
+None. All questions were answered by the user on 2026-09-30.
 
 ## Dependencies
 

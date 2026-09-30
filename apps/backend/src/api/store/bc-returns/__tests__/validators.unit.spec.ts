@@ -21,4 +21,24 @@ describe("StoreBCReturnsQuery", () => {
       StoreBCReturnsQuery.parse({ unexpected: "value" })
     ).toThrow();
   });
+
+  // TC-22 (NIMBUS-172): the open and processed states are accepted.
+  it("accepts the open and processed states", () => {
+    expect(StoreBCReturnsQuery.parse({ state: "open" })).toEqual({
+      limit: 20,
+      offset: 0,
+      state: "open",
+    });
+    expect(StoreBCReturnsQuery.parse({ state: "processed" })).toEqual({
+      limit: 20,
+      offset: 0,
+      state: "processed",
+    });
+  });
+
+  // TC-23 (NIMBUS-172): unknown states and the removed status param are rejected.
+  it("rejects an unknown state and the removed status param", () => {
+    expect(() => StoreBCReturnsQuery.parse({ state: "Released" })).toThrow();
+    expect(() => StoreBCReturnsQuery.parse({ status: "Open" })).toThrow();
+  });
 });

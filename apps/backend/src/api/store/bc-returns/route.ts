@@ -45,7 +45,7 @@ export const GET = async (
     return;
   }
 
-  const { limit, offset, status, date_from, date_to, search } =
+  const { limit, offset, state, date_from, date_to, search } =
     req.validatedQuery as StoreBCReturnsQueryType;
 
   const bcService =
@@ -55,7 +55,7 @@ export const GET = async (
     customerNumber: bcCustomerNumber,
     limit: limit ?? 20,
     offset: offset ?? 0,
-    status,
+    state,
     date_from,
     date_to,
     search,

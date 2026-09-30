@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Detaljer",
-      "itemCountLabel": "Artiklar: {count}"
+      "itemCountLabel": "Artiklar: {count}",
+      "receiptLabel": "Mottagning",
+      "receivedLabel": "Mottagen",
+      "externalRefLabel": "Extern ref."
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Tillbaka till returer",
       "returnNumberHeading": "Retur #{number}",
       "requestedDateLabel": "Begärd den",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "receiptNumberHeading": "Returmottagning #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Varor",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Returen hittades inte",
-      "message": "Den här returen är inte tillgänglig. Returer som har behandlats färdigt visas inte längre här."
+      "message": "Den här returen är inte tillgänglig. Kontrollera returnumret och försök igen."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Något gick fel",
@@ -579,6 +583,18 @@
       "open": "Öppen",
       "draft": "Utkast",
       "released": "Frisläppt"
+    },
+    "bcReturnState": {
+      "open": "Öppen",
+      "processed": "Behandlad"
+    },
+    "bcReturnReceipts": {
+      "heading": "Mottagningar",
+      "receiptNumberHeading": "Mottagning #{number}",
+      "receivedDateLabel": "Mottagen den",
+      "externalRefLabel": "Extern ref.",
+      "quantityColumnLabel": "Antal",
+      "emptyLinesMessage": "Den här mottagningen har inga artikelrader."
     }
   },
   "Cart": {

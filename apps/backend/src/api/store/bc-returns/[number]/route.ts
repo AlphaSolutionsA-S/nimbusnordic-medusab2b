@@ -42,7 +42,7 @@ export const GET = async (
 
   const returnNumber = req.params.number;
 
-  // Foreign, unknown, processed and impossible numbers all get the same 404.
+  // Foreign, unknown and impossible numbers all get the same 404.
   if (!returnNumber || returnNumber.length > BC_DOCUMENT_NUMBER_MAX_LENGTH) {
     res.status(404).json({ message: "Return not found." });
     return;
