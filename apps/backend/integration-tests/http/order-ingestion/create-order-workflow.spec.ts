@@ -12,6 +12,7 @@ import { createIngestedOrderStep } from "../../../src/workflows/order-ingestion/
 import type { CreateIngestedOrderInput } from "../../../src/workflows/order-ingestion/steps/create-ingested-order";
 import { createOrderExternalReferenceStep } from "../../../src/workflows/order-ingestion/steps/create-order-external-reference";
 import type { CanonicalOrder } from "../../../src/modules/order-ingestion/canonical-order-schema";
+import { CanonicalOrderSchema } from "../../../src/modules/order-ingestion/canonical-order-schema";
 import {
   BC_INTEGRATION_STATE_METADATA_KEY,
   createInitialBcIntegrationState,
@@ -467,6 +468,54 @@ medusaIntegrationTestRunner({
         expect(persisted.currency_code).toEqual("dkk");
         expect(persisted.shipping_address ?? null).toBeNull();
         expect(persisted.billing_address ?? null).toBeNull();
+      });
+
+      it("TC-11: persists both addresses from a schema-normalized payload with lower-case country codes (NIMBUS-171)", async () => {
+        const container = getContainer();
+        const companyService =
+          container.resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const orderModuleService = container.resolve<IOrderModuleService>(
+          Modules.ORDER
+        );
+
+        await companyService.createCompanies({
+          name: "TC-11 Company",
+          email: "tc11@example.com",
+          business_central_customer_number: "tc11-customer-number",
+        });
+
+        const address = {
+          name: "METZ A/S",
+          addressLine1: "Skelstedet 9",
+          city: "Vedbæk",
+          postCode: "2950",
+        };
+        const canonicalOrder = CanonicalOrderSchema.parse({
+          ...singleLineCanonicalOrder,
+          externalOrderNumber: "COUNTRY-WORKFLOW-1",
+          billTo: { ...address, country: "dk " },
+          shipTo: { ...address, country: "\tNo" },
+        });
+
+        const { result: order } = await createOrderFromCanonicalPayloadWorkflow(
+          container
+        ).run({
+          input: {
+            customer_number: "tc11-customer-number",
+            canonicalOrder,
+          },
+        });
+
+        const persisted = await orderModuleService.retrieveOrder(order.id, {
+          relations: ["shipping_address", "billing_address"],
+        });
+
+        expect(persisted.billing_address?.country_code).toEqual("dk");
+        expect(persisted.shipping_address?.country_code).toEqual("no");
+        expect(
+          (persisted.metadata?.canonical_order as CanonicalOrder | undefined)
+            ?.billTo?.country
+        ).toEqual("DK");
       });
     });
   },

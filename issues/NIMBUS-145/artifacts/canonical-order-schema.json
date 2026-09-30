@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "CanonicalOrder",
-  "description": "Canonical order contract for APIM validate-content (schema-id: canonical-order-json). Mirrors CanonicalOrderSchema in apps/backend/src/modules/order-ingestion/canonical-order-schema.ts. Rules JSON Schema cannot express (real-calendar dates, unique lineNumber within an order) are enforced by the Medusa endpoint.",
+  "description": "Canonical order contract for APIM validate-content (schema-id: canonical-order-json). Mirrors CanonicalOrderSchema in apps/backend/src/modules/order-ingestion/canonical-order-schema.ts. Rules JSON Schema cannot express (real-calendar dates, unique lineNumber within an order) and the ISO 3166-1 alpha-2 country list are enforced by the Medusa endpoint.",
   "type": "object",
   "additionalProperties": false,
   "required": ["externalOrderNumber", "orderDate", "currencyCode", "lines"],
@@ -42,7 +42,11 @@
         "city": { "type": "string", "minLength": 1 },
         "state": { "type": "string" },
         "postCode": { "type": "string", "minLength": 1 },
-        "country": { "type": "string", "minLength": 1 }
+        "country": {
+          "type": "string",
+          "pattern": "^[ \\t\\n\\r]*[A-Za-z]{2}[ \\t\\n\\r]*$",
+          "description": "Shape check only (NIMBUS-171 D9): two letters, any case, optional surrounding space/tab/CR/LF. The Medusa endpoint checks the value against the officially assigned ISO 3166-1 alpha-2 codes."
+        }
       }
     },
     "orderLine": {

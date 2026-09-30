@@ -34,11 +34,16 @@ to match.
   is no namespace, the root is `<canonicalOrder>`, and lines are `<lines><line>…</line></lines>`.
   Numbers use a dot as the decimal separator. Comma decimals such as `134,75` fail the XSD with a
   400, so the policy does not normalize them.
-- Two rules APIM cannot fully enforce are left to the Medusa endpoint, which still validates every
+- Three rules APIM cannot fully enforce are left to the Medusa endpoint, which still validates every
   request with zod:
   - Real-calendar dates: `31-02-2026` passes APIM and is rejected by Medusa with a 400.
   - Unique `lineNumber`: the XSD enforces it with `xs:unique`, but JSON Schema cannot, so a JSON
     request with duplicate line numbers is rejected by Medusa with a 400.
+  - ISO country codes (NIMBUS-171): APIM checks only that an address `country` is two letters, any
+    case, with optional surrounding space/tab/CR/LF. `XX` passes APIM and is rejected by Medusa with
+    a 400 that names the field. The ISO 3166-1 alpha-2 list and its exceptions allowlist live only
+    in `apps/backend/src/modules/order-ingestion/country-code.ts`. After changing either schema,
+    re-register both in APIM (section 2) and run test-payloads TC-16 and TC-17.
 
 ## Prerequisites
 

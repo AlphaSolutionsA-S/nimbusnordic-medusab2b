@@ -7,6 +7,9 @@ import type {
 } from "@medusajs/framework/types";
 import { COMPANY_MODULE } from "../../../src/modules/company";
 import type { ICompanyModuleService } from "../../../src/types";
+import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
+import type OrderIngestionModuleService from "../../../src/modules/order-ingestion/service";
+import type { CanonicalOrder } from "../../../src/modules/order-ingestion/canonical-order-schema";
 import { singleLineCanonicalOrder } from "../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures";
 
 jest.setTimeout(60 * 1000);
@@ -44,6 +47,31 @@ async function waitForOrderIngestionState(
     `Timed out waiting for order ${orderId} to reach order_ingestion_state="${expectedState}"`
   );
 }
+
+async function listOrdersForExternalNumber(
+  orderModuleService: IOrderModuleService,
+  externalOrderNumber: string
+) {
+  const orders = await orderModuleService.listOrders(
+    {},
+    { select: ["id", "metadata"], take: 1000 }
+  );
+
+  // Test-only JS filter: the order has no native external-number column.
+  return orders.filter(
+    (order) =>
+      (order.metadata?.canonical_order as CanonicalOrder | undefined)
+        ?.externalOrderNumber === externalOrderNumber
+  );
+}
+
+const countryTestAddress = {
+  name: "JK Tryk",
+  contact: "3. Parts Nimbus",
+  addressLine1: "Industrikrogen 11B",
+  city: "Rønnede",
+  postCode: "4683",
+};
 
 medusaIntegrationTestRunner({
   inApp: true,
@@ -201,6 +229,134 @@ medusaIntegrationTestRunner({
           "ready_for_business_central"
         );
         expect(finalOrder.id).toEqual(response.data.order_id);
+      });
+
+      it("TC-8: rejects an invalid shipTo.country with the existing 400, naming the field and the value sent, and creates nothing (NIMBUS-171)", async () => {
+        const container = getContainer();
+        const companyService =
+          container.resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const orderModuleService = container.resolve<IOrderModuleService>(
+          Modules.ORDER
+        );
+        const orderIngestionService =
+          container.resolve<OrderIngestionModuleService>(
+            ORDER_INGESTION_MODULE
+          );
+        const secretHeaders = await generateSecretApiKeyHeaders(container);
+
+        const company = await companyService.createCompanies({
+          name: "TC-8 HTTP Company",
+          email: "tc8-http@example.com",
+          business_central_customer_number: "tc8-http-customer",
+        });
+
+        const error = await api
+          .post(
+            "/orderapi/orders?customerNumber=tc8-http-customer",
+            {
+              ...singleLineCanonicalOrder,
+              externalOrderNumber: "COUNTRY-INVALID-HTTP-1",
+              shipTo: { ...countryTestAddress, country: "Denmark" },
+            },
+            secretHeaders
+          )
+          .catch((e) => e);
+
+        expect(error.response.status).toEqual(400);
+        expect(error.response.data.type).toEqual("invalid_data");
+        expect(error.response.data.message).toEqual(
+          "Invalid request: Field 'shipTo.country' must be an ISO 3166-1 alpha-2 country code, but got: 'Denmark'"
+        );
+        // Only the field path and the sent country are echoed — no other payload content.
+        expect(error.response.data.message).not.toContain("JK Tryk");
+        expect(error.response.data.message).not.toContain("COUNTRY-INVALID-HTTP-1");
+
+        expect(
+          await listOrdersForExternalNumber(
+            orderModuleService,
+            "COUNTRY-INVALID-HTTP-1"
+          )
+        ).toHaveLength(0);
+        expect(
+          await orderIngestionService.listOrderExternalReferences({
+            external_order_number: "COUNTRY-INVALID-HTTP-1",
+            company_id: company.id,
+          })
+        ).toHaveLength(0);
+      });
+
+      it("TC-9: rejects an unassigned two-letter billTo.country (XX) with a 400 naming billTo.country (NIMBUS-171)", async () => {
+        const container = getContainer();
+        const companyService =
+          container.resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const secretHeaders = await generateSecretApiKeyHeaders(container);
+
+        await companyService.createCompanies({
+          name: "TC-9 HTTP Company",
+          email: "tc9-http@example.com",
+          business_central_customer_number: "tc9-http-customer",
+        });
+
+        await expect(
+          api.post(
+            "/orderapi/orders?customerNumber=tc9-http-customer",
+            {
+              ...singleLineCanonicalOrder,
+              externalOrderNumber: "COUNTRY-INVALID-HTTP-2",
+              billTo: { ...countryTestAddress, country: "XX" },
+              shipTo: { ...countryTestAddress, country: "DK" },
+            },
+            secretHeaders
+          )
+        ).rejects.toMatchObject({
+          response: {
+            status: 400,
+            data: {
+              type: "invalid_data",
+              message: expect.stringContaining(
+                "Field 'billTo.country' must be an ISO 3166-1 alpha-2 country code, but got: 'XX'"
+              ),
+            },
+          },
+        });
+      });
+
+      it("TC-10: accepts a lower-case, padded country, stores it lower case on the order address and upper case in the canonical metadata (NIMBUS-171)", async () => {
+        const container = getContainer();
+        const companyService =
+          container.resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const orderModuleService = container.resolve<IOrderModuleService>(
+          Modules.ORDER
+        );
+        const secretHeaders = await generateSecretApiKeyHeaders(container);
+
+        await companyService.createCompanies({
+          name: "TC-10 HTTP Company",
+          email: "tc10-http@example.com",
+          business_central_customer_number: "tc10-http-customer",
+        });
+
+        const response = await api.post(
+          "/orderapi/orders?customerNumber=tc10-http-customer",
+          {
+            ...singleLineCanonicalOrder,
+            externalOrderNumber: "COUNTRY-VALID-HTTP-1",
+            shipTo: { ...countryTestAddress, country: " se " },
+          },
+          secretHeaders
+        );
+
+        expect(response.status).toEqual(201);
+
+        const persisted = await orderModuleService.retrieveOrder(
+          response.data.order_id,
+          { relations: ["shipping_address"] }
+        );
+        expect(persisted.shipping_address?.country_code).toEqual("se");
+        expect(
+          (persisted.metadata?.canonical_order as CanonicalOrder | undefined)
+            ?.shipTo?.country
+        ).toEqual("SE");
       });
     });
   },

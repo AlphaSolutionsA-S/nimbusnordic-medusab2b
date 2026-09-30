@@ -58,6 +58,14 @@ payload is NIMBUS-149's job, not this story's.
     precedence. Resolving the BC fallback is downstream processing/enrichment logic, not owned by
     this story (see Dependencies) — this story's job is only to not reject a payload for omitting
     them.
+  - **`country` on `billTo`/`shipTo` (added by NIMBUS-171, 2026-09-30):** must be an officially
+    assigned ISO 3166-1 alpha-2 code. Any case and surrounding whitespace are accepted
+    (`dk`, `" SE "`). `DNK`, `Denmark`, `XX` and empty values are rejected with the order validation
+    400, which names the field (e.g. `shipTo.country`) and the value sent. The accepted value is
+    normalized to the trimmed upper-case code in the canonical order and stored lower case on the
+    Medusa order address. APIM checks only the two-letter shape. Exceptions (e.g. `XK`) can be
+    allowed later in one documented allowlist in
+    `apps/backend/src/modules/order-ingestion/country-code.ts`.
   - **Computed totals are dropped from the input contract entirely, not just made optional.**
     They are derived outputs, not submitter-supplied data — calculation-input fields are kept
     instead: `quantity`, `unitPrice`, `discountPercent`, `discountAmount`,

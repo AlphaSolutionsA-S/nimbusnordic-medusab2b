@@ -14,7 +14,7 @@ NIMBUS-129's `POST /orderapi/orders`, plus a Company with
 `business_central_customer_number = "579000283084"`. Until those are deployed, check the APIM
 layer alone in the trace: validation passed, the transformed body, and the backend URL.
 **APIM-only cases** (the response comes from APIM, no downstream needed): TC-2, TC-4, TC-7,
-TC-8, TC-9, TC-10, TC-11, TC-12.
+TC-8, TC-9, TC-10, TC-11, TC-12, TC-16.
 
 Every order payload follows the implemented canonical contract
 (`apps/backend/src/modules/order-ingestion/canonical-order-schema.ts`): dates are `DD-MM-YYYY`, a
@@ -227,6 +227,7 @@ These pass APIM and must be rejected by Medusa. Their purpose is to confirm the 
 |---|---|---|
 | a | JSON with two lines both `"lineNumber": 1` | Medusa `400` passed through (JSON Schema cannot express uniqueness) |
 | b | `orderDate` = `31-02-2026` | Medusa `400` passed through (APIM checks the pattern only, not the calendar) |
+| c | TC-3's body with `<country>XX</country>` (or JSON `"country": "XX"`) | Medusa `400` passed through, message `Invalid request: Field 'shipTo.country' must be an ISO 3166-1 alpha-2 country code, but got: 'XX'` (APIM checks the shape only, NIMBUS-171) |
 
 ## TC-14: Unknown token
 
@@ -242,6 +243,22 @@ Send TC-1's body (with a new `externalOrderNumber`) to
 
 **Expect:** `201` for the real token's customer. The trace shows a backend URL with only
 `api-version`, `sp`, `sv` and the named-value `sig`, and no `customerNumber` or forged `sig`.
+
+## TC-16: Country that is not a two-letter code (NIMBUS-171)
+
+Send TC-3's body (XML) with `<country>Denmark</country>`, then with `<country>DNK</country>`. Send
+the JSON form of TC-3 (the transformed body shown under TC-3, new `externalOrderNumber`) with
+`"country": "Denmark"`.
+
+**Expect:** `400` with the generic validation error body. There is no Logic App run.
+
+## TC-17: Lower-case, padded country is accepted (NIMBUS-171)
+
+Send TC-3's body with a new `externalOrderNumber` and `<country> se </country>`.
+
+**Expect:** `201` from Medusa. APIM must not reject a code the backend accepts. The Medusa order's
+shipping address has `country_code` `se`. The order's `metadata.canonical_order.shipTo.country` is
+`SE`.
 
 ## Summary
 
@@ -262,3 +279,5 @@ Send TC-1's body (with a new `externalOrderNumber`) to
 | TC-13 | Downstream-only rules | `application/json` | 400 (Medusa) | Yes |
 | TC-14 | Unknown token | `application/json` | 401 (Logic App) | Logic App only |
 | TC-15 | Caller query params dropped | `application/json` | 201 | Yes |
+| TC-16 | Country not two letters | both | 400 | No |
+| TC-17 | Lower-case padded country | `application/xml` | 201 | Yes |

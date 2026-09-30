@@ -3,6 +3,7 @@ import {
   multiLineCanonicalOrder,
   singleLineCanonicalOrder,
 } from "../../../modules/order-ingestion/__fixtures__/canonical-order-fixtures";
+import { CanonicalOrderSchema } from "../../../modules/order-ingestion/canonical-order-schema";
 
 describe("mapCanonicalOrderHeader", () => {
   it("TC-1: maps shipTo and billTo onto shipping/billing addresses with the order phone on both", () => {
@@ -51,5 +52,25 @@ describe("mapCanonicalOrderHeader", () => {
     expect(header.currency_code).toEqual("DKK");
     expect(header.shipping_address).toBeUndefined();
     expect(header.billing_address).toBeUndefined();
+  });
+
+  it("TC-3: stores a schema-normalized country as a lower-case country_code on both addresses (parse -> map wiring)", () => {
+    const address = {
+      name: "JK Tryk",
+      addressLine1: "Industrikrogen 11B",
+      city: "Rønnede",
+      postCode: "4683",
+    };
+    const parsed = CanonicalOrderSchema.parse({
+      ...multiLineCanonicalOrder,
+      shipTo: { ...address, country: " se " },
+      billTo: { ...address, country: "Dk" },
+    });
+
+    const header = mapCanonicalOrderHeader(parsed);
+
+    expect(parsed.shipTo?.country).toEqual("SE");
+    expect(header.shipping_address?.country_code).toEqual("se");
+    expect(header.billing_address?.country_code).toEqual("dk");
   });
 });

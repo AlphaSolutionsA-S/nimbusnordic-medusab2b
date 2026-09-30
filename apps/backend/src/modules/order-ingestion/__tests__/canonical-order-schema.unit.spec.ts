@@ -175,4 +175,108 @@ describe("CanonicalOrderSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  describe("address country (NIMBUS-171)", () => {
+    const address = {
+      name: "JK Tryk",
+      addressLine1: "Industrikrogen 11B",
+      city: "Rønnede",
+      postCode: "4683",
+      country: "DK",
+    };
+
+    it("TC-15: accepts ISO codes in any case with surrounding whitespace on billTo and shipTo, and outputs the trimmed upper-case code", () => {
+      const cases: ReadonlyArray<readonly [string, string]> = [
+        ["DK", "DK"],
+        ["dk", "DK"],
+        [" SE ", "SE"],
+        ["\tno\n", "NO"],
+        ["Gb", "GB"],
+      ];
+
+      for (const [sent, expected] of cases) {
+        const result = CanonicalOrderSchema.safeParse({
+          ...singleLineCanonicalOrder,
+          billTo: { ...address, country: sent },
+          shipTo: { ...address, country: sent },
+        });
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.billTo?.country).toEqual(expected);
+          expect(result.data.shipTo?.country).toEqual(expected);
+        }
+      }
+    });
+
+    it("TC-16: rejects a shipTo.country that is not an officially assigned ISO code, naming the field path and the value sent", () => {
+      for (const country of ["DNK", "Denmark", "XX", "", "   ", "XK", "UK", "EU", "ß", "ıt"]) {
+        const result = CanonicalOrderSchema.safeParse({
+          ...singleLineCanonicalOrder,
+          shipTo: { ...address, country },
+        });
+        expect(result.success).toBe(false);
+        if (!result.success) {
+          expect(result.error.issues).toHaveLength(1);
+          expect(result.error.issues[0].path).toEqual(["shipTo", "country"]);
+          expect(result.error.issues[0].message).toEqual(
+            `Field 'shipTo.country' must be an ISO 3166-1 alpha-2 country code, but got: '${country}'`
+          );
+        }
+      }
+    });
+
+    it("TC-16b: echoes at most 20 characters of a long rejected country value", () => {
+      const result = CanonicalOrderSchema.safeParse({
+        ...singleLineCanonicalOrder,
+        shipTo: { ...address, country: "Kingdom of Denmark and more" },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].message).toEqual(
+          "Field 'shipTo.country' must be an ISO 3166-1 alpha-2 country code, but got: 'Kingdom of Denmark a...'"
+        );
+      }
+    });
+
+    it("TC-17: applies the same rule to billTo.country (every address in the order)", () => {
+      const result = CanonicalOrderSchema.safeParse({
+        ...singleLineCanonicalOrder,
+        billTo: { ...address, country: "Denmark" },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(["billTo", "country"]);
+        expect(result.error.issues[0].message).toContain("'Denmark'");
+      }
+    });
+
+    it("TC-18: reports both addresses when both countries are invalid", () => {
+      const result = CanonicalOrderSchema.safeParse({
+        ...singleLineCanonicalOrder,
+        billTo: { ...address, country: "DNK" },
+        shipTo: { ...address, country: "Sweden" },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues.map((issue) => issue.path)).toEqual(
+          expect.arrayContaining([
+            ["billTo", "country"],
+            ["shipTo", "country"],
+          ])
+        );
+      }
+    });
+
+    it("TC-19: still rejects a non-string country with a type error", () => {
+      const result = CanonicalOrderSchema.safeParse({
+        ...singleLineCanonicalOrder,
+        shipTo: { ...address, country: 45 },
+      });
+      expect(result.success).toBe(false);
+      if (!result.success) {
+        expect(result.error.issues[0].path).toEqual(["shipTo", "country"]);
+        expect(result.error.issues[0].code).toEqual("invalid_type");
+      }
+    });
+  });
 });
