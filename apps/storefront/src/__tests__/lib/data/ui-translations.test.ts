@@ -153,3 +153,5 @@ describe("getRuntimeMessages", () => {
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ availability: "available", messages: {} })
   })
 })
+
+export {}

@@ -1,11 +1,12 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http";
-import { MedusaError } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils";
 import { STOREFRONT_TRANSLATION_MODULE } from "../../../modules/storefront-translation";
 import type StorefrontTranslationModuleService from "../../../modules/storefront-translation/service";
 import type {
   MutationInput,
   MutationResponse,
 } from "../../../types/storefront-translation";
+import { revalidateStorefrontTranslations } from "../../../utils/translations/revalidate-storefront";
 import { localeSchema } from "../../../utils/translations/validation";
 import { mutateTranslationWorkflow } from "../../../workflows/storefront-translation/workflows/mutate-translation";
 import { MissingIdSchema } from "./validators";
@@ -37,11 +38,18 @@ export async function respondWithMutation(
   status = 200
 ): Promise<void> {
   const { result } = await mutateTranslationWorkflow(req.scope).run({ input });
+  // The mutation is committed at this point; a failed callback never rolls it back.
   const affectsStorefront = result.translation.is_active || input.operation === "activate";
-  const body: MutationResponse = {
-    ...result,
-    // Storefront callback is added separately; the timed refresh covers active changes meanwhile.
-    refresh: affectsStorefront ? "deferred" : "not_needed",
-  };
+  const refresh = affectsStorefront
+    ? await revalidateStorefrontTranslations(
+        {
+          locale: result.translation.locale,
+          version: result.translation.version,
+          is_active: result.translation.is_active,
+        },
+        req.scope.resolve(ContainerRegistrationKeys.LOGGER)
+      )
+    : "not_needed";
+  const body: MutationResponse = { ...result, refresh };
   res.status(status).json(body);
 }

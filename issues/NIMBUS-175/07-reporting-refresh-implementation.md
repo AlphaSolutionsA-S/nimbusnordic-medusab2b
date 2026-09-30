@@ -1,6 +1,6 @@
 # Task 07: Revalidation and missing-key reporting
 
-**Status:** TODO
+**Status:** IN PROGRESS (production builds and TC-7 refresh check pending; see Task 08)
 **App:** backend + storefront
 **App Roots:** apps/backend, apps/storefront
 **Task ID:** 07

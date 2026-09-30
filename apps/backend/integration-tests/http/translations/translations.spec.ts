@@ -1,3 +1,5 @@
+import { createServer, type Server } from "node:http";
+import type { AddressInfo } from "node:net";
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import type { MedusaContainer } from "@medusajs/framework/types";
 import { createAdminUser, createStoreUser } from "../../utils/admin";
@@ -326,6 +328,69 @@ medusaIntegrationTestRunner({
         expect(dismissed.data).toEqual({ dismissed: true });
         expect((await api.get("/admin/ui-translations/missing-keys", admin)).data.count).toBe(0);
       });
+    });
+
+    describe("Task 07 storefront refresh callback", () => {
+      type Received = { authorization?: string; body: string };
+      let server: Server;
+      let received: Received[];
+      let behaviour: "ok" | "fail" | "hang";
+
+      beforeEach(async () => {
+        received = [];
+        behaviour = "ok";
+        server = createServer((request, response) => {
+          let body = "";
+          request.on("data", (chunk) => (body += chunk));
+          request.on("end", () => {
+            received.push({ authorization: request.headers.authorization, body });
+            if (behaviour === "hang") {
+              return;
+            }
+            response.statusCode = behaviour === "ok" ? 200 : 500;
+            response.end("{}");
+          });
+        });
+        await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const { port } = server.address() as AddressInfo;
+        process.env.STOREFRONT_TRANSLATION_REVALIDATE_URL = `http://127.0.0.1:${port}/api/translations/revalidate`;
+        process.env.REVALIDATE_SECRET = "callback-secret";
+      });
+
+      afterEach(async () => {
+        delete process.env.STOREFRONT_TRANSLATION_REVALIDATE_URL;
+        delete process.env.REVALIDATE_SECRET;
+        server.closeAllConnections();
+        await new Promise((resolve) => server.close(resolve));
+      });
+
+      it("requests a refresh after activation and active saves, not for inactive edits", async () => {
+        await importLocale("da");
+        expect(received).toHaveLength(0);
+        const activated = await activate("da", 1);
+        expect(activated.data.refresh).toBe("requested");
+        expect(received).toHaveLength(1);
+        expect(received[0].authorization).toBe("Bearer callback-secret");
+        expect(JSON.parse(received[0].body)).toEqual({ locale: "da", version: 2, is_active: true });
+      });
+
+      it.each(["fail", "hang"] as const)(
+        "TC-2: a %s callback still returns the committed save with refresh deferred",
+        async (mode) => {
+          await importLocale("da");
+          await activate("da", 1);
+          behaviour = mode;
+          const saved = await api.post(
+            "/admin/ui-translations/da",
+            { expected_version: 2, messages: { ...english, Cart: { ...english.Cart, title: "Kurv" } } },
+            admin
+          );
+          expect(saved.status).toBe(200);
+          expect(saved.data).toMatchObject({ refresh: "deferred", translation: { version: 3 } });
+          const [row] = await service().listStorefrontTranslations({ locale: "da" });
+          expect(row.version).toBe(3);
+        }
+      );
     });
 
     describe("TC-7 resolution safety and round trips", () => {

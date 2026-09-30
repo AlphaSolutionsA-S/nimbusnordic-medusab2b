@@ -43,3 +43,30 @@ describe("getCountryCode", () => {
     expect(countryCode).toBe("dk")
   })
 })
+
+describe("middleware request headers (NIMBUS-175)", () => {
+  beforeEach(() => {
+    jest.resetModules()
+    process.env = { ...originalEnv, NEXT_PUBLIC_MEDUSA_BACKEND_URL: "http://backend.test" }
+    global.fetch = jest.fn(async () => ({
+      ok: true,
+      json: async () => ({ regions: [{ id: "reg_dk", countries: [{ iso_2: "dk" }] }] }),
+    })) as unknown as typeof fetch
+  })
+
+  afterAll(() => {
+    process.env = originalEnv
+  })
+
+  it("overwrites the storefront pathname header from the URL, without the query string", async () => {
+    const { middleware } = await import("@/middleware")
+    const request = new NextRequest("https://example.com/dk/cart?token=secret", {
+      headers: { cookie: "_medusa_cache_id=abc", "x-storefront-pathname": "/forged" },
+    })
+
+    const response = await middleware(request)
+
+    expect(response.headers.get("x-middleware-request-x-storefront-pathname")).toBe("/dk/cart")
+    expect(response.headers.get("x-middleware-request-x-next-intl-locale")).toBe("da")
+  })
+})

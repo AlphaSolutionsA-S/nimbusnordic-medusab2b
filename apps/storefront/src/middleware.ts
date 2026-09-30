@@ -17,6 +17,7 @@ import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
 // entirely in English (translations exist and are correct in `messages/`,
 // but were never being loaded).
 const NEXT_INTL_LOCALE_HEADER = "X-NEXT-INTL-LOCALE"
+const STOREFRONT_PATHNAME_HEADER = "X-STOREFRONT-PATHNAME"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
@@ -130,6 +131,9 @@ export async function middleware(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const requestHeaders = new Headers(request.headers)
   requestHeaders.delete("x-payload-live-preview")
+  // Route context for missing-translation reports; always overwritten, never taken from the client,
+  // and without the query string. src/i18n/request.ts sanitizes it before use.
+  requestHeaders.set(STOREFRONT_PATHNAME_HEADER, request.nextUrl.pathname)
   const cartId = searchParams.get("cart_id")
   const checkoutStep = searchParams.get("step")
   const cacheIdCookie = request.cookies.get("_medusa_cache_id")
