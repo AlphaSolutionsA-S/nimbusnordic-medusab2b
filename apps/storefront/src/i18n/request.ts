@@ -1,6 +1,8 @@
 import { getRequestConfig } from "next-intl/server"
 
+import { getRuntimeMessages } from "@/lib/data/ui-translations"
 import { DEFAULT_LOCALE, SUPPORTED_LOCALES } from "@/lib/i18n/country-language-map"
+import { makeTranslationErrorHandlers } from "@/lib/i18n/translation-errors"
 
 // This project doesn't use next-intl's own `[locale]` routing — the locale is
 // derived from the existing `/{countryCode}/...` segment instead. Rather than
@@ -26,8 +28,17 @@ export default getRequestConfig(async ({ requestLocale }) => {
       ? (requested as (typeof SUPPORTED_LOCALES)[number])
       : DEFAULT_LOCALE
 
+  // Messages come only from the backend database (NIMBUS-175): no messages/*.json and no other
+  // language as a fallback. An unavailable locale renders raw keys.
+  const runtime = await getRuntimeMessages(locale)
+
   return {
     locale,
-    messages: (await import(`../../messages/${locale}.json`)).default,
+    messages: runtime.messages,
+    ...makeTranslationErrorHandlers({
+      available: runtime.availability === "available",
+      onMissing: () => undefined,
+      onFormattingError: () => undefined,
+    }),
   }
 })

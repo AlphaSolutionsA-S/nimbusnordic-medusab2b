@@ -8,8 +8,9 @@ import { render, screen } from "@testing-library/react"
 // (resolving it in this jsdom environment yields a stub that throws on
 // call). Both are mocked with minimal, faithful stand-ins so this test
 // exercises the layout's own wiring (params -> locale resolution ->
-// setRequestLocale -> getMessages -> provider props) rather than next-intl's
-// internals.
+// setRequestLocale -> runtime database messages -> provider props) rather
+// than next-intl's internals. The JSON catalogs are used here only as
+// developer fixtures standing in for the backend response.
 type Messages = Record<string, Record<string, string>>
 type LocaleContextValue = { locale: string; messages: Messages } | null
 
@@ -36,11 +37,19 @@ jest.mock("next-intl", () => {
   }
 })
 
+jest.mock("@/lib/data/ui-translations", () => ({
+  getRuntimeMessages: jest.fn(async (locale: string) => ({
+    locale,
+    messages: require(`../../../messages/${locale}.json`),
+    availability: "available",
+    version: 1,
+  })),
+}))
+
 jest.mock("next-intl/server", () => {
   const messages = require("../../../messages/en.json") as Messages
 
   return {
-    getMessages: jest.fn(async () => messages),
     setRequestLocale: jest.fn(),
     getTranslations: jest.fn(async (namespace: string) => {
       const dict = messages[namespace] ?? {}
@@ -50,13 +59,20 @@ jest.mock("next-intl/server", () => {
 })
 
 import { useLocale, useTranslations } from "next-intl"
-import { getTranslations } from "next-intl/server"
+import { getTranslations, setRequestLocale } from "next-intl/server"
+
+import { getRuntimeMessages } from "@/lib/data/ui-translations"
 
 import CountryLocaleLayout from "@/app/[countryCode]/layout"
 
 function LocaleProbe() {
   const locale = useLocale()
   return <span data-testid="locale-probe">{locale}</span>
+}
+
+function ClientWelcome() {
+  const t = useTranslations("Common")
+  return <p data-testid="client-welcome">{t("welcome")}</p>
 }
 
 function ClientExample() {
@@ -79,6 +95,21 @@ describe("CountryLocaleLayout", () => {
     render(element)
 
     expect(screen.getByTestId("locale-probe")).toHaveTextContent("da")
+    expect(setRequestLocale).toHaveBeenCalledWith("da")
+    expect(getRuntimeMessages).toHaveBeenCalledWith("da")
+  })
+
+  it("provides the se -> sv database messages to client components (TC-1)", async () => {
+    const swedish = require("../../../messages/sv.json") as Messages
+    const element = await CountryLocaleLayout({
+      children: <ClientWelcome />,
+      params: Promise.resolve({ countryCode: "se" }),
+    })
+
+    render(element)
+
+    expect(getRuntimeMessages).toHaveBeenCalledWith("sv")
+    expect(screen.getByTestId("client-welcome")).toHaveTextContent(swedish.Common.welcome)
   })
 
   it("falls back to the default locale for an unmapped country (TC-2)", async () => {

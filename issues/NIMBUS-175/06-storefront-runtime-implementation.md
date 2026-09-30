@@ -1,6 +1,6 @@
 # Task 06: Storefront runtime source, cache, and fallback
 
-**Status:** TODO
+**Status:** IN PROGRESS (production build pending a reachable backend; see Task 08)
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 06
