@@ -59,6 +59,16 @@ describe("revalidateStorefrontTranslations", () => {
   });
 
   it.each([
+    [true, 200, "requested"],
+    [false, 503, "deferred"],
+  ])("releases the response body (ok=%p) even when cancelling fails", async (ok, status, outcome) => {
+    const cancel = jest.fn().mockRejectedValue(new Error("already consumed"));
+    fetchMock.mockResolvedValue({ ok, status, body: { cancel } });
+    await expect(revalidateStorefrontTranslations(input, makeLogger())).resolves.toBe(outcome);
+    expect(cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
     ["missing URL", { STOREFRONT_TRANSLATION_REVALIDATE_URL: "" }, "not_configured"],
     ["missing secret", { REVALIDATE_SECRET: "" }, "not_configured"],
     ["plain HTTP host", { STOREFRONT_TRANSLATION_REVALIDATE_URL: "http://shop.example.test/x" }, "insecure_url"],

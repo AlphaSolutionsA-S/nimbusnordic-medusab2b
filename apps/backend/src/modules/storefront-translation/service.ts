@@ -55,6 +55,11 @@ interface TranslationRow {
   updated_at: Date | string;
 }
 
+interface CommittedMutation {
+  row: TranslationRow;
+  reference: MessageDocument | null;
+}
+
 interface MissingRow {
   id: string;
   key: string;
@@ -115,6 +120,22 @@ function filledKeys(messages: MessageDocument): string[] {
 function valueAt(messages: MessageDocument, key: string): string | undefined {
   const flat = flattenMessages(messages);
   return Object.prototype.hasOwnProperty.call(flat, key) ? flat[key] : undefined;
+}
+
+/** True when a proper prefix of the key path is a text, so the key can never be added. */
+function hasTextAncestor(messages: MessageDocument, key: string): boolean {
+  let node: MessageDocument = messages;
+  for (const segment of key.split(".").slice(0, -1)) {
+    if (!Object.prototype.hasOwnProperty.call(node, segment)) {
+      return false;
+    }
+    const child = node[segment];
+    if (typeof child === "string") {
+      return true;
+    }
+    node = child;
+  }
+  return false;
 }
 
 function transactionManagerOf(context: Context<SqlEntityManager>): SqlEntityManager {
@@ -356,14 +377,19 @@ export default class StorefrontTranslationModuleService extends MedusaService({
     input: MutationInput,
     @MedusaContext() context: Context<SqlEntityManager> = {}
   ): Promise<MutationResult> {
-    return this.mutateDocument_(input, context);
+    const { row, reference } = await this.mutateDocument_(input, context);
+    // ICU parsing runs after the commit so the locale lock is not held while it runs.
+    return {
+      translation: toTranslationDocument(row),
+      warnings: compareIcu(row.messages, reference),
+    };
   }
 
   @InjectTransactionManager()
   protected async mutateDocument_(
     input: MutationInput,
     @MedusaContext() context: Context<SqlEntityManager> = {}
-  ): Promise<MutationResult> {
+  ): Promise<CommittedMutation> {
     const manager = transactionManagerOf(context);
     let row: TranslationRow;
     let clearOutage = false;
@@ -413,10 +439,7 @@ export default class StorefrontTranslationModuleService extends MedusaService({
         break;
     }
     await this.clearResolved(manager, row, clearOutage);
-    return {
-      translation: toTranslationDocument(row),
-      warnings: compareIcu(row.messages, await this.referenceFor(manager, row)),
-    };
+    return { row, reference: await this.referenceFor(manager, row) };
   }
 
   @InjectManager()
@@ -457,7 +480,13 @@ export default class StorefrontTranslationModuleService extends MedusaService({
       if (report.kind === "key") {
         const document = documents.get(report.locale);
         // Individual keys only for provisioned locales, and only while still absent or empty.
-        if (!document || keyPathProblem(key) || (valueAt(document, key) ?? "").trim() !== "") {
+        // A key below an existing text can never be resolved, so it is not recorded either.
+        if (
+          !document ||
+          keyPathProblem(key) ||
+          (valueAt(document, key) ?? "").trim() !== "" ||
+          hasTextAncestor(document, key)
+        ) {
           continue;
         }
       }

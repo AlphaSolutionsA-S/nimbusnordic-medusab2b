@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { validateAndTransformBody } from "@medusajs/framework";
 import type {
   MedusaNextFunction,
@@ -8,6 +8,10 @@ import type {
 import { MiddlewareRoute } from "@medusajs/medusa";
 import { MAX_REPORT_BODY_BYTES } from "../../../../utils/translations/validation";
 import { MissingReportBatchSchema } from "./validators";
+
+function sha256(value: string): Buffer {
+  return createHash("sha256").update(value, "utf8").digest();
+}
 
 // Server-to-server only: the storefront server forwards reports with a dedicated secret.
 // Neither a publishable key nor a customer token grants access. Missing configuration fails closed.
@@ -19,9 +23,9 @@ export function verifyTranslationReportSecret(
   const configured = process.env.TRANSLATION_REPORT_SECRET ?? "";
   const header = req.headers.authorization ?? "";
   const supplied = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
-  const expected = Buffer.from(configured);
-  const actual = Buffer.from(supplied);
-  if (!configured || actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+  // Fixed-length digests keep the comparison constant-time without revealing the secret length.
+  const matches = timingSafeEqual(sha256(supplied), sha256(configured));
+  if (!configured || !matches) {
     res.status(401).json({ type: "unauthorized", message: "Unauthorized" });
     return;
   }

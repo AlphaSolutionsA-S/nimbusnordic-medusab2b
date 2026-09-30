@@ -5,7 +5,7 @@ import { flattenMessages } from "./documents";
 // Browser-safe: used by the backend when saving and importable by Admin.
 
 interface Signature {
-  arguments: Map<string, string>;
+  arguments: Map<string, Set<string>>;
   tags: Set<string>;
   selects: Map<string, string>;
 }
@@ -33,7 +33,9 @@ function collect(elements: MessageFormatElement[], signature: Signature): void {
   for (const element of elements) {
     const kind = argumentKind(element);
     if (kind && "value" in element) {
-      signature.arguments.set(element.value, kind);
+      const kinds = signature.arguments.get(element.value) ?? new Set<string>();
+      kinds.add(kind);
+      signature.arguments.set(element.value, kinds);
     }
     if (element.type === TYPE.select) {
       // Plural categories legitimately differ between languages; select options do not.
@@ -61,13 +63,18 @@ function describe(names: Iterable<string>): string {
   return [...names].sort().join(", ");
 }
 
+function sameKinds(left: Set<string>, right: Set<string>): boolean {
+  return left.size === right.size && [...left].every((kind) => right.has(kind));
+}
+
 function compareSignatures(key: string, current: Signature, reference: Signature): IcuWarning[] {
   const warnings: IcuWarning[] = [];
   const missing = [...reference.arguments.keys()].filter((name) => !current.arguments.has(name));
   const extra = [...current.arguments.keys()].filter((name) => !reference.arguments.has(name));
-  const changedKind = [...current.arguments].filter(
-    ([name, kind]) => reference.arguments.has(name) && reference.arguments.get(name) !== kind
-  );
+  const changedKind = [...current.arguments].filter(([name, kinds]) => {
+    const referenceKinds = reference.arguments.get(name);
+    return referenceKinds !== undefined && !sameKinds(kinds, referenceKinds);
+  });
   if (missing.length || extra.length || changedKind.length) {
     const parts = [
       missing.length ? `missing {${describe(missing)}}` : "",

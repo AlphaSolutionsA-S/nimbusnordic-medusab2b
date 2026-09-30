@@ -60,7 +60,10 @@ export const ResolveMissingSchema = z
     expected_version: versionSchema,
     value: z
       .string()
-      .max(MAX_VALUE_BYTES)
+      .refine(
+        (value) => Buffer.byteLength(value, "utf8") <= MAX_VALUE_BYTES,
+        `Value is larger than ${MAX_VALUE_BYTES / 1024} KiB`
+      )
       .refine((value) => value.trim() !== "", "Enter a text value"),
   })
   .strict();

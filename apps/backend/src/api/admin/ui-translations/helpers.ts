@@ -18,7 +18,10 @@ export function translationService(req: MedusaRequest): StorefrontTranslationMod
 export function localeParam(req: MedusaRequest, name = "locale"): string {
   const parsed = localeSchema.safeParse(req.params[name]);
   if (!parsed.success) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, "Locale must be a valid BCP 47 language tag");
+    throw new MedusaError(
+      MedusaError.Types.INVALID_DATA,
+      parsed.error.issues[0]?.message ?? "Locale must be a valid BCP 47 language tag"
+    );
   }
   return parsed.data;
 }

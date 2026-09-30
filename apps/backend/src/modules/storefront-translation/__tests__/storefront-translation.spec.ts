@@ -3,6 +3,7 @@ import { MedusaError } from "@medusajs/framework/utils";
 import { STOREFRONT_TRANSLATION_MODULE } from "../index";
 import StorefrontTranslationModuleService from "../service";
 import type { MessageDocument } from "../../../types/storefront-translation";
+import { MAX_REPORTS_GLOBAL } from "../../../utils/translations/validation";
 
 jest.setTimeout(60_000);
 
@@ -155,6 +156,66 @@ moduleIntegrationTestRunner<StorefrontTranslationModuleService>({
         expect(applied.translation).toMatchObject({ version: 2, messages: { Cart: { title: "Panier" } } });
       });
 
+      it("TC-3: previews an import for a new locale without writing", async () => {
+        await importLocale("en");
+        const preview = await service.previewImport({
+          locale: "sv",
+          expected_version: null,
+          mode: "replace",
+          messages: { Cart: { title: "Varukorg" } },
+        });
+        expect(preview).toMatchObject({ locale: "sv", expected_version: null, mode: "replace" });
+        expect(preview.diff).toEqual({ added: ["Cart.title"], changed: [], removed: [], empty: [] });
+        expect(preview.warnings).toEqual([]);
+        expect(await service.listStorefrontTranslations({ locale: "sv" })).toHaveLength(0);
+        await expect(
+          service.previewImport({ locale: "en", expected_version: null, mode: "replace", messages: english })
+        ).rejects.toMatchObject({ type: MedusaError.Types.CONFLICT });
+      });
+
+      it("TC-3: previews a merge into an existing locale at its loaded version", async () => {
+        await importLocale("en");
+        await importLocale("sv");
+        const preview = await service.previewImport({
+          locale: "sv",
+          expected_version: 1,
+          mode: "merge",
+          messages: { Common: { title: "Välkommen" }, Cart: { added: "Ny" } },
+        });
+        expect(preview.diff).toEqual({
+          added: ["Cart.added"],
+          changed: ["Common.title"],
+          removed: [],
+          empty: ["Common.empty"],
+        });
+        expect(preview.warnings).toEqual([
+          expect.objectContaining({ key: "Common.title", code: "arguments" }),
+        ]);
+        const [row] = await service.listStorefrontTranslations({ locale: "sv" });
+        expect(row).toMatchObject({ version: 1, messages: english });
+      });
+
+      it("TC-3: preview rejects a stale version and a text/group merge clash", async () => {
+        await importLocale("sv");
+        await service.mutateDocument({
+          operation: "save",
+          locale: "sv",
+          expected_version: 1,
+          messages: { ...english, Cart: { title: "Varukorg" } },
+        });
+        await expect(
+          service.previewImport({ locale: "sv", expected_version: 1, mode: "merge", messages: english })
+        ).rejects.toMatchObject({ type: MedusaError.Types.CONFLICT });
+        await expect(
+          service.previewImport({
+            locale: "sv",
+            expected_version: 2,
+            mode: "merge",
+            messages: { Cart: { title: { sub: "x" } } },
+          })
+        ).rejects.toMatchObject({ type: MedusaError.Types.INVALID_DATA });
+      });
+
       it("TC-3: activation increments the version and clears the outage notice", async () => {
         await service.reportMissing([{ locale: "it", page_path: "/", kind: "locale_unavailable" }]);
         expect(await service.listTranslationMissingKeys({ locale: "it" })).toHaveLength(1);
@@ -240,6 +301,44 @@ moduleIntegrationTestRunner<StorefrontTranslationModuleService>({
         expect(count).toBe(2500);
       });
 
+      it("TC-4: enforces the global cap, counting dismissed entries", async () => {
+        await importLocale("pl");
+        const filler = (index: number) => ({
+          locale: `x-${Math.floor(index / 2000)}`,
+          key: `Filler.k${index}`,
+          first_seen_at: new Date(),
+          last_seen_at: new Date(),
+          last_page_path: "/",
+          dismissed: index % 2 === 0,
+        });
+        for (let start = 0; start < MAX_REPORTS_GLOBAL - 1; start += 5000) {
+          const end = Math.min(start + 5000, MAX_REPORTS_GLOBAL - 1);
+          await service.createTranslationMissingKeys(
+            Array.from({ length: end - start }, (_, offset) => filler(start + offset))
+          );
+        }
+        const result = await service.reportMissing([
+          { locale: "pl", page_path: "/", kind: "key", key: "Global.A" },
+          { locale: "pl", page_path: "/", kind: "key", key: "Global.B" },
+        ]);
+        expect(result).toEqual({ accepted: 1, ignored: 1 });
+        const [, count] = await service.listAndCountTranslationMissingKeys({});
+        expect(count).toBe(MAX_REPORTS_GLOBAL);
+      });
+
+      it("TC-4: ignores keys below an existing text but accepts new keys and group children", async () => {
+        await importLocale("pl");
+        const result = await service.reportMissing([
+          { locale: "pl", page_path: "/", kind: "key", key: "Cart.title.sub" },
+          { locale: "pl", page_path: "/", kind: "key", key: "Cart.title.sub.deeper" },
+          { locale: "pl", page_path: "/", kind: "key", key: "Common.group.child" },
+          { locale: "pl", page_path: "/", kind: "key", key: "Cart.newKey" },
+        ]);
+        expect(result).toEqual({ accepted: 2, ignored: 2 });
+        const rows = await service.listTranslationMissingKeys({ locale: "pl" });
+        expect(rows.map((row) => row.key).sort()).toEqual(["Cart.newKey", "Common.group.child"]);
+      });
+
       it("TC-5: a report racing a resolution never leaves an entry for a filled key", async () => {
         await importLocale("no");
         await importLocale("da");
@@ -282,6 +381,25 @@ moduleIntegrationTestRunner<StorefrontTranslationModuleService>({
           });
         await expect(resolve(outage.id)).rejects.toMatchObject({ type: MedusaError.Types.INVALID_DATA });
         await expect(resolve(foreign.id)).rejects.toMatchObject({ type: MedusaError.Types.NOT_FOUND });
+      });
+
+      it("TC-5: resolve rejects a stale version without filling the key", async () => {
+        await importLocale("no");
+        await service.reportMissing([{ locale: "no", page_path: "/", kind: "key", key: "Cart.new" }]);
+        await service.mutateDocument({ operation: "activate", locale: "no", expected_version: 1, is_active: true });
+        const [missing] = await service.listTranslationMissingKeys({ locale: "no" });
+        await expect(
+          service.mutateDocument({
+            operation: "resolve",
+            locale: "no",
+            expected_version: 1,
+            missing_id: missing.id,
+            value: "Ny",
+          })
+        ).rejects.toMatchObject({ type: MedusaError.Types.CONFLICT });
+        const [row] = await service.listStorefrontTranslations({ locale: "no" });
+        expect(row).toMatchObject({ version: 2, messages: english });
+        expect(await service.listTranslationMissingKeys({ locale: "no" })).toHaveLength(1);
       });
 
       it("returns ICU warnings against English without blocking", async () => {

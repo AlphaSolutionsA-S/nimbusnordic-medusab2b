@@ -20,6 +20,9 @@ export const LOCALE_UNAVAILABLE_KEY = "__locale_unavailable__";
 
 const FORBIDDEN_SEGMENTS = new Set(["__proto__", "prototype", "constructor", LOCALE_UNAVAILABLE_KEY]);
 
+/** Static admin route segments under /admin/ui-translations that a language code would shadow. */
+const RESERVED_LOCALES = new Set(["missing-keys"]);
+
 const encoder = new TextEncoder();
 
 function byteLength(value: string): number {
@@ -46,6 +49,10 @@ export const localeSchema = z
   .string()
   .max(MAX_LOCALE_LENGTH)
   .transform((value, ctx) => {
+    if (RESERVED_LOCALES.has(value.toLowerCase())) {
+      ctx.addIssue({ code: "custom", message: `"${value}" is reserved and cannot be used as a language code` });
+      return z.NEVER;
+    }
     const canonical = canonicalizeLocale(value);
     if (!canonical) {
       ctx.addIssue({ code: "custom", message: "Locale must be a valid BCP 47 language tag" });

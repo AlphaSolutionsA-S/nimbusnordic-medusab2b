@@ -23,6 +23,15 @@ function configuredTarget(): URL | "not_configured" | "invalid_url" | "insecure_
   return secure ? url : "insecure_url";
 }
 
+/** Releases the connection; the callback response body is never read. */
+async function discardBody(response: Response): Promise<void> {
+  try {
+    await response.body?.cancel();
+  } catch {
+    // Nothing to release; the refresh outcome is already decided by the status.
+  }
+}
+
 /**
  * Asks the storefront to invalidate one locale's cache after a committed change. The URL comes only
  * from server configuration. Never throws: any failure returns "deferred" and the storefront's timed
@@ -51,6 +60,7 @@ export async function revalidateStorefrontTranslations(
       redirect: "error",
       signal: AbortSignal.timeout(STOREFRONT_REFRESH_TIMEOUT_MS),
     });
+    await discardBody(response);
     if (!response.ok) {
       logger.warn(describe(`status_${response.status}`));
       return "deferred";

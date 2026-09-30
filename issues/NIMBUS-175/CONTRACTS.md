@@ -115,6 +115,8 @@ preserving empty groups and the rest of the document structure.
   document size independently. Client file size checks supplement server checks.
 - Import structural conflicts (`A` string versus `A.B`) are explicit validation
   errors for merge; replace may replace the structure after a removal preview.
+  Removal confirmation counts text leaves only: a replace that drops only empty
+  groups removes no texts and applies without `confirm_removed`.
 - Reporting: 50 records / 32 KiB body; 512 characters per sanitized path;
   2,500 distinct records per locale and 20,000 globally, including dismissed
   markers. Enforce database caps transactionally, not with an in-memory counter.

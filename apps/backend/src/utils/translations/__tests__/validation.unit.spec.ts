@@ -22,6 +22,15 @@ describe("translation validation", () => {
     }
   );
 
+  it.each(["missing-keys", "MISSING-KEYS", "Missing-Keys"])(
+    "rejects the reserved route segment %p as a locale",
+    (value) => {
+      const result = localeSchema.safeParse(value);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0]?.message).toContain("reserved");
+    }
+  );
+
   it("rejects non-string locales", () => {
     expect(localeSchema.safeParse(42).success).toBe(false);
   });
@@ -53,20 +62,23 @@ describe("translation validation", () => {
     expect(messageDocumentSchema.safeParse(value).success).toBe(false);
   });
 
-  it("TC-3: rejects documents nested beyond the depth limit", () => {
+  // Depth counts object levels, root included: a leaf key with N segments sits at depth N.
+  function nestedDocument(levels: number): Record<string, unknown> {
     let deep: Record<string, unknown> = { leaf: "x" };
-    for (let i = 0; i < MAX_DEPTH; i++) {
+    for (let i = 1; i < levels; i++) {
       deep = { [`level${i}`]: deep };
     }
-    expect(messageDocumentSchema.safeParse(deep).success).toBe(false);
+    return deep;
+  }
+
+  it("TC-3: rejects documents nested one level beyond the depth limit", () => {
+    expect(messageDocumentSchema.safeParse(nestedDocument(MAX_DEPTH + 1)).success).toBe(false);
+    expect(keyPathProblem(Array.from({ length: MAX_DEPTH + 1 }, () => "a").join("."))).not.toBeNull();
   });
 
-  it("TC-3: accepts the maximum depth", () => {
-    let deep: Record<string, unknown> = { leaf: "x" };
-    for (let i = 0; i < MAX_DEPTH - 2; i++) {
-      deep = { [`level${i}`]: deep };
-    }
-    expect(messageDocumentSchema.safeParse(deep).success).toBe(true);
+  it("TC-3: accepts exactly the maximum depth", () => {
+    expect(messageDocumentSchema.safeParse(nestedDocument(MAX_DEPTH)).success).toBe(true);
+    expect(keyPathProblem(Array.from({ length: MAX_DEPTH }, () => "a").join("."))).toBeNull();
   });
 
   it("TC-3: enforces the leaf count", () => {

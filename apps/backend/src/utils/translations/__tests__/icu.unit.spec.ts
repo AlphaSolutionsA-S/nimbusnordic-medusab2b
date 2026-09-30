@@ -52,6 +52,17 @@ describe("compareIcu", () => {
     ]);
   });
 
+  it("TC-4: compares every format used by a repeated placeholder", () => {
+    const repeated = { Cart: { total: "{amount, number} ({amount, date})" } };
+    expect(compareIcu({ Cart: { total: "({amount, date}) {amount, number}" } }, repeated)).toEqual([]);
+    expect(
+      compareIcu({ Cart: { total: "{amount, number} ({amount, number})" } }, repeated)
+    ).toEqual([expect.objectContaining({ key: "Cart.total", code: "arguments" })]);
+    expect(compareIcu({ Cart: { total: "{amount, number} ({amount})" } }, repeated)).toEqual([
+      expect.objectContaining({ key: "Cart.total", code: "arguments" }),
+    ]);
+  });
+
   it("TC-4: reports malformed ICU as a warning, not an exception", () => {
     expect(compareIcu({ Cart: { greeting: "Hello {name" } }, reference)).toEqual([
       expect.objectContaining({ key: "Cart.greeting", code: "invalid_icu" }),

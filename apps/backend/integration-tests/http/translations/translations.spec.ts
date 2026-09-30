@@ -231,6 +231,30 @@ medusaIntegrationTestRunner({
         expect((await importLocale("en_US")).status).toBe(400);
       });
 
+      it("rejects the reserved missing-keys route segment as a language code", async () => {
+        const imported = await importLocale("Missing-Keys");
+        expect(imported.status).toBe(400);
+        expect(imported.data.message).toContain("reserved");
+        const created = await api.post(
+          "/admin/ui-translations",
+          { locale: "missing-keys", source: "import", messages: english },
+          { ...admin, ...noThrow }
+        );
+        expect(created.status).toBe(400);
+        expect(await service().listStorefrontTranslations({})).toHaveLength(0);
+      });
+
+      it("measures a resolved value in UTF-8 bytes", async () => {
+        const value = "€".repeat(Math.floor((16 * 1024) / 3) + 1);
+        const response = await api.post(
+          "/admin/ui-translations/en/missing-keys/trmk_01TEST/resolve",
+          { expected_version: 1, value },
+          { ...admin, ...noThrow }
+        );
+        expect(response.status).toBe(400);
+        expect(response.data.message).toContain("16 KiB");
+      });
+
       it("rejects oversized bodies", async () => {
         const big = { A: Object.fromEntries(Array.from({ length: 80 }, (_, i) => [`k${i}`, "x".repeat(16000)])) };
         const response = await importLocale("en", big);
@@ -254,7 +278,13 @@ medusaIntegrationTestRunner({
       const report = { kind: "key", locale: "en", page_path: "/gb/cart", key: "Cart.missing" };
 
       it("denies absent or wrong secrets and customer/publishable credentials", async () => {
-        for (const headers of [{ headers: {} }, { headers: { authorization: "Bearer wrong" } }, customer, store]) {
+        const wrongSecrets = ["Bearer wrong", `Bearer ${REPORT_SECRET}x`, `Bearer ${REPORT_SECRET.slice(0, -1)}`];
+        for (const headers of [
+          { headers: {} },
+          ...wrongSecrets.map((authorization) => ({ headers: { authorization } })),
+          customer,
+          store,
+        ]) {
           const response = await api.post("/internal/ui-translations/missing-keys", { reports: [report] }, {
             ...headers,
             ...noThrow,
