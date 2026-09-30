@@ -190,3 +190,13 @@
   1. The TestDK walkthrough (Task 05 TC-7).
   2. Commit, then rebase on develop.
   3. Merge, then move the issue to Internal review.
+
+---
+
+## 2026-09-30 - Merged to develop, moved to Internal review
+
+- **Outcome:**
+  - Committed as 66687ff, merged into develop as b9e751c with `--no-ff`, and pushed.
+  - Jira NIMBUS-141 moved to Internal review ("Finish work"), with summary comment 252087.
+- **Open:** the TestDK walkthrough (Task 05 TC-7). The user will run it.
+- **Handover to:** user (TestDK walkthrough and internal review).
