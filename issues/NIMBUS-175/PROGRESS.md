@@ -104,3 +104,49 @@
 - **Handover to:** implementor agent
 - **Handover prompt:** Implement NIMBUS-175 on `feature/NIMBUS-175` from `develop`, following
   `manifest.md` and the eight dependency-ordered task files, `PLAN.md` and `CONTRACTS.md`.
+
+- **Date:** 2026-09-30
+- **Updated by:** implementor agent
+- **Outcome:** All eight tasks are implemented on `feature/NIMBUS-175` and marked DONE in
+  `manifest.md`. Commits: `d0c0ee7` (approval record), `632f58d` (01), `2b8ded5` (02),
+  `01a5e84` (03), `d861dd0` (04), `f643669` (05), `fa917a3` (lockfile fix), `bc3a154` (06),
+  `72d62c2` (07), `7f31347` (outage-report fix found in Task 08), plus the commit that adds
+  `VALIDATION.md` and `ROLLOUT.md`. Not pushed; no PR.
+  - **Validation.** A fresh baseline was taken at `8e7d8b8` and compared by failing test. There
+    are no new failures in backend tsc/lint/unit/modules/HTTP or storefront Jest/tsc/lint; the
+    pre-existing failures are unchanged. New tests: 248 unit, 288 module, 132 HTTP, 19 Admin
+    jsdom and 429 storefront tests passing. Both production builds pass; the storefront build
+    needs a reachable backend.
+  - **Production-mode checks** ran locally against a disposable PostgreSQL container and two
+    independent `next start` instances:
+    - last-good copy after invalidation plus outage;
+    - raw keys for a cold locale;
+    - timed refresh on the second worker (≤300 s plus one request);
+    - deactivate/reactivate, and rejection of an out-of-order callback;
+    - deduplicated inbox, public-route limits and path sanitizing;
+    - no secrets in bundles.
+
+    Evidence is in `VALIDATION.md`. No shared or remote database was used and nothing was
+    deployed.
+  - **Findings:**
+    1. `jsonb` reorders keys, so exports equal the sources by content but not byte order (also
+       affects Admin tab order).
+    2. Medusa rewrites 409 messages to a generic idempotency text; the Admin UI uses its own.
+    3. `it.json` has a rich-text tag mismatch in `Checkout.review.agreementText`.
+    4. Pre-existing: every Admin page crashes under `medusa develop` in this environment
+       (likely the root-hoisted React 19 `@medusajs/icons`), so the browser keyboard smoke test
+       was not possible.
+  - **Jira:** the issue is in Estimation. Its only onward transition is "Estimate approved"
+    (to To Do), and there is no In Progress or Internal Review transition. The status was not
+    changed, to avoid recording an estimate approval nobody gave.
+- **Handover to:** user (review and Jira status), then code review.
+- **Handover prompt:** Review `feature/NIMBUS-175` for NIMBUS-175 with the code-review skill.
+  Read `issues/NIMBUS-175/VALIDATION.md` (evidence, findings, unverified items) and `ROLLOUT.md`.
+  Decide:
+  - whether the `jsonb` key-order normalization is acceptable, or whether a `json` column is
+    wanted;
+  - whether the pre-existing Admin dev-mode crash should be a separate issue.
+
+  Move Jira forward (Estimation → To Do → In Progress → Internal Review) as the workflow allows.
+  Before any environment switch, follow `ROLLOUT.md`: deploy the backend, configure secrets,
+  import and activate the 8 locales in Admin, verify the store reads, then deploy the storefront.

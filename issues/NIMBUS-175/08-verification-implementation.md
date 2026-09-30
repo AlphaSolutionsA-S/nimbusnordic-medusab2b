@@ -1,6 +1,6 @@
 # Task 08: Cross-app verification and rollout
 
-**Status:** TODO
+**Status:** DONE (unverified items listed in VALIDATION.md)
 **App:** backend + storefront
 **App Roots:** apps/backend, apps/storefront
 **Task ID:** 08
