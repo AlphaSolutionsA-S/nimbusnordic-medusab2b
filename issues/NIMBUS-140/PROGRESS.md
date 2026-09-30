@@ -196,3 +196,19 @@
   section with a B2B customer that has a BC customer number. If the tenant's v2.0 API does
   not serve `salesReturnOrders`, switch the URL line in `listReturns` to the Abakion
   `customerPortal` path (Task 01). Then move NIMBUS-140 to Internal Review in Jira.
+
+- **Date:** 2026-09-30
+- **Updated by:** main session (merge record)
+- **Outcome:** Committed as `43a2817` ("NIMBUS-140: Add return overview to customer account")
+  on `feature/NIMBUS-140` and merged into develop on 2026-09-29 20:57 (`d63ef11`). A Jira comment
+  records the merge. The Jira status is still In Progress; the move to Internal review is
+  pending (the transition was not applied in this session). NIMBUS-172 (posted returns) builds on
+  this and is no longer blocked.
+  - **Still open from the previous entry:** the sandbox smoke test from the PLAN.md
+    Verification section (the v2.0 tenant serves `salesReturnOrders`; a return created
+    through NIMBUS-138 appears; empty and error states) and a full storefront build against a
+    running backend. This record does not show that either has been done.
+- **Handover to:** user (internal review and smoke test on develop)
+- **Handover prompt:** Review NIMBUS-140 on develop. Run the PLAN.md Verification smoke test
+  with a B2B customer that has a BC customer number, then close NIMBUS-140 in Jira using the
+  jira-workflow closing-comment procedure (§ E).
