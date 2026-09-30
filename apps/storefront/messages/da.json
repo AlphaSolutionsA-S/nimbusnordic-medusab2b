@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Returnering anmodet",
       "returnCreatedMessage": "Returnering {number} oprettet - status {status}.",
       "backToOrderDetailsLabel": "Tilbage til ordredetaljer",
+      "viewReturnLabel": "Se returnering",
       "orderNumberLabel": "Ordrenummer",
       "billToAddressLabel": "Faktureringsadresse",
       "shipToAddressLabel": "Leveringsadresse",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Forventet {date}",
       "reservationShipsLabel": "Afsendes {date}",
       "reservationFreightLabel": "Fragt: {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Tilbage til returneringer",
+      "returnNumberHeading": "Returnering #{number}",
+      "requestedDateLabel": "Anmodet den",
+      "statusLabel": "Status"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Varer",
+      "itemColumnLabel": "Vare",
+      "unitColumnLabel": "Enhed",
+      "requestedQuantityColumnLabel": "Anmodet",
+      "receivedQuantityColumnLabel": "Modtaget",
+      "reasonColumnLabel": "Årsag",
+      "itemNumberLabel": "Varenr. {number}",
+      "variantLabel": "Variant {variant}",
+      "emptyMessage": "Denne returnering har ingen varelinjer."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Forventet kreditering",
+      "excludingTaxLabel": "Forventet kreditering ekskl. moms",
+      "includingTaxLabel": "Forventet kreditering inkl. moms",
+      "disclaimer": "Beløbet er et estimat baseret på returordren. Det endelige beløb fastsættes på kreditnotaen."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Returnering ikke fundet",
+      "message": "Denne returnering er ikke tilgængelig. Returneringer, der er færdigbehandlet, vises ikke længere her."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Noget gik galt",
+      "errorMessage": "Vi kunne ikke indlæse denne returnering. Prøv igen."
     }
   },
   "Cart": {

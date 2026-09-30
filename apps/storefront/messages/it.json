@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Reso richiesto",
       "returnCreatedMessage": "Reso {number} creato - stato {status}.",
       "backToOrderDetailsLabel": "Torna ai dettagli dell'ordine",
+      "viewReturnLabel": "Visualizza reso",
       "orderNumberLabel": "Numero ordine",
       "billToAddressLabel": "Indirizzo di fatturazione",
       "shipToAddressLabel": "Indirizzo di spedizione",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Previsto il {date}",
       "reservationShipsLabel": "Spedizione il {date}",
       "reservationFreightLabel": "Trasporto: {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Torna ai resi",
+      "returnNumberHeading": "Reso #{number}",
+      "requestedDateLabel": "Richiesto il",
+      "statusLabel": "Stato"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Articoli",
+      "itemColumnLabel": "Articolo",
+      "unitColumnLabel": "Unità",
+      "requestedQuantityColumnLabel": "Richiesta",
+      "receivedQuantityColumnLabel": "Ricevuta",
+      "reasonColumnLabel": "Motivo",
+      "itemNumberLabel": "Cod. articolo {number}",
+      "variantLabel": "Variante {variant}",
+      "emptyMessage": "Questo reso non contiene righe articolo."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Accredito previsto",
+      "excludingTaxLabel": "Accredito previsto imponibile",
+      "includingTaxLabel": "Accredito previsto imposte incluse",
+      "disclaimer": "Questo importo è una stima basata sull'ordine di reso. L'importo definitivo è indicato nella nota di credito."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Reso non trovato",
+      "message": "Questo reso non è disponibile. I resi completamente elaborati non vengono più mostrati qui."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Qualcosa è andato storto",
+      "errorMessage": "Non è stato possibile caricare questo reso. Riprova."
     }
   },
   "Cart": {

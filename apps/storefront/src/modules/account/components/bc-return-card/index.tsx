@@ -19,11 +19,13 @@ const BcReturnCard = async ({ item }: BcReturnCardProps) => {
         <div className="flex pr-2 text-small-regular items-center">
           <CalendarIcon className="inline-block mr-1" />
           <span data-testid="bc-return-date">
-            {documentDate.toLocaleDateString("en-GB", {
-              year: "numeric",
-              month: "numeric",
-              day: "numeric",
-            })}
+            {Number.isNaN(documentDate.getTime())
+              ? "-"
+              : documentDate.toLocaleDateString("en-GB", {
+                  year: "numeric",
+                  month: "numeric",
+                  day: "numeric",
+                })}
           </span>
         </div>
 

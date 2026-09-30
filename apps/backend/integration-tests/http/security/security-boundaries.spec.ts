@@ -169,6 +169,14 @@ medusaIntegrationTestRunner({
       expect(response.status).toBe(401);
     });
 
+    it.each(['/store/bc-returns', '/store/bc-returns/1001'])(
+      'requires customer authentication for %s',
+      async (path) => {
+        const response = await api.get(path, { ...publicHeaders, validateStatus: () => true });
+        expect(response.status).toBe(401);
+      },
+    );
+
     it.each([false, true])('allows cart edits and item deletion with rejected approval: %s',
       async (hasRejectedApproval) => {
         const region = await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({

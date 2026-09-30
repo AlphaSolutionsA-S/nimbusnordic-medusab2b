@@ -6,6 +6,7 @@ import { Button, Container, Heading, Input, Select, Text } from "@medusajs/ui"
 import { useTranslations } from "next-intl"
 import { createBCReturn } from "@/lib/data/business-central"
 import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
+import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import type {
   BCOrderDetail,
   BCReturnLineInput,
@@ -146,7 +147,14 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
             status: result.status,
           })}
         </Text>
-        <div>
+        <div className="flex items-center gap-x-4">
+          <LocalizedClientLink
+            href={`/account/returns/${encodeURIComponent(result.number)}`}
+            className="text-small-regular text-ui-fg-base underline"
+            data-testid="bc-order-return-view-return-link"
+          >
+            {t("viewReturnLabel")}
+          </LocalizedClientLink>
           <Button type="button" onClick={closeReturnFlow}>
             {t("backToOrderDetailsLabel")}
           </Button>

@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Rücksendung angefordert",
       "returnCreatedMessage": "Rücksendung {number} erstellt - Status {status}.",
       "backToOrderDetailsLabel": "Zurück zu den Bestelldetails",
+      "viewReturnLabel": "Rücksendung anzeigen",
       "orderNumberLabel": "Bestellnummer",
       "billToAddressLabel": "Rechnungsadresse",
       "shipToAddressLabel": "Lieferadresse",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Erwartet {date}",
       "reservationShipsLabel": "Versand {date}",
       "reservationFreightLabel": "Fracht: {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Zurück zu den Rücksendungen",
+      "returnNumberHeading": "Rücksendung #{number}",
+      "requestedDateLabel": "Angefordert am",
+      "statusLabel": "Status"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Artikel",
+      "itemColumnLabel": "Artikel",
+      "unitColumnLabel": "Einheit",
+      "requestedQuantityColumnLabel": "Angefordert",
+      "receivedQuantityColumnLabel": "Erhalten",
+      "reasonColumnLabel": "Grund",
+      "itemNumberLabel": "Artikelnr. {number}",
+      "variantLabel": "Variante {variant}",
+      "emptyMessage": "Diese Rücksendung enthält keine Artikelpositionen."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Erwartete Gutschrift",
+      "excludingTaxLabel": "Erwartete Gutschrift netto",
+      "includingTaxLabel": "Erwartete Gutschrift brutto",
+      "disclaimer": "Dieser Betrag ist eine Schätzung auf Basis des Rücksendeauftrags. Der endgültige Betrag wird in der Gutschrift festgelegt."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Rücksendung nicht gefunden",
+      "message": "Diese Rücksendung ist nicht verfügbar. Vollständig bearbeitete Rücksendungen werden hier nicht mehr angezeigt."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Etwas ist schiefgelaufen",
+      "errorMessage": "Diese Rücksendung konnte nicht geladen werden. Bitte versuchen Sie es erneut."
     }
   },
   "Cart": {

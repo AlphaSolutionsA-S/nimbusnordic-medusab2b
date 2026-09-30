@@ -1,6 +1,6 @@
 # Task 01: Add `getReturn` to the Business Central module service — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01

@@ -1,6 +1,6 @@
 # Task 02: Add `GET /store/bc-returns/:number` API route — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02

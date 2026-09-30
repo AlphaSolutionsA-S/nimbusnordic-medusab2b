@@ -1,6 +1,6 @@
 # Task 03: Storefront return detail types and data-fetching layer — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 03

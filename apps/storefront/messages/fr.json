@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Retour demandé",
       "returnCreatedMessage": "Retour {number} créé - statut {status}.",
       "backToOrderDetailsLabel": "Retour aux détails de la commande",
+      "viewReturnLabel": "Voir le retour",
       "orderNumberLabel": "Numéro de commande",
       "billToAddressLabel": "Adresse de facturation",
       "shipToAddressLabel": "Adresse de livraison",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Prévu le {date}",
       "reservationShipsLabel": "Expédition le {date}",
       "reservationFreightLabel": "Fret : {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Revenir aux retours",
+      "returnNumberHeading": "Retour #{number}",
+      "requestedDateLabel": "Demandé le",
+      "statusLabel": "Statut"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Articles",
+      "itemColumnLabel": "Article",
+      "unitColumnLabel": "Unité",
+      "requestedQuantityColumnLabel": "Demandé",
+      "receivedQuantityColumnLabel": "Reçu",
+      "reasonColumnLabel": "Motif",
+      "itemNumberLabel": "Réf. article {number}",
+      "variantLabel": "Variante {variant}",
+      "emptyMessage": "Ce retour ne contient aucune ligne d'article."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Avoir prévu",
+      "excludingTaxLabel": "Avoir prévu hors taxes",
+      "includingTaxLabel": "Avoir prévu toutes taxes comprises",
+      "disclaimer": "Ce montant est une estimation basée sur l'ordre de retour. Le montant définitif est fixé sur l'avoir."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Retour introuvable",
+      "message": "Ce retour n'est pas disponible. Les retours entièrement traités ne sont plus affichés ici."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Une erreur s'est produite",
+      "errorMessage": "Nous n'avons pas pu charger ce retour. Veuillez réessayer."
     }
   },
   "Cart": {
