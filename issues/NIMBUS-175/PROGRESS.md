@@ -55,3 +55,42 @@
 - **Outcome:** Scope extended at the user's request: missing-key logging and reporting to a "Missing keys" admin list (D14, server and client, D15); adding a new language in the admin, as a copy or import, inactive until activated (D16/D17); country mapping stays in code, with NIMBUS-176 logged as the follow-up enhancement to move it to the DB. `SCOPE.md`, `FEATURE.md` and the Jira acceptance criteria updated to match. Scope still awaits the user's approval.
 - **Handover to:** user (approve scope), then implementation-planner agent
 - **Handover prompt:** As in the scoper entry above, with decisions D1–D17 in `SCOPE.md`.
+
+- **Date:** 2026-09-30
+- **Updated by:** implementation-planner (foreground)
+- **Outcome:** At the user's request to "plan 175", inspected develop at `cdbc75a`,
+  the scope/mockup, runtime i18n paths, installed SDK/cache behavior, and backend/Admin
+  conventions. Created `PLAN.md`, `CONTRACTS.md`, eight implementation task files,
+  and `manifest.md`. No application code, branch, deployment, or database changes.
+  Jira was unassigned and has been assigned to Klaus Petersen under the Jira
+  workflow; status remains Scoping and Customer Portal was already present.
+  Both apps have test infrastructure; the plan adds a dedicated Admin TSX/jsdom
+  configuration. No tests were run as evidence of implementing this feature.
+- **Review points:** Approve the concrete plan, including the 300-second refresh,
+  warm-process last-good snapshot/cold-start raw-key limitation, explicit inactive
+  cache state, import confirmation/version contract, and bounded missing-key
+  reporting. Scope approval was not recorded in the preceding entries and has
+  not been silently inferred from the request to draft the plan.
+- **Handover to:** user for plan/scope review; then implementor after approval.
+- **Handover prompt:** Review `issues/NIMBUS-175/PLAN.md` and `CONTRACTS.md` against
+  the decisions in `SCOPE.md`. After explicit approval, record it here and set
+  `manifest.md` to `Ready for Dispatch: true`. Implement NIMBUS-175 on
+  `feature/NIMBUS-175` from `develop`, following the eight dependency-ordered task
+  files. Preserve database-only runtime messages, atomic stale-save rejection,
+  manual per-environment imports, inactive new languages, server/client missing-key
+  reporting, and country mapping in code. Capture a fresh validation baseline and
+  execute Task 08's production-mode cache/concurrency checks. Do not dispatch while
+  the manifest remains false.
+
+- **Date:** 2026-09-30
+- **Updated by:** implementation-planner (foreground)
+- **Outcome:** Completed the plan review pass: specified leaf-only flattening and
+  immutable leaf updates to preserve empty JSON groups; added a readiness panel for
+  the original eight imports; clarified cache/snapshot fallback for absent rows and
+  network failures. Updated contracts and verification cases consistently. Markdown
+  diff check is clean. No application tests were run because this change only drafts
+  implementation work.
+- **Handover to:** user for scope and plan approval.
+- **Handover prompt:** Review `PLAN.md`, especially the cache/fallback limits and
+  reporting caps. Confirm the scope and plan explicitly before dispatch; keep
+  `manifest.md` false until approval, then implement via the eight tasks.

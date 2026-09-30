@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<canonicalOrder>
+  <externalOrderNumber>NIMBUS129-E2E-REPLACE-WITH-RUN-ID-XML</externalOrderNumber>
+  <orderDate>15-10-2026</orderDate>
+  <requestedDeliveryDate>22-10-2026</requestedDeliveryDate>
+  <currencyCode>DKK</currencyCode>
+  <billTo>
+    <name>Nimbus E2E Test Company</name>
+    <addressLine1>1 Test Street</addressLine1>
+    <city>Testby</city>
+    <postCode>0000</postCode>
+    <country>DK</country>
+  </billTo>
+  <shipTo>
+    <name>Nimbus E2E Test Receiver</name>
+    <addressLine1>2 Test Street</addressLine1>
+    <city>Testby</city>
+    <postCode>0000</postCode>
+    <country>DK</country>
+  </shipTo>
+  <lines>
+    <line>
+      <lineNumber>1</lineNumber>
+      <itemNumber>NIMBUS129-TEST-ITEM-1</itemNumber>
+      <custItemNo>NIMBUS129-TEST-ITEM-1</custItemNo>
+      <eanNo>0000000000017</eanNo>
+      <description>Synthetic E2E item one</description>
+      <unitOfMeasureCode>PCS</unitOfMeasureCode>
+      <quantity>2</quantity>
+      <unitPrice>999.99</unitPrice>
+    </line>
+    <line>
+      <lineNumber>2</lineNumber>
+      <itemNumber>NIMBUS129-TEST-ITEM-2</itemNumber>
+      <custItemNo>NIMBUS129-TEST-ITEM-2</custItemNo>
+      <eanNo>0000000000024</eanNo>
+      <description>Synthetic E2E item two</description>
+      <unitOfMeasureCode>PCS</unitOfMeasureCode>
+      <quantity>1</quantity>
+    </line>
+  </lines>
+</canonicalOrder>
