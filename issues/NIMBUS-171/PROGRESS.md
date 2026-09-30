@@ -259,3 +259,18 @@
   section 2) and run test payloads TC-16, TC-17 and TC-13c. Tell customer systems about the
   rule before deployment.
 - **Next owner:** user. Push develop, update Jira, and do the manual APIM steps.
+
+## 2026-09-30 - Pushed, Jira updated, Internal review
+
+- **Updated by:** main session
+- **Outcome:** Pushed `develop` to origin (`3b827a6..63e4f42`). Added a summary comment to
+  NIMBUS-171 (changes, manual APIM steps, links to SCOPE.md, PLAN.md and PROGRESS.md, commits).
+  With the user's go-ahead, moved the issue Estimation → To Do (Estimate approved) →
+  In Progress → Internal review.
+- **Handover to:** reviewer (Internal review), including the manual APIM steps.
+- **Handover prompt:** Re-register the updated `canonical-order-schema.json` and
+  `canonical-order-schema.xsd` in APIM (see section 2 of
+  `issues/NIMBUS-145/artifacts/deployment-instructions.md`). Run test payloads TC-16, TC-17 and
+  TC-13c from `issues/NIMBUS-145/artifacts/test-payloads.md`. Confirm that customer systems
+  have been told non-ISO country values are rejected. Record the evidence here, then run the
+  Definition of Done, add the closing comment to NIMBUS-171 and transition it to Closed.
