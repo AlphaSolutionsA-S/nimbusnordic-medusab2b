@@ -1,6 +1,6 @@
 # Task 02: Models, migration, and atomic persistence
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02

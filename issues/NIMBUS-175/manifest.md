@@ -15,7 +15,7 @@ Create the branch only when implementation starts.
 | # | Title | File | App | Depends On | Status |
 | --- | --- | --- | --- | --- | --- |
 | 01 | Contracts and safe document helpers | `01-contracts-implementation.md` | backend | None | DONE |
-| 02 | Models, migration, atomic persistence | `02-persistence-implementation.md` | backend | 01 | TODO |
+| 02 | Models, migration, atomic persistence | `02-persistence-implementation.md` | backend | 01 | DONE |
 | 03 | APIs and workflows | `03-api-implementation.md` | backend | 01, 02 | TODO |
 | 04 | Admin harness and translation editor | `04-admin-editor-implementation.md` | backend Admin | 01, 03 | TODO |
 | 05 | Admin language/import/missing-key tools | `05-admin-tools-implementation.md` | backend Admin | 04 | TODO |

@@ -3,6 +3,7 @@ import { APPROVAL_MODULE } from "./src/modules/approval";
 import { COMPANY_MODULE } from "./src/modules/company";
 import { BUSINESS_CENTRAL_MODULE } from "./src/modules/business-central";
 import { ORDER_INGESTION_MODULE } from "./src/modules/order-ingestion";
+import { STOREFRONT_TRANSLATION_MODULE } from "./src/modules/storefront-translation";
 import { loadEnv, defineConfig } from "@medusajs/framework/utils";
 
 loadEnv(process.env.NODE_ENV || "development", process.cwd());
@@ -33,6 +34,9 @@ module.exports = defineConfig({
     },
     [ORDER_INGESTION_MODULE]: {
       resolve: "./modules/order-ingestion",
+    },
+    [STOREFRONT_TRANSLATION_MODULE]: {
+      resolve: "./modules/storefront-translation",
     },
     [ "notification" ]: {
       resolve: "@medusajs/medusa/notification",
