@@ -21,20 +21,22 @@ Storefront texts now live in per-language files in the code. Every wording chang
 ## Acceptance criteria
 - [ ] Admin users can open a "Translations" page from the Medusa Admin navigation.
 - [ ] The page lists all storefront texts grouped by section, with a readable label and an editable field per text (as in the reference screenshot).
-- [ ] Admin can switch between all supported storefront languages (da, de, en, fr, it, no, pl, sv).
+- [ ] Admin can switch between all stored languages (initially da, de, en, fr, it, no, pl, sv).
+- [ ] Admin can add a new language, starting as a copy of an existing language or from an import; it stays hidden from the storefront until the admin activates it. (Connecting it to countries is done by a developer for now; see NIMBUS-176.)
 - [ ] Admin can edit a text and save it; the saved value is stored per language.
 - [ ] Admin can import a language file (JSON) to create or replace that language's translations.
 - [ ] Admin can export a language's translations as a JSON file in the same format the storefront uses.
 - [ ] Admin can compare languages and see texts that are missing or empty in one language compared to another (e.g. English as reference).
 - [ ] Admin can compare stored translations against the file shipped in the code, and see new texts that exist in the code but not yet in the stored translations (and texts that were removed).
 - [ ] Admin can search/filter texts by key or value.
+- [ ] When the storefront asks for a text that doesn't exist, it is logged, and the admin sees it in a "Missing keys" list for that language where they can add the text or dismiss it.
 - [ ] Only authenticated admin users can view or change translations.
 
 ## Out of scope
 - Machine/AI translation suggestions (possible follow-up).
 - Translating product/catalog data (handled elsewhere in Medusa); this covers storefront UI text only.
 - Transactional email/notification text (NIMBUS-162).
-- Adding new languages to the storefront routing.
+- Mapping countries to languages from the admin (stays in code for now; NIMBUS-176).
 
 ## Open questions
 - **Runtime source of truth:** Should the storefront read translations from the database at runtime (with caching/revalidation), or is the DB only an editing workspace whose export is committed back into `apps/storefront/messages/*.json` and deployed? This drives most of the design.
