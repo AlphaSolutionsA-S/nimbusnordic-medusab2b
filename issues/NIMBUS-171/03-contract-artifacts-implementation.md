@@ -1,6 +1,6 @@
 # Task 03: APIM shape check and contract docs for `country` — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE (2026-09-30)
 **App:** backend (contract artifacts under `issues/NIMBUS-145/artifacts/` and `issues/NIMBUS-147/`; one backend unit test)
 **App Root:** apps/backend
 **Task ID:** 03

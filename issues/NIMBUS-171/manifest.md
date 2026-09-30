@@ -12,9 +12,9 @@
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Backend country-code rule on canonical addresses | `01-country-code-rule-implementation.md` | backend | None | TODO |
-| 02 | HTTP and workflow integration tests for the country rule | `02-country-code-integration-tests-implementation.md` | backend | 01 | TODO |
-| 03 | APIM shape check and contract docs for `country` | `03-contract-artifacts-implementation.md` | backend (contract artifacts) | 01 | TODO |
+| 01 | Backend country-code rule on canonical addresses | `01-country-code-rule-implementation.md` | backend | None | DONE |
+| 02 | HTTP and workflow integration tests for the country rule | `02-country-code-integration-tests-implementation.md` | backend | 01 | DONE |
+| 03 | APIM shape check and contract docs for `country` | `03-contract-artifacts-implementation.md` | backend (contract artifacts) | 01 | DONE |
 
 Tasks 02 and 03 are independent of each other and can run in either order after 01.
 

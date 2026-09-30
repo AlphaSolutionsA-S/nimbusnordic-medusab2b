@@ -1,5 +1,7 @@
 import { z } from "@medusajs/framework/zod";
 
+import { isAllowedCountryCode, normalizeCountryCode } from "./country-code";
+
 const CANONICAL_DATE_PATTERN = /^(\d{2})-(\d{2})-(\d{4})$/;
 const EAN_PATTERN = /^\d{13}$/;
 const CURRENCY_CODE_PATTERN = /^[A-Za-z]{3}$/;
@@ -33,6 +35,31 @@ export const CanonicalDateSchema = z
   .regex(CANONICAL_DATE_PATTERN, "must be a date in DD-MM-YYYY format")
   .refine(isRealCalendarDate, "must be a real calendar date");
 
+/*
+  ISO 3166-1 alpha-2 country code (NIMBUS-171). Any case and surrounding whitespace are accepted;
+  the parsed value is the trimmed upper-case code (" se " -> "SE"). The check runs on the raw value
+  so the 400 message echoes what was sent. The code list and the exceptions allowlist live in
+  ./country-code.ts.
+*/
+// Caps how much of a rejected value the 400 message echoes back.
+const MAX_ECHOED_COUNTRY_LENGTH = 20;
+
+function echoCountryValue(input: unknown): string {
+  const value = String(input);
+
+  return value.length > MAX_ECHOED_COUNTRY_LENGTH
+    ? `${value.slice(0, MAX_ECHOED_COUNTRY_LENGTH)}...`
+    : value;
+}
+
+const CanonicalCountryCodeSchema = z
+  .string()
+  .refine((value) => isAllowedCountryCode(value), {
+    error: (issue) =>
+      `Field '${(issue.path ?? []).map(String).join(".")}' must be an ISO 3166-1 alpha-2 country code, but got: '${echoCountryValue(issue.input)}'`,
+  })
+  .transform(normalizeCountryCode);
+
 export const CanonicalOrderAddressSchema = z
   .object({
     name: z.string().min(1),
@@ -42,7 +69,7 @@ export const CanonicalOrderAddressSchema = z
     city: z.string().min(1),
     state: z.string().optional(),
     postCode: z.string().min(1),
-    country: z.string().min(1),
+    country: CanonicalCountryCodeSchema,
   })
   .strict();
 

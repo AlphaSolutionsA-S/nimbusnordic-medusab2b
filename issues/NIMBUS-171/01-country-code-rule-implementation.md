@@ -1,6 +1,6 @@
 # Task 01: Backend country-code rule on canonical addresses — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE (2026-09-30)
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01

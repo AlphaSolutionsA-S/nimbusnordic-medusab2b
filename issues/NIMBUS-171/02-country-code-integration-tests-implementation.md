@@ -1,6 +1,6 @@
 # Task 02: HTTP and workflow integration tests for the country rule — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE (2026-09-30)
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02

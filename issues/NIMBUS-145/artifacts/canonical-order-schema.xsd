@@ -10,7 +10,8 @@
   "134,75" are rejected here, so no comma-to-dot normalization is needed after xml-to-json.
 
   Rules not expressible in XSD 1.0 (real-calendar dates, e.g. rejecting 31-02-2026) are enforced by
-  the Medusa endpoint. Unique lineNumber within an order is enforced here by xs:unique.
+  the Medusa endpoint. Unique lineNumber within an order is enforced here by xs:unique. The address
+  country is a shape check only (NIMBUS-171): the ISO 3166-1 alpha-2 list is checked by Medusa.
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
 
@@ -53,7 +54,7 @@
       <xs:element name="city" type="nonEmptyString" minOccurs="1"/>
       <xs:element name="state" type="xs:string" minOccurs="0"/>
       <xs:element name="postCode" type="nonEmptyString" minOccurs="1"/>
-      <xs:element name="country" type="nonEmptyString" minOccurs="1"/>
+      <xs:element name="country" type="countryCode" minOccurs="1"/>
     </xs:all>
   </xs:complexType>
 
@@ -92,6 +93,16 @@
   <xs:simpleType name="currencyCode">
     <xs:restriction base="xs:string">
       <xs:pattern value="[A-Za-z]{3}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!--
+    Shape check only (NIMBUS-171 D9): two letters, any case, optional surrounding space, tab, CR or
+    LF. XSD patterns are implicitly anchored. The ISO 3166-1 alpha-2 list is checked by Medusa.
+  -->
+  <xs:simpleType name="countryCode">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[ \t\n\r]*[A-Za-z]{2}[ \t\n\r]*"/>
     </xs:restriction>
   </xs:simpleType>
 
