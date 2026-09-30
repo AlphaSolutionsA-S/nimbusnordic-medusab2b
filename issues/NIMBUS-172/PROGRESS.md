@@ -313,3 +313,18 @@
 - **Still open:** the TestDK walkthrough (Task 04 step 8, risks R1/R2, and whether
   `$orderby=Document_Date desc` is accepted). Jira has not been updated.
 - **Next owner:** user. Push develop, do the TestDK walkthrough and update Jira.
+
+## 2026-09-30 — Jira updated, Internal review
+
+- **Outcome:** Added a summary comment to NIMBUS-172 (changes, decisions agreed during
+  planning, pending TestDK walkthrough, links to PLAN.md and PROGRESS.md, commits). With the
+  user's go-ahead, moved the issue Scoping → Estimation → To Do (Estimate approved) →
+  In Progress → Internal review.
+- **Handover to:** reviewer (Internal review), including the TestDK walkthrough.
+- **Handover prompt:** On `develop`, with the backend and storefront running against TestDK, do
+  Task 04 step 8 from `issues/NIMBUS-172/04-storefront-return-detail-implementation.md`.
+  Confirm R1 (the `or` filter on `PostedReturnReceiptReturnRcptLines`; the fallback is one
+  request per receipt, in parallel), R2 (line `Type` values and field names), and that
+  `$orderby=Document_Date desc` is accepted on `PostedReturnReceipt`. Record the evidence here,
+  then run the Definition of Done, add the closing comment to NIMBUS-172 and transition it to
+  Closed.
