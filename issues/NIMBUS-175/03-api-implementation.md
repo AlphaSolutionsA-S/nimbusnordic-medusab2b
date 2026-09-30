@@ -1,6 +1,6 @@
 # Task 03: APIs and mutation workflows
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 03
