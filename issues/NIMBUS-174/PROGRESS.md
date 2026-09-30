@@ -21,3 +21,9 @@
 - **Outcome:** NIMBUS-173 is merged into `develop` (`3cb6ef3`), so the wait condition is met. Scoping can start from `develop`.
 - **Handover to:** scoper agent
 - **Handover prompt:** Same as the first entry. Base the scope on current `develop`.
+
+- **Date:** 2026-09-30
+- **Updated by:** scoper agent
+- **Outcome:** SCOPE.md written from the user's Step 1 answers (relayed by the main session): code-list defect in scope, one generic translated message for every failure, same message for failed remove, typed code kept on failure. Medusa 2.21.0 `promo_codes` confirmed to REPLACE (evidence in SCOPE.md). Status is draft pending the user's approval of the document; Jira Step 6c is left to the main session.
+- **Handover to:** user (approve SCOPE.md), then implementation-planner agent
+- **Handover prompt:** Plan the implementation of NIMBUS-174 from the approved `issues/NIMBUS-174/SCOPE.md` (update that scope rather than creating a new one), based on `develop`. Make promotion add and remove in `apps/storefront/src/modules/checkout/components/promotion-code/index.tsx` go through Server Actions that return a result (not throw), since Next.js replaces thrown Server Action messages in production. Show the translated `Checkout.promotionCode.applyErrorMessage` in `discount-error-message` for every failure (including remove and cart-not-found), keep the typed code on failure and clear it on success. Fix the code list: add sends existing codes plus the new one, remove sends existing codes minus the removed one, and `submitPromotionForm` in `apps/storefront/src/lib/data/cart.ts` must stop sending only `[code]` (Medusa 2.21.0 `promo_codes` replaces the list). Reuse the NIMBUS-173 customer-error util/logging. Cover the test cases in SCOPE.md, replacing the TC-6 `useActionState` stub with a real form-submit test. Storefront only; no new translation keys.
