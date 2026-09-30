@@ -15,3 +15,9 @@
 - **Outcome:** The user decided to wait: scoping is deferred until NIMBUS-173 (`feature/NIMBUS-173`) is merged into `develop`, because both change `promotion-code/index.tsx` and its test.
 - **Handover to:** scoper agent (after the NIMBUS-173 merge)
 - **Handover prompt:** Same as above. Start from `develop` after NIMBUS-173 is merged.
+
+- **Date:** 2026-09-30
+- **Updated by:** main session
+- **Outcome:** NIMBUS-173 is merged into `develop` (`3cb6ef3`), so the wait condition is met. Scoping can start from `develop`.
+- **Handover to:** scoper agent
+- **Handover prompt:** Same as the first entry. Base the scope on current `develop`.

@@ -46,3 +46,18 @@
   - Also: a Task 05 TC-3 temporary file briefly overwrote the tracked `src/__tests__/smoke.test.tsx`. It was restored from HEAD and is identical. The build output `apps/storefront/.next` was removed after the failed build.
 - **Handover to:** user / developer with a running backend and storefront (manual Task 06 checks), then PR review
 - **Handover prompt:** On `feature/NIMBUS-173`, start the backend and the storefront (`cd apps/storefront && pnpm dev`, port 8000). Rerun `cd apps/storefront && pnpm build` with the backend up. Then run Task 06 TC-3 to TC-9 from `issues/NIMBUS-173/06-verification-implementation.md` on /dk, /de and /gb: prices and dates, tab titles, the checkout header brand, payment method names, skeleton labels, BC status filter labels, forced cart and shipping error messages, not-found pages, and quote validation. Take a screenshot per locale of the cart, the checkout payment step and the account orders list. Append the results to this file, set Task 06 to DONE in `manifest.md`, then run the Definition of Done and commit with the `NIMBUS-173: …` convention. Decide whether the unwired promotion-code `formAction` (errors from `addPromotionCode` are not caught) should get a follow-up issue.
+
+- **Date:** 2026-09-30
+- **Updated by:** main session (merge)
+- **Outcome:** `feature/NIMBUS-173` was merged into `develop` (`3cb6ef3`) and pushed, together with the remote `develop` merge `34f84c1`. `develop` had meanwhile received NIMBUS-141 and NIMBUS-157. Merge conflicts and follow-through:
+  - `messages/*.json`: key-level three-way merge, with both sides' keys kept and no value clashes.
+  - `bc-return-card`: `develop`'s invalid-date guard kept, and the date formatted with the active locale.
+  - `employee.tsx`: the spending-limit guard kept, and `locale` passed to `formatAmount`.
+  - `bc-return-detail-template` (hardcoded `en-GB`), `bc-return-expected-credit` and `company-card` (missing the required `locale`) now use the active locale.
+  - `company-card` test: now expects `US$12,345.67` (`en` formats as `en-GB`, decision 8).
+  - Gates on merged `develop`: Jest 350 tests with only the 3 baseline failures (`main-layout` 1, `product-tabs` 2); `tsc` 9 errors, all pre-existing; lint has only the 2 baseline `exhaustive-deps` warnings.
+  - `pnpm build`: run by the user and reported as done.
+  - Jira NIMBUS-173 moved to Internal review.
+  - Still open: the manual Task 06 checks (TC-3 to TC-9) on /dk, /de and /gb.
+- **Handover to:** reviewer (Internal review), including the manual Task 06 checks
+- **Handover prompt:** On `develop`, with the backend and storefront running, run Task 06 TC-3 to TC-9 from `issues/NIMBUS-173/06-verification-implementation.md` on /dk, /de and /gb: prices and dates, tab titles, checkout brand and payment names, skeleton labels, BC status filter labels, forced cart and shipping errors, not-found pages, and quote validation. Also check the NIMBUS-141 return detail page (date and expected credit) in a non-English locale. Record the evidence here, then close NIMBUS-173 with a closing comment. NIMBUS-174 (promotion-code errors) can now be scoped from `develop`.
