@@ -1,6 +1,6 @@
 # Task 02: Integration tests for the expected-company guard — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02

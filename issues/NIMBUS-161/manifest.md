@@ -2,11 +2,10 @@
 
 **Project ID:** NIMBUS-161
 **Date:** 2026-09-30
-**Ready for Dispatch:** false
+**Ready for Dispatch:** true
 
-> Waiting for the user to review the plan (Step 8), and for an answer to OQ-1 in PLAN.md. Once
-> the user approves, set this to `true`. No other prerequisite blocks it: NIMBUS-157 and
-> NIMBUS-160 are both on develop.
+> On 2026-09-30 the user approved the plan, including OQ-1: a mismatch writes a `logger.warn`
+> line that names both company ids.
 
 ## Branch
 
@@ -16,8 +15,8 @@
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Expected-company guard in the BC sync step, workflow and GET route | `01-backend-expected-company-guard-implementation.md` | backend | None | TODO |
-| 02 | Integration tests for the guard, plus regression run | `02-backend-expected-company-guard-tests-implementation.md` | backend | 01 | TODO |
+| 01 | Expected-company guard in the BC sync step, workflow and GET route | `01-backend-expected-company-guard-implementation.md` | backend | None | DONE |
+| 02 | Integration tests for the guard, plus regression run | `02-backend-expected-company-guard-tests-implementation.md` | backend | 01 | DONE |
 
 ## Dispatch order
 

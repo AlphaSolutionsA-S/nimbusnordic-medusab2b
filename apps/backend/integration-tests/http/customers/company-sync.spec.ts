@@ -5,6 +5,8 @@ import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
 import type { IBusinessCentralModuleService } from "../../../src/modules/business-central/types";
 import { COMPANY_MODULE } from "../../../src/modules/company";
 import type { ICompanyModuleService } from "../../../src/types";
+import { ModuleCompanySpendingLimitResetFrequency } from "../../../src/types";
+import { syncCompanyFromBusinessCentralWorkflow } from "../../../src/workflows/company/workflows/sync-company-from-business-central";
 import {
   adminHeaders,
   createAdminUser,
@@ -289,6 +291,125 @@ medusaIntegrationTestRunner({
 
         expect(response.status).toBeGreaterThanOrEqual(500);
         updateSpy.mockRestore();
+      });
+    });
+
+    describe("syncCompanyFromBusinessCentralWorkflow - expected company guard", () => {
+      // The login sync tests above leave their getCustomer spies in place; start clean.
+      beforeEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      const staleAt = new Date(Date.now() - 11 * 60 * 1000);
+
+      async function createUnlinkedCompany(): Promise<string> {
+        const companyService =
+          getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const created = await companyService.createCompanies({
+          name: "Other Company",
+          email: "other@example.com",
+          phone: "99999999",
+          address: null,
+          city: null,
+          state: null,
+          zip: null,
+          country: "DK",
+          logo_url: null,
+          currency_code: "DKK",
+          business_central_customer_number: "00022222",
+          spending_limit_reset_frequency:
+            ModuleCompanySpendingLimitResetFrequency.MONTHLY,
+        });
+        await companyService.updateCompanies({
+          id: created.id,
+          business_central_synced_at: staleAt,
+        });
+
+        return created.id;
+      }
+
+      it("TC-1: skips without a Business Central call when the expected company differs", async () => {
+        const companyAId = await createLinkedCompany("00011551");
+        const companyBId = await createUnlinkedCompany();
+        const companyService =
+          getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+        await companyService.updateCompanies({
+          id: companyAId,
+          business_central_synced_at: staleAt,
+        });
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        const getCustomerSpy = jest.spyOn(bcService, "getCustomer");
+
+        const { result } = await syncCompanyFromBusinessCentralWorkflow(
+          getContainer()
+        ).run({
+          input: { customerId: customer.id, expectedCompanyId: companyBId },
+        });
+
+        const [companyA] = await companyService.listCompanies({ id: companyAId });
+        const [companyB] = await companyService.listCompanies({ id: companyBId });
+
+        expect(result).toEqual({ status: "skipped" });
+        expect(getCustomerSpy).not.toHaveBeenCalled();
+        expect(companyA.business_central_synced_at).toEqual(staleAt);
+        expect(companyA.name).toBe("Test Company");
+        expect(companyB.business_central_synced_at).toEqual(staleAt);
+        expect(companyB.name).toBe("Other Company");
+      });
+
+      it("TC-2: synchronizes when the expected company matches the customer's company", async () => {
+        const companyAId = await createLinkedCompany("00011551");
+        const companyService =
+          getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+        await companyService.updateCompanies({
+          id: companyAId,
+          business_central_synced_at: staleAt,
+        });
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+        const getCustomerSpy = jest
+          .spyOn(bcService, "getCustomer")
+          .mockResolvedValueOnce({
+            number: "00011551",
+            displayName: "Matched Company",
+            email: "matched@example.com",
+            phoneNumber: "87654321",
+            addressLine1: "Updated Street 1",
+            addressLine2: "",
+            city: "Updated city",
+            state: "",
+            postalCode: "2000",
+            country: "DK",
+            blocked: "not_blocked",
+            creditLimit: 0,
+            taxRegistrationNumber: "DK12345678",
+            currencyCode: "DKK",
+          });
+
+        const { result } = await syncCompanyFromBusinessCentralWorkflow(
+          getContainer()
+        ).run({
+          input: { customerId: customer.id, expectedCompanyId: companyAId },
+        });
+
+        const [companyA] = await companyService.listCompanies({ id: companyAId });
+
+        expect(result).toEqual({ status: "updated" });
+        expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+        expect(getCustomerSpy).toHaveBeenCalledWith("00011551");
+        expect(companyA.name).toBe("Matched Company");
+        expect(companyA.business_central_synced_at?.getTime()).toBeGreaterThan(
+          staleAt.getTime()
+        );
       });
     });
   },

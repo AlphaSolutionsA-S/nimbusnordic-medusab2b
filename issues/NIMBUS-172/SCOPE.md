@@ -8,7 +8,7 @@
 - **Project Folder:** issues/NIMBUS-172/
 - **Size:** M
 - **Area:** Storefront account / return overview and return detail page, Business Central module
-- **Base Branch:** develop (branch `feature/NIMBUS-172` from develop after NIMBUS-140 is merged)
+- **Base Branch:** develop (branch `feature/NIMBUS-172` from develop; NIMBUS-140 is already merged)
 - **Requested by:** Klaus Petersen
 - **Requested at:** 2026-09-29T12:45:00Z
 
@@ -109,8 +109,8 @@ Story. Expected high-level breakdown (the implementation-planner decides the det
 
 ## Dependencies
 
-- **NIMBUS-140** (return overview): must be merged to develop first. It is In Progress and its
-  latest progress entry is awaiting code review, commit and rebase.
+- **NIMBUS-140** (return overview): merged to develop on 2026-09-29 20:57 (`d63ef11`). This
+  story builds on it; the dependency is satisfied.
 - **NIMBUS-141** (return detail page): merged to develop and in Internal review. This story
   extends it.
 - **NIMBUS-138** (Business Central return connection): In Progress. Provides the ODataV4 access

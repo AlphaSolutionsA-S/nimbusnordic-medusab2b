@@ -50,3 +50,49 @@
       postgres:16 container, with the shell-only env vars given in PLAN.md → Verification.
       Never write a `.env` file.
   - Build and lint the backend. Do not commit or change Jira unless the user asks.
+
+
+# Implementation complete
+
+- **Date:** 2026-09-30
+- **Updated by:** implementor agent (Claude Code)
+- **Outcome:** Tasks 01 and 02 are DONE and the manifest is updated. The work is on
+  `develop` and is not committed.
+  - `prepare-company-bc-sync.ts`: new optional `expectedCompanyId`. On a mismatch the step
+    writes a `logger.warn` naming both company ids and returns `skipped` before it resolves or
+    calls Business Central (OQ-1 = yes).
+  - `sync-company-from-business-central.ts`: the input type gains `expectedCompanyId`, which
+    is forwarded to the step.
+  - `store/companies/[id]/route.ts`: `GET` passes `expectedCompanyId: id`.
+  - The login sync route (`sync-business-central/route.ts`) has no diff.
+  - `integration-tests/http/customers/company-sync.spec.ts`: new describe block with TC-1
+    (mismatch) and TC-2 (match), which run the workflow directly.
+- **Deviations from plan:**
+  - TC-1 setup uses `ModuleCompanySpendingLimitResetFrequency.MONTHLY` instead of
+    `"monthly"`, because the skeleton literal did not typecheck against the enum in
+    `ModuleCreateCompany`.
+  - The new describe block also calls `jest.restoreAllMocks()` in a `beforeEach`. The
+    existing login sync tests never restore their `getCustomer` spies, so TC-1 first saw
+    5 leftover calls. The guard itself behaved correctly.
+- **Validation:**
+  - Integration (throwaway postgres:16, shell-only env vars): `company-sync.spec.ts` passed
+    9/9 and `companies.spec.ts` passed 23/23, for 32 passed and 0 failed.
+  - Fails without the guard: with the guard block removed temporarily, TC-1 failed (1 failed,
+    8 passed; result `updated` instead of `skipped`). The file was then restored
+    byte-identically, confirmed with `cmp` and `git diff`.
+  - Unit tests: 19 suites and 104 tests passed.
+  - `tsc --noEmit`: no errors in changed files. The 18 errors it reports are all in
+    integration test files this work did not touch.
+  - eslint on the three changed src files: clean. The spec file is excluded by the repo
+    ignore pattern.
+  - `corepack pnpm --filter @b2b-starter/backend build`: succeeded, with 13 lint warnings
+    that are all in files this work did not touch.
+- **Open items:**
+  - Jira was not transitioned, per the instruction.
+  - Nothing is committed.
+  - Unrelated finding: the login sync tests leak `jest.spyOn` spies between tests. It was
+    not fixed.
+- **Handover to:** user (klp@alpha-solutions.dk) for review and commit.
+- **Handover prompt:** Review the uncommitted NIMBUS-161 diff on `develop` (4 backend
+  files and the issue docs). Commit it with the NIMBUS commit-message convention, then move
+  NIMBUS-161 to Internal Review in Jira.

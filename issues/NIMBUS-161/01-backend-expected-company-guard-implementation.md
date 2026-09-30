@@ -1,6 +1,6 @@
 # Task 01: Expected-company guard in the Business Central sync — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01

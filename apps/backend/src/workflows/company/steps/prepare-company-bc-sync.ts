@@ -10,6 +10,7 @@ import type { ModuleUpdateCompany } from "../../../types";
 
 export type PrepareCompanyBcSyncInput = {
   customerId: string;
+  expectedCompanyId?: string;
 };
 
 export type PreparedCompanyBcSync =
@@ -67,6 +68,17 @@ export const prepareCompanyBcSyncStep = createStep(
     const companyId = company?.id ?? null;
     const bcCustomerNumber =
       company?.business_central_customer_number ?? null;
+
+    if (
+      companyId &&
+      input.expectedCompanyId &&
+      companyId !== input.expectedCompanyId
+    ) {
+      logger.warn(
+        `Business Central sync skipped: customer company ${companyId} does not match expected company ${input.expectedCompanyId}`
+      );
+      return new StepResponse({ status: "skipped", update: null });
+    }
 
     if (!companyId || !bcCustomerNumber) {
       return new StepResponse({ status: "skipped", update: null });
