@@ -14,12 +14,15 @@ import type { MissingReport } from "@/types/ui-translations"
 
 const FORWARD_TIMEOUT_MS = 3000
 const REPORT_ENDPOINT = "/internal/ui-translations/missing-keys"
+const LOG_WINDOW_MS = 60 * 1000
+const MAX_LOGS_PER_WINDOW = 60
 
 const seen = new Map<string, number>()
 const formattingSeen = new Map<string, number>()
 let pending: MissingReport[] = []
 let scheduled = false
 let reportClient: Medusa | null = null
+const logWindow = { start: 0, count: 0, suppressed: 0 }
 
 // Separate from the public storefront SDK: debug is off so the report secret never appears in
 // request diagnostics, and this module is server-only so the secret never reaches a browser bundle.
@@ -31,7 +34,32 @@ function client(): Medusa {
   return reportClient
 }
 
-/** Sanitizes, validates and deduplicates reports, logging each accepted one once. */
+/** At most MAX_LOGS_PER_WINDOW lines per minute; the next window first logs how many were dropped. */
+function logMissingMessage(report: MissingReport, now: number): void {
+  if (now - logWindow.start >= LOG_WINDOW_MS) {
+    if (logWindow.suppressed > 0) {
+      console.warn("[ui-translations] missing message logs suppressed", {
+        count: logWindow.suppressed,
+      })
+    }
+    logWindow.start = now
+    logWindow.count = 0
+    logWindow.suppressed = 0
+  }
+  if (logWindow.count >= MAX_LOGS_PER_WINDOW) {
+    logWindow.suppressed += 1
+    return
+  }
+  logWindow.count += 1
+  console.warn("[ui-translations] missing message", {
+    locale: report.locale,
+    kind: report.kind,
+    key: report.kind === "key" ? report.key : null,
+    page_path: report.page_path,
+  })
+}
+
+/** Sanitizes, validates and deduplicates reports, logging each accepted one once (rate-limited). */
 export function acceptMissingReports(reports: readonly MissingReport[]): MissingReport[] {
   const accepted: MissingReport[] = []
   const now = Date.now()
@@ -43,14 +71,8 @@ export function acceptMissingReports(reports: readonly MissingReport[]): Missing
     if (!parsed.success || !markFirstSeen(seen, reportDedupKey(parsed.data), now)) {
       continue
     }
-    const sanitized = parsed.data
-    console.warn("[ui-translations] missing message", {
-      locale: sanitized.locale,
-      kind: sanitized.kind,
-      key: sanitized.kind === "key" ? sanitized.key : null,
-      page_path: sanitized.page_path,
-    })
-    accepted.push(sanitized)
+    logMissingMessage(parsed.data, now)
+    accepted.push(parsed.data)
   }
   return accepted
 }
@@ -85,8 +107,12 @@ export async function forwardMissingTranslations(reports: MissingReport[]): Prom
 
 /** Server-render hook: logs once and forwards after the response, within the request lifetime. */
 export function reportMissingTranslation(report: MissingReport): void {
+  // Capacity first: a report dropped here must not be marked as seen and suppressed for the window.
+  if (pending.length >= MAX_REPORT_BATCH) {
+    return
+  }
   const accepted = acceptMissingReports([report])
-  if (!accepted.length || pending.length >= MAX_REPORT_BATCH) {
+  if (!accepted.length) {
     return
   }
   pending.push(...accepted)

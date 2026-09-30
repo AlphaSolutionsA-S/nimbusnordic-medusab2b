@@ -102,6 +102,45 @@ describe("server missing-key reporting", () => {
     ).not.toThrow()
   })
 
+  it("TC-4: a report dropped at queue capacity is not marked as seen", async () => {
+    for (let i = 0; i < 51; i++) {
+      server.reportMissingTranslation({ kind: "key", locale: "da", key: `Full.k${i}`, page_path: "/dk" })
+    }
+    expect(console.warn).toHaveBeenCalledTimes(50)
+    await runAfter()
+    expect(mockBackendFetch.mock.calls[0][1].body.reports).toHaveLength(50)
+
+    server.reportMissingTranslation({ kind: "key", locale: "da", key: "Full.k50", page_path: "/dk" })
+    await runAfter()
+    expect(mockBackendFetch.mock.calls[1][1].body.reports).toEqual([
+      expect.objectContaining({ key: "Full.k50" }),
+    ])
+  })
+
+  it("TC-4: rate-limits the per-report log line and reports the suppressed count", () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000)
+    const reports = Array.from({ length: 50 }, (_, i) => ({
+      kind: "key" as const,
+      locale: "da" as const,
+      key: `Log.k${i}`,
+      page_path: "/dk",
+    }))
+    server.acceptMissingReports(reports)
+    const accepted = server.acceptMissingReports(reports.map((r) => ({ ...r, key: `${r.key}b` })))
+    expect(accepted).toHaveLength(50)
+    expect(console.warn).toHaveBeenCalledTimes(60)
+
+    now.mockReturnValue(1_000_000 + 60_000)
+    server.acceptMissingReports([{ kind: "key", locale: "da", key: "Log.next", page_path: "/dk" }])
+    expect(console.warn).toHaveBeenCalledWith("[ui-translations] missing message logs suppressed", {
+      count: 40,
+    })
+    expect(console.warn).toHaveBeenLastCalledWith(
+      "[ui-translations] missing message",
+      expect.objectContaining({ key: "Log.next" })
+    )
+  })
+
   it("logs formatting errors once per code", () => {
     server.reportTranslationFormattingError("FORMATTING_ERROR")
     server.reportTranslationFormattingError("FORMATTING_ERROR")

@@ -1,4 +1,4 @@
-import { timingSafeEqual } from "node:crypto"
+import { createHash, timingSafeEqual } from "node:crypto"
 
 import { revalidateTag } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
@@ -31,13 +31,16 @@ const refreshSchema = z
   })
   .strict()
 
+function digest(value: string): Buffer {
+  return createHash("sha256").update(value).digest()
+}
+
+// Comparing fixed-length digests keeps the secret's length out of the timing.
 function authorized(request: NextRequest): boolean {
   const secret = process.env.REVALIDATE_SECRET ?? ""
   const header = request.headers.get("authorization") ?? ""
   const supplied = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : ""
-  const expected = Buffer.from(secret)
-  const actual = Buffer.from(supplied)
-  return Boolean(secret) && actual.length === expected.length && timingSafeEqual(actual, expected)
+  return Boolean(secret) && timingSafeEqual(digest(supplied), digest(secret))
 }
 
 function reply(status: number, body: Record<string, unknown>): NextResponse {

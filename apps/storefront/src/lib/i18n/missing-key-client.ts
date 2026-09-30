@@ -30,10 +30,11 @@ export function enqueueMissingTranslation(report: MissingReport): void {
   if (typeof window === "undefined") {
     return
   }
-  if (!markFirstSeen(seen, reportDedupKey(report), Date.now())) {
+  // Capacity first: a report dropped here must not be marked as seen and suppressed for the window.
+  if (queue.length >= MAX_REPORT_BATCH) {
     return
   }
-  if (queue.length >= MAX_REPORT_BATCH) {
+  if (!markFirstSeen(seen, reportDedupKey(report), Date.now())) {
     return
   }
   queue.push({ ...report, page_path: sanitizeTranslationPagePath(report.page_path) })

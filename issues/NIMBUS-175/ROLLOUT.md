@@ -92,6 +92,11 @@ exist first; importing works without it and reports that placeholders could not 
   missing or inactive in an environment (R6). NIMBUS-176 tracks moving the mapping to the database.
 - **Deactivation:** deactivating a language makes the storefront show raw keys for it. The worker
   that receives the callback does this at once; other workers follow after their timed refresh.
+- **Database restore or reseed:** restart every storefront instance after restoring or reseeding
+  the backend database. Each storefront process keeps its last-good copy and refresh watermark per
+  language and, to ignore stale data, does not accept a lower version than it has seen. A restored
+  database usually has lower versions, so without a restart the old texts stay for up to 600
+  seconds (2 × the 300-second refresh period) before the restored versions are accepted.
 
 ## Rollback
 

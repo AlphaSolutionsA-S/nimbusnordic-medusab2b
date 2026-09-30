@@ -62,6 +62,18 @@ describe("missing-key client queue", () => {
     expect(sentReports()).toHaveLength(50)
   })
 
+  it("TC-4: a key dropped at queue capacity is not suppressed by the dedup window", async () => {
+    for (let i = 0; i < 80; i++) {
+      client.enqueueMissingTranslation(key(`Flood.k${i}`))
+    }
+    await jest.advanceTimersByTimeAsync(2000)
+    client.enqueueMissingTranslation(key("Flood.k60"))
+    client.enqueueMissingTranslation(key("Flood.k0"))
+    await jest.advanceTimersByTimeAsync(2000)
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(sentReports(1)).toEqual([expect.objectContaining({ key: "Flood.k60" })])
+  })
+
   it("flushes on pagehide", async () => {
     client.enqueueMissingTranslation(key("Cart.a"))
     window.dispatchEvent(new Event("pagehide"))

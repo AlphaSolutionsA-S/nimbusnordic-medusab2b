@@ -150,3 +150,23 @@
   Move Jira forward (Estimation → To Do → In Progress → Internal Review) as the workflow allows.
   Before any environment switch, follow `ROLLOUT.md`: deploy the backend, configure secrets,
   import and activate the 8 locales in Admin, verify the store reads, then deploy the storefront.
+
+- **Date:** 2026-10-01
+- **Updated by:** coordinating agent (code review + fixes)
+- **Outcome:** Code review of `feature/NIMBUS-175` found 1 must, 7 should and ~20 nits. At the user's
+  request all were fixed, and `message-catalogs.test.ts` was deleted (the `messages/*.json` files stay, D13).
+  - **Must:** the storefront read now has a 3 s timeout.
+  - **Should:** import apply uses the previewed version; save rebases the draft instead of overwriting it;
+    conflict reload keeps the draft on failure; per-key ICU checks in the editor; rightmost client-IP entry;
+    per-client limit before global plus a 1000 reports/min cap and log sampling; module tests for preview,
+    resolve and the global cap.
+  - **Nits:** see the commits.
+  - **Checks:** results against the baseline:
+    - backend unit 254/254, Admin 29/29, module 40/40 and translations HTTP 27/27 (disposable Postgres);
+    - storefront 426/429 (the same 3 pre-existing failures);
+    - tsc at the baseline (22 backend / 8 storefront), and lint with no new findings.
+  - **Not fixed:** a report for a key that is an existing *group* is still accepted and can never be
+    resolved; it can only be dismissed.
+- **Handover to:** user (review the fixes, move Jira out of Estimation, push and open a PR to `develop`).
+- **Handover prompt:** Re-review the fix commits on `feature/NIMBUS-175`, then push and open a PR. Roll out
+  per `ROLLOUT.md`.

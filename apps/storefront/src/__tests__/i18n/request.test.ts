@@ -97,6 +97,17 @@ describe("i18n/request", () => {
     })
   })
 
+  it("reports a neutral path when the middleware pathname header is absent", async () => {
+    jest.mocked(require("next/headers").headers).mockResolvedValueOnce(new Headers())
+    await resolve("sv")
+
+    expect(reportMissingTranslation).toHaveBeenCalledWith({
+      kind: "locale_unavailable",
+      locale: "sv",
+      page_path: "/unknown",
+    })
+  })
+
   it("reports an individual missing key with the middleware route context (Task 07 TC-3)", async () => {
     const result = await resolve("da")
 

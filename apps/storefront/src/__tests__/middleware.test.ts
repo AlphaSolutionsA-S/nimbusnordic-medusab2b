@@ -69,4 +69,16 @@ describe("middleware request headers (NIMBUS-175)", () => {
     expect(response.headers.get("x-middleware-request-x-storefront-pathname")).toBe("/dk/cart")
     expect(response.headers.get("x-middleware-request-x-next-intl-locale")).toBe("da")
   })
+
+  it("overwrites a forged pathname header on the static-asset branch too", async () => {
+    const { middleware } = await import("@/middleware")
+    const request = new NextRequest("https://example.com/robots.txt", {
+      headers: { cookie: "_medusa_cache_id=abc", "x-storefront-pathname": "/forged" },
+    })
+
+    const response = await middleware(request)
+
+    expect(response.headers.get("x-middleware-next")).toBe("1")
+    expect(response.headers.get("x-middleware-request-x-storefront-pathname")).toBe("/robots.txt")
+  })
 })

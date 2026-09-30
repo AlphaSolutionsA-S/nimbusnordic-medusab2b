@@ -15,6 +15,11 @@ import type {
 // seen, otherwise an empty document so next-intl renders raw keys.
 
 export const TRANSLATION_REVALIDATE_SECONDS = 300
+// A hung backend must fail fast so the last-good copy (or raw keys) is served instead.
+const READ_TIMEOUT_MS = 3000
+// After this long without being refreshed, a snapshot or refresh watermark no longer blocks a
+// lower version, so a restored or reseeded database with lower versions is picked up.
+const VERSION_GUARD_TTL_MS = 2 * TRANSLATION_REVALIDATE_SECONDS * 1000
 const SNAPSHOT_MAX_LOCALES = 64
 const SNAPSHOT_MAX_BYTES = 32 * 1024 * 1024
 const MAX_DEPTH = 12
@@ -32,11 +37,13 @@ interface Snapshot {
   version: number
   messages: MessageDocument
   bytes: number
+  at: number
 }
 
 interface Watermark {
   version: number
   is_active: boolean
+  at: number
 }
 
 // Process-local state. It does not survive restarts or deployments and is not shared between
@@ -45,6 +52,10 @@ const snapshots = new Map<string, Snapshot>()
 const watermarks = new Map<string, Watermark>()
 const generations = new Map<string, number>()
 let snapshotBytes = 0
+
+function blocksLowerVersion(entry: { at: number } | undefined): boolean {
+  return entry !== undefined && Date.now() - entry.at < VERSION_GUARD_TTL_MS
+}
 
 function canonicalLocale(locale: string): string {
   try {
@@ -96,7 +107,7 @@ async function readRuntimeDocument(locale: string): Promise<CachedRead> {
   try {
     const { translation } = await sdk.client.fetch<{ translation: unknown }>(
       `/store/ui-translations/${encodeURIComponent(locale)}`,
-      { method: "GET", cache: "no-store" }
+      { method: "GET", cache: "no-store", signal: AbortSignal.timeout(READ_TIMEOUT_MS) }
     )
     if (!isActiveDocument(translation, locale)) {
       throw new Error("invalid_translation_response")
@@ -129,7 +140,7 @@ function dropSnapshot(locale: string): void {
 
 function storeSnapshot(locale: string, translation: TranslationDocument): void {
   const existing = snapshots.get(locale)
-  if (existing && existing.version > translation.version) {
+  if (existing && existing.version > translation.version && blocksLowerVersion(existing)) {
     return
   }
   const bytes = Buffer.byteLength(JSON.stringify(translation.messages))
@@ -147,13 +158,18 @@ function storeSnapshot(locale: string, translation: TranslationDocument): void {
     }
     dropSnapshot(oldest)
   }
-  snapshots.set(locale, { version: translation.version, messages: translation.messages, bytes })
+  snapshots.set(locale, {
+    version: translation.version,
+    messages: translation.messages,
+    bytes,
+    at: Date.now(),
+  })
   snapshotBytes += bytes
 }
 
 function signalledInactive(locale: string, version: number): boolean {
   const mark = watermarks.get(locale)
-  return Boolean(mark && !mark.is_active && mark.version >= version)
+  return Boolean(mark && !mark.is_active && mark.version >= version && blocksLowerVersion(mark))
 }
 
 function unavailable(locale: string, availability: "unavailable" | "inactive"): RuntimeMessages {
@@ -198,7 +214,7 @@ export const getRuntimeMessages = cache(async (requested: string): Promise<Runti
     return unavailable(locale, "inactive")
   }
   const snapshot = snapshots.get(locale)
-  if (snapshot && snapshot.version > translation.version) {
+  if (snapshot && snapshot.version > translation.version && blocksLowerVersion(snapshot)) {
     // An older cached or in-flight result never replaces a newer copy this process already has.
     return { locale, messages: snapshot.messages, availability: "available", version: snapshot.version }
   }
@@ -224,10 +240,10 @@ export function recordTranslationRefresh(input: {
 }): boolean {
   const locale = canonicalLocale(input.locale)
   const current = watermarks.get(locale)
-  if (current && current.version >= input.version) {
+  if (current && current.version >= input.version && blocksLowerVersion(current)) {
     return false
   }
-  watermarks.set(locale, { version: input.version, is_active: input.is_active })
+  watermarks.set(locale, { version: input.version, is_active: input.is_active, at: Date.now() })
   generations.set(locale, (generations.get(locale) ?? 0) + 1)
   if (!input.is_active) {
     dropSnapshot(locale)

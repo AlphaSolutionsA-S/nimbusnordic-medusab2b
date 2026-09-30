@@ -126,6 +126,47 @@ describe("POST /api/translations/missing", () => {
     expect(other.status).toBe(202)
   })
 
+  it("TC-4: uses the rightmost entry of a comma-separated client-IP header", async () => {
+    process.env.TRANSLATION_REPORT_CLIENT_IP_HEADER = "x-forwarded-for"
+    const statuses: number[] = []
+    for (let i = 0; i < 31; i++) {
+      // The client controls everything left of the proxy-appended entry, including empty entries.
+      const forwarded = i % 2 ? `198.51.100.${i}, 203.0.113.9` : `198.51.100.${i}, 203.0.113.9, `
+      statuses.push(
+        (await POST(request({ reports: [{ ...report, key: `Xff.k${i}` }] }, { "x-forwarded-for": forwarded }))).status
+      )
+    }
+    expect(statuses.slice(0, 30).every((status) => status === 202)).toBe(true)
+    expect(statuses[30]).toBe(429)
+  })
+
+  it("TC-4: a client over its limit does not use up the process-wide quota", async () => {
+    process.env.TRANSLATION_REPORT_CLIENT_IP_HEADER = "x-real-ip"
+    for (let i = 0; i < 40; i++) {
+      await POST(request({ reports: [{ ...report, key: `Noisy.k${i}` }] }, { "x-real-ip": "203.0.113.9" }))
+    }
+    const statuses: number[] = []
+    for (let i = 0; i < 271; i++) {
+      const ip = `10.0.${Math.floor(i / 250)}.${i % 250}`
+      statuses.push((await POST(request({ reports: [{ ...report, key: `Quiet.k${i}` }] }, { "x-real-ip": ip }))).status)
+    }
+    // 30 accepted from the noisy client + 270 from others = the global limit of 300.
+    expect(statuses.slice(0, 270).every((status) => status === 202)).toBe(true)
+    expect(statuses[270]).toBe(429)
+  })
+
+  it("TC-4: caps the number of reports per minute, not only requests", async () => {
+    const batch = (i: number) =>
+      request({ reports: Array.from({ length: 50 }, (_, j) => ({ ...report, key: `Bulk.b${i}.k${j}` })) })
+    const statuses: number[] = []
+    for (let i = 0; i < 21; i++) {
+      statuses.push((await POST(batch(i))).status)
+    }
+    expect(statuses.slice(0, 20).every((status) => status === 202)).toBe(true)
+    expect(statuses[20]).toBe(429)
+    expect(mockBackendFetch).toHaveBeenCalledTimes(20)
+  })
+
   it("TC-5: a backend outage still returns 202 and logs without recursion", async () => {
     mockBackendFetch.mockRejectedValue(Object.assign(new Error("down"), { status: 503 }))
     const response = await POST(request({ reports: [report] }))

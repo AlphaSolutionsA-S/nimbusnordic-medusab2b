@@ -49,6 +49,8 @@ describe("POST /api/translations/revalidate", () => {
   it.each([
     ["no secret header", null],
     ["a wrong secret", "Bearer wrong-secret-value-of-some-len"],
+    ["a wrong secret of a different length", "Bearer x"],
+    ["a longer secret with the right prefix", `Bearer ${SECRET}x`],
     ["a non-bearer scheme", `Basic ${SECRET}`],
   ])("TC-1: rejects %s without invalidating", async (_name, authorization) => {
     const response = await POST(request({ locale: "da", version: 2, is_active: true }, authorization))

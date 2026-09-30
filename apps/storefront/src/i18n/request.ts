@@ -15,7 +15,7 @@ const PATHNAME_HEADER = "x-storefront-pathname"
 
 async function currentPagePath(): Promise<string> {
   try {
-    return (await headers()).get(PATHNAME_HEADER) ?? "/unknown"
+    return (await headers()).get(PATHNAME_HEADER) || "/unknown"
   } catch {
     return "/unknown"
   }

@@ -2,6 +2,8 @@
  * Unit tests for the runtime translation loader. `next/cache` is replaced by a small in-memory
  * stand-in that, like Next 15, drops tag-invalidated entries and never stores a thrown failure.
  * Real cache/invalidation/outage behaviour is verified separately against a production build.
+ *
+ * @jest-environment node
  */
 jest.mock("server-only", () => ({}))
 jest.mock("@/lib/config", () => ({ sdk: { client: { fetch: jest.fn() } } }))
@@ -68,7 +70,11 @@ describe("getRuntimeMessages", () => {
     expect(first).toEqual({ locale: "da", messages: danish, availability: "available", version: 1 })
     expect(second.messages).toEqual(danish)
     expect(fetchMock).toHaveBeenCalledTimes(1)
-    expect(fetchMock).toHaveBeenCalledWith("/store/ui-translations/da", { method: "GET", cache: "no-store" })
+    expect(fetchMock).toHaveBeenCalledWith("/store/ui-translations/da", {
+      method: "GET",
+      cache: "no-store",
+      signal: expect.any(AbortSignal),
+    })
     expect(loader.translationCacheTag("da")).toBe("ui-translations:da")
   })
 
@@ -82,6 +88,33 @@ describe("getRuntimeMessages", () => {
     fetchMock.mockResolvedValueOnce({ translation: doc(2, danishV2) })
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ messages: danishV2, version: 2 })
     expect(fetchMock.mock.calls.every(([url]) => url === "/store/ui-translations/da")).toBe(true)
+  })
+
+  it("TC-2: a hung backend read times out and serves the last good copy, then raw keys", async () => {
+    fetchMock.mockResolvedValueOnce({ translation: doc(1) })
+    await loader.getRuntimeMessages("da")
+    revalidateTag("ui-translations:da")
+
+    const controllers: AbortController[] = []
+    const timeout = jest.spyOn(AbortSignal, "timeout").mockImplementation(() => {
+      const controller = new AbortController()
+      controllers.push(controller)
+      return controller.signal
+    })
+    const hang = (_url: string, init: { signal: AbortSignal }) =>
+      new Promise((_resolve, reject) => {
+        init.signal.addEventListener("abort", () => reject(new DOMException("timed out", "TimeoutError")))
+      })
+    fetchMock.mockImplementationOnce(hang).mockImplementationOnce(hang)
+
+    const warm = loader.getRuntimeMessages("da")
+    const cold = loader.getRuntimeMessages("sv")
+    await Promise.resolve()
+    expect(timeout).toHaveBeenCalledWith(3000)
+    controllers.forEach((controller) => controller.abort())
+
+    expect(await warm).toMatchObject({ messages: danish, availability: "available", version: 1 })
+    expect(await cold).toMatchObject({ messages: {}, availability: "unavailable" })
   })
 
   it("TC-2: renders raw keys on a cold outage and never caches the failure", async () => {
@@ -146,6 +179,31 @@ describe("getRuntimeMessages", () => {
     revalidateTag("ui-translations:da")
     fetchMock.mockResolvedValueOnce({ translation: doc(4) })
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 5, messages: danishV2 })
+  })
+
+  it("a snapshot and watermark stop blocking lower versions after the TTL (DB restore)", async () => {
+    const now = jest.spyOn(Date, "now").mockReturnValue(1_000_000)
+    fetchMock.mockResolvedValueOnce({ translation: doc(5, danishV2) })
+    await loader.getRuntimeMessages("da")
+    expect(loader.recordTranslationRefresh({ locale: "da", version: 6, is_active: true })).toBe(true)
+
+    // Within the TTL the restored lower versions are still blocked.
+    now.mockReturnValue(1_000_000 + 599_999)
+    expect(loader.recordTranslationRefresh({ locale: "da", version: 2, is_active: true })).toBe(false)
+    revalidateTag("ui-translations:da")
+    fetchMock.mockResolvedValueOnce({ translation: doc(2) })
+    expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 5, messages: danishV2 })
+
+    // After 2 x the revalidate period the restored database wins.
+    now.mockReturnValue(1_000_000 + 600_000)
+    expect(loader.recordTranslationRefresh({ locale: "da", version: 2, is_active: true })).toBe(true)
+    revalidateTag("ui-translations:da")
+    fetchMock.mockResolvedValueOnce({ translation: doc(2) })
+    expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 2, messages: danish })
+    // The restored copy is now the last good copy for an outage.
+    revalidateTag("ui-translations:da")
+    fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"))
+    expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 2, messages: danish })
   })
 
   it("keeps an explicitly active empty document as a legitimate success", async () => {

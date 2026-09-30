@@ -182,7 +182,12 @@ export async function middleware(request: NextRequest) {
 
   // check if the url is a static asset
   if (request.nextUrl.pathname.includes(".")) {
-    return NextResponse.next()
+    // Forward the overwritten headers so a client-supplied pathname header never passes through.
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
   }
 
   const redirectPath =
