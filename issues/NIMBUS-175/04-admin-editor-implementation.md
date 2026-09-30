@@ -1,6 +1,6 @@
 # Task 04: Admin test harness and core editor
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend Admin
 **App Root:** apps/backend
 **Task ID:** 04
