@@ -61,3 +61,9 @@
   - Still open: the manual Task 06 checks (TC-3 to TC-9) on /dk, /de and /gb.
 - **Handover to:** reviewer (Internal review), including the manual Task 06 checks
 - **Handover prompt:** On `develop`, with the backend and storefront running, run Task 06 TC-3 to TC-9 from `issues/NIMBUS-173/06-verification-implementation.md` on /dk, /de and /gb: prices and dates, tab titles, checkout brand and payment names, skeleton labels, BC status filter labels, forced cart and shipping errors, not-found pages, and quote validation. Also check the NIMBUS-141 return detail page (date and expected credit) in a non-English locale. Record the evidence here, then close NIMBUS-173 with a closing comment. NIMBUS-174 (promotion-code errors) can now be scoped from `develop`.
+
+- **Date:** 2026-09-30
+- **Updated by:** main session
+- **Outcome:** The user ran the manual Task 06 checks (TC-3 to TC-9 on /dk, /de and /gb) and reported them as fine. All verification for NIMBUS-173 is complete.
+- **Handover to:** user (close NIMBUS-173)
+- **Handover prompt:** Run the Definition of Done check, add the closing comment to NIMBUS-173 and transition it to Closed.
