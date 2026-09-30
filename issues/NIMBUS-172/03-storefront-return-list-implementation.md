@@ -1,6 +1,6 @@
 # Task 03: Storefront — combined return list with state badge, filter and grouped receipts — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 03
@@ -9,6 +9,16 @@
 **Depends on:** Task 01 (the backend list response shape and the `state` query param)
 
 ---
+
+## Approved Decisions (user, 2026-09-30)
+
+The user approved the plan on 2026-09-30, with OQ-1..OQ-4 accepted as recommended. See PLAN.md
+"Resolved Questions".
+
+- **OQ-2 (resolved):** the Status filter is All / Open / Processed and writes `?state=`. The
+  Open / Released BC-status options are removed.
+- **OQ-3 (resolved):** the translated Open / Processed badge is primary. The raw BC status pill
+  appears only for open rows whose status is not "Open".
 
 ## Project Environment
 

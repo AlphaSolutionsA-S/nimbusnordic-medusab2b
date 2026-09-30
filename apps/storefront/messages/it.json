@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Dettagli",
-      "itemCountLabel": "Articoli: {count}"
+      "itemCountLabel": "Articoli: {count}",
+      "receiptLabel": "Ricevimento",
+      "receivedLabel": "Ricevuto",
+      "externalRefLabel": "Rif. esterno"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Stato",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Torna ai resi",
       "returnNumberHeading": "Reso #{number}",
       "requestedDateLabel": "Richiesto il",
-      "statusLabel": "Stato"
+      "statusLabel": "Stato",
+      "receiptNumberHeading": "Ricevimento reso #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Articoli",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Reso non trovato",
-      "message": "Questo reso non è disponibile. I resi completamente elaborati non vengono più mostrati qui."
+      "message": "Questo reso non è disponibile. Controlla il numero del reso e riprova."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Qualcosa è andato storto",
@@ -579,6 +583,18 @@
       "open": "Aperto",
       "draft": "Bozza",
       "released": "Rilasciato"
+    },
+    "bcReturnState": {
+      "open": "Aperto",
+      "processed": "Elaborato"
+    },
+    "bcReturnReceipts": {
+      "heading": "Ricevimenti",
+      "receiptNumberHeading": "Ricevimento #{number}",
+      "receivedDateLabel": "Ricevuto il",
+      "externalRefLabel": "Rif. esterno",
+      "quantityColumnLabel": "Quantità",
+      "emptyLinesMessage": "Questo ricevimento non contiene righe articolo."
     }
   },
   "Cart": {

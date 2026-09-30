@@ -27,10 +27,22 @@ import type {
   BCReturnListItem,
   BCReturnOrder,
   BCReturnReason,
+  BCReturnSource,
   BCSalesOrderAddressInput,
   BCSalesOrderLineRejection,
   IBusinessCentralModuleService,
 } from "./types";
+import {
+  buildPostedReturnReceipts,
+  buildReturnListRows,
+  countReceiptItems,
+  filterReturnListRows,
+  latestReceivedDate,
+} from "./return-history";
+import type {
+  PostedReturnReceiptHeader,
+  PostedReturnReceiptLineRecord,
+} from "./return-history";
 
 const DEFAULT_BUSINESS_CENTRAL_DISCOVERY_URL =
   "https://api.businesscentral.dynamics.com/v2.0/f44eef10-122f-4a63-9f5c-bd9fbd87a364/TestDK/api/v2.0";
@@ -59,6 +71,18 @@ const RETURN_ORDER_DETAIL_FIELDS =
   "id,number,documentDate,status,currencyCode,pricesIncludingVAT";
 const RETURN_ORDER_DETAIL_LINE_FIELDS =
   "id,sequence,lineType,lineObjectNumber,variantCode,description,unitOfMeasureCode,quantity,returnQtyReceived,returnReasonCode,lineAmount,amountIncludingTax";
+const OPEN_RETURN_ORDER_LIST_FIELDS = "id,number,documentDate,status";
+const OPEN_RETURN_ORDER_FETCH_CAP = 1000;
+const POSTED_RETURN_RECEIPT_ENTITY_SET = "PostedReturnReceipt";
+const POSTED_RETURN_RECEIPT_LINES_ENTITY_SET = "PostedReturnReceiptReturnRcptLines";
+// Header fields only: the web service also carries names, addresses, phone and e-mail.
+const POSTED_RETURN_RECEIPT_FIELDS = "No,Return_Order_No,External_Document_No,Document_Date";
+const POSTED_RETURN_RECEIPT_LIST_LINE_FIELDS = "Document_No,Type,No,Variant_Code,Quantity";
+const POSTED_RETURN_RECEIPT_FETCH_CAP = 5000;
+const POSTED_RETURN_RECEIPT_LINE_FILTER_CHUNK_SIZE = 20;
+const POSTED_RETURN_RECEIPT_DETAIL_LINE_FIELDS =
+  "Document_No,Line_No,Type,No,Variant_Code,Description,Quantity,Unit_of_Measure_Code,Return_Reason_Code";
+const MAX_RETURN_DETAIL_RECEIPTS = 100;
 const CREATE_SALES_ORDER_TIMEOUT_MS = 30000;
 
 type BusinessCentralTokenResponse = {
@@ -542,9 +566,12 @@ function mapSalesReturnOrderToListItem(
     number: requireBusinessCentralString(item.number, "number"),
     documentDate: item.documentDate,
     status: decodeBCEnumValue(item.status),
+    state: "open",
+    source: "return_order",
     itemCount: (item.salesReturnOrderLines ?? []).filter(
       (line) => line.lineType === "Item"
     ).length,
+    receipts: [],
   };
 }
 
@@ -573,6 +600,65 @@ function resolveBCCurrencyCode(value: unknown): string {
   }
 
   return process.env.BUSINESS_CENTRAL_LCY_CODE?.trim() || DEFAULT_BUSINESS_CENTRAL_LCY_CODE;
+}
+
+type BCPostedReturnReceiptRaw = {
+  No?: unknown;
+  Return_Order_No?: unknown;
+  External_Document_No?: unknown;
+  Document_Date?: unknown;
+};
+
+type BCPostedReturnReceiptLineRaw = {
+  Document_No?: unknown;
+  Line_No?: unknown;
+  Type?: unknown;
+  No?: unknown;
+  Variant_Code?: unknown;
+  Description?: unknown;
+  Quantity?: unknown;
+  Unit_of_Measure_Code?: unknown;
+  Return_Reason_Code?: unknown;
+};
+
+function mapPostedReturnReceiptHeader(
+  raw: BCPostedReturnReceiptRaw
+): PostedReturnReceiptHeader | null {
+  const number = optionalString(raw.No).trim();
+
+  if (!number) {
+    return null;
+  }
+
+  return {
+    number,
+    returnOrderNumber: optionalString(raw.Return_Order_No).trim(),
+    externalDocumentNumber: optionalString(raw.External_Document_No).trim(),
+    receivedDate: optionalDate(raw.Document_Date) ?? "",
+  };
+}
+
+function mapPostedReturnReceiptLine(
+  raw: BCPostedReturnReceiptLineRaw
+): PostedReturnReceiptLineRecord {
+  return {
+    documentNumber: optionalString(raw.Document_No).trim(),
+    lineNumber: optionalNumber(raw.Line_No),
+    lineType: decodeBCEnumValue(raw.Type),
+    itemNumber: optionalString(raw.No),
+    variantCode: optionalString(raw.Variant_Code),
+    description: optionalString(raw.Description),
+    quantity: optionalNumber(raw.Quantity),
+    unitOfMeasureCode: optionalString(raw.Unit_of_Measure_Code),
+    returnReasonCode: optionalString(raw.Return_Reason_Code),
+  };
+}
+
+// Points an ODataV4 URL from getODataV4Url at another web service, keeping ?company=...
+function withODataV4Resource(odataUrl: URL, resource: string): URL {
+  const url = new URL(odataUrl.toString());
+  url.pathname = url.pathname.replace(/\/ODataV4\/[^/]+$/, `/ODataV4/${resource}`);
+  return url;
 }
 
 type BCSalesReturnOrderDetailLineRaw = {
@@ -635,6 +721,8 @@ function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturn
     number: requireBusinessCentralString(raw.number, "number"),
     documentDate: optionalString(raw.documentDate),
     status: decodeBCEnumValue(raw.status),
+    state: "open",
+    source: "return_order",
     lines: rawLines
       // BC text lines (blank line type, e.g. "Invoice No. ...:") carry no item or quantity.
       .filter((line) => decodeBCEnumValue(line.lineType).trim() !== "")
@@ -646,6 +734,7 @@ function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturn
       amountExcludingTax:
         raw.pricesIncludingVAT === true ? null : roundCurrencyAmount(lineAmount),
     },
+    receipts: [],
   };
 }
 
@@ -1533,39 +1622,97 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return [...reasons.values()];
   }
 
-  // Filters directly on sellToCustomerNumber: unlike salesOrder, the
-  // salesReturnOrder OData entity has no customerId (GUID) field, so there is
-  // no customer lookup round trip to make here (contrast with listOrders,
-  // which must resolve customerNumber -> customerId first).
+  // Merges open return orders (v2.0 salesReturnOrders) with posted return receipts (ODataV4
+  // PostedReturnReceipt), both filtered on the session's customer number. salesReturnOrder has
+  // no customerId, so no customer-GUID lookup is needed (contrast with listOrders). BC cannot
+  // page across two sources, so both are read up to a cap and merged, filtered, sorted and
+  // paged in memory (NIMBUS-172).
   async listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult> {
     const discoveryUrl = this.getDiscoveryUrl();
     const tenantId = this.getTenantId(discoveryUrl);
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
 
-    const returnFilters: string[] = [
-      `sellToCustomerNumber eq '${escapeODataString(params.customerNumber)}'`,
-    ];
-    if (params.status) {
-      returnFilters.push(`status eq '${escapeODataString(params.status)}'`);
-    }
-    if (params.date_from) {
-      returnFilters.push(`documentDate ge ${params.date_from}`);
-    }
-    if (params.date_to) {
-      returnFilters.push(`documentDate le ${params.date_to}`);
-    }
-    if (params.search) {
-      returnFilters.push(`contains(number,'${escapeODataString(params.search)}')`);
+    const receiptsUrlPromise = this.getODataV4Url(
+      discoveryUrl,
+      accessToken,
+      POSTED_RETURN_RECEIPT_ENTITY_SET
+    );
+    const [openReturns, receiptHeaders] = await Promise.all([
+      this.fetchOpenReturnOrders(discoveryUrl, accessToken, params.customerNumber),
+      receiptsUrlPromise.then((receiptsUrl) =>
+        this.fetchPostedReturnReceiptHeaders(
+          receiptsUrl,
+          accessToken,
+          [`Sell_to_Customer_No eq '${escapeODataString(params.customerNumber)}'`],
+          POSTED_RETURN_RECEIPT_FETCH_CAP
+        )
+      ),
+    ]);
+    const receiptsUrl = await receiptsUrlPromise;
+
+    if (
+      openReturns.length >= OPEN_RETURN_ORDER_FETCH_CAP ||
+      receiptHeaders.length >= POSTED_RETURN_RECEIPT_FETCH_CAP
+    ) {
+      this.logger?.warn(
+        "Business Central return history reached its fetch cap; older returns are not listed"
+      );
     }
 
+    const rows = filterReturnListRows(buildReturnListRows(openReturns, receiptHeaders), {
+      state: params.state,
+      date_from: params.date_from,
+      date_to: params.date_to,
+      search: params.search,
+    });
+    const pageRows = rows.slice(params.offset, params.offset + params.limit);
+    const processedReceiptNumbers = pageRows
+      .filter((row) => row.state === "processed")
+      .flatMap((row) => row.receipts.map((receipt) => receipt.number));
+    const receiptLines =
+      processedReceiptNumbers.length > 0
+        ? await this.fetchPostedReturnReceiptLines(
+            receiptsUrl,
+            accessToken,
+            processedReceiptNumbers,
+            POSTED_RETURN_RECEIPT_LIST_LINE_FIELDS
+          )
+        : [];
+
+    return {
+      returns: pageRows.map((row) =>
+        row.state === "processed"
+          ? {
+              ...row,
+              itemCount: countReceiptItems(
+                row.receipts.map((receipt) => receipt.number),
+                receiptLines
+              ),
+            }
+          : row
+      ),
+      count: rows.length,
+      offset: params.offset,
+      limit: params.limit,
+    };
+  }
+
+  private async fetchOpenReturnOrders(
+    discoveryUrl: URL,
+    accessToken: string,
+    customerNumber: string
+  ): Promise<BCReturnListItem[]> {
     const odataUrl = new URL(`${discoveryUrl.toString()}/salesReturnOrders()`);
-    odataUrl.searchParams.set("$filter", returnFilters.join(" and "));
-    odataUrl.searchParams.set("$top", String(params.limit));
-    odataUrl.searchParams.set("$skip", String(params.offset));
-    odataUrl.searchParams.set("$count", "true");
+    odataUrl.searchParams.set(
+      "$filter",
+      `sellToCustomerNumber eq '${escapeODataString(customerNumber)}'`
+    );
+    odataUrl.searchParams.set("$top", String(OPEN_RETURN_ORDER_FETCH_CAP));
+    // Newest first, so hitting the cap drops the oldest open return orders.
     odataUrl.searchParams.set("$orderby", "documentDate desc");
-    odataUrl.searchParams.set("$expand", "salesReturnOrderLines");
+    odataUrl.searchParams.set("$select", OPEN_RETURN_ORDER_LIST_FIELDS);
+    odataUrl.searchParams.set("$expand", "salesReturnOrderLines($select=id,lineType)");
 
     const returnsResponse = await fetch(odataUrl.toString(), {
       method: "GET",
@@ -1583,16 +1730,101 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     const returnsBody = (await returnsResponse.json()) as {
-      "@odata.count"?: number;
-      value: BCSalesReturnOrderRaw[];
+      value?: BCSalesReturnOrderRaw[];
     };
 
-    return {
-      returns: (returnsBody.value ?? []).map(mapSalesReturnOrderToListItem),
-      count: returnsBody["@odata.count"] ?? 0,
-      offset: params.offset,
-      limit: params.limit,
-    };
+    return (returnsBody.value ?? []).map(mapSalesReturnOrderToListItem);
+  }
+
+  private async fetchPostedReturnReceiptHeaders(
+    receiptsUrl: URL,
+    accessToken: string,
+    filters: string[],
+    top: number
+  ): Promise<PostedReturnReceiptHeader[]> {
+    const url = new URL(receiptsUrl.toString());
+    url.searchParams.set("$filter", filters.join(" and "));
+    url.searchParams.set("$select", POSTED_RETURN_RECEIPT_FIELDS);
+    url.searchParams.set("$top", String(top));
+    // Newest first, so hitting $top drops the oldest receipts.
+    url.searchParams.set("$orderby", "Document_Date desc");
+
+    const response = await fetch(url.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central posted return receipts request failed with status ${response.status}`
+      );
+    }
+
+    const body = (await response.json()) as { value?: BCPostedReturnReceiptRaw[] };
+
+    return (body.value ?? [])
+      .map(mapPostedReturnReceiptHeader)
+      .filter((header): header is PostedReturnReceiptHeader => header !== null);
+  }
+
+  // Lines are filtered on Document_No only; callers pass receipt numbers taken from headers
+  // that were already filtered on the customer number.
+  private async fetchPostedReturnReceiptLines(
+    receiptsUrl: URL,
+    accessToken: string,
+    receiptNumbers: readonly string[],
+    select: string
+  ): Promise<PostedReturnReceiptLineRecord[]> {
+    const uniqueNumbers = [...new Set(receiptNumbers)];
+    const chunks: string[][] = [];
+
+    for (
+      let index = 0;
+      index < uniqueNumbers.length;
+      index += POSTED_RETURN_RECEIPT_LINE_FILTER_CHUNK_SIZE
+    ) {
+      chunks.push(
+        uniqueNumbers.slice(index, index + POSTED_RETURN_RECEIPT_LINE_FILTER_CHUNK_SIZE)
+      );
+    }
+
+    const chunkResults = await Promise.all(
+      chunks.map(async (chunk) => {
+        const url = withODataV4Resource(receiptsUrl, POSTED_RETURN_RECEIPT_LINES_ENTITY_SET);
+        url.searchParams.set(
+          "$filter",
+          chunk
+            .map((number) => `Document_No eq '${escapeODataString(number)}'`)
+            .join(" or ")
+        );
+        url.searchParams.set("$select", select);
+
+        const response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            accept: "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new MedusaError(
+            MedusaError.Types.UNEXPECTED_STATE,
+            `Business Central posted return receipt lines request failed with status ${response.status}`
+          );
+        }
+
+        const body = (await response.json()) as { value?: BCPostedReturnReceiptLineRaw[] };
+
+        return (body.value ?? []).map(mapPostedReturnReceiptLine);
+      })
+    );
+
+    return chunkResults.flat();
   }
 
   private async getCustomerId(
@@ -2029,14 +2261,100 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
   }
 
-  // Reads the Abakion customer-portal API: unlike the standard v2.0 API, its return order
-  // lines expose variantCode and returnReasonCode.
+  // Open return orders come from the Abakion customer-portal API (unlike v2.0, its lines expose
+  // variantCode and returnReasonCode). Posted return receipts come from the ODataV4
+  // PostedReturnReceipt web service. Every query is filtered on the session's customer number.
   async getReturn(params: BCGetReturnParams): Promise<BCReturnDetail | null> {
     const discoveryUrl = this.getDiscoveryUrl();
     const tenantId = this.getTenantId(discoveryUrl);
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
 
+    const customerFilter = `Sell_to_Customer_No eq '${escapeODataString(params.customerNumber)}'`;
+    const numberLiteral = `'${escapeODataString(params.returnNumber)}'`;
+    const receiptsUrlPromise = this.getODataV4Url(
+      discoveryUrl,
+      accessToken,
+      POSTED_RETURN_RECEIPT_ENTITY_SET
+    );
+    const [openReturn, [returnOrderReceipts, numberedReceipts]] = await Promise.all([
+      this.fetchOpenReturnOrderDetail(discoveryUrl, accessToken, params),
+      receiptsUrlPromise.then((receiptsUrl) =>
+        Promise.all([
+          this.fetchPostedReturnReceiptHeaders(
+            receiptsUrl,
+            accessToken,
+            [customerFilter, `Return_Order_No eq ${numberLiteral}`],
+            MAX_RETURN_DETAIL_RECEIPTS
+          ),
+          this.fetchPostedReturnReceiptHeaders(
+            receiptsUrl,
+            accessToken,
+            [customerFilter, `No eq ${numberLiteral}`],
+            1
+          ),
+        ])
+      ),
+    ]);
+    const receiptsUrl = await receiptsUrlPromise;
+
+    let source: BCReturnSource;
+    let number: string;
+    let receiptHeaders: PostedReturnReceiptHeader[];
+
+    if (openReturn || returnOrderReceipts.length > 0) {
+      source = "return_order";
+      number =
+        openReturn?.number ?? returnOrderReceipts[0]?.returnOrderNumber ?? params.returnNumber;
+      receiptHeaders = returnOrderReceipts;
+    } else {
+      // A receipt that belongs to a return order is shown under that return order only.
+      const standaloneReceipt = numberedReceipts.find(
+        (receipt) => receipt.returnOrderNumber === ""
+      );
+
+      if (!standaloneReceipt) {
+        return null;
+      }
+
+      source = "posted_receipt";
+      number = standaloneReceipt.number;
+      receiptHeaders = [standaloneReceipt];
+    }
+
+    const receiptLines =
+      receiptHeaders.length > 0
+        ? await this.fetchPostedReturnReceiptLines(
+            receiptsUrl,
+            accessToken,
+            receiptHeaders.map((receipt) => receipt.number),
+            POSTED_RETURN_RECEIPT_DETAIL_LINE_FIELDS
+          )
+        : [];
+    const receipts = buildPostedReturnReceipts(receiptHeaders, receiptLines);
+
+    if (openReturn) {
+      return { ...openReturn, receipts };
+    }
+
+    return {
+      id: `${source === "return_order" ? "return-order" : "posted-receipt"}:${number}`,
+      number,
+      documentDate: latestReceivedDate(receipts),
+      status: "",
+      state: "processed",
+      source,
+      lines: [],
+      expectedCredit: null,
+      receipts,
+    };
+  }
+
+  private async fetchOpenReturnOrderDetail(
+    discoveryUrl: URL,
+    accessToken: string,
+    params: BCGetReturnParams
+  ): Promise<BCReturnDetail | null> {
     const returnUrl = new URL(
       `${this.getEnvironmentBaseUrl(discoveryUrl)}/${CUSTOMER_PORTAL_API_PATH}/companies(${this.getCompanyId()})/salesReturnOrders`
     );

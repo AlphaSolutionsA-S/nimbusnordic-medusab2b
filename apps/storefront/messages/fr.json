@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Détails",
-      "itemCountLabel": "Articles : {count}"
+      "itemCountLabel": "Articles : {count}",
+      "receiptLabel": "Réception",
+      "receivedLabel": "Reçu",
+      "externalRefLabel": "Réf. externe"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Statut",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Revenir aux retours",
       "returnNumberHeading": "Retour #{number}",
       "requestedDateLabel": "Demandé le",
-      "statusLabel": "Statut"
+      "statusLabel": "Statut",
+      "receiptNumberHeading": "Réception de retour #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Articles",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Retour introuvable",
-      "message": "Ce retour n'est pas disponible. Les retours entièrement traités ne sont plus affichés ici."
+      "message": "Ce retour n'est pas disponible. Vérifiez le numéro de retour et réessayez."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Une erreur s'est produite",
@@ -579,6 +583,18 @@
       "open": "Ouvert",
       "draft": "Brouillon",
       "released": "Lancé"
+    },
+    "bcReturnState": {
+      "open": "Ouvert",
+      "processed": "Traité"
+    },
+    "bcReturnReceipts": {
+      "heading": "Réceptions",
+      "receiptNumberHeading": "Réception #{number}",
+      "receivedDateLabel": "Reçu le",
+      "externalRefLabel": "Réf. externe",
+      "quantityColumnLabel": "Quantité",
+      "emptyLinesMessage": "Cette réception ne contient aucune ligne d'article."
     }
   },
   "Cart": {

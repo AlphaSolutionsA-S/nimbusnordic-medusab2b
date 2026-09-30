@@ -50,7 +50,7 @@ export const listBCReturns = async (
     query: {
       limit: params.limit ?? 20,
       offset: params.offset ?? 0,
-      ...(params.status ? { status: params.status } : {}),
+      ...(params.state ? { state: params.state } : {}),
       ...(params.date_from ? { date_from: params.date_from } : {}),
       ...(params.date_to ? { date_to: params.date_to } : {}),
       ...(params.search ? { search: params.search } : {}),

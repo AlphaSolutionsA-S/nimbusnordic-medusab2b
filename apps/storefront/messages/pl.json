@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Szczegóły",
-      "itemCountLabel": "Pozycje: {count}"
+      "itemCountLabel": "Pozycje: {count}",
+      "receiptLabel": "Przyjęcie",
+      "receivedLabel": "Przyjęto",
+      "externalRefLabel": "Ref. zewnętrzna"
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Powrót do zwrotów",
       "returnNumberHeading": "Zwrot #{number}",
       "requestedDateLabel": "Data zgłoszenia",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "receiptNumberHeading": "Przyjęcie zwrotu #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Produkty",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Nie znaleziono zwrotu",
-      "message": "Ten zwrot jest niedostępny. W pełni przetworzone zwroty nie są już tutaj wyświetlane."
+      "message": "Ten zwrot jest niedostępny. Sprawdź numer zwrotu i spróbuj ponownie."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Coś poszło nie tak",
@@ -579,6 +583,18 @@
       "open": "Otwarte",
       "draft": "Wersja robocza",
       "released": "Zwolnione"
+    },
+    "bcReturnState": {
+      "open": "Otwarte",
+      "processed": "Przetworzone"
+    },
+    "bcReturnReceipts": {
+      "heading": "Przyjęcia",
+      "receiptNumberHeading": "Przyjęcie #{number}",
+      "receivedDateLabel": "Data przyjęcia",
+      "externalRefLabel": "Ref. zewnętrzna",
+      "quantityColumnLabel": "Ilość",
+      "emptyLinesMessage": "To przyjęcie nie zawiera pozycji towarowych."
     }
   },
   "Cart": {

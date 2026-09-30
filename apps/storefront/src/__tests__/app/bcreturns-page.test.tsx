@@ -17,6 +17,7 @@ jest.mock("@/modules/account/components/bc-return-overview", () => ({
 }))
 
 import Returns, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/returns/page"
+import { listBCReturns } from "@/lib/data/business-central"
 
 describe("Returns page", () => {
   it("renders the extracted heading unchanged", async () => {
@@ -31,5 +32,18 @@ describe("Returns page", () => {
       title: "Returns",
       description: "Company-wide Business Central return history.",
     })
+  })
+
+  // TC-11 (NIMBUS-172): a valid state is forwarded and an invalid one is dropped.
+  it("forwards a valid state and drops an invalid one", async () => {
+    await Returns({ searchParams: Promise.resolve({ state: "processed" }) })
+    expect(listBCReturns).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: "processed" })
+    )
+
+    await Returns({ searchParams: Promise.resolve({ state: "Released" }) })
+    expect(listBCReturns).toHaveBeenLastCalledWith(
+      expect.objectContaining({ state: undefined })
+    )
   })
 })

@@ -1,6 +1,6 @@
 # Task 02: Backend — return detail for processed returns and posted receipts — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 02
@@ -9,6 +9,16 @@
 **Depends on:** Task 01
 
 ---
+
+## Approved Decisions (user, 2026-09-30)
+
+The user approved the plan on 2026-09-30, with OQ-1..OQ-4 accepted as recommended. See PLAN.md
+"Resolved Questions".
+
+- **OQ-1 (resolved):** a processed return order is found by `Return_Order_No`. A receipt number
+  only opens on its own when its `Return_Order_No` is empty. Otherwise it is `null` (404) and the
+  receipt is shown under its return order. This narrows the approved SCOPE.md wording, and the
+  user approved the change.
 
 ## Project Environment
 

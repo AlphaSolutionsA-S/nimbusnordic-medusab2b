@@ -43,7 +43,7 @@ describe("listBCReturns", () => {
   })
 
   // TC-2: edge case — optional filters are only included when provided.
-  it("omits status, date_from, date_to and search from the query when not provided", async () => {
+  it("omits state, date_from, date_to and search from the query when not provided", async () => {
     ;(sdk.client.fetch as jest.Mock).mockResolvedValueOnce({
       returns: [],
       count: 0,
@@ -62,7 +62,7 @@ describe("listBCReturns", () => {
   })
 
   // TC-3: integration/wiring — all optional filters are forwarded when provided.
-  it("forwards status, date range and search filters when provided", async () => {
+  it("forwards state, date range and search filters when provided", async () => {
     ;(sdk.client.fetch as jest.Mock).mockResolvedValueOnce({
       returns: [],
       count: 0,
@@ -71,7 +71,7 @@ describe("listBCReturns", () => {
     })
 
     await listBCReturns({
-      status: "Open",
+      state: "processed",
       date_from: "2026-01-01",
       date_to: "2026-12-31",
       search: "RET-1",
@@ -83,7 +83,7 @@ describe("listBCReturns", () => {
         query: {
           limit: 20,
           offset: 0,
-          status: "Open",
+          state: "processed",
           date_from: "2026-01-01",
           date_to: "2026-12-31",
           search: "RET-1",

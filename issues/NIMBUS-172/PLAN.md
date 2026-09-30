@@ -2,8 +2,9 @@
 
 **Issue:** https://alphasolutionsdk.atlassian.net/browse/NIMBUS-172
 
-> **Status (2026-09-30):** Planned. **Ready for Dispatch: false.** The plan is waiting for the
-> user's review of OQ-1..OQ-4 below.
+> **Status (2026-09-30):** Approved. **Ready for Dispatch: true.** The main session relayed the
+> user's approval on 2026-09-30, with all four recommendations (OQ-1..OQ-4) accepted as written
+> ("all oq are approved and good choices you made"). See "Resolved Questions" below.
 
 ## Objective
 
@@ -158,31 +159,30 @@ What we found in the current code on develop (NIMBUS-140 `d63ef11`, NIMBUS-141 `
 - **D10, not-found copy.** It is replaced in all 8 locales with "This return is unavailable.
   Check the return number and try again.", because processed returns are now shown.
 
-## Open Questions (for the user's plan review)
+## Resolved Questions (user, 2026-09-30)
 
-- **OQ-1, receipts whose return order no longer exists.**
-  - SCOPE.md says that a receipt whose return order number "is empty or does not match a return
-    order" becomes its own row. It also says that a return order that is no longer open, but
-    has receipts, is one processed row with its receipts grouped under it.
-  - BC deletes a return order once it is processed. A non-empty `Return_Order_No` that matches
-    no open order is therefore the normal processed case.
-  - The plan groups such receipts into **one processed row per return order number**. Only
-    receipts with an **empty** `Return_Order_No` become stand-alone rows.
-  - **Recommended: accept.** The alternative would make every processed return with several
-    receipts show up as several rows.
-- **OQ-2, filter replaces the BC status filter.**
-  - The Status dropdown becomes All / Open / Processed.
-  - The old Open / Released BC-status options disappear, and the backend `status` query param
-    is replaced by `state`.
-  - **Recommended: accept.**
-- **OQ-3, status badge text.**
-  - The list and the detail page show "Open" / "Processed" as the badge.
-  - For open returns, the raw BC status is added only when it is not "Open" (for example
-    "Released"), to avoid "Open Open".
-  - **Recommended: accept.** The alternative is to always show both.
-- **OQ-4, the processed "Items: n" count.** It counts distinct item + variant that were
-  actually received (D3). **Recommended: accept.** The alternative is to count every receipt
-  line.
+The main session relayed the user's answer on 2026-09-30: "all oq are approved and good choices
+you made". All four recommendations are accepted as written.
+
+- **OQ-1, receipts whose return order no longer exists: resolved, grouped per return order.**
+  - Receipts with a non-empty `Return_Order_No` that matches no open return order are grouped
+    into **one processed row per `Return_Order_No`**.
+  - Only receipts with an **empty** `Return_Order_No` become stand-alone rows, identified by the
+    receipt number.
+  - **Change to the approved SCOPE.md:** SCOPE.md says that a receipt whose return order number
+    "is empty or does not match a return order" becomes its own row. The user approved
+    narrowing this to "is empty" on 2026-09-30. BC deletes a return order once it is processed,
+    so a non-matching number is the normal processed case and belongs to the grouped row.
+    SCOPE.md itself is not edited here, because it has uncommitted user changes. This PLAN.md
+    records the change, and the plan and the task files take precedence on this point.
+  - This also covers the detail page: a receipt number whose receipt belongs to a return order
+    returns 404 on its own and is shown under its return order (D9).
+- **OQ-2, filter: resolved, All / Open / Processed.** The `state` param (`open` | `processed`)
+  replaces the BC-status `status` param and the Open / Released options.
+- **OQ-3, badge text: resolved.** The translated Open / Processed badge is primary. For open
+  returns, the raw BC status is added only when it is not "Open".
+- **OQ-4, processed "Items: n": resolved.** It counts distinct item + variant with a received
+  quantity greater than 0, across the return's receipts (D3).
 
 ## Risks
 

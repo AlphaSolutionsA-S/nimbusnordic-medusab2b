@@ -2,7 +2,7 @@
 
 **Project ID:** NIMBUS-172
 **Date:** 2026-09-30
-**Ready for Dispatch:** false (waiting for the user's plan review, PLAN.md "Open Questions")
+**Ready for Dispatch:** true (plan approved by the user on 2026-09-30; OQ-1..OQ-4 resolved, see PLAN.md "Resolved Questions")
 
 ## Branch
 
@@ -13,10 +13,10 @@ committed on it yet.
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Merge posted return receipts into `listReturns` (types, merge helpers, `state` filter) | `01-backend-return-list-merge-implementation.md` | backend | None | TODO |
-| 02 | Return detail for processed returns and posted receipts (`getReturn`) | `02-backend-return-detail-receipts-implementation.md` | backend | 01 | TODO |
-| 03 | Combined return list: state badge, open/processed filter, grouped receipts, translations | `03-storefront-return-list-implementation.md` | storefront | 01 | TODO |
-| 04 | Return detail page for processed returns and receipts, translations | `04-storefront-return-detail-implementation.md` | storefront | 02, 03 | TODO |
+| 01 | Merge posted return receipts into `listReturns` (types, merge helpers, `state` filter) | `01-backend-return-list-merge-implementation.md` | backend | None | DONE |
+| 02 | Return detail for processed returns and posted receipts (`getReturn`) | `02-backend-return-detail-receipts-implementation.md` | backend | 01 | DONE |
+| 03 | Combined return list: state badge, open/processed filter, grouped receipts, translations | `03-storefront-return-list-implementation.md` | storefront | 01 | DONE |
+| 04 | Return detail page for processed returns and receipts, translations | `04-storefront-return-detail-implementation.md` | storefront | 02, 03 | DONE (TestDK walkthrough pending) |
 
 ## Notes for the dispatcher
 

@@ -1,6 +1,6 @@
 # Task 04: Storefront — return detail for processed returns and posted receipts — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE (code, tests, build and lint). The TestDK walkthrough in step 8 is still open: there were no BC credentials and no running environment. See PROGRESS.md.
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 04
@@ -11,6 +11,14 @@
 namespace, and the catalog order)
 
 ---
+
+## Approved Decisions (user, 2026-09-30)
+
+The user approved the plan on 2026-09-30, with OQ-1..OQ-4 accepted as recommended. See PLAN.md
+"Resolved Questions".
+
+- **OQ-3 (resolved):** the detail page uses the same badge rule as the list card: the state badge
+  is primary, and the raw BC status is shown only for open returns whose status is not "Open".
 
 ## Project Environment
 

@@ -1,6 +1,6 @@
 # Task 01: Backend — merge posted return receipts into `listReturns` — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01
@@ -9,6 +9,19 @@
 **Depends on:** None
 
 ---
+
+## Approved Decisions (user, 2026-09-30)
+
+The user approved the plan on 2026-09-30, with OQ-1..OQ-4 accepted as recommended. See PLAN.md
+"Resolved Questions".
+
+- **OQ-1 (resolved):** receipts are grouped into one processed row per non-empty
+  `Return_Order_No`. Only receipts with an empty `Return_Order_No` become stand-alone rows.
+  This narrows the approved SCOPE.md wording ("empty or does not match"), and the user approved
+  the change. This task implements it in `buildReturnListRows`.
+- **OQ-2 (resolved):** `state` (`open` | `processed`) replaces the `status` query param.
+- **OQ-4 (resolved):** the processed item count is the number of distinct item + variant with a
+  received quantity greater than 0 (`countReceiptItems`).
 
 ## Project Environment
 

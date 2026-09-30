@@ -132,11 +132,39 @@ export type BCReturnReason = {
   description: string;
 };
 
+export type BCReturnState = "open" | "processed";
+
+// "return_order": the row is a BC return order (open, or processed = only posted receipts left).
+// "posted_receipt": a posted return receipt without a return order, identified by its own number.
+export type BCReturnSource = "return_order" | "posted_receipt";
+
+export type BCPostedReturnReceiptSummary = {
+  number: string;
+  // Document_Date of the posted receipt; "" when BC sends no date.
+  receivedDate: string;
+  // Free text (e.g. "AX 209475" or the portal "RET-..." request id). Display-only "External ref".
+  externalDocumentNumber: string;
+};
+
+export type BCPostedReturnReceiptLine = {
+  lineNumber: number;
+  itemNumber: string;
+  variantCode: string;
+  description: string;
+  quantity: number;
+  unitOfMeasureCode: string;
+  returnReasonCode: string;
+};
+
+export type BCPostedReturnReceipt = BCPostedReturnReceiptSummary & {
+  lines: BCPostedReturnReceiptLine[];
+};
+
 export type BCListReturnsParams = {
   customerNumber: string;
   limit: number;
   offset: number;
-  status?: string;
+  state?: BCReturnState;
   date_from?: string;
   date_to?: string;
   search?: string;
@@ -145,9 +173,15 @@ export type BCListReturnsParams = {
 export type BCReturnListItem = {
   id: string;
   number: string;
+  // Open: the return order's document date. Processed: the latest receipt Document_Date.
   documentDate: string;
+  // Decoded BC status for open return orders; "" for processed rows.
   status: string;
+  state: BCReturnState;
+  source: BCReturnSource;
   itemCount: number;
+  // Oldest first. Empty for open return orders without posted receipts.
+  receipts: BCPostedReturnReceiptSummary[];
 };
 
 export type BCListReturnsResult = {
@@ -184,10 +218,18 @@ export type BCReturnExpectedCredit = {
 export type BCReturnDetail = {
   id: string;
   number: string;
+  // Open: the return order's document date. Processed: the latest receipt Document_Date.
   documentDate: string;
+  // Decoded BC status for open return orders; "" for processed returns.
   status: string;
+  state: BCReturnState;
+  source: BCReturnSource;
+  // Return order lines; [] for processed returns (the return order no longer exists).
   lines: BCReturnDetailLine[];
-  expectedCredit: BCReturnExpectedCredit;
+  // null for processed returns: credit memos are out of scope (NIMBUS-172).
+  expectedCredit: BCReturnExpectedCredit | null;
+  // Posted return receipts, oldest first.
+  receipts: BCPostedReturnReceipt[];
 };
 
 export interface IBusinessCentralModuleService {

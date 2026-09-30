@@ -22,7 +22,7 @@ export default async function Returns({
 }: {
   searchParams: Promise<{
     page?: string
-    status?: string
+    state?: string
     date_from?: string
     date_to?: string
     search?: string
@@ -33,7 +33,10 @@ export default async function Returns({
 
   const currentPage = Math.max(1, parseInt(params.page ?? "1") || 1)
   const offset = (currentPage - 1) * LIMIT
-  const { status, date_from, date_to, search } = params
+  const { date_from, date_to, search } = params
+  // Only the two supported states reach the backend; anything else means "all".
+  const state =
+    params.state === "open" || params.state === "processed" ? params.state : undefined
 
   let result: BCReturnListResponse | null = null
   let hasError = false
@@ -42,7 +45,7 @@ export default async function Returns({
     result = await listBCReturns({
       limit: LIMIT,
       offset,
-      status,
+      state,
       date_from,
       date_to,
       search,
@@ -60,7 +63,7 @@ export default async function Returns({
         <Heading>{t("heading")}</Heading>
       </div>
       <BcReturnFilters
-        currentStatus={status}
+        currentState={state}
         currentDateFrom={date_from}
         currentDateTo={date_to}
         currentSearch={search}

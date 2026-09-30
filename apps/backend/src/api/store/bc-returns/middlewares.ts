@@ -19,7 +19,7 @@ export const storeBCReturnsMiddlewares: MiddlewareRoute[] = [
         defaults: [
           "limit",
           "offset",
-          "status",
+          "state",
           "date_from",
           "date_to",
           "search",

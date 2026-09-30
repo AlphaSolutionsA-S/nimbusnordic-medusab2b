@@ -528,7 +528,10 @@
     },
     "bcReturnCard": {
       "detailsLabel": "Detaljer",
-      "itemCountLabel": "Varer: {count}"
+      "itemCountLabel": "Varer: {count}",
+      "receiptLabel": "Mottak",
+      "receivedLabel": "Mottatt",
+      "externalRefLabel": "Ekstern ref."
     },
     "bcOrderLineFulfillment": {
       "statusColumnLabel": "Status",
@@ -548,7 +551,8 @@
       "backToReturnsLabel": "Tilbake til returer",
       "returnNumberHeading": "Retur #{number}",
       "requestedDateLabel": "Forespurt den",
-      "statusLabel": "Status"
+      "statusLabel": "Status",
+      "receiptNumberHeading": "Returmottak #{number}"
     },
     "bcReturnLines": {
       "itemsHeading": "Varer",
@@ -569,7 +573,7 @@
     },
     "bcReturnNotFound": {
       "headingLabel": "Retur ikke funnet",
-      "message": "Denne returen er ikke tilgjengelig. Returer som er ferdig behandlet, vises ikke lenger her."
+      "message": "Denne returen er ikke tilgjengelig. Kontroller returnummeret og prøv igjen."
     },
     "bcReturnDetailPage": {
       "errorHeading": "Noe gikk galt",
@@ -579,6 +583,18 @@
       "open": "Åpen",
       "draft": "Utkast",
       "released": "Frigitt"
+    },
+    "bcReturnState": {
+      "open": "Åpen",
+      "processed": "Behandlet"
+    },
+    "bcReturnReceipts": {
+      "heading": "Mottak",
+      "receiptNumberHeading": "Mottak #{number}",
+      "receivedDateLabel": "Mottatt den",
+      "externalRefLabel": "Ekstern ref.",
+      "quantityColumnLabel": "Antall",
+      "emptyLinesMessage": "Dette mottaket har ingen varelinjer."
     }
   },
   "Cart": {

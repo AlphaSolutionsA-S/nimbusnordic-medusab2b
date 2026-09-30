@@ -1,31 +1,28 @@
 "use client"
 
 import Button from "@/modules/common/components/button"
+import type { BCReturnState } from "@/types/bc-order"
 import { useTranslations } from "next-intl"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useTransition } from "react"
 
-// Only statuses whose BC wire value has no XML-encoded space (see Task 01).
-const BC_RETURN_STATUSES = ["Open", "Released"] as const
-
-// Visible labels only — option values stay as the BC API filter values.
-const STATUS_LABEL_KEYS = { Open: "open", Released: "released" } as const
+const BC_RETURN_STATES = ["open", "processed"] as const
 
 type BcReturnFiltersProps = {
-  currentStatus?: string
+  currentState?: BCReturnState
   currentDateFrom?: string
   currentDateTo?: string
   currentSearch?: string
 }
 
 const BcReturnFilters = ({
-  currentStatus,
+  currentState,
   currentDateFrom,
   currentDateTo,
   currentSearch,
 }: BcReturnFiltersProps) => {
   const t = useTranslations("Account.bcReturnFilters")
-  const tStatus = useTranslations("Account.bcStatus")
+  const tState = useTranslations("Account.bcReturnState")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -79,13 +76,13 @@ const BcReturnFilters = ({
         <select
           id="bc-return-status-filter"
           className="text-sm border border-neutral-200 rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-neutral-400"
-          value={currentStatus ?? ""}
-          onChange={(e) => pushParams({ status: e.target.value || undefined })}
+          value={currentState ?? ""}
+          onChange={(e) => pushParams({ state: e.target.value || undefined })}
         >
           <option value="">{t("allStatusesOption")}</option>
-          {BC_RETURN_STATUSES.map((s) => (
+          {BC_RETURN_STATES.map((s) => (
             <option key={s} value={s}>
-              {tStatus(STATUS_LABEL_KEYS[s])}
+              {tState(s)}
             </option>
           ))}
         </select>
