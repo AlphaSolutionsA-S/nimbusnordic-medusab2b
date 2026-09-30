@@ -1,10 +1,13 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { TranslationsWorkspace } from "../components/TranslationsWorkspace";
 import { sdk } from "../../../lib/client";
+import { translationQueryKey } from "../../../hooks/api/ui-translations";
 import { diffMessages, mergeMessages } from "../../../../utils/translations/documents";
 import type {
+  IcuWarning,
   MessageDocument,
   MissingKeyRecord,
   TranslationDocument,
@@ -26,6 +29,7 @@ class FakeBackend {
   documents: Record<string, TranslationDocument> = {};
   missing: MissingKeyRecord[] = [];
   calls: Array<{ method: string; url: string; body?: Body }> = [];
+  previewWarnings: IcuWarning[] = [];
 
   put(locale: string, messages: MessageDocument, version = 1, is_active = true): TranslationDocument {
     const document = { id: `sftr_${locale}`, locale, version, is_active, updated_at: NOW, messages };
@@ -56,9 +60,12 @@ class FakeBackend {
       };
     }
     if (method === "GET" && locale === "missing-keys") {
-      const filter = new URLSearchParams(url.split("?")[1]).get("locale");
+      const params = new URLSearchParams(url.split("?")[1]);
+      const filter = params.get("locale");
+      const offset = Number(params.get("offset") ?? 0);
+      const limit = Number(params.get("limit") ?? 20);
       const rows = this.missing.filter((row) => !row.dismissed && (!filter || row.locale === filter));
-      return { missing_keys: rows, count: rows.length, offset: 0, limit: 20 };
+      return { missing_keys: rows.slice(offset, offset + limit), count: rows.length, offset, limit };
     }
     if (method === "GET" && locale && !action) {
       if (!current) {
@@ -81,7 +88,7 @@ class FakeBackend {
       const next = current && body.mode === "merge" ? mergeMessages(current.messages, incoming) : incoming;
       const diff = diffMessages(current?.messages ?? {}, next);
       if (action === "import-preview") {
-        return { locale, expected_version: expected, mode: body.mode, diff, warnings: [] };
+        return { locale, expected_version: expected, mode: body.mode, diff, warnings: this.previewWarnings };
       }
       if (diff.removed.length && !body.confirm_removed) {
         throw httpError(400, "Confirm the removal");
@@ -128,11 +135,13 @@ function renderWorkspace() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
-  return render(
+  const router = createMemoryRouter([{ path: "*", element: <TranslationsWorkspace /> }]);
+  const view = render(
     <QueryClientProvider client={client}>
-      <TranslationsWorkspace />
+      <RouterProvider router={router} />
     </QueryClientProvider>
   );
+  return { client, ...view };
 }
 
 function jsonFile(messages: unknown, name = "texts.json"): File {
@@ -224,6 +233,49 @@ describe("Translation tools", () => {
     expect(within(dialog).getByText("texts.json")).toBeInTheDocument();
     expect(within(dialog).getByRole("button", { name: "Preview changes" })).toBeEnabled();
     expect(backend.documents.en.version).toBe(2);
+  });
+
+  it("applies with the previewed version even after the editor picked up a newer one", async () => {
+    backend.put("en", english);
+    const { client } = renderWorkspace();
+    const user = userEvent.setup();
+    const dialog = await openImportDialog();
+    await user.upload(within(dialog).getByLabelText("JSON file"), jsonFile({ Cart: { title: "Basket" } }));
+    await user.click(within(dialog).getByRole("button", { name: "Preview changes" }));
+    await within(dialog).findByText(/0 added · 1 changed/);
+
+    backend.put("en", { ...english, Cart: { title: "Your cart", note: "Theirs" } }, 2);
+    await client.refetchQueries({ queryKey: translationQueryKey.all });
+    await user.click(within(dialog).getByRole("button", { name: "Apply import" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent(/changed after the preview/);
+    expect(backend.posts(/\/import$/)[0].body).toMatchObject({ expected_version: 1 });
+    expect(backend.documents.en.messages).toMatchObject({ Cart: { title: "Your cart", note: "Theirs" } });
+  });
+
+  it("lists every preview warning when one key has several", async () => {
+    backend.put("en", english);
+    backend.previewWarnings = [
+      { key: "Common.title", code: "arguments", message: "Placeholders differ from reference: missing {name}" },
+      { key: "Common.title", code: "structure", message: "Rich-text tags differ from reference (expected <b>)" },
+    ];
+    const consoleError = jest.spyOn(console, "error");
+    renderWorkspace();
+    const user = userEvent.setup();
+    const dialog = await openImportDialog();
+    await user.upload(within(dialog).getByLabelText("JSON file"), jsonFile({ Common: { title: "Hi" } }));
+    await user.click(within(dialog).getByRole("button", { name: "Preview changes" }));
+
+    const list = await within(dialog).findByRole("list", { name: "Placeholder warnings" });
+    expect(within(list).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
+      "Common.title: Placeholders differ from reference: missing {name}",
+      "Common.title: Rich-text tags differ from reference (expected <b>)",
+    ]);
+    const duplicateKeyErrors = consoleError.mock.calls.filter((args) =>
+      args.some((arg) => typeof arg === "string" && arg.includes("same key"))
+    );
+    expect(duplicateKeyErrors).toEqual([]);
+    consoleError.mockRestore();
   });
 
   it("TC-3: a successful merge import adopts the new version", async () => {
@@ -345,6 +397,44 @@ describe("Translation tools", () => {
     expect(await screen.findByText(/Your unsaved edits are kept/)).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /Common\.title/ })).toHaveValue("Unsaved");
     expect(backend.documents.en.version).toBe(2);
+  });
+
+  it("missing texts restart at the first page on a new filter and step back from an emptied page", async () => {
+    backend.put("en", english);
+    const record = (locale: string, index: number): MissingKeyRecord => ({
+      id: `trmk_${locale}_${index}`,
+      locale,
+      key: `Cart.k${String(index).padStart(2, "0")}`,
+      count: 1,
+      first_seen_at: NOW,
+      last_seen_at: NOW,
+      last_page_path: "/",
+      dismissed: false,
+    });
+    backend.missing = [
+      ...Array.from({ length: 21 }, (_, index) => record("en", index)),
+      record("da", 0),
+      record("da", 1),
+    ];
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByDisplayValue("Welcome {name}");
+    await user.click(screen.getByRole("button", { name: "Missing texts" }));
+    const dialog = await screen.findByRole("dialog");
+
+    // All languages are shown first because the dialog's filter defaults before the language loads.
+    expect(await within(dialog).findByText("1–20 of 23")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Next" }));
+    expect(await within(dialog).findByText("21–23 of 23")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByLabelText("Show all languages"));
+    expect(await within(dialog).findByText("1–20 of 21")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Next" }));
+    expect(await within(dialog).findByText("21–21 of 21")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Dismiss" }));
+    expect(await within(dialog).findByText("1–20 of 20")).toBeInTheDocument();
+    expect(within(dialog).queryByText("No missing texts have been reported.")).not.toBeInTheDocument();
   });
 
   it.each([

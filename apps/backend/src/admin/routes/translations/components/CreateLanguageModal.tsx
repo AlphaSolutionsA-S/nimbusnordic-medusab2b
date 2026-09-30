@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, FocusModal, Input, Label, RadioGroup, Select, Text } from "@medusajs/ui";
 import { useCreateTranslation, usePreviewImport } from "../../../hooks/api/ui-translations";
 import { REFERENCE_LOCALE, safeErrorMessage } from "../../../lib/translations";
@@ -43,6 +43,7 @@ export function CreateLanguageModal({ open, locales, onClose, onCreated }: Creat
   const [error, setError] = useState<string | null>(null);
   const create = useCreateTranslation();
   const previewMutation = usePreviewImport(canonical ?? "");
+  const readRequest = useRef(0);
 
   const sourceSummary = locales.find((summary) => summary.locale === sourceLocale);
   const localeProblem = !input.trim()
@@ -58,6 +59,7 @@ export function CreateLanguageModal({ open, locales, onClose, onCreated }: Creat
     (source === "copy" ? Boolean(sourceSummary) : Boolean(messages && preview && preview.locale === canonical));
 
   const handleFile = async (file: File | undefined) => {
+    const request = ++readRequest.current;
     setMessages(null);
     setPreview(null);
     setFileError(null);
@@ -65,6 +67,9 @@ export function CreateLanguageModal({ open, locales, onClose, onCreated }: Creat
       return;
     }
     const result = await readJsonFile(file);
+    if (request !== readRequest.current) {
+      return;
+    }
     if (result.ok) {
       setMessages(result.messages);
     } else {
@@ -184,7 +189,12 @@ export function CreateLanguageModal({ open, locales, onClose, onCreated }: Creat
                 id="translation-new-file"
                 type="file"
                 accept="application/json,.json"
-                onChange={(event) => void handleFile(event.target.files?.[0])}
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  // Clear the input so picking the same file again fires onChange.
+                  event.target.value = "";
+                  void handleFile(file);
+                }}
               />
               {fileError && (
                 <Text role="alert" size="small" className="text-ui-fg-error">

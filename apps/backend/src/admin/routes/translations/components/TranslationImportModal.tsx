@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button, Checkbox, FocusModal, Label, RadioGroup, Text } from "@medusajs/ui";
 import { useImportTranslation, usePreviewImport } from "../../../hooks/api/ui-translations";
 import { errorStatus, safeErrorMessage } from "../../../lib/translations";
@@ -71,6 +71,7 @@ export function TranslationImportModal({ open, locale, current, onClose, onAppli
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [confirmRemoved, setConfirmRemoved] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const readRequest = useRef(0);
 
   const invalidatePreview = () => {
     setPreview(null);
@@ -79,6 +80,7 @@ export function TranslationImportModal({ open, locale, current, onClose, onAppli
   };
 
   const handleFile = async (file: File | undefined) => {
+    const request = ++readRequest.current;
     invalidatePreview();
     setMessages(null);
     setFileError(null);
@@ -87,6 +89,9 @@ export function TranslationImportModal({ open, locale, current, onClose, onAppli
       return;
     }
     const result = await readJsonFile(file);
+    if (request !== readRequest.current) {
+      return;
+    }
     if (result.ok) {
       setMessages(result.messages);
     } else {
@@ -115,8 +120,9 @@ export function TranslationImportModal({ open, locale, current, onClose, onAppli
       return;
     }
     setActionError(null);
+    // Apply against the version the admin previewed, so a change after the preview returns 409.
     importMutation.mutate(
-      { expected_version: expectedVersion, mode, messages, confirm_removed: confirmRemoved },
+      { expected_version: preview.expected_version, mode, messages, confirm_removed: confirmRemoved },
       {
         onSuccess: (result) => onApplied(result.translation),
         onError: (error) => {
@@ -161,7 +167,12 @@ export function TranslationImportModal({ open, locale, current, onClose, onAppli
               id="translation-import-file"
               type="file"
               accept="application/json,.json"
-              onChange={(event) => void handleFile(event.target.files?.[0])}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                // Clear the input so picking the same file again fires onChange.
+                event.target.value = "";
+                void handleFile(file);
+              }}
             />
             {fileName && !fileError && (
               <Text size="xsmall" className="text-ui-fg-subtle">
@@ -228,13 +239,27 @@ export function TranslationImportModal({ open, locale, current, onClose, onAppli
               />
               <KeyList title="Empty texts" keys={preview.diff.empty} />
               {preview.warnings.length > 0 && (
-                <KeyList
-                  title="Placeholder warnings"
-                  keys={preview.warnings.map((warning) => warning.key || "(language)")}
-                  render={(key) =>
-                    preview.warnings.find((warning) => (warning.key || "(language)") === key)?.message ?? ""
-                  }
-                />
+                <div className="flex flex-col gap-y-1">
+                  <Text size="small" weight="plus">
+                    Placeholder warnings ({preview.warnings.length})
+                  </Text>
+                  <ul aria-label="Placeholder warnings" className="flex max-h-48 flex-col gap-y-1 overflow-y-auto rounded-md border border-ui-border-base px-3 py-2">
+                    {preview.warnings.slice(0, MAX_LISTED).map((warning) => (
+                      <li key={`${warning.key}:${warning.code}`}>
+                        <Text size="xsmall" className="font-mono">
+                          {warning.key || "(language)"}: {warning.message}
+                        </Text>
+                      </li>
+                    ))}
+                    {preview.warnings.length > MAX_LISTED && (
+                      <li>
+                        <Text size="xsmall" className="text-ui-fg-subtle">
+                          …and {preview.warnings.length - MAX_LISTED} more
+                        </Text>
+                      </li>
+                    )}
+                  </ul>
+                </div>
               )}
               {needsConfirmation && (
                 <div className="flex items-center gap-x-2">

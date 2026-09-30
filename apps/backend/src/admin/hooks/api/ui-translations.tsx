@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sdk } from "../../lib/client";
+import { queryKeysFactory } from "../../lib/query-key-factory";
 import type {
   CreateInput,
   LocaleSummary,
@@ -10,12 +11,12 @@ import type {
   TranslationDocument,
 } from "../../../types/storefront-translation";
 
-export const translationKeys = {
-  all: ["ui-translations"] as const,
-  list: () => ["ui-translations", "list"] as const,
-  detail: (locale: string) => ["ui-translations", "locale", locale] as const,
-  missing: (locale?: string) => ["ui-translations", "missing", locale ?? "all"] as const,
-};
+type MissingKeysQuery = { missing: string; offset: number };
+
+/** One key space, so invalidating `all` covers the locale list, details and missing keys. */
+export const translationQueryKey = queryKeysFactory<"ui-translations", MissingKeysQuery>(
+  "ui-translations"
+);
 
 function localePath(locale: string): string {
   return `/admin/ui-translations/${encodeURIComponent(locale)}`;
@@ -23,14 +24,14 @@ function localePath(locale: string): string {
 
 export function useTranslationLocales() {
   return useQuery({
-    queryKey: translationKeys.list(),
+    queryKey: translationQueryKey.list(),
     queryFn: () => sdk.client.fetch<{ locales: LocaleSummary[] }>("/admin/ui-translations"),
   });
 }
 
 export function useTranslation(locale: string, options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: translationKeys.detail(locale),
+    queryKey: translationQueryKey.detail(locale),
     enabled: Boolean(locale) && (options.enabled ?? true),
     queryFn: () => sdk.client.fetch<{ translation: TranslationDocument }>(localePath(locale)),
   });
@@ -40,10 +41,10 @@ export function useTranslation(locale: string, options: { enabled?: boolean } = 
 export function useAdoptMutation() {
   const client = useQueryClient();
   return async (result: MutationResponse): Promise<void> => {
-    client.setQueryData(translationKeys.detail(result.translation.locale), {
+    client.setQueryData(translationQueryKey.detail(result.translation.locale), {
       translation: result.translation,
     });
-    await client.invalidateQueries({ queryKey: translationKeys.all });
+    await client.invalidateQueries({ queryKey: translationQueryKey.all });
   };
 }
 
@@ -108,7 +109,7 @@ export function useMissingTranslations(locale: string | undefined, offset: numbe
     params.set("locale", locale);
   }
   return useQuery({
-    queryKey: [...translationKeys.missing(locale), offset],
+    queryKey: translationQueryKey.list({ missing: locale ?? "all", offset }),
     queryFn: () =>
       sdk.client.fetch<{ missing_keys: MissingKeyRecord[]; count: number; offset: number; limit: number }>(
         `/admin/ui-translations/missing-keys?${params.toString()}`
@@ -136,6 +137,6 @@ export function useDismissMissing(locale: string) {
         `${localePath(locale)}/missing-keys/${encodeURIComponent(id)}/dismiss`,
         { method: "POST", body: {} }
       ),
-    onSuccess: () => client.invalidateQueries({ queryKey: translationKeys.all }),
+    onSuccess: () => client.invalidateQueries({ queryKey: translationQueryKey.all }),
   });
 }

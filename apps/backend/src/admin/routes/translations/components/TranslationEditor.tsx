@@ -1,4 +1,5 @@
-import { type ReactNode, useMemo, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
+import { useBlocker } from "react-router-dom";
 import {
   Badge,
   Button,
@@ -30,6 +31,13 @@ import type {
 
 const MAX_SEARCH_RESULTS = 200;
 
+const DISCARD_PROMPT = {
+  title: "Discard unsaved changes?",
+  description: "You have unsaved changes in this language. They will be lost.",
+  confirmText: "Discard changes",
+  cancelText: "Keep editing",
+};
+
 interface Draft {
   locale: string;
   version: number;
@@ -47,6 +55,44 @@ function makeDraft(document: TranslationDocument): Draft {
     baseline: flat,
     values: flat,
   };
+}
+
+/** Adopts a saved document, keeping values edited after `submitted` was sent for saving. */
+function rebaseDraft(
+  current: Draft | null,
+  submitted: Readonly<Record<string, string>>,
+  saved: TranslationDocument
+): Draft {
+  const next = makeDraft(saved);
+  if (!current || current.locale !== saved.locale) {
+    return next;
+  }
+  const values = { ...next.values };
+  for (const key of Object.keys(values)) {
+    const hasCurrent = Object.prototype.hasOwnProperty.call(current.values, key);
+    if (hasCurrent && current.values[key] !== submitted[key]) {
+      values[key] = current.values[key];
+    }
+  }
+  return { ...next, values };
+}
+
+/** `undefined`: the reference lacks the key; `null`: no reference document is available. */
+type ReferenceValue = string | undefined | null;
+
+interface CachedWarnings {
+  value: string;
+  referenceValue: ReferenceValue;
+  warnings: IcuWarning[];
+}
+
+/** Compares one text with its reference text, with the same rules as a whole-document compareIcu. */
+function keyWarnings(key: string, value: string, referenceValue: ReferenceValue): IcuWarning[] {
+  const reference: MessageDocument | null =
+    referenceValue === null ? null : referenceValue === undefined ? {} : { text: referenceValue };
+  return compareIcu({ text: value }, reference)
+    .filter((warning) => warning.key === "text")
+    .map((warning) => ({ ...warning, key }));
 }
 
 function isDirty(draft: Draft | null): boolean {
@@ -169,34 +215,61 @@ export function TranslationEditor({ renderTools }: TranslationEditorProps = {}) 
   const activeDraft = draft && draft.locale === locale ? draft : null;
   const dirty = isDirty(activeDraft);
 
-  const draftDocument = useMemo(
-    () => (activeDraft ? updateMessageLeaves(activeDraft.original, activeDraft.values) : null),
-    [activeDraft]
+  // Warnings are computed per rendered field and cached per key, so a keystroke re-checks one text
+  // instead of the whole document. The reference language is compared with itself.
+  const referenceDocument = reference.data?.translation.messages;
+  const referenceValues = useMemo(
+    () => (referenceDocument ? flattenMessages(referenceDocument) : null),
+    [referenceDocument]
   );
-  const referenceMessages =
-    locale === REFERENCE_LOCALE ? draftDocument : reference.data?.translation.messages ?? null;
-  const warningsByKey = useMemo(() => {
-    const map = new Map<string, IcuWarning[]>();
-    if (!draftDocument) {
-      return map;
+  const warningCache = useRef(new Map<string, CachedWarnings>());
+  const warningsFor = (key: string, value: string): IcuWarning[] => {
+    const hasReferenceKey = Boolean(
+      referenceValues && Object.prototype.hasOwnProperty.call(referenceValues, key)
+    );
+    const referenceValue: ReferenceValue =
+      locale === REFERENCE_LOCALE
+        ? value
+        : referenceValues && (hasReferenceKey ? referenceValues[key] : undefined);
+    const cached = warningCache.current.get(key);
+    if (cached && cached.value === value && cached.referenceValue === referenceValue) {
+      return cached.warnings;
     }
-    for (const warning of compareIcu(draftDocument, referenceMessages)) {
-      map.set(warning.key, [...(map.get(warning.key) ?? []), warning]);
-    }
-    return map;
-  }, [draftDocument, referenceMessages]);
+    const warnings = keyWarnings(key, value, referenceValue);
+    warningCache.current.set(key, { value, referenceValue, warnings });
+    return warnings;
+  };
 
   const confirmDiscard = async (): Promise<boolean> => {
     if (!isDirty(activeDraft)) {
       return true;
     }
-    return prompt({
-      title: "Discard unsaved changes?",
-      description: "You have unsaved changes in this language. They will be lost.",
-      confirmText: "Discard changes",
-      cancelText: "Keep editing",
-    });
+    return prompt(DISCARD_PROMPT);
   };
+
+  // Guard unsaved work against closing the tab and against navigating away inside Admin.
+  useEffect(() => {
+    if (!dirty) {
+      return;
+    }
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirty]);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      dirty && currentLocation.pathname !== nextLocation.pathname
+  );
+  useEffect(() => {
+    if (blocker.state !== "blocked") {
+      return;
+    }
+    void prompt(DISCARD_PROMPT).then((discard) => (discard ? blocker.proceed() : blocker.reset()));
+    // Runs once per blocked navigation; `prompt` is not a dependency so it cannot prompt twice.
+  }, [blocker]);
 
   const resetFor = (next: string) => {
     setDraft(null);
@@ -261,16 +334,19 @@ export function TranslationEditor({ renderTools }: TranslationEditorProps = {}) 
   };
 
   const handleSave = () => {
-    if (!activeDraft || !draftDocument) {
+    if (!activeDraft) {
       return;
     }
     setError(null);
     setNotice(null);
+    const submitted = activeDraft.values;
+    const messages = updateMessageLeaves(activeDraft.original, submitted);
     save.mutate(
-      { expected_version: activeDraft.version, messages: draftDocument },
+      { expected_version: activeDraft.version, messages },
       {
         onSuccess: (result) => {
-          setDraft(makeDraft(result.translation));
+          // Keep anything typed while the save was in flight.
+          setDraft((current) => rebaseDraft(current, submitted, result.translation));
           setConflict(false);
           setNotice(
             result.refresh === "deferred"
@@ -291,11 +367,14 @@ export function TranslationEditor({ renderTools }: TranslationEditorProps = {}) 
 
   const reloadLatest = async () => {
     const result = await detail.refetch();
-    if (result.data) {
-      setDraft(makeDraft(result.data.translation));
-      setConflict(false);
-      setNotice(null);
+    if (!result.isSuccess) {
+      setError("The latest version could not be loaded. Your changes are kept; try again.");
+      return;
     }
+    setDraft(makeDraft(result.data.translation));
+    setConflict(false);
+    setNotice(null);
+    setError(null);
   };
 
   const allKeys = activeDraft ? Object.keys(activeDraft.values) : [];
@@ -443,7 +522,7 @@ export function TranslationEditor({ renderTools }: TranslationEditorProps = {}) 
                     translationKey={key}
                     value={activeDraft.values[key]}
                     multiline={baseline.includes("\n") || baseline.length > 120}
-                    warnings={warningsByKey.get(key) ?? []}
+                    warnings={warningsFor(key, activeDraft.values[key])}
                     onChange={updateValue}
                   />
                 );

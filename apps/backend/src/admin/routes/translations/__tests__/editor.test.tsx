@@ -1,7 +1,9 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { TranslationEditor } from "../components/TranslationEditor";
+import { translationQueryKey } from "../../../hooks/api/ui-translations";
 import { sdk } from "../../../lib/client";
 import type { LocaleSummary, TranslationDocument } from "../../../../types/storefront-translation";
 
@@ -25,6 +27,7 @@ interface Backend {
   documents: Record<string, TranslationDocument>;
   onPost?: (url: string, body: unknown) => unknown;
   listError?: boolean;
+  detailError?: boolean;
 }
 
 function installBackend(backend: Backend) {
@@ -37,6 +40,9 @@ function installBackend(backend: Backend) {
         throw httpError(500);
       }
       return { locales: Object.values(backend.documents).map(summary) };
+    }
+    if (backend.detailError) {
+      throw httpError(500);
     }
     const locale = decodeURIComponent(url.split("/").pop() ?? "");
     const translation = backend.documents[locale];
@@ -51,9 +57,11 @@ function renderEditor() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
+  // The editor blocks in-app navigation with unsaved work, which needs a data router.
+  const router = createMemoryRouter([{ path: "*", element: <TranslationEditor /> }]);
   const view = render(
     <QueryClientProvider client={client}>
-      <TranslationEditor />
+      <RouterProvider router={router} />
     </QueryClientProvider>
   );
   return { client, ...view };
@@ -145,8 +153,8 @@ describe("TranslationEditor", () => {
     const input = await screen.findByDisplayValue("Velkommen {name}");
     await user.clear(input);
     await user.type(input, "Draft text");
-    await client.invalidateQueries({ queryKey: ["ui-translations", "locale", "en"] });
-    await client.refetchQueries({ queryKey: ["ui-translations", "locale", "da"] });
+    await client.invalidateQueries({ queryKey: translationQueryKey.detail("en") });
+    await client.refetchQueries({ queryKey: translationQueryKey.detail("da") });
     expect(await field(/Common\.title/)).toHaveValue("Draft text");
   });
 
@@ -238,5 +246,65 @@ describe("TranslationEditor", () => {
     await user.click(screen.getByRole("button", { name: "Save" }));
     await screen.findByText("Saved.");
     expect(posts).toEqual([{ expected_version: 4, messages: { Common: { title: "Hi!", empty: {} }, Layout: {} } }]);
+  });
+
+  it("keeps text typed while a save is in flight and rebases it on the saved version", async () => {
+    const posts: unknown[] = [];
+    let finishSave: () => void = () => undefined;
+    const backend: Backend = { documents: { en: doc("en", 1, english) } };
+    backend.onPost = (_url, body) => {
+      posts.push(body);
+      const saved = doc("en", posts.length + 1, (body as { messages: TranslationDocument["messages"] }).messages);
+      return new Promise((resolve) => {
+        finishSave = () => {
+          backend.documents.en = saved;
+          resolve({ translation: saved, warnings: [], refresh: "not_needed" });
+        };
+      });
+    };
+    installBackend(backend);
+    renderEditor();
+    const user = userEvent.setup();
+
+    const input = await field(/Common\.title/);
+    await user.clear(input);
+    await user.type(input, "Hello");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(posts).toHaveLength(1));
+    await user.type(input, " again");
+    finishSave();
+
+    await screen.findByText("Saved.");
+    expect(await field(/Common\.title/)).toHaveValue("Hello again");
+    expect(screen.getByRole("button", { name: "Save" })).toBeEnabled();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(posts).toHaveLength(2));
+    expect(posts[1]).toMatchObject({
+      expected_version: 2,
+      messages: { Common: { title: "Hello again" } },
+    });
+  });
+
+  it("keeps the draft and the conflict when reloading after a 409 fails", async () => {
+    const backend: Backend = { documents: { en: doc("en", 1, english) } };
+    backend.onPost = () => {
+      throw httpError(409, "conflict");
+    };
+    installBackend(backend);
+    renderEditor();
+    const user = userEvent.setup();
+
+    const input = await field(/Common\.title/);
+    await user.clear(input);
+    await user.type(input, "Mine");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    const conflict = await screen.findByRole("alert");
+
+    backend.detailError = true;
+    await user.click(within(conflict).getByRole("button", { name: /Reload latest/ }));
+    expect(await screen.findByText(/latest version could not be loaded/)).toBeInTheDocument();
+    expect(screen.getByText("Someone else saved this language")).toBeInTheDocument();
+    expect(await field(/Common\.title/)).toHaveValue("Mine");
   });
 });

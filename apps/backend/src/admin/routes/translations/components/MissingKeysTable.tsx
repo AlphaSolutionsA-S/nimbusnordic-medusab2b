@@ -130,6 +130,12 @@ function MissingRow({
 
 export function MissingKeysTable({ locale, document, onResolved }: MissingKeysTableProps) {
   const [offset, setOffset] = useState(0);
+  const [pagedLocale, setPagedLocale] = useState(locale);
+  if (pagedLocale !== locale) {
+    // A new language filter (or "show all languages") starts from the first page.
+    setPagedLocale(locale);
+    setOffset(0);
+  }
   const missing = useMissingTranslations(locale, offset);
   const showLocale = !locale;
 
@@ -151,6 +157,15 @@ export function MissingKeysTable({ locale, document, onResolved }: MissingKeysTa
     );
   }
   const { missing_keys: rows, count } = missing.data;
+  if (!rows.length && offset > 0) {
+    // The last rows on this page were resolved or dismissed; step back to a page that has rows.
+    setOffset(Math.max(0, offset - MISSING_PAGE_SIZE));
+    return (
+      <Text role="status" size="small">
+        Loading missing texts…
+      </Text>
+    );
+  }
   if (!rows.length) {
     return <Text size="small">No missing texts have been reported.</Text>;
   }
