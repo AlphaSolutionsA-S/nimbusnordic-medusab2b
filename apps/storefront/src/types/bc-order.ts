@@ -133,3 +133,31 @@ export type BCReturnListResponse = {
   offset: number
   limit: number
 }
+
+export type BCReturnDetailLine = {
+  id: string
+  sequence: number
+  lineType: string
+  itemNumber: string
+  variantCode: string
+  description: string
+  unitOfMeasureCode: string
+  quantity: number
+  quantityReceived: number
+  returnReasonCode: string
+}
+
+export type BCReturnExpectedCredit = {
+  currencyCode: string
+  amountIncludingTax: number
+  amountExcludingTax: number | null
+}
+
+export type BCReturnDetail = {
+  id: string
+  number: string
+  documentDate: string
+  status: string
+  lines: BCReturnDetailLine[]
+  expectedCredit: BCReturnExpectedCredit
+}

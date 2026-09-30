@@ -3,7 +3,11 @@ import { fireEvent, render, screen } from "@testing-library/react"
 jest.mock("@/lib/data/business-central", () => ({
   createBCReturn: jest.fn(),
 }))
+jest.mock("next/navigation", () => ({
+  useParams: jest.fn(() => ({ countryCode: "dk" })),
+}))
 
+import { createBCReturn } from "@/lib/data/business-central"
 import BcOrderReturn from "@/modules/account/components/bc-order-return"
 
 const order = {
@@ -99,5 +103,61 @@ describe("BcOrderReturn", () => {
     )
 
     expect(screen.queryByText("Request a return")).not.toBeInTheDocument()
+  })
+
+  // TC-5: integration — the return confirmation links to the new return's detail page.
+  it("links the return confirmation to the new return's detail page", async () => {
+    ;(createBCReturn as jest.Mock).mockResolvedValueOnce({
+      id: "31502913",
+      number: "31502913",
+      status: "Open",
+      requestId: "RET-1",
+      sourceOrderNo: "BC-1",
+      lines: [],
+    })
+
+    render(
+      <BcOrderReturn order={order} reasons={[]}>
+        <div>children</div>
+      </BcOrderReturn>
+    )
+
+    fireEvent.click(screen.getByText("Request a return"))
+    const [shippedInput] = screen.getAllByRole("spinbutton")
+    fireEvent.change(shippedInput, { target: { value: "1" } })
+    const form = screen.getByText("Submit return request").closest("form") as HTMLFormElement
+    fireEvent.submit(form)
+
+    const link = await screen.findByTestId("bc-order-return-view-return-link")
+    expect(link).toHaveTextContent("View return")
+    expect(link).toHaveAttribute("href", "/dk/account/returns/31502913")
+    expect(screen.getByText("Back to order details")).toBeInTheDocument()
+  })
+
+  // TC-6: edge case — the return number is URL-encoded in the link.
+  it("URL-encodes the return number in the confirmation link", async () => {
+    ;(createBCReturn as jest.Mock).mockResolvedValueOnce({
+      id: "RO/1",
+      number: "RO/1",
+      status: "Open",
+      requestId: "RET-2",
+      sourceOrderNo: "BC-1",
+      lines: [],
+    })
+
+    render(
+      <BcOrderReturn order={order} reasons={[]}>
+        <div>children</div>
+      </BcOrderReturn>
+    )
+
+    fireEvent.click(screen.getByText("Request a return"))
+    const [shippedInput] = screen.getAllByRole("spinbutton")
+    fireEvent.change(shippedInput, { target: { value: "1" } })
+    const form = screen.getByText("Submit return request").closest("form") as HTMLFormElement
+    fireEvent.submit(form)
+
+    const link = await screen.findByTestId("bc-order-return-view-return-link")
+    expect(link).toHaveAttribute("href", "/dk/account/returns/RO%2F1")
   })
 })

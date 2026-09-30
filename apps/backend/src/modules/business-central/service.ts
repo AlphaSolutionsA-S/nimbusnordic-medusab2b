@@ -5,6 +5,9 @@ import type {
   BCCreateSalesOrderLineInput,
   BCCreateSalesOrderParams,
   BCGetOrderParams,
+  BCGetReturnParams,
+  BCReturnDetail,
+  BCReturnDetailLine,
   BCListOrdersParams,
   BCListOrdersResult,
   BCListReturnsParams,
@@ -51,6 +54,11 @@ const ENABLED_REASON_CODES_ENTITY_SET = "CS_EnabledReasonCodes";
 const CREATE_RETURN_TIMEOUT_MS = 30000;
 const CUSTOMER_PORTAL_API_PATH = "api/abakion/customerPortal/v2.0";
 const BC_EMPTY_DATE = "0001-01-01";
+const DEFAULT_BUSINESS_CENTRAL_LCY_CODE = "DKK";
+const RETURN_ORDER_DETAIL_FIELDS =
+  "id,number,documentDate,status,currencyCode,pricesIncludingVAT";
+const RETURN_ORDER_DETAIL_LINE_FIELDS =
+  "id,sequence,lineType,lineObjectNumber,variantCode,description,unitOfMeasureCode,quantity,returnQtyReceived,returnReasonCode,lineAmount,amountIncludingTax";
 const CREATE_SALES_ORDER_TIMEOUT_MS = 30000;
 
 type BusinessCentralTokenResponse = {
@@ -533,11 +541,111 @@ function mapSalesReturnOrderToListItem(
     id: item.id,
     number: requireBusinessCentralString(item.number, "number"),
     documentDate: item.documentDate,
-    // BC sends enum members XML-encoded, e.g. "Pending_x0020_Approval".
-    status: optionalString(item.status).replace(/_x0020_/g, " "),
+    status: decodeBCEnumValue(item.status),
     itemCount: (item.salesReturnOrderLines ?? []).filter(
       (line) => line.lineType === "Item"
     ).length,
+  };
+}
+
+// BC sends enum members XML-encoded, e.g. "Pending_x0020_Approval" or "_x0020_" (blank).
+function decodeBCEnumValue(value: unknown): string {
+  return optionalString(value).replace(/_x([0-9A-Fa-f]{4})_/g, (_match, hex: string) =>
+    String.fromCharCode(parseInt(hex, 16))
+  );
+}
+
+function optionalNumber(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function roundCurrencyAmount(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+// A blank BC currency code means the company's local currency (LCY). Same rule and env var as
+// resolveCurrencyCode in workflows/company/steps/prepare-company-bc-sync.ts.
+function resolveBCCurrencyCode(value: unknown): string {
+  const currencyCode = optionalString(value).trim();
+
+  if (currencyCode) {
+    return currencyCode;
+  }
+
+  return process.env.BUSINESS_CENTRAL_LCY_CODE?.trim() || DEFAULT_BUSINESS_CENTRAL_LCY_CODE;
+}
+
+type BCSalesReturnOrderDetailLineRaw = {
+  id?: unknown;
+  sequence?: unknown;
+  lineType?: unknown;
+  lineObjectNumber?: unknown;
+  variantCode?: unknown;
+  description?: unknown;
+  unitOfMeasureCode?: unknown;
+  quantity?: unknown;
+  returnQtyReceived?: unknown;
+  returnReasonCode?: unknown;
+  lineAmount?: unknown;
+  amountIncludingTax?: unknown;
+};
+
+type BCSalesReturnOrderDetailRaw = {
+  id?: unknown;
+  number?: unknown;
+  documentDate?: unknown;
+  status?: unknown;
+  currencyCode?: unknown;
+  pricesIncludingVAT?: unknown;
+  salesReturnOrderLines?: BCSalesReturnOrderDetailLineRaw[];
+};
+
+function mapSalesReturnOrderDetailLine(
+  line: BCSalesReturnOrderDetailLineRaw
+): BCReturnDetailLine {
+  return {
+    id: optionalString(line.id),
+    sequence: optionalNumber(line.sequence),
+    lineType: decodeBCEnumValue(line.lineType),
+    itemNumber: optionalString(line.lineObjectNumber),
+    variantCode: optionalString(line.variantCode),
+    description: optionalString(line.description),
+    unitOfMeasureCode: optionalString(line.unitOfMeasureCode),
+    quantity: optionalNumber(line.quantity),
+    quantityReceived: optionalNumber(line.returnQtyReceived),
+    returnReasonCode: optionalString(line.returnReasonCode),
+  };
+}
+
+function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturnDetail {
+  const rawLines = [...(raw.salesReturnOrderLines ?? [])].sort(
+    (left, right) => optionalNumber(left.sequence) - optionalNumber(right.sequence)
+  );
+  const amountIncludingTax = rawLines.reduce(
+    (sum, line) => sum + optionalNumber(line.amountIncludingTax),
+    0
+  );
+  const lineAmount = rawLines.reduce(
+    (sum, line) => sum + optionalNumber(line.lineAmount),
+    0
+  );
+
+  return {
+    id: optionalString(raw.id),
+    number: requireBusinessCentralString(raw.number, "number"),
+    documentDate: optionalString(raw.documentDate),
+    status: decodeBCEnumValue(raw.status),
+    lines: rawLines
+      // BC text lines (blank line type, e.g. "Invoice No. ...:") carry no item or quantity.
+      .filter((line) => decodeBCEnumValue(line.lineType).trim() !== "")
+      .map(mapSalesReturnOrderDetailLine),
+    expectedCredit: {
+      currencyCode: resolveBCCurrencyCode(raw.currencyCode),
+      amountIncludingTax: roundCurrencyAmount(amountIncludingTax),
+      // lineAmount already includes VAT when prices include VAT, so no net figure can be derived.
+      amountExcludingTax:
+        raw.pricesIncludingVAT === true ? null : roundCurrencyAmount(lineAmount),
+    },
   };
 }
 
@@ -1919,6 +2027,54 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       lines,
       invoices: invoices.map(mapSalesInvoiceToSummary),
     };
+  }
+
+  // Reads the Abakion customer-portal API: unlike the standard v2.0 API, its return order
+  // lines expose variantCode and returnReasonCode.
+  async getReturn(params: BCGetReturnParams): Promise<BCReturnDetail | null> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const tenantId = this.getTenantId(discoveryUrl);
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
+
+    const returnUrl = new URL(
+      `${this.getEnvironmentBaseUrl(discoveryUrl)}/${CUSTOMER_PORTAL_API_PATH}/companies(${this.getCompanyId()})/salesReturnOrders`
+    );
+    returnUrl.searchParams.set(
+      "$filter",
+      [
+        `number eq '${escapeODataString(params.returnNumber)}'`,
+        `sellToCustomerNumber eq '${escapeODataString(params.customerNumber)}'`,
+      ].join(" and ")
+    );
+    returnUrl.searchParams.set("$top", "1");
+    returnUrl.searchParams.set("$select", RETURN_ORDER_DETAIL_FIELDS);
+    returnUrl.searchParams.set(
+      "$expand",
+      `salesReturnOrderLines($select=${RETURN_ORDER_DETAIL_LINE_FIELDS})`
+    );
+
+    const returnResponse = await fetch(returnUrl.toString(), {
+      method: "GET",
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: "application/json",
+      },
+    });
+
+    if (!returnResponse.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central return order request failed with status ${returnResponse.status}`
+      );
+    }
+
+    const returnBody = (await returnResponse.json()) as {
+      value?: BCSalesReturnOrderDetailRaw[];
+    };
+    const raw = returnBody.value?.[0];
+
+    return raw ? mapSalesReturnOrderToDetail(raw) : null;
   }
 }
 

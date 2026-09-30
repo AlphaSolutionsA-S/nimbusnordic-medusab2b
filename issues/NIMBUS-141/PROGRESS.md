@@ -116,3 +116,77 @@
     - Keep the 8 locale catalogs key-identical.
     - Preserve line endings: CRLF for `.ts`/`.tsx`, LF for `messages/*.json`.
   - **Finish with the TestDK walkthrough** in Task 05, TC-7, and record the results here.
+
+---
+
+## 2026-09-29 - Plan approved, dispatched to implementor
+
+- **Outcome:** The user approved the plan and answered yes to all three open questions:
+  - **OQ-1:** no per-line prices are shown.
+  - **OQ-2:** the reason is shown as the BC code.
+  - **OQ-3:** BC text lines are hidden.
+- NIMBUS-140 is merged to develop (merge d63ef11), so `manifest.md` is set to
+  `Ready for Dispatch: true`.
+- **Handover to:** implementor agent, using the handover prompt in the previous entry.
+
+---
+
+## 2026-09-29 - Implementation complete, waiting for code review
+
+- **Updated by:** implementor agent (run as a sub-agent).
+- **Outcome:** Tasks 01 to 05 are implemented on `feature/NIMBUS-141`, which was created from
+  develop at d970e9e (contains the NIMBUS-140 merge d63ef11). The changes are **not committed**.
+  All tasks and the manifest are marked DONE.
+  - Each task's NIMBUS-140 prerequisite check passed.
+  - The edits were applied as written in the task files, with no deviations from the code.
+  - No `TEMP (NIMBUS-138)` code was touched. No auth was added for `/store/bc-returns/:number`.
+    No `.env` file was written. Jira was not changed.
+- **Tests run:**
+  - Backend module tests (`TEST_TYPE=integration:modules`, throwaway `postgres:16` container, since
+    removed): 176 passed, 2 failed. The 2 failures are the known `listOrders` round-trip
+    guardrail baseline (src and `.medusa/server` copies). All 6 new `get-return.spec.ts` tests
+    pass, and so do NIMBUS-140's `listReturns` tests.
+  - Backend unit tests (`TEST_TYPE=unit`): 99 of 99 passed, including the 5 new route tests.
+  - Storefront Jest (full suite): 285 passed, 3 failed. The failures are in `main-layout.test.tsx`
+    (1) and `product-tabs/index.test.tsx` (2). They fail the same way with all NIMBUS-141
+    storefront changes stashed, so they are pre-existing. All 17 new NIMBUS-141 tests pass
+    (4 data layer, 3 lines, 2 expected credit, 2 template, 4 page and not-found, 2 confirmation
+    link). The 4 existing `bc-order-return` tests and `message-catalogs.test.ts` (8-locale
+    parity) also pass.
+  - Backend `pnpm lint`: 0 errors (13 pre-existing warnings, none in touched files).
+    Backend `pnpm build`: succeeded.
+  - Storefront `pnpm lint`: 0 errors (2 pre-existing warnings). `tsc --noEmit` shows no errors in
+    touched files; the pre-existing errors elsewhere are ignored by `ignoreBuildErrors`.
+  - Storefront `pnpm build`: compiled successfully, then stopped at "Collecting page data"
+    because `categories/[...category]` `generateStaticParams` needs a running backend. This is
+    unrelated to NIMBUS-141.
+- **Open items:**
+  - **TC-7 TestDK walkthrough (Task 05) was not run.** It needs a live BC tenant and a signed-in
+    B2B customer. All 5 steps are still open as a manual check, including the 401 check for an
+    unauthenticated `/store/bc-returns/<number>` call (Task 02, TC-6).
+  - Rebase on develop before merging, because of the NIMBUS-138 overlap.
+- **Handover to:** user, for code review, the TC-7 walkthrough and the commit.
+- **Handover prompt:** Review the uncommitted NIMBUS-141 changes on `feature/NIMBUS-141`. Run
+  the Task 05 TC-7 walkthrough against TestDK and record the results here. Then commit
+  following the commit-messages convention, rebase on develop, and move NIMBUS-141 to Internal
+  Review.
+
+---
+
+## 2026-09-30 - Code review follow-ups
+
+- **Updated by:** Claude, after the code review.
+- **Jira:** NIMBUS-141 assigned to Klaus Petersen and moved Estimation → To Do ("Estimate approved") → In Progress ("Start work").
+- **Review result:** no must-fix issues. The one should-fix, plus a date fix the user asked for, are done:
+  - **401 test:** `integration-tests/http/security/security-boundaries.spec.ts` now checks that `/store/bc-returns` and `/store/bc-returns/1001` return 401 without customer login.
+    - Result: 24/24 pass.
+    - With the `/store/bc-returns*` matcher narrowed to `/store/bc-returns`, the detail-route case fails (500 instead of 401), so the test does catch a missing login check.
+  - **Missing or invalid document date:** the date now shows as "-" instead of "Invalid Date" on both the return detail template and the return list card (`bc-return-card`). Each component has a test for it; the 2 suites, 9 tests, pass.
+- **Accepted as they are:**
+  - Dates use en-GB and amounts en-US in every locale, as the existing order and return cards do.
+  - The BC status is shown in English.
+  - A company without a BC customer number sees the generic error message.
+- **Handover to:** user. Next steps:
+  1. The TestDK walkthrough (Task 05 TC-7).
+  2. Commit, then rebase on develop.
+  3. Merge, then move the issue to Internal review.

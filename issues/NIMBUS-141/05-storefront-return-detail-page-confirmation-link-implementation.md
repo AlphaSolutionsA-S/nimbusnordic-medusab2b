@@ -1,6 +1,6 @@
 # Task 05: Return detail page route and link from the return confirmation — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 05

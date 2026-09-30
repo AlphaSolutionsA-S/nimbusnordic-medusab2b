@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Zwrot zażądany",
       "returnCreatedMessage": "Zwrot {number} utworzony - status {status}.",
       "backToOrderDetailsLabel": "Powrót do szczegółów zamówienia",
+      "viewReturnLabel": "Zobacz zwrot",
       "orderNumberLabel": "Numer zamówienia",
       "billToAddressLabel": "Adres rozliczeniowy",
       "shipToAddressLabel": "Adres dostawy",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Oczekiwano {date}",
       "reservationShipsLabel": "Wysyłka {date}",
       "reservationFreightLabel": "Fracht: {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Powrót do zwrotów",
+      "returnNumberHeading": "Zwrot #{number}",
+      "requestedDateLabel": "Data zgłoszenia",
+      "statusLabel": "Status"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Produkty",
+      "itemColumnLabel": "Pozycja",
+      "unitColumnLabel": "Jednostka",
+      "requestedQuantityColumnLabel": "Zgłoszono",
+      "receivedQuantityColumnLabel": "Przyjęto",
+      "reasonColumnLabel": "Powód",
+      "itemNumberLabel": "Nr towaru {number}",
+      "variantLabel": "Wariant {variant}",
+      "emptyMessage": "Ten zwrot nie zawiera pozycji towarowych."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Przewidywana korekta",
+      "excludingTaxLabel": "Przewidywana korekta bez podatku",
+      "includingTaxLabel": "Przewidywana korekta z podatkiem",
+      "disclaimer": "Ta kwota jest szacunkowa i opiera się na zamówieniu zwrotu. Ostateczna kwota zostanie ustalona na fakturze korygującej."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Nie znaleziono zwrotu",
+      "message": "Ten zwrot jest niedostępny. W pełni przetworzone zwroty nie są już tutaj wyświetlane."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Coś poszło nie tak",
+      "errorMessage": "Nie udało się załadować tego zwrotu. Spróbuj ponownie."
     }
   },
   "Cart": {

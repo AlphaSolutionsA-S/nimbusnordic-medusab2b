@@ -1,6 +1,6 @@
 # Task 04: Return detail components, template and all-locale translations — Implementation Plan
 
-**Status:** TODO
+**Status:** DONE
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 04

@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Return requested",
       "returnCreatedMessage": "Return {number} created - status {status}.",
       "backToOrderDetailsLabel": "Back to order details",
+      "viewReturnLabel": "View return",
       "orderNumberLabel": "Order number",
       "billToAddressLabel": "Bill-to address",
       "shipToAddressLabel": "Ship-to address",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Expected {date}",
       "reservationShipsLabel": "Ships {date}",
       "reservationFreightLabel": "Freight: {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Back to returns",
+      "returnNumberHeading": "Return #{number}",
+      "requestedDateLabel": "Requested on",
+      "statusLabel": "Status"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Items",
+      "itemColumnLabel": "Item",
+      "unitColumnLabel": "Unit",
+      "requestedQuantityColumnLabel": "Requested",
+      "receivedQuantityColumnLabel": "Received",
+      "reasonColumnLabel": "Reason",
+      "itemNumberLabel": "Item no. {number}",
+      "variantLabel": "Variant {variant}",
+      "emptyMessage": "This return has no item lines."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Expected credit",
+      "excludingTaxLabel": "Expected credit excluding tax",
+      "includingTaxLabel": "Expected credit including tax",
+      "disclaimer": "This amount is an estimate based on the return order. The final amount is set on the credit note."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Return not found",
+      "message": "This return is unavailable. Returns that have been fully processed are no longer shown here."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Something went wrong",
+      "errorMessage": "We were unable to load this return. Please try again."
     }
   },
   "Cart": {

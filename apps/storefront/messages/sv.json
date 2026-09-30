@@ -376,6 +376,7 @@
       "returnRequestedHeading": "Retur begärd",
       "returnCreatedMessage": "Retur {number} skapad - status {status}.",
       "backToOrderDetailsLabel": "Tillbaka till orderdetaljer",
+      "viewReturnLabel": "Visa retur",
       "orderNumberLabel": "Ordernummer",
       "billToAddressLabel": "Fakturaadress",
       "shipToAddressLabel": "Leveransadress",
@@ -525,6 +526,37 @@
       "reservationExpectedLabel": "Förväntas {date}",
       "reservationShipsLabel": "Skickas {date}",
       "reservationFreightLabel": "Frakt: {freightType}"
+    },
+    "bcReturnDetailTemplate": {
+      "backToReturnsLabel": "Tillbaka till returer",
+      "returnNumberHeading": "Retur #{number}",
+      "requestedDateLabel": "Begärd den",
+      "statusLabel": "Status"
+    },
+    "bcReturnLines": {
+      "itemsHeading": "Varor",
+      "itemColumnLabel": "Artikel",
+      "unitColumnLabel": "Enhet",
+      "requestedQuantityColumnLabel": "Begärt",
+      "receivedQuantityColumnLabel": "Mottaget",
+      "reasonColumnLabel": "Orsak",
+      "itemNumberLabel": "Artikelnr {number}",
+      "variantLabel": "Variant {variant}",
+      "emptyMessage": "Den här returen har inga artikelrader."
+    },
+    "bcReturnExpectedCredit": {
+      "heading": "Förväntad kreditering",
+      "excludingTaxLabel": "Förväntad kreditering exklusive moms",
+      "includingTaxLabel": "Förväntad kreditering inklusive moms",
+      "disclaimer": "Beloppet är en uppskattning baserad på returordern. Det slutliga beloppet fastställs på kreditfakturan."
+    },
+    "bcReturnNotFound": {
+      "headingLabel": "Returen hittades inte",
+      "message": "Den här returen är inte tillgänglig. Returer som har behandlats färdigt visas inte längre här."
+    },
+    "bcReturnDetailPage": {
+      "errorHeading": "Något gick fel",
+      "errorMessage": "Vi kunde inte läsa in den här returen. Försök igen."
     }
   },
   "Cart": {

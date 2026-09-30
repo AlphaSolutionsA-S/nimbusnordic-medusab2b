@@ -2,16 +2,10 @@
 
 **Project ID:** NIMBUS-141
 **Date:** 2026-09-29
-**Ready for Dispatch:** false
+**Ready for Dispatch:** true
 
-> **Why it is not ready:**
-> 1. **Blocked by NIMBUS-140.** Every task builds on code that NIMBUS-140 adds, and NIMBUS-140 is
->    planned but not implemented or merged. See "External dependencies" below.
-> 2. **The plan review is pending.** The user must approve `PLAN.md`, including the Q4 reading
->    that no per-line prices are shown and open questions OQ-2 and OQ-3.
->
-> Set this to `true` only when NIMBUS-140 is merged to develop **and** the user has approved the
-> plan.
+> NIMBUS-140 is merged to develop (d63ef11), and on 2026-09-29 the user approved the plan,
+> answering yes to OQ-1, OQ-2 and OQ-3.
 
 ## Branch
 
@@ -22,11 +16,11 @@ develop.
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Add `getReturn` to the Business Central module service | `01-backend-get-return-service-implementation.md` | backend | NIMBUS-140 T01 | TODO |
-| 02 | Add `GET /store/bc-returns/:number` API route | `02-backend-bc-return-detail-route-implementation.md` | backend | 01, NIMBUS-140 T02 | TODO |
-| 03 | Storefront return detail types and data-fetching layer | `03-storefront-return-detail-types-data-layer-implementation.md` | storefront | 02, NIMBUS-140 T03 | TODO |
-| 04 | Return detail components, template and all-locale translations | `04-storefront-return-detail-components-translations-implementation.md` | storefront | 03, NIMBUS-140 T04–T05 | TODO |
-| 05 | Return detail page route and link from the return confirmation | `05-storefront-return-detail-page-confirmation-link-implementation.md` | storefront | 04, NIMBUS-140 T05 | TODO |
+| 01 | Add `getReturn` to the Business Central module service | `01-backend-get-return-service-implementation.md` | backend | NIMBUS-140 T01 | DONE |
+| 02 | Add `GET /store/bc-returns/:number` API route | `02-backend-bc-return-detail-route-implementation.md` | backend | 01, NIMBUS-140 T02 | DONE |
+| 03 | Storefront return detail types and data-fetching layer | `03-storefront-return-detail-types-data-layer-implementation.md` | storefront | 02, NIMBUS-140 T03 | DONE |
+| 04 | Return detail components, template and all-locale translations | `04-storefront-return-detail-components-translations-implementation.md` | storefront | 03, NIMBUS-140 T04–T05 | DONE |
+| 05 | Return detail page route and link from the return confirmation | `05-storefront-return-detail-page-confirmation-link-implementation.md` | storefront | 04, NIMBUS-140 T05 | DONE |
 
 ## External dependencies (blocking)
 

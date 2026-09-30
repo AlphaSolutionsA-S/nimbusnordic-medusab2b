@@ -8,6 +8,7 @@ import type {
   BCOrderListResponse,
   BCReturnListParams,
   BCReturnListResponse,
+  BCReturnDetail,
   BCReturnOrder,
   BCReturnReason,
   BCReturnRequestBody,
@@ -151,4 +152,36 @@ export const createBCReturn = async (
   )
 
   return response.return
+}
+
+type StoreBCReturnDetailResponse = {
+  return: BCReturnDetail
+}
+
+export const retrieveBCReturn = async (
+  returnNumber: string
+): Promise<BCReturnDetail | null> => {
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  try {
+    const response = await sdk.client.fetch<StoreBCReturnDetailResponse>(
+      `/store/bc-returns/${encodeURIComponent(returnNumber)}`,
+      {
+        method: "GET",
+        headers,
+        credentials: "include",
+        cache: "no-store",
+      }
+    )
+
+    return response.return
+  } catch (error) {
+    if (error instanceof FetchError && error.status === 404) {
+      return null
+    }
+
+    throw error
+  }
 }

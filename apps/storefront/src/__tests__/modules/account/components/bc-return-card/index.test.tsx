@@ -69,4 +69,11 @@ describe("BcReturnCard", () => {
 
     expect(screen.queryByTestId("bc-return-related-order")).toBeNull()
   })
+
+  it("shows a dash when Business Central sends no document date", async () => {
+    const element = await BcReturnCard({ item: { ...item, documentDate: "" } })
+    render(element)
+
+    expect(screen.getByTestId("bc-return-date")).toHaveTextContent(/^-$/)
+  })
 })
