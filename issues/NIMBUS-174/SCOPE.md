@@ -1,7 +1,7 @@
 # Checkout: no error message when a promotion code fails
 
 - **Date:** 2026-09-30
-- **Status:** Scoped (draft — pending user approval of this document)
+- **Status:** Scoped (approved 2026-09-30)
 - **Type:** Bug
 - **Tracker:** JIRA — https://alphasolutionsdk.atlassian.net/browse/NIMBUS-174 (Relates NIMBUS-173, no parent epic)
 - **Priority:** Medium
@@ -139,7 +139,7 @@ What this means for the current code:
 
 ## Open Questions
 
-- None. The decisions are recorded above. The user still needs to approve this document.
+- None. The user approved this document on 2026-09-30.
 
 ## Dependencies
 
