@@ -2,7 +2,7 @@ import { getProductPrice } from "@/lib/util/get-product-price"
 import { HttpTypes } from "@medusajs/types"
 import { Text, clx } from "@medusajs/ui"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 import Thumbnail from "../thumbnail"
 import PreviewAddToCart from "./preview-add-to-cart"
 import PreviewPrice from "./price"
@@ -21,8 +21,10 @@ export default async function ProductPreview({
   }
 
   const t = await getTranslations("Products.preview")
+  const locale = await getLocale()
   const { cheapestPrice } = getProductPrice({
     product,
+    locale,
   })
 
   const inventoryQuantity = product.variants?.reduce((acc, variant) => {
@@ -39,6 +41,7 @@ export default async function ProductPreview({
           <Thumbnail
             thumbnail={product.thumbnail}
             images={product.images}
+            alt={product.title}
             size="square"
             isFeatured={isFeatured}
           />

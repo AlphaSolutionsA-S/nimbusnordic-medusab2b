@@ -4,7 +4,7 @@ import LocalizedClientLink from "@/modules/common/components/localized-client-li
 import { StoreQuoteResponse } from "@/types"
 import { CalendarMini, DocumentText } from "@medusajs/icons"
 import { Button, clx, Container } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import Image from "next/image"
 import { useMemo } from "react"
 
@@ -14,6 +14,7 @@ type QuoteCardProps = {
 
 const QuoteCard = ({ quote }: QuoteCardProps) => {
   const t = useTranslations("Account.quoteCard")
+  const locale = useLocale()
   // Reuses the identical "{count} item(s)" pattern already extracted for
   // `@/modules/account/components/order-card`.
   const tOrderCard = useTranslations("Account.orderCard")
@@ -90,6 +91,7 @@ const QuoteCard = ({ quote }: QuoteCardProps) => {
             {convertToLocale({
               amount: order.total,
               currency_code: order.currency_code,
+              locale,
             })}
           </span>
           {"·"}

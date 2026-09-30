@@ -1,4 +1,5 @@
 import { retrieveCart } from "@/lib/data/cart"
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import { convertToLocale } from "@/lib/util/money"
 import ApprovalCardActions from "@/modules/account/components/approval-card-actions"
 import CalendarIcon from "@/modules/common/icons/calendar"
@@ -7,7 +8,7 @@ import { ApprovalStatusType } from "@/types/approval"
 import { B2BCart } from "@/types/global"
 import { CheckMini, XMarkMini } from "@medusajs/icons"
 import { clx, Container, Text } from "@medusajs/ui"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 import Image from "next/image"
 
 type ApprovalCardProps = {
@@ -20,6 +21,8 @@ export default async function ApprovalCard({
   type = "customer",
 }: ApprovalCardProps) {
   const t = await getTranslations("Account.approvalCard")
+  const locale = await getLocale()
+  const formattingLocale = getFormattingLocale(locale)
   // Reuses the identical "{count} item(s)" pattern already extracted for
   // `@/modules/account/components/order-card`.
   const tOrderCard = await getTranslations("Account.orderCard")
@@ -80,7 +83,7 @@ export default async function ApprovalCard({
           data-testid="order-created-at"
         >
           <CalendarIcon className="inline-block mr-1" />
-          {createdAt.toLocaleDateString("en-GB", {
+          {createdAt.toLocaleDateString(formattingLocale, {
             year: "numeric",
             month: "numeric",
             day: "numeric",
@@ -97,7 +100,7 @@ export default async function ApprovalCard({
             <Text className="flex items-center gap-x-1 text-xs text-grey-500">
               <CheckMini className="inline-block" />
               {t("orderCompletedAtLabel")}{" "}
-              {updatedAt.toLocaleDateString("en-GB", {
+              {updatedAt.toLocaleDateString(formattingLocale, {
                 year: "numeric",
                 month: "numeric",
                 day: "numeric",
@@ -106,7 +109,7 @@ export default async function ApprovalCard({
           ) : (
             <Text className="flex items-center gap-x-1 text-xs text-grey-500">
               {t("approvedAtLabel")}{" "}
-              {updatedAt.toLocaleDateString("en-GB", {
+              {updatedAt.toLocaleDateString(formattingLocale, {
                 year: "numeric",
                 month: "numeric",
                 day: "numeric",
@@ -122,7 +125,7 @@ export default async function ApprovalCard({
             <XMarkMini className="inline-block mr-1" />
             <span data-testid="order-display-id">
               {t("rejectedAtLabel")}{" "}
-              {updatedAt.toLocaleDateString("en-GB", {
+              {updatedAt.toLocaleDateString(formattingLocale, {
                 year: "numeric",
                 month: "numeric",
                 day: "numeric",
@@ -138,6 +141,7 @@ export default async function ApprovalCard({
             {convertToLocale({
               amount: cart.total,
               currency_code: cart.currency_code,
+              locale,
             })}
           </span>
           {"·"}

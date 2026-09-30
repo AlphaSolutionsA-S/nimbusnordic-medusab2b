@@ -9,17 +9,31 @@
       "continueLabel": "Continue"
     },
     "thumbnail": {
-      "altFallback": "test"
+      "altFallback": "Product image"
     },
     "notFound": {
       "headingLabel": "Page not found",
       "pageMessage": "The page you tried to access does not exist.",
       "goToFrontpageLabel": "Go to frontpage"
+    },
+    "paymentMethods": {
+      "creditCard": "Credit card",
+      "ideal": "iDeal",
+      "bancontact": "Bancontact",
+      "paypal": "PayPal",
+      "invoice": "Pay by invoice"
+    },
+    "paymentIcon": {
+      "title": "{brand} icon"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "cartNotFound": "We couldn't find your cart. Please refresh the page and try again."
     }
   },
   "Layout": {
     "nav": {
-      "brandName": "Medusa B2B Starter",
+      "brandName": "Nimbus Nordic",
       "searchPlaceholder": "Search for products",
       "searchDisabledTooltip": "Install a search provider to enable product search",
       "quoteLabel": "Quote",
@@ -96,7 +110,8 @@
       "approvalRequiredSalesManager": "This order requires approval by a sales manager.",
       "approvalRequestedLabel": "Approval Requested",
       "requestApprovalLabel": "Request Approval",
-      "placeOrderLabel": "Place order"
+      "placeOrderLabel": "Place order",
+      "paymentDeclinedMessage": "Your payment could not be completed. Check your payment details or choose another payment method."
     },
     "paymentTest": {
       "attentionLabel": "Attention:",
@@ -116,7 +131,8 @@
       "applyLabel": "Apply",
       "promotionAppliedOne": "Promotion applied:",
       "promotionAppliedOther": "Promotions applied:",
-      "removeDiscountSrLabel": "Remove discount code from order"
+      "removeDiscountSrLabel": "Remove discount code from order",
+      "applyErrorMessage": "This code could not be applied. Check the code and try again."
     },
     "review": {
       "agreementText": "By Completing this order, I agree to Medusa's <termsLink>Terms of Sale ↗</termsLink> and <privacyLink>Privacy Policy ↗</privacyLink>",
@@ -457,7 +473,8 @@
       "pickQuoteItemLabel": "Pick Quote Item",
       "pickQuoteItemDescription": "Select a quote item to write a message around",
       "selectItemPlaceholder": "Select Item",
-      "sendLabel": "Send"
+      "sendLabel": "Send",
+      "textRequiredMessage": "Enter a message."
     },
     "quoteTable": {
       "newLabel": "New",
@@ -557,6 +574,11 @@
     "bcReturnDetailPage": {
       "errorHeading": "Something went wrong",
       "errorMessage": "We were unable to load this return. Please try again."
+    },
+    "bcStatus": {
+      "open": "Open",
+      "draft": "Draft",
+      "released": "Released"
     }
   },
   "Cart": {
@@ -627,6 +649,13 @@
     },
     "notFound": {
       "cartMessage": "The cart you tried to access does not exist. Clear your cookies and try again."
+    },
+    "cartContext": {
+      "lockedForApprovalToast": "Cart is locked for approval.",
+      "addToCartFailedToast": "Failed to add to cart",
+      "deleteItemFailedToast": "Failed to delete item",
+      "updateQuantityFailedToast": "Failed to update cart quantity",
+      "emptyCartFailedToast": "Failed to empty cart"
     }
   },
   "Products": {
@@ -782,12 +811,68 @@
       "backLabel": "Back"
     }
   },
-  "BcTest": {
-    "heading": "Business Central API Operations",
-    "errorLabel": "Error",
-    "unknownErrorMessage": "Unknown error"
-  },
   "MetaDescription": {
     "storeSuffix": "| Nimbus Nordic"
+  },
+  "Metadata": {
+    "home": {
+      "title": "Nimbus Nordic",
+      "description": "Order corporate wear for your business in the Nimbus Nordic B2B webshop."
+    },
+    "account": {
+      "title": "Account",
+      "description": "Overview of your account activity."
+    },
+    "addresses": {
+      "title": "Addresses",
+      "description": "View your addresses."
+    },
+    "approvals": {
+      "title": "Approvals",
+      "description": "Overview of your pending approvals."
+    },
+    "bcOrders": {
+      "title": "BC Orders",
+      "description": "Company-wide Business Central order history."
+    },
+    "returns": {
+      "title": "Returns",
+      "description": "Company-wide Business Central return history."
+    },
+    "claims": {
+      "title": "Claims",
+      "description": "Guidance for submitting a claim."
+    },
+    "orders": {
+      "title": "Orders",
+      "description": "Overview of your previous orders."
+    },
+    "orderDetails": {
+      "title": "Order #{displayId}",
+      "description": "View your order."
+    },
+    "profile": {
+      "title": "Profile",
+      "description": "View and edit your profile."
+    },
+    "login": {
+      "title": "Log in",
+      "description": "Log in to your Nimbus Nordic account."
+    },
+    "cart": {
+      "title": "Cart",
+      "description": "View your cart."
+    },
+    "checkout": {
+      "title": "Checkout"
+    },
+    "store": {
+      "title": "Store",
+      "description": "Explore all of our products."
+    },
+    "orderConfirmed": {
+      "title": "Order confirmed",
+      "description": "Your purchase was successful."
+    }
   }
 }

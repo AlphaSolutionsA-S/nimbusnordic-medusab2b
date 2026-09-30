@@ -1,3 +1,4 @@
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import { isEmpty } from "@/lib/util/isEmpty"
 
 type ConvertToLocaleParams = {
@@ -5,7 +6,8 @@ type ConvertToLocaleParams = {
   currency_code: string
   minimumFractionDigits?: number
   maximumFractionDigits?: number
-  locale?: string
+  // The active next-intl locale ("da", "en", ...) — from useLocale()/getLocale().
+  locale: string
 }
 
 export const convertToLocale = ({
@@ -13,10 +15,10 @@ export const convertToLocale = ({
   currency_code,
   minimumFractionDigits,
   maximumFractionDigits,
-  locale = "en-US",
+  locale,
 }: ConvertToLocaleParams) => {
   return currency_code && !isEmpty(currency_code)
-    ? new Intl.NumberFormat(locale, {
+    ? new Intl.NumberFormat(getFormattingLocale(locale), {
         style: "currency",
         currency: currency_code,
         minimumFractionDigits,

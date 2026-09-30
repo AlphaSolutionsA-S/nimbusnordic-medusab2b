@@ -1,6 +1,7 @@
 "use client"
 
 import { setContactDetails } from "@/lib/data/cart"
+import { getCustomerErrorKey } from "@/lib/util/customer-error"
 import Divider from "@/modules/common/components/divider"
 import { ApprovalStatusType, B2BCart, B2BCustomer } from "@/types"
 import { CheckCircleSolid } from "@medusajs/icons"
@@ -20,6 +21,7 @@ const ContactDetails = ({
   customer: B2BCustomer | null
 }) => {
   const t = useTranslations("Checkout.contactDetails")
+  const tErrors = useTranslations("Common.errors")
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -123,7 +125,7 @@ const ContactDetails = ({
                     : t("nextStepLabel")}
                 </SubmitButton>
                 <ErrorMessage
-                  error={message}
+                  error={message ? tErrors(getCustomerErrorKey(message)) : null}
                   data-testid="address-error-message"
                 />
               </div>

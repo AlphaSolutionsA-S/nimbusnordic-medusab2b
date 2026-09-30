@@ -18,7 +18,7 @@ const PreviouslyPurchasedProduct = async ({
     <Container className="flex justify-between items-center">
       <div className="flex gap-2">
         <div className="w-14 h-14 rounded-md overflow-hidden bg-neutral-100">
-          <Thumbnail thumbnail={thumbnail} size="square" />
+          <Thumbnail thumbnail={thumbnail} size="square" alt={product_title} />
         </div>
         <div className="flex flex-col justify-center">
           <Text className="text-lg text-neutral-950">{product_title}</Text>

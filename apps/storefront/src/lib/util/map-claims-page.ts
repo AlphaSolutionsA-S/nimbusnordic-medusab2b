@@ -17,7 +17,7 @@ export function mapPayloadClaimsPage(
   cmsURL?: string,
 ): ClaimsPage {
   return {
-    title: document.title || 'Claims',
+    title: document.title || undefined,
     layout: (document.layout || []).map((block) => {
       if (typeof block !== 'object' || block === null) {
         return { blockType: 'unknown' };

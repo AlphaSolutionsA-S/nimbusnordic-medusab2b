@@ -16,7 +16,7 @@ jest.mock("next/navigation", () => ({
   useRouter: jest.fn(() => ({ refresh: jest.fn() })),
 }))
 
-import Profile from "@/app/[countryCode]/(main)/account/@dashboard/profile/page"
+import Profile, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/profile/page"
 
 describe("Profile page", () => {
   it("renders the extracted section headings unchanged", async () => {
@@ -25,5 +25,12 @@ describe("Profile page", () => {
 
     expect(screen.getByText("Details")).toBeInTheDocument()
     expect(screen.getByText("Security")).toBeInTheDocument()
+  })
+
+  it("translates the page metadata (TC-1)", async () => {
+    expect(await generateMetadata()).toEqual({
+      title: "Profile",
+      description: "View and edit your profile.",
+    })
   })
 })

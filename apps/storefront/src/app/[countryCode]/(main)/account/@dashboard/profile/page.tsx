@@ -7,9 +7,13 @@ import { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "Profile",
-  description: "View and edit your Medusa Store profile.",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Metadata.profile")
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  }
 }
 
 export default async function Profile() {

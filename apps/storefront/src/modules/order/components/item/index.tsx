@@ -14,7 +14,11 @@ const Item = ({ item, order }: ItemProps) => {
   return (
     <tr className="flex gap-x-4">
       <td className="w-20">
-        <Thumbnail thumbnail={item.thumbnail} size="square" />
+        <Thumbnail
+          thumbnail={item.thumbnail}
+          size="square"
+          alt={item.product_title}
+        />
       </td>
 
       <td className="flex flex-col w-full">

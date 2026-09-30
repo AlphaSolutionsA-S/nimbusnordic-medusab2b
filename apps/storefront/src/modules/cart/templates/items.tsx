@@ -4,7 +4,7 @@ import ItemFull from "@/modules/cart/components/item-full"
 import { B2BCart } from "@/types/global"
 import { StoreCartLineItem } from "@medusajs/types"
 import { Container, Text } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useMemo } from "react"
 
 type ItemsTemplateProps = {
@@ -19,6 +19,7 @@ const ItemsTemplate = ({
   showTotal = true,
 }: ItemsTemplateProps) => {
   const t = useTranslations("Cart.items")
+  const locale = useLocale()
   const items = cart?.items
   const totalQuantity = useMemo(
     () => cart?.items?.reduce((acc, item) => acc + item.quantity, 0),
@@ -59,6 +60,7 @@ const ItemsTemplate = ({
               {convertToLocale({
                 amount: cart?.item_total,
                 currency_code: cart?.currency_code,
+                locale,
               })}
             </Text>
           </div>

@@ -6,7 +6,7 @@ import { clx } from "@medusajs/ui"
 import Button from "@/modules/common/components/button"
 import ChevronDown from "@/modules/common/icons/chevron-down"
 import X from "@/modules/common/icons/x"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import React, { Fragment, useMemo } from "react"
 import OptionSelect from "./option-select"
 
@@ -34,11 +34,13 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   optionsDisabled,
 }) => {
   const t = useTranslations("Products.mobileActions")
+  const locale = useLocale()
   const { state, open, close } = useToggleState()
 
   const price = getProductPrice({
     product: product,
     variantId: variant?.id,
+    locale,
   })
 
   const selectedPrice = useMemo(() => {

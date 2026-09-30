@@ -99,7 +99,7 @@ describe("CompanyCard (read-only)", () => {
       />
     )
 
-    expect(valueFor("Credit Limit")).toBe("$12,345.67")
+    expect(valueFor("Credit Limit")).toBe("US$12,345.67")
     expect(valueFor("Blocked")).toBe("Blocked for invoicing")
     expect(valueFor("Spending Limit Reset Frequency")).toBe("Monthly")
   })

@@ -2,6 +2,7 @@
 
 import { isStripeLike, paymentInfoMap } from "@/lib/constants"
 import { initiatePaymentSession } from "@/lib/data/cart"
+import { useCustomerErrorMessage } from "@/lib/hooks/use-customer-error-message"
 import ErrorMessage from "@/modules/checkout/components/error-message"
 import PaymentContainer from "@/modules/checkout/components/payment-container"
 import { StripeContext } from "@/modules/checkout/components/payment-wrapper"
@@ -25,6 +26,8 @@ const Payment = ({
   availablePaymentMethods: any[]
 }) => {
   const t = useTranslations("Checkout.payment")
+  const tPaymentMethods = useTranslations("Common.paymentMethods")
+  const toCustomerMessage = useCustomerErrorMessage()
   const activeSession = cart.payment_collection?.payment_sessions?.find(
     (paymentSession: any) => paymentSession.status === "pending"
   )
@@ -110,7 +113,7 @@ const Payment = ({
         )
       }
     } catch (err: any) {
-      setError(err.message)
+      setError(toCustomerMessage(err, "checkout.payment"))
     } finally {
       setIsLoading(false)
     }
@@ -239,8 +242,11 @@ const Payment = ({
                   className="txt-medium text-ui-fg-subtle"
                   data-testid="payment-method-summary"
                 >
-                  {paymentInfoMap[selectedPaymentMethod]?.title ||
-                    selectedPaymentMethod}
+                  {paymentInfoMap[selectedPaymentMethod]
+                    ? tPaymentMethods(
+                        paymentInfoMap[selectedPaymentMethod].titleKey
+                      )
+                    : selectedPaymentMethod}
                 </Text>
               </div>
               <div className="flex flex-col w-1/3">
@@ -256,7 +262,10 @@ const Payment = ({
                   <Text>
                     {isStripeLike(selectedPaymentMethod) && cardBrand
                       ? cardBrand
-                      : paymentInfoMap[selectedPaymentMethod]?.title}
+                      : paymentInfoMap[selectedPaymentMethod] &&
+                        tPaymentMethods(
+                          paymentInfoMap[selectedPaymentMethod].titleKey
+                        )}
                   </Text>
                 </div>
               </div>

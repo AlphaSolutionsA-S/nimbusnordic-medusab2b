@@ -2,6 +2,8 @@
 
 import { isManual, isPaypal, isStripeLike } from "@/lib/constants"
 import { createCartApproval, placeOrder } from "@/lib/data/cart"
+import { useCustomerErrorMessage } from "@/lib/hooks/use-customer-error-message"
+import { logCustomerError } from "@/lib/util/customer-error"
 import ErrorMessage from "@/modules/checkout/components/error-message"
 import Button from "@/modules/common/components/button"
 import Spinner from "@/modules/common/icons/spinner"
@@ -103,6 +105,7 @@ const RequestApprovalButton = ({
   notReady: boolean
 }) => {
   const t = useTranslations("Checkout.paymentButton")
+  const toCustomerMessage = useCustomerErrorMessage()
   const [submitting, setSubmitting] = useState(false)
 
   const { requires_admin_approval, requires_sales_manager_approval } =
@@ -117,7 +120,7 @@ const RequestApprovalButton = ({
     setSubmitting(true)
 
     await createCartApproval(cart.id, cart.customer!.id).catch((err) => {
-      toast.error(err.message)
+      toast.error(toCustomerMessage(err, "checkout.request-approval"))
     })
 
     setSubmitting(false)
@@ -178,13 +181,14 @@ const StripePaymentButton = ({
   "data-testid"?: string
 }) => {
   const t = useTranslations("Checkout.paymentButton")
+  const toCustomerMessage = useCustomerErrorMessage()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const onPaymentCompleted = async () => {
     await completeCart(cart)
       .catch((err) => {
-        setErrorMessage(err.message)
+        setErrorMessage(toCustomerMessage(err, "checkout.stripe-complete"))
       })
       .finally(() => {
         setSubmitting(false)
@@ -242,7 +246,13 @@ const StripePaymentButton = ({
             onPaymentCompleted()
           }
 
-          setErrorMessage(error.message || null)
+          if (error.type === "card_error" || error.type === "validation_error") {
+            logCustomerError("checkout.stripe-confirm", error.message)
+            setErrorMessage(t("paymentDeclinedMessage"))
+          } else {
+            // toCustomerMessage logs as well
+            setErrorMessage(toCustomerMessage(error.message, "checkout.stripe-confirm"))
+          }
           return
         }
 
@@ -286,13 +296,14 @@ const PayPalPaymentButton = ({
   notReady: boolean
   "data-testid"?: string
 }) => {
+  const toCustomerMessage = useCustomerErrorMessage()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const onPaymentCompleted = async () => {
     await completeCart(cart)
       .catch((err) => {
-        setErrorMessage(err.message)
+        setErrorMessage(toCustomerMessage(err, "checkout.paypal-complete"))
       })
       .finally(() => {
         setSubmitting(false)
@@ -311,13 +322,18 @@ const PayPalPaymentButton = ({
       ?.authorize()
       .then((authorization) => {
         if (authorization.status !== "COMPLETED") {
-          setErrorMessage(`An error occurred, status: ${authorization.status}`)
+          setErrorMessage(
+            toCustomerMessage(
+              new Error(`PayPal authorization status: ${authorization.status}`),
+              "checkout.paypal-authorize"
+            )
+          )
           return
         }
         onPaymentCompleted()
       })
-      .catch(() => {
-        setErrorMessage(`An unknown error occurred, please try again.`)
+      .catch((err) => {
+        setErrorMessage(toCustomerMessage(err, "checkout.paypal-authorize"))
         setSubmitting(false)
       })
   }
@@ -355,13 +371,14 @@ const ManualTestPaymentButton = ({
   cart: B2BCart
 }) => {
   const t = useTranslations("Checkout.paymentButton")
+  const toCustomerMessage = useCustomerErrorMessage()
   const [submitting, setSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const onPaymentCompleted = async () => {
     await completeCart(cart)
       .catch((err) => {
-        setErrorMessage(err.message)
+        setErrorMessage(toCustomerMessage(err, "checkout.manual-complete"))
       })
       .finally(() => {
         setSubmitting(false)

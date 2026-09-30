@@ -1,5 +1,7 @@
 import { Container, Heading } from "@medusajs/ui"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
+import { convertToLocale } from "@/lib/util/money"
 import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
 import BcOrderReturn from "@/modules/account/components/bc-order-return"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
@@ -16,13 +18,11 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
   // which renders alongside this template on the same order-detail page.
   const tBcOrderReturn = await getTranslations("Account.bcOrderReturn")
   const tFulfillment = await getTranslations("Account.bcOrderLineFulfillment")
+  const locale = await getLocale()
   // TEMP (NIMBUS-138): BC reason codes cannot be fetched yet; reason selection is disabled.
   const returnReasons: BCReturnReason[] = []
   const formattedAmount = (amount: number) =>
-    new Intl.NumberFormat("en-GB", {
-      style: "currency",
-      currency: order.currencyCode,
-    }).format(amount)
+    convertToLocale({ amount, currency_code: order.currencyCode, locale })
 
   const renderAddress = (address: string[]) =>
     address.length > 0 ? address.map((line) => <div key={line}>{line}</div>) : "-"
@@ -41,7 +41,7 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
         <div>
           <Heading level="h1">{t("orderNumberHeading", { number: order.number })}</Heading>
           <p className="text-small-regular text-ui-fg-subtle mt-1">
-            {new Date(order.orderDate).toLocaleDateString("en-GB")}
+            {new Date(order.orderDate).toLocaleDateString(getFormattingLocale(locale))}
           </p>
         </div>
 

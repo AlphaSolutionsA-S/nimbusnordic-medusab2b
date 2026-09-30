@@ -6,7 +6,7 @@ import { Button, clx } from "@medusajs/ui"
 import { formatAmount } from "@/modules/common/components/amount-cell"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { StoreFreeShippingPrice } from "@/types/shipping-option/http"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useState } from "react"
 
 export default function FreeShippingPriceNudge({
@@ -49,6 +49,7 @@ function FreeShippingInline({
   }
 }) {
   const t = useTranslations("Shipping.freeShippingNudge")
+  const locale = useLocale()
 
   return (
     <div className="bg-neutral-100 p-2 rounded-lg border">
@@ -73,7 +74,7 @@ function FreeShippingInline({
             {t.rich("remainingMessage", {
               amount: () => (
                 <span className="text-neutral-950">
-                  {formatAmount(price.target_remaining, cart.currency_code)}
+                  {formatAmount(price.target_remaining, cart.currency_code, locale)}
                 </span>
               ),
             })}
@@ -108,6 +109,7 @@ function FreeShippingPopup({
   }
 }) {
   const t = useTranslations("Shipping.freeShippingNudge")
+  const locale = useLocale()
   const [isClosed, setIsClosed] = useState(false)
 
   if (cart.items?.length === 0) {
@@ -159,7 +161,8 @@ function FreeShippingPopup({
                     <span className="text-white">
                       {formatAmount(
                         price.target_remaining,
-                        cart.currency_code
+                        cart.currency_code,
+                        locale
                       )}
                     </span>
                   ),

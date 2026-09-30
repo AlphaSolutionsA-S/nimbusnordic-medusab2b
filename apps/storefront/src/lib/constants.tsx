@@ -5,35 +5,28 @@ import PayPal from "@/modules/common/icons/paypal"
 import { CreditCard } from "@medusajs/icons"
 import React from "react"
 
-/* Map of payment provider_id to their title and icon. Add in any payment providers you want to use. */
-export const paymentInfoMap: Record<
-  string,
-  { title: string; icon: React.JSX.Element }
-> = {
-  pp_stripe_stripe: {
-    title: "Credit card",
-    icon: <CreditCard />,
-  },
-  "pp_medusa-payments_default": {
-    title: "Credit card",
-    icon: <CreditCard />,
-  },
-  "pp_stripe-ideal_stripe": {
-    title: "iDeal",
-    icon: <Ideal />,
-  },
-  "pp_stripe-bancontact_stripe": {
-    title: "Bancontact",
-    icon: <Bancontact />,
-  },
-  pp_paypal_paypal: {
-    title: "PayPal",
-    icon: <PayPal />,
-  },
-  pp_system_default: {
-    title: "Pay by invoice",
-    icon: <FilePlus />,
-  },
+// Keys of the `Common.paymentMethods` catalog namespace.
+export type PaymentMethodTitleKey =
+  | "creditCard"
+  | "ideal"
+  | "bancontact"
+  | "paypal"
+  | "invoice"
+
+export type PaymentInfo = {
+  titleKey: PaymentMethodTitleKey
+  icon: React.JSX.Element
+}
+
+/* Map of payment provider_id to its title key and icon. Titles are resolved
+   through `Common.paymentMethods` at render time. */
+export const paymentInfoMap: Record<string, PaymentInfo> = {
+  pp_stripe_stripe: { titleKey: "creditCard", icon: <CreditCard /> },
+  "pp_medusa-payments_default": { titleKey: "creditCard", icon: <CreditCard /> },
+  "pp_stripe-ideal_stripe": { titleKey: "ideal", icon: <Ideal /> },
+  "pp_stripe-bancontact_stripe": { titleKey: "bancontact", icon: <Bancontact /> },
+  pp_paypal_paypal: { titleKey: "paypal", icon: <PayPal /> },
+  pp_system_default: { titleKey: "invoice", icon: <FilePlus /> },
   // Add more payment providers here
 }
 

@@ -13,7 +13,7 @@ jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ countryCode: "us" })),
 }))
 
-import AddressesPage from "@/app/[countryCode]/(main)/account/@dashboard/addresses/page"
+import AddressesPage, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/addresses/page"
 
 describe("AddressesPage", () => {
   it("renders the extracted heading and description unchanged", async () => {
@@ -28,5 +28,12 @@ describe("AddressesPage", () => {
         "View and update your shipping addresses, you can add as many as you like. Saving your addresses will make them available during checkout."
       )
     ).toBeInTheDocument()
+  })
+
+  it("translates the page metadata (TC-1)", async () => {
+    expect(await generateMetadata()).toEqual({
+      title: "Addresses",
+      description: "View your addresses.",
+    })
   })
 })

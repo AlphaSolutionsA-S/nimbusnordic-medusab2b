@@ -1,6 +1,7 @@
 "use client"
 
 import { acceptQuote, rejectQuote } from "@/lib/data/quotes"
+import { useCustomerErrorMessage } from "@/lib/hooks/use-customer-error-message"
 import { formatAmount } from "@/modules/common/components/amount-cell"
 import Button from "@/modules/common/components/button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
@@ -10,7 +11,7 @@ import { StoreQuoteResponse } from "@/types/quote"
 import { ArrowUturnLeft, CheckCircleSolid } from "@medusajs/icons"
 import { AdminOrderLineItem, AdminOrderPreview } from "@medusajs/types"
 import { Container, Heading, Text, toast } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { useRouter } from "next/navigation"
 import React, { useMemo, useState } from "react"
 import QuoteMessages from "../quote-messages"
@@ -31,6 +32,8 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
   countryCode,
 }) => {
   const t = useTranslations("Account.quoteDetails")
+  const locale = useLocale()
+  const toCustomerMessage = useCustomerErrorMessage()
   const order = quote.draft_order
   const originalItemsMap = useMemo(() => {
     return new Map<string, AdminOrderLineItem>(
@@ -98,7 +101,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                 </span>
 
                 <span className="txt-small text-ui-fg-subtle">
-                  {formatAmount(order.total, order.currency_code)}
+                  {formatAmount(order.total, order.currency_code, locale)}
                 </span>
               </div>
 
@@ -108,7 +111,7 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                 </span>
 
                 <span className="txt-small text-ui-fg-subtle">
-                  {formatAmount(preview.total, order.currency_code)}
+                  {formatAmount(preview.total, order.currency_code, locale)}
                 </span>
               </div>
             </div>
@@ -123,7 +126,9 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                   setIsRejecting(true)
 
                   rejectQuote(quote.id)
-                    .catch((e) => toast.error(e.message))
+                    .catch((e) =>
+                      toast.error(toCustomerMessage(e, "quotes.reject"))
+                    )
                     .finally(() => setIsRejecting(false))
                 }}
                 isLoading={isRejecting}
@@ -140,7 +145,9 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                   setIsAccepting(true)
 
                   acceptQuote(quote.id)
-                    .catch((e) => toast.error(e.message))
+                    .catch((e) =>
+                      toast.error(toCustomerMessage(e, "quotes.accept"))
+                    )
                     .finally(() => setIsAccepting(false))
                 }}
                 isLoading={isAccepting}
@@ -189,7 +196,8 @@ const QuoteDetails: React.FC<QuoteDetailsProps> = ({
                   {(quote.customer?.employee?.spending_limit &&
                     formatAmount(
                       quote.customer?.employee?.spending_limit || 0,
-                      order.currency_code.toUpperCase()
+                      order.currency_code.toUpperCase(),
+                      locale
                     )) ||
                     "-"}
                 </Text>

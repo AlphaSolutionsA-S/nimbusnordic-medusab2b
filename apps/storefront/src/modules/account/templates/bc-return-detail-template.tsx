@@ -1,8 +1,9 @@
 import { Container, Heading } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import BcReturnExpectedCredit from "@/modules/account/components/bc-return-expected-credit"
 import BcReturnLines from "@/modules/account/components/bc-return-lines"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
 import type { BCReturnDetail } from "@/types/bc-order"
 
 type BcReturnDetailTemplateProps = {
@@ -11,6 +12,7 @@ type BcReturnDetailTemplateProps = {
 
 const BcReturnDetailTemplate = ({ bcReturn }: BcReturnDetailTemplateProps) => {
   const t = useTranslations("Account.bcReturnDetailTemplate")
+  const locale = useLocale()
   const documentDate = new Date(bcReturn.documentDate)
 
   return (
@@ -33,7 +35,7 @@ const BcReturnDetailTemplate = ({ bcReturn }: BcReturnDetailTemplateProps) => {
             <dd className="text-ui-fg-base" data-testid="bc-return-document-date">
               {Number.isNaN(documentDate.getTime())
                 ? "-"
-                : documentDate.toLocaleDateString("en-GB")}
+                : documentDate.toLocaleDateString(getFormattingLocale(locale))}
             </dd>
           </div>
           <div>

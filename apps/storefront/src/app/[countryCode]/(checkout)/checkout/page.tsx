@@ -5,10 +5,15 @@ import CheckoutForm from "@/modules/checkout/templates/checkout-form"
 import CheckoutSummary from "@/modules/checkout/templates/checkout-summary"
 import { B2BCart } from "@/types/global"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
 
-export const metadata: Metadata = {
-  title: "Checkout",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Metadata.checkout")
+
+  return {
+    title: t("title"),
+  }
 }
 
 export default async function Checkout({

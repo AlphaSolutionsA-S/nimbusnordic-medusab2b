@@ -16,6 +16,7 @@ import type {
   StoreProductVariant,
 } from "@medusajs/types"
 import { toast } from "@medusajs/ui"
+import { useTranslations } from "next-intl"
 import { useParams } from "next/navigation"
 import type { PropsWithChildren } from "react"
 import {
@@ -60,6 +61,7 @@ export function CartProvider({
   cart: B2BCart | null
 }>) {
   const { countryCode } = useParams()
+  const t = useTranslations("Cart.cartContext")
 
   const [optimisticCart, setOptimisticCart] = useOptimistic<B2BCart | null>(
     cart
@@ -82,7 +84,7 @@ export function CartProvider({
           (approval) => approval.status === ApprovalStatusType.PENDING
         )
       ) {
-        toast.error("Cart is locked for approval.")
+        toast.error(t("lockedForApprovalToast"))
         return
       }
 
@@ -169,9 +171,9 @@ export function CartProvider({
           countryCode: countryCode as string,
         }).catch((e) => {
           if (e.message === "Cart is pending approval") {
-            toast.error("Cart is locked for approval.")
+            toast.error(t("lockedForApprovalToast"))
           } else {
-            toast.error("Failed to add to cart")
+            toast.error(t("addToCartFailedToast"))
           }
           setOptimisticCart(prevCart)
         })
@@ -215,7 +217,7 @@ export function CartProvider({
     setIsUpdatingCart(true)
 
     await deleteLineItem(lineItem).catch((e) => {
-      toast.error("Failed to delete item")
+      toast.error(t("deleteItemFailedToast"))
       setOptimisticCart(prevCart)
     })
   }
@@ -276,7 +278,7 @@ export function CartProvider({
         lineId: lineItem,
         data: { quantity },
       }).catch((e) => {
-        toast.error("Failed to update cart quantity")
+        toast.error(t("updateQuantityFailedToast"))
         setOptimisticCart(prevCart)
       })
     }
@@ -295,7 +297,7 @@ export function CartProvider({
     setIsUpdatingCart(true)
 
     await emptyCart().catch((e) => {
-      toast.error("Failed to empty cart")
+      toast.error(t("emptyCartFailedToast"))
       setOptimisticCart(prevCart)
     })
   }

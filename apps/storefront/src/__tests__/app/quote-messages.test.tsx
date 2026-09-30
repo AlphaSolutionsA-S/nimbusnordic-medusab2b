@@ -1,9 +1,11 @@
 import { render, screen } from "@testing-library/react"
+import userEvent from "@testing-library/user-event"
 
 jest.mock("@/lib/data/quotes", () => ({
   createQuoteMessage: jest.fn(),
 }))
 
+import { createQuoteMessage } from "@/lib/data/quotes"
 import QuoteMessages from "@/app/[countryCode]/(main)/account/@dashboard/quotes/components/quote-messages"
 
 const quote = {
@@ -24,5 +26,14 @@ describe("QuoteMessages", () => {
       screen.getByText("Select a quote item to write a message around")
     ).toBeInTheDocument()
     expect(screen.getByText("Send")).toBeInTheDocument()
+  })
+
+  it("shows the translated validation message for an empty message (TC-7)", async () => {
+    render(<QuoteMessages quote={quote} preview={preview} />)
+
+    await userEvent.click(screen.getByText("Send"))
+
+    expect(await screen.findByText("Enter a message.")).toBeInTheDocument()
+    expect(createQuoteMessage).not.toHaveBeenCalled()
   })
 })

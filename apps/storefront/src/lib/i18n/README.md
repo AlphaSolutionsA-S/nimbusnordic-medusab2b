@@ -32,3 +32,11 @@ export function ExampleClientComponent() {
   return <p>{t('welcome')}</p>
 }
 ```
+
+## Formatting prices and dates
+
+Never hardcode a formatting locale. Get the active next-intl locale (`useLocale()` in
+non-async components, `await getLocale()` in async Server Components) and pass it to
+`convertToLocale({ ..., locale })`, or to `Intl.*` / `toLocale*String` via
+`getFormattingLocale(locale)` from `src/lib/i18n/formatting-locale.ts` (e.g. `da` → `da-DK`,
+`en` → `en-GB`).

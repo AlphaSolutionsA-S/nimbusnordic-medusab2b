@@ -32,7 +32,7 @@ jest.mock("@/modules/account/components/pending-customer-approvals", () => ({
   default: () => null,
 }))
 
-import Orders from "@/app/[countryCode]/(main)/account/@dashboard/orders/page"
+import Orders, { generateMetadata } from "@/app/[countryCode]/(main)/account/@dashboard/orders/page"
 
 describe("Orders page", () => {
   it("renders the extracted headings unchanged", async () => {
@@ -42,5 +42,12 @@ describe("Orders page", () => {
     expect(screen.getByText("Orders")).toBeInTheDocument()
     expect(screen.getByText("Pending Approvals")).toBeInTheDocument()
     expect(screen.getByText("Completed Orders")).toBeInTheDocument()
+  })
+
+  it("translates the page metadata (TC-1)", async () => {
+    expect(await generateMetadata()).toEqual({
+      title: "Orders",
+      description: "Overview of your previous orders.",
+    })
   })
 })

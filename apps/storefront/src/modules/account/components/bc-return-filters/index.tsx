@@ -8,6 +8,9 @@ import { useEffect, useState, useTransition } from "react"
 // Only statuses whose BC wire value has no XML-encoded space (see Task 01).
 const BC_RETURN_STATUSES = ["Open", "Released"] as const
 
+// Visible labels only — option values stay as the BC API filter values.
+const STATUS_LABEL_KEYS = { Open: "open", Released: "released" } as const
+
 type BcReturnFiltersProps = {
   currentStatus?: string
   currentDateFrom?: string
@@ -22,6 +25,7 @@ const BcReturnFilters = ({
   currentSearch,
 }: BcReturnFiltersProps) => {
   const t = useTranslations("Account.bcReturnFilters")
+  const tStatus = useTranslations("Account.bcStatus")
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -81,7 +85,7 @@ const BcReturnFilters = ({
           <option value="">{t("allStatusesOption")}</option>
           {BC_RETURN_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {s}
+              {tStatus(STATUS_LABEL_KEYS[s])}
             </option>
           ))}
         </select>

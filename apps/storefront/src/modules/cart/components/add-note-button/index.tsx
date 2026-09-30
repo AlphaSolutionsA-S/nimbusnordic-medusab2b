@@ -91,7 +91,7 @@ const AddNoteButton = ({
             : "opacity-0 pointer-events-none"
         }`}
       >
-        <span className="text-neutral-950">Note:&nbsp;</span>
+        <span className="text-neutral-950">{t("noteLabel")}&nbsp;</span>
 
         <Input
           ref={inputRef}

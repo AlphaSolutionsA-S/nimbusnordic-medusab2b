@@ -1,9 +1,11 @@
+import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
+import { convertToLocale } from "@/lib/util/money"
 import CalendarIcon from "@/modules/common/icons/calendar"
 import DocumentIcon from "@/modules/common/icons/document"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import type { BCOrder } from "@/types/bc-order"
 import { Container } from "@medusajs/ui"
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
 
 type BcOrderCardProps = {
   order: BCOrder
@@ -11,12 +13,14 @@ type BcOrderCardProps = {
 
 const BcOrderCard = async ({ order }: BcOrderCardProps) => {
   const t = await getTranslations("Account.bcOrderCard")
+  const locale = await getLocale()
   const orderDate = new Date(order.orderDate)
 
-  const formattedAmount = new Intl.NumberFormat("en-GB", {
-    style: "currency",
-    currency: order.currencyCode,
-  }).format(order.totalAmountIncludingTax)
+  const formattedAmount = convertToLocale({
+    amount: order.totalAmountIncludingTax,
+    currency_code: order.currencyCode,
+    locale,
+  })
 
   return (
     <Container className="bg-white flex small:flex-row flex-col p-4 rounded-md small:justify-between small:items-center gap-y-2 items-start">
@@ -24,7 +28,7 @@ const BcOrderCard = async ({ order }: BcOrderCardProps) => {
         <div className="flex pr-2 text-small-regular items-center">
           <CalendarIcon className="inline-block mr-1" />
           <span data-testid="bc-order-date">
-            {orderDate.toLocaleDateString("en-GB", {
+            {orderDate.toLocaleDateString(getFormattingLocale(locale), {
               year: "numeric",
               month: "numeric",
               day: "numeric",

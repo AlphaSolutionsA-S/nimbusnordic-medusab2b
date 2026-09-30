@@ -5,7 +5,7 @@ import BcReturnExpectedCredit from "@/modules/account/components/bc-return-expec
 
 // jest-dom normalises the rendered text's whitespace (Intl uses U+00A0 after the currency code).
 const money = (amount: number, currencyCode: string) =>
-  convertToLocale({ amount, currency_code: currencyCode }).replace(/\s/g, " ")
+  convertToLocale({ amount, currency_code: currencyCode, locale: "en" }).replace(/\s/g, " ")
 
 describe("BcReturnExpectedCredit", () => {
   // TC-1: happy path — both totals in the return's currency, labelled as expected.

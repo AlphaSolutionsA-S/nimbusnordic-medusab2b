@@ -1,5 +1,5 @@
 import { Heading } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { convertToLocale } from "@/lib/util/money"
 import type { BCReturnExpectedCredit } from "@/types/bc-order"
 
@@ -9,8 +9,9 @@ type BcReturnExpectedCreditProps = {
 
 const BcReturnExpectedCredit = ({ expectedCredit }: BcReturnExpectedCreditProps) => {
   const t = useTranslations("Account.bcReturnExpectedCredit")
+  const locale = useLocale()
   const formatAmount = (amount: number) =>
-    convertToLocale({ amount, currency_code: expectedCredit.currencyCode })
+    convertToLocale({ amount, currency_code: expectedCredit.currencyCode, locale })
 
   return (
     <div className="flex flex-col gap-y-3" data-testid="bc-return-expected-credit">

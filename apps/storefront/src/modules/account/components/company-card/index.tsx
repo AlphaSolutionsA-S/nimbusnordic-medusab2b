@@ -3,7 +3,7 @@ import { formatAmount } from "@/modules/common/components/amount-cell"
 import { ModuleCompanyBlockedState, StoreCompanyResponse } from "@/types"
 import { HttpTypes } from "@medusajs/types"
 import { Container, Text } from "@medusajs/ui"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 
 const BLOCKED_VALUE_KEYS: Record<ModuleCompanyBlockedState, string> = {
   not_blocked: "blockedNotBlockedValue",
@@ -17,6 +17,7 @@ const CompanyCard = ({
   regions,
 }: StoreCompanyResponse & { regions: HttpTypes.StoreRegion[] }) => {
   const t = useTranslations("Account.companyCard")
+  const locale = useLocale()
 
   const countryName = regions
     .flatMap((region) => region.countries ?? [])
@@ -60,7 +61,7 @@ const CompanyCard = ({
       label: t("creditLimitLabel"),
       value:
         company.credit_limit != null && currencyCode
-          ? formatAmount(company.credit_limit, currencyCode)
+          ? formatAmount(company.credit_limit, currencyCode, locale)
           : company.credit_limit?.toString(),
     })
   }

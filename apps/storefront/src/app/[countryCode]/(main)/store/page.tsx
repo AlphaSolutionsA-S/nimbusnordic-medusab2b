@@ -8,13 +8,18 @@ import { SortOptions } from "@/modules/store/components/refinement-list/sort-pro
 import StoreBreadcrumb from "@/modules/store/components/store-breadcrumb"
 import PaginatedProducts from "@/modules/store/templates/paginated-products"
 import { Metadata } from "next"
+import { getTranslations } from "next-intl/server"
 import { Suspense } from "react"
 
 export const dynamicParams = true
 
-export const metadata: Metadata = {
-  title: "Store",
-  description: "Explore all of our products.",
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Metadata.store")
+
+  return {
+    title: t("title"),
+    description: t("description"),
+  }
 }
 
 type Params = {

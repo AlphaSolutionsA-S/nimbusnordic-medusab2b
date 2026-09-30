@@ -29,4 +29,14 @@ describe("BcReturnFilters", () => {
     const optionValues = Array.from(statusSelect.options).map((o) => o.value)
     expect(optionValues).toEqual(["", "Open", "Released"])
   })
+
+  it("translates the status labels but keeps the BC filter values (TC-7)", () => {
+    render(<BcReturnFilters />)
+
+    expect(screen.getByRole("option", { name: "Open" })).toHaveAttribute("value", "Open")
+    expect(screen.getByRole("option", { name: "Released" })).toHaveAttribute(
+      "value",
+      "Released"
+    )
+  })
 })

@@ -15,25 +15,6 @@ import type {
 } from "@/types/bc-order"
 import { FetchError } from "@medusajs/js-sdk"
 
-type StoreBusinessCentralOperationsResponse = {
-  operations: unknown
-}
-
-export const listBusinessCentralOperations = async () => {
-  const headers = {
-    ...(await getAuthHeaders()),
-  }
-
-  return sdk.client.fetch<StoreBusinessCentralOperationsResponse>(
-    "/store/business-central/operations",
-    {
-      method: "GET",
-      headers,
-      credentials: "include",
-    }
-  )
-}
-
 export const listBCOrders = async (
   params: BCOrderListParams = {}
 ): Promise<BCOrderListResponse> => {

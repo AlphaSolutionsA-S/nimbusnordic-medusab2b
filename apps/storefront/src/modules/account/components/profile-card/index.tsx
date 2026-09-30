@@ -1,6 +1,7 @@
 "use client"
 
 import { updateCustomer, updatePassword } from "@/lib/data/customer"
+import { logCustomerError } from "@/lib/util/customer-error"
 import Button from "@/modules/common/components/button"
 import Input from "@/modules/common/components/input"
 import { B2BCustomer } from "@/types/global"
@@ -77,9 +78,8 @@ const ProfileCard = ({ customer }: { customer: B2BCustomer }) => {
       resetPasswordForm()
       toast.success(t("passwordUpdatedToast"))
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : t("passwordUpdateErrorToast")
-      )
+      logCustomerError("account.password-update", error)
+      toast.error(t("passwordUpdateErrorToast"))
     } finally {
       setIsSavingPassword(false)
     }

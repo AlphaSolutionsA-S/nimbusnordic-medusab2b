@@ -1,5 +1,6 @@
 "use client"
 
+import { useCustomerErrorMessage } from "@/lib/hooks/use-customer-error-message"
 import { cartToCsv } from "@/lib/util/convert-cart-to-csv"
 import Button from "@/modules/common/components/button"
 import { B2BCart } from "@/types"
@@ -13,6 +14,7 @@ type CartToCsvButtonProps = {
 
 const CartToCsvButton = ({ cart }: CartToCsvButtonProps) => {
   const t = useTranslations("Cart.cartToCsvButton")
+  const toCustomerMessage = useCustomerErrorMessage()
   const [isExportingCart, setIsExportingCart] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -44,8 +46,8 @@ const CartToCsvButton = ({ cart }: CartToCsvButtonProps) => {
         link.click()
         URL.revokeObjectURL(url)
       }
-    } catch (error: any) {
-      setError(error.message)
+    } catch (error) {
+      setError(toCustomerMessage(error, "cart.csv-export"))
     }
 
     setIsExportingCart(false)

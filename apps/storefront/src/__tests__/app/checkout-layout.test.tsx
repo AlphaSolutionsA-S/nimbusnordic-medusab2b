@@ -15,6 +15,6 @@ describe("CheckoutLayout", () => {
     const element = await CheckoutLayout({ children: <div>content</div> })
     render(element)
 
-    expect(screen.getByText("Medusa B2B Starter")).toBeInTheDocument()
+    expect(screen.getByText("Nimbus Nordic")).toBeInTheDocument()
   })
 })
