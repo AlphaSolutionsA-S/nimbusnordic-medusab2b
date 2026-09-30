@@ -245,3 +245,17 @@
   tests passed. ESLint on `canonical-order-schema.ts` gave 0 errors.
 - **Next owner:** user. Commit and merge to develop, then do the manual APIM steps from the
   code review entry.
+
+## 2026-09-30 - Committed and merged to develop
+
+- **Updated by:** main session
+- **Outcome:** Committed on `feature/NIMBUS-171` as `ded0f97`, on top of the plan commit
+  `9158a8a`. Merged into `develop` (no fast-forward) as `231c951`. Local develop had diverged
+  from `origin/develop`, which had two new commits with NIMBUS-175 plan docs and NIMBUS-129 e2e
+  test cases, docs only. These were merged in with `git pull --no-rebase` (`0e68a8a`), without
+  conflicts. The new NIMBUS-129 e2e sample orders use `DK`, which the new rule accepts. Not
+  pushed. Jira not updated (NIMBUS-171 is still in Estimation).
+- **Still open:** re-register both schemas in APIM (NIMBUS-145 deployment instructions,
+  section 2) and run test payloads TC-16, TC-17 and TC-13c. Tell customer systems about the
+  rule before deployment.
+- **Next owner:** user. Push develop, update Jira, and do the manual APIM steps.
