@@ -2,8 +2,8 @@
 
 **Project ID:** NIMBUS-175
 **Date:** 2026-09-30
-**Ready for Dispatch:** false
-**Approval:** Pending review of PLAN.md; scope approval also not yet recorded.
+**Ready for Dispatch:** true
+**Approval:** Scope and plan explicitly approved by Klaus Petersen on 2026-09-30.
 
 ## Branch
 

@@ -94,3 +94,13 @@
 - **Handover prompt:** Review `PLAN.md`, especially the cache/fallback limits and
   reporting caps. Confirm the scope and plan explicitly before dispatch; keep
   `manifest.md` false until approval, then implement via the eight tasks.
+
+- **Date:** 2026-09-30
+- **Updated by:** coordinating agent (jira-workflow)
+- **Outcome:** User explicitly approved `SCOPE.md` and `PLAN.md` as written ("Approve and
+  implement"). `manifest.md` set to `Ready for Dispatch: true`. Jira assigned to Klaus
+  Petersen with component Customer Portal; status moved from Scoping to Estimation via "Scope approved" (no In Progress
+  transition is available from Scoping).
+- **Handover to:** implementor agent
+- **Handover prompt:** Implement NIMBUS-175 on `feature/NIMBUS-175` from `develop`, following
+  `manifest.md` and the eight dependency-ordered task files, `PLAN.md` and `CONTRACTS.md`.
