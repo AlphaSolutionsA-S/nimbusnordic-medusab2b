@@ -1,0 +1,11 @@
+{
+  "orderDate": "15-10-2026",
+  "currencyCode": "DKK",
+  "lines": [
+    {
+      "lineNumber": 1,
+      "eanNo": "0000000000017",
+      "quantity": 1
+    }
+  ]
+}

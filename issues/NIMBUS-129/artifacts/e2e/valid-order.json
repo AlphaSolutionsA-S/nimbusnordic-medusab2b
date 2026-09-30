@@ -1,0 +1,41 @@
+{
+  "externalOrderNumber": "NIMBUS129-E2E-REPLACE-WITH-RUN-ID-JSON",
+  "orderDate": "15-10-2026",
+  "requestedDeliveryDate": "22-10-2026",
+  "currencyCode": "DKK",
+  "billTo": {
+    "name": "Nimbus E2E Test Company",
+    "addressLine1": "1 Test Street",
+    "city": "Testby",
+    "postCode": "0000",
+    "country": "DK"
+  },
+  "shipTo": {
+    "name": "Nimbus E2E Test Receiver",
+    "addressLine1": "2 Test Street",
+    "city": "Testby",
+    "postCode": "0000",
+    "country": "DK"
+  },
+  "lines": [
+    {
+      "lineNumber": 1,
+      "itemNumber": "NIMBUS129-TEST-ITEM-1",
+      "custItemNo": "NIMBUS129-TEST-ITEM-1",
+      "eanNo": "0000000000017",
+      "description": "Synthetic E2E item one",
+      "unitOfMeasureCode": "PCS",
+      "quantity": 2,
+      "unitPrice": 999.99
+    },
+    {
+      "lineNumber": 2,
+      "itemNumber": "NIMBUS129-TEST-ITEM-2",
+      "custItemNo": "NIMBUS129-TEST-ITEM-2",
+      "eanNo": "0000000000024",
+      "description": "Synthetic E2E item two",
+      "unitOfMeasureCode": "PCS",
+      "quantity": 1
+    }
+  ]
+}

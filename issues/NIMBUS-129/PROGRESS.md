@@ -373,3 +373,30 @@
   of binding downstream guidance now live in Task 02's doc — the `unitPrice` no-override rule for
   NIMBUS-148 and the optional-display rule for NIMBUS-158 — and should be carried into those
   stories when they are scoped.
+
+- **Date:** 2026-09-30
+- **Updated by:** coordinating assistant
+- **Outcome:** At the user's request, added `END_TO_END_TEST_CASES.md` for the external-client
+  path through APIM, Logic App, Medusa, asynchronous Business Central delivery, and persisted
+  outcome. Explicitly excluded NIMBUS-158's Admin/retry experience. Mapped cases to existing
+  backend integration suites and the Azure manual payload plans. No tests were run and no Azure
+  or Business Central environment was called. Full cross-stack execution is still gated on
+  non-production Azure configuration; the APIM policy artifact has an unresolved Logic App URL
+  placeholder and a commented path-rewrite line. Recorded the approved NIMBUS-145/146 exception
+  to the epic's original path-token log-redaction requirement.
+- **Handover to:** user / non-production integration tester.
+- **Handover prompt:** Review `END_TO_END_TEST_CASES.md`, then run the marked cases against the
+  configured non-production APIM, Logic App, Medusa, and Business Central sandbox. Reconcile the
+  token-logging exception if the epic-level redaction requirement is still binding. Leave
+  NIMBUS-158 Admin/retry validation out of this run.
+
+- **Date:** 2026-09-30
+- **Updated by:** coordinating assistant
+- **Outcome:** Added synthetic, non-production JSON/XML order fixtures, an invalid JSON fixture,
+  and a sandbox setup guide under `artifacts/e2e/`. The fixtures contain no real tokens or API
+  keys; the setup guide requires sandbox-only customer/item records and deployment config.
+  Automated application tests were not run.
+- **Handover to:** user / non-production integration tester.
+- **Handover prompt:** Use the fixtures in `artifacts/e2e/README.md` with the cases in
+  `END_TO_END_TEST_CASES.md`; provision the named synthetic items/customer in the BC sandbox and
+  matching company/token in the non-production integration first.
