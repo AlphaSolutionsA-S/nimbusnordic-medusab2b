@@ -1,6 +1,6 @@
 # Task 05: Import, languages, comparison, and missing-key tools
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend Admin
 **App Root:** apps/backend
 **Task ID:** 05

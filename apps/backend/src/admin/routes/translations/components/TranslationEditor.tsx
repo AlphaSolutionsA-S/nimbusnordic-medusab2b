@@ -117,10 +117,8 @@ function TranslationField({ translationKey, value, multiline, warnings, onChange
 }
 
 export interface TranslationEditorProps {
-  /** Optional slot for tools (import, export, languages) that operate on the current language. */
-  renderToolbar?: (context: EditorContext) => ReactNode;
-  /** Optional slot rendered when no language exists yet. */
-  renderEmpty?: (context: EditorContext) => ReactNode;
+  /** Optional tools (import, export, languages, missing texts) that operate on the editor. */
+  renderTools?: (context: EditorContext) => ReactNode;
 }
 
 export interface EditorContext {
@@ -135,7 +133,7 @@ export interface EditorContext {
   selectLocale: (locale: string) => Promise<void>;
 }
 
-export function TranslationEditor({ renderToolbar, renderEmpty }: TranslationEditorProps = {}) {
+export function TranslationEditor({ renderTools }: TranslationEditorProps = {}) {
   const prompt = usePrompt();
   const locales = useTranslationLocales();
   const summaries = locales.data?.locales ?? [];
@@ -252,7 +250,7 @@ export function TranslationEditor({ renderToolbar, renderEmpty }: TranslationEdi
     return (
       <div className="flex flex-col items-start gap-y-2 px-6 py-4">
         <Text size="small">No languages have been imported yet.</Text>
-        {renderEmpty?.(context)}
+        {renderTools?.(context)}
       </div>
     );
   }
@@ -351,7 +349,6 @@ export function TranslationEditor({ renderToolbar, renderEmpty }: TranslationEdi
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
-        {renderToolbar?.(context)}
         <Button
           size="small"
           onClick={handleSave}
@@ -361,6 +358,8 @@ export function TranslationEditor({ renderToolbar, renderEmpty }: TranslationEdi
           Save
         </Button>
       </div>
+
+      {renderTools?.(context)}
 
       {conflict && (
         <div role="alert" className="flex flex-col items-start gap-y-2 mx-6 rounded-md border border-ui-border-base bg-ui-bg-subtle px-4 py-3">

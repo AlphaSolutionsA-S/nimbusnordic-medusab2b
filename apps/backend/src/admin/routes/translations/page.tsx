@@ -1,7 +1,7 @@
 import { defineRouteConfig } from "@medusajs/admin-sdk";
 import { Language } from "@medusajs/icons";
 import { Container, Heading, Text } from "@medusajs/ui";
-import { TranslationEditor } from "./components/TranslationEditor";
+import { TranslationsWorkspace } from "./components/TranslationsWorkspace";
 
 const TranslationsPage = () => {
   return (
@@ -12,7 +12,7 @@ const TranslationsPage = () => {
           Storefront interface texts, stored per language.
         </Text>
       </div>
-      <TranslationEditor />
+      <TranslationsWorkspace />
     </Container>
   );
 };

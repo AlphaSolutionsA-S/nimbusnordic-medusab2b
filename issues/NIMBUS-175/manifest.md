@@ -18,7 +18,7 @@ Create the branch only when implementation starts.
 | 02 | Models, migration, atomic persistence | `02-persistence-implementation.md` | backend | 01 | DONE |
 | 03 | APIs and workflows | `03-api-implementation.md` | backend | 01, 02 | DONE |
 | 04 | Admin harness and translation editor | `04-admin-editor-implementation.md` | backend Admin | 01, 03 | DONE |
-| 05 | Admin language/import/missing-key tools | `05-admin-tools-implementation.md` | backend Admin | 04 | TODO |
+| 05 | Admin language/import/missing-key tools | `05-admin-tools-implementation.md` | backend Admin | 04 | DONE |
 | 06 | Storefront runtime and fallback | `06-storefront-runtime-implementation.md` | storefront | 03 | TODO |
 | 07 | Refresh and missing-key reporting | `07-reporting-refresh-implementation.md` | backend + storefront | 03, 06 | TODO |
 | 08 | Verification and rollout | `08-verification-implementation.md` | backend + storefront | 05, 07 | TODO |
