@@ -11,6 +11,7 @@ import { updateCompaniesStep } from "../steps/update-companies";
 
 export type SyncCompanyFromBusinessCentralInput = {
   customerId: string;
+  expectedCompanyId?: string;
 };
 
 export type SyncCompanyFromBusinessCentralResult = {
@@ -22,6 +23,7 @@ export const syncCompanyFromBusinessCentralWorkflow = createWorkflow(
   function (input: SyncCompanyFromBusinessCentralInput) {
     const prepared = prepareCompanyBcSyncStep({
       customerId: input.customerId,
+      expectedCompanyId: input.expectedCompanyId,
     });
 
     when({ prepared }, ({ prepared }) => prepared.status === "ready").then(

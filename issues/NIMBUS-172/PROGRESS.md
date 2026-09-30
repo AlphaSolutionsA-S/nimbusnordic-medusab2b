@@ -16,3 +16,41 @@
   (one row per receipt vs grouped per return order, merged vs separate list, which date) with the
   user, and note the dependency on NIMBUS-140 being implemented first. Create SCOPE.md in this
   folder.
+
+- **Date:** 2026-09-30
+- **Updated by:** scoper agent
+- **Outcome:** Draft scope written to `issues/NIMBUS-172/SCOPE.md`; **awaiting user approval**
+  (not approved yet). Clarification answers collected from the user by the main session
+  (AskUserQuestion) and relayed to the scoper:
+  - Partial receipts: grouped under return order (one row per return order, receipts listed
+    under it); a partly received return order stays open and shows its receipts.
+  - Layout: same list + filter (combined list, status badge, open/processed filter, like
+    NIMBUS-170).
+  - Received date: `Document_Date`.
+  - Detail page: link to detail; extend the NIMBUS-141 detail page for processed returns and
+    posted receipts.
+  - Sequencing: wait for NIMBUS-140 to be merged to develop, then branch `feature/NIMBUS-172`
+    from develop.
+  - Priority: Medium; nothing is waiting on this.
+  Remaining open items (see SCOPE.md Open Questions): scope approval, list sort order, posted
+  receipts with no matching return order, which item details to show per receipt. Jira not
+  touched.
+- **Handover to:** user (scope approval), then implementation-planner agent
+- **Handover prompt (PENDING USER APPROVAL — do not run until the user approves SCOPE.md):**
+  Plan the implementation of NIMBUS-172 from the approved `issues/NIMBUS-172/SCOPE.md`, using
+  `issues/NIMBUS-172/FEATURE.md` Technical notes for the Business Central ODataV4 sources
+  (`PostedReturnReceipt`, `PostedReturnReceiptReturnRcptLines`, filtered by
+  `Sell_to_Customer_No`, matched to open return orders via `Return_Order_No`). NIMBUS-140 is merged
+  to develop (`d63ef11`); base the work on `feature/NIMBUS-172` from develop. Build on the
+  NIMBUS-140 return overview and NIMBUS-141 detail page and follow the NIMBUS-170 combined list +
+  filter pattern. SCOPE.md already exists: update it with any planning findings rather than
+  creating a new one, and resolve or raise its remaining open questions.
+
+## 2026-09-30 — Correction: NIMBUS-140 already merged
+
+- **Outcome:** NIMBUS-140 was merged to develop on 2026-09-29 20:57 (`d63ef11`, "Merge branch
+  'feature/NIMBUS-140' into develop"). The earlier entry treated it as unmerged. SCOPE.md
+  Dependencies and Base Branch are updated, so the sequencing blocker is gone and
+  `feature/NIMBUS-172` can branch from develop now. Scope is still a draft awaiting user
+  approval.
+- **Handover to:** user (scope approval), then implementation-planner agent (prompt above).

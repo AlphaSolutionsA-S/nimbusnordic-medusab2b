@@ -54,7 +54,7 @@ export const GET = async (
   if (customer_id && isStale(existing?.business_central_synced_at)) {
     try {
       await syncCompanyFromBusinessCentralWorkflow(req.scope).run({
-        input: { customerId: customer_id },
+        input: { customerId: customer_id, expectedCompanyId: id },
       });
     } catch (error) {
       logger.error(`Business Central freshness sync failed for company ${id}`);
