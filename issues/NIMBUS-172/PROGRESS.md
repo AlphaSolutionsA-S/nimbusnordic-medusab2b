@@ -304,3 +304,12 @@
 - **Still open:** the TestDK walkthrough (Task 04 step 8, risks R1/R2). Also check that
   `$orderby=Document_Date desc` is accepted by the PostedReturnReceipt web service.
 - **Next owner:** user. Do the TestDK walkthrough, then commit.
+
+## 2026-09-30 — Committed and merged to develop
+
+- **Outcome:** Committed on `feature/NIMBUS-172` as `4b20cd3`. Merged into `develop` (no
+  fast-forward) as `f898c4d`, after `git pull --ff-only` on develop. The incoming develop
+  commits changed issue docs only, so the tested code is unchanged. Not pushed.
+- **Still open:** the TestDK walkthrough (Task 04 step 8, risks R1/R2, and whether
+  `$orderby=Document_Date desc` is accepted). Jira has not been updated.
+- **Next owner:** user. Push develop, do the TestDK walkthrough and update Jira.
