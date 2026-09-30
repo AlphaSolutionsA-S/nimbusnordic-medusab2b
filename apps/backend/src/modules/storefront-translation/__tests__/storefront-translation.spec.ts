@@ -169,6 +169,17 @@ moduleIntegrationTestRunner<StorefrontTranslationModuleService>({
         expect(await service.listTranslationMissingKeys({ locale: "it" })).toHaveLength(0);
       });
 
+      it("TC-3: ignores a stale outage report for a locale that is active", async () => {
+        await importLocale("it");
+        await service.mutateDocument({ operation: "activate", locale: "it", expected_version: 1, is_active: true });
+        const result = await service.reportMissing([{ locale: "it", page_path: "/it", kind: "locale_unavailable" }]);
+        expect(result).toEqual({ accepted: 0, ignored: 1 });
+        await service.mutateDocument({ operation: "activate", locale: "it", expected_version: 2, is_active: false });
+        expect(
+          await service.reportMissing([{ locale: "it", page_path: "/it", kind: "locale_unavailable" }])
+        ).toEqual({ accepted: 1, ignored: 0 });
+      });
+
       it("TC-4: parallel duplicate reports produce one row with correct counts", async () => {
         await importLocale("pl");
         const report = { locale: "pl", page_path: "/pl/cart", kind: "key" as const, key: "Cart.missing" };

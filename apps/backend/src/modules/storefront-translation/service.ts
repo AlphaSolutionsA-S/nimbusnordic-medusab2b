@@ -436,14 +436,24 @@ export default class StorefrontTranslationModuleService extends MedusaService({
     await this.lock(manager, REPORTING_CAP_LOCK);
     const locales = [...new Set(reports.map((report) => report.locale))].sort();
     const documents = new Map<string, MessageDocument | null>();
+    const activeLocales = new Set<string>();
     for (const locale of locales) {
       await this.lockLocale(manager, locale);
-      documents.set(locale, (await this.findRow(manager, locale))?.messages ?? null);
+      const row = await this.findRow(manager, locale);
+      documents.set(locale, row?.messages ?? null);
+      if (row?.is_active) {
+        activeLocales.add(locale);
+      }
     }
 
     let accepted = 0;
     for (const report of reports) {
       const key = report.kind === "key" ? report.key : LOCALE_UNAVAILABLE_KEY;
+      // An outage report for a locale that is active now comes from a storefront worker still
+      // holding an older inactive/absent state; recording it would show a stale notice.
+      if (report.kind === "locale_unavailable" && activeLocales.has(report.locale)) {
+        continue;
+      }
       if (report.kind === "key") {
         const document = documents.get(report.locale);
         // Individual keys only for provisioned locales, and only while still absent or empty.
