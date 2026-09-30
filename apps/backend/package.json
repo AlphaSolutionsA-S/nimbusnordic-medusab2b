@@ -24,6 +24,7 @@
     "test:unit": "cross-env TEST_TYPE=unit NODE_OPTIONS=--experimental-vm-modules jest --silent --runInBand --forceExit"
   },
   "dependencies": {
+    "@formatjs/icu-messageformat-parser": "2.11.4",
     "@hookform/resolvers": "5.5.7",
     "@medusajs/admin-sdk": "2.21.0",
     "@medusajs/cli": "2.21.0",

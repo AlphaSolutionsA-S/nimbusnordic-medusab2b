@@ -1,6 +1,6 @@
 # Task 01: Contracts and document helpers
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 01
