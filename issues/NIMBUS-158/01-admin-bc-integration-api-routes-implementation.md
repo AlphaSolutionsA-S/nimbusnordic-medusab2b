@@ -304,3 +304,26 @@ Test cases are defined in Task 03.
   `line_failures`, include them in the GET response. If not, remove them.
 - **Verify `req.params.id`** — Medusa's admin route param naming may differ; check existing
   routes like `companies/[id]/route.ts` for the exact param access pattern.
+
+## Deviations
+
+- Reconciled placeholder metadata with `business_central_integration`: Admin returns `attempt_count`, the three persisted timestamps, `bc_order_number`, and `partial` under their actual names.
+- Pending is an initial state, not a running signal. Replaced the route's metadata check with an owner-scoped reservation in a workflow step; the automatic and Admin subscriber share the same reservation and original deterministic workflow transaction ID. Reservation acquisition failures return 409.
+- Replaced an unawaited submission call with a short acceptance workflow that reserves and emits an event; the subscriber runs the existing delivery workflow off the request path. This follows current `arch-route-emits-long-work`.
+- Added explicit default-false `force_resend` to the reusable workflow input and a pure duplicate decision. Preserved the previous BC identifier if an explicit resend fails before creating a new order, so ordinary retries remain guarded.
+- Sanitized failure details to known failure codes and `line_number`/`reason`, excluding free-form vendor messages and line identifiers.
+- Added four unit behavior tests before implementation. HTTP/auth/concurrency delivery coverage remains Task 03.
+- The configured locking/event bus are in-memory. The initial 3600-second reservation is renewed every TTL/3 while delivery runs because existing vendor lookups are unbounded. Renewal promises are serialized, failures logged without vendor details, timer cleared before draining renewal and owner-safe final release. Task 03 must prove a deferred actual submission beyond initial TTL rejects normal/force overlap with 409 and leaves no reservation/renewal after completion. Behavior across multiple production instances is unverified.
+- No `docs/architecture/` directory or current behavior documentation was found by the behavior-name search. Legacy direct core reads inside the existing preparation/outcome steps remain pre-existing code; new route reads use `getOrderDetailWorkflow`.
+
+## Done-when evidence
+
+- Status read returns only the sanitized current state: `admin-bc-integration.unit.spec.ts`, `returns null status for untracked orders` and `whitelists failure codes and drops vendor messages and canonical data`; route HTTP proof is Task 03.
+- Submission validates `force_resend` and returns 202 after reservation and event emission: registered `AdminSubmitOrderToBc` middleware and `requestBcSubmissionWorkflow`; real HTTP acceptance proof is Task 03.
+- Normal duplicate protection and explicit force exception: unit tests `keeps ordinary retries duplicate-safe when a BC id exists even on failure` and `guards a sent state without an identifier and allows a failed retry without one`.
+- Overlap rejection/owner-safe release: verified installed in-memory provider acquire/release code and implemented shared reservation; real runtime proof is Task 03.
+- Authenticated Admin access: verified installed framework router applies user authentication to `/admin`; negative runtime proof is Task 03.
+- Also update: middleware aggregator and automatic subscriber updated; reusable workflow input/decision/outcome identity retention updated. Case manifest and branch notes record the reconciled seam. No current architecture documentation found.
+- Scoped unit tests: 4 passed, 0 failed. Backend lint: 0 errors, 13 pre-existing warnings. Whole-app typecheck: 22 errors, unchanged from baseline, all in legacy integration tests.
+
+- Renewal primitive verified in installed in-memory provider lines 83-88; runtime proof remains Task 03.

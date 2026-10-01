@@ -2,7 +2,7 @@
 
 **Project ID:** NIMBUS-158
 **Date:** 2026-09-02
-**Ready for Dispatch:** true (conditional — see Dependency Status below)
+**Ready for Dispatch:** true
 
 ## Dependency Status
 
@@ -21,7 +21,7 @@ implementation.
 
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
-| 01 | Admin API routes for BC integration status and submission | `01-admin-bc-integration-api-routes-implementation.md` | backend | NIMBUS-148, NIMBUS-149 | TODO |
+| 01 | Admin API routes for BC integration status and submission | `01-admin-bc-integration-api-routes-implementation.md` | backend | NIMBUS-148, NIMBUS-149 | DONE |
 | 02 | Admin order-detail widget for BC status and retry | `02-admin-bc-order-status-widget-implementation.md` | backend | 01 | TODO |
 | 03 | Integration tests for BC integration admin API | `03-admin-bc-integration-tests-implementation.md` | backend | 01 | TODO |
 
@@ -77,3 +77,11 @@ actual implemented code from NIMBUS-148 and NIMBUS-149:
       triggered via a subscriber event.
 - [ ] **In-progress indicator** — what NIMBUS-148 writes to metadata at the start of its
       workflow, for the concurrency guard.
+
+## 2026-10-01 dispatch reconciliation
+
+NIMBUS-148/149 implementation is present on develop. Actual metadata key: business_central_integration. Fields: status, bc_order_id, bc_order_number, attempt_count, initialized_at, last_attempt_at, sent_at, partial, failure_reason, line_failures. Statuses remain pending/sent/failed; pending is not a concurrency signal. Submission uses sendOrderToBusinessCentralWorkflow with store: true and getSendOrderToBusinessCentralTransactionId, shared with automatic submission. Existing workflow input must gain explicit force_resend while preserving its default duplicate guard. Replace legacy route metadata checks with current workflow-layer design; record deviations in tasks.
+
+## Conventions and commands
+
+Commands run from repo root, separately: pnpm --filter @b2b-starter/backend test:unit -- <path>; pnpm --filter @b2b-starter/backend test:admin -- <path>; pnpm --filter @b2b-starter/backend lint; pnpm --filter @b2b-starter/backend exec tsc --noEmit; pnpm --filter @b2b-starter/backend build; pnpm test:integration:http.

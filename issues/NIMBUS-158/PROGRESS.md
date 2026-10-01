@@ -31,3 +31,15 @@
   with Task 01 (admin API routes), then Task 02 (widget), then Task 03 (tests). Before starting,
   complete the reconciliation checklist in manifest.md against the actual implemented code from
   NIMBUS-148 and NIMBUS-149.
+
+## 2026-10-01 - Task 01 implementation complete; review pending
+
+- Updated by: Task 01 tdd-worker, with root executing approved filesystem writes and checks.
+- Outcome: Reconciled Admin read/submit API implemented, shared asynchronous reservation/event dispatch wired, normal duplicate guard preserved and explicit force flag added. Four new unit tests pass; HTTP/runtime evidence belongs to Task 03. Lint has 0 errors, 13 existing warnings; typecheck remains at the 22-error baseline.
+- Next owner: dispatcher/code-reviewer for Task 01; then Task 02 worker.
+- Handover prompt: Review Task 01 source and recorded deviations, then implement the order-detail widget against the actual `AdminBcIntegration` fields in branch-notes.md. Preserve manual refresh and explicit force confirmation. Keep Task 03 runtime coverage pending.
+
+## 2026-10-01 - Task 01 review rework
+
+- Outcome: Addressed the lease-expiry review blocker with serialized owner renewal during delivery and timer/drain/release cleanup. Scoped behavior tests remain 4/4 passing. Runtime proof beyond initial TTL belongs to Task 03.
+- Next owner: code-reviewer for final Task 01 verdict, then Task 02 and Task 03 workers.
