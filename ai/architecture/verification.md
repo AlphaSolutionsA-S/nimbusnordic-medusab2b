@@ -13,11 +13,9 @@ What a test must prove and at which layer. Commands are in `ai/AGENTS.md` (Comma
   framework guarantees and trivial rendering.
 - Assert at the depth the caller consumes: the type of each field it uses, not that its container
   exists.
-- Security work carries negative cases per property (company membership, role, cross-company access;
-  `integration-tests/http/security/security-boundaries.spec.ts` is the home for them). Every
-  security-critical path is tested somewhere in the branch.
-- Where a security property depends on vendor behaviour, at least one test exercises the real
-  library, not a stub.
+- Security work carries negative cases per property (membership, role, cross-company access) in
+  `integration-tests/http/security/security-boundaries.spec.ts`; a property that depends on vendor
+  behaviour is tested once against the real library.
 - Never mock framework-resolved services to assert their call order; test the extracted pure decision
   or move the case to integration. Keep dependency resolution and I/O where the framework puts them
   and extract only pure logic, never a `*Logic(input, deps)` mocking seam.

@@ -10,10 +10,9 @@ packages. Code examples and detail: the `medusa-backend` skill (`reference/medus
   or the `medusa` MCP (otherwise the Medusa documentation). Record the primitive, the evidence and
   the behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
   unverified claim is marked UNVERIFIED in the plan and blocks dispatch.
-- Security-relevant vendor claims (signatures, lock ownership, replay, token checks) are verified
-  from dist code or a runnable probe, never type-doc or README prose.
-- `query.graph` selection is string-based and weakly typed, so a wrong path fails silently. Verify a
-  result shape once against real data and mock only the shape you verified.
+- Security-relevant vendor claims are verified from dist code or a runnable probe, never docs.
+- A `query.graph` path that is wrong fails silently: verify the shape once against real data and
+  mock only that shape.
 - Installed source: `apps/backend` uses `node-linker=hoisted` (`apps/backend/.npmrc`), so read
   `apps/backend/node_modules/@medusajs/<pkg>/dist/...`; if a package is missing there, grep the
   store `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is
@@ -21,10 +20,9 @@ packages. Code examples and detail: the `medusa-backend` skill (`reference/medus
 
 ## OOTB first
 
-Use Medusa's workflow or step before writing your own; core workflows emit the events that raw
-service calls skip. Add no pre-check, dedup, retry or compensation around an OOTB primitive unless
-verified evidence shows it lacks that guarantee. Extend core flows through the hooks in
-`apps/backend/src/workflows/hooks/`, not by copying the flow.
+Use Medusa's workflow or step before writing your own (core workflows emit events raw service calls
+skip); add no pre-check, dedup, retry or compensation around it without evidence it lacks that
+guarantee. Extend core flows through `apps/backend/src/workflows/hooks/`, never by copying them.
 
 ## Reading core data
 

@@ -230,8 +230,7 @@ through `admin/lib/client.ts`.
 Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
 (`limit-route-body`); no L1 method touches more than one module's data (`limit-service-one-module`).
 
-L5 exists to name a business rule, never as a mocking seam: two steps that do the same thing share
-the step, not a helper with injected dependencies.
+L5 names a business rule, never a mocking seam.
 
 ### Storefront (Next.js App Router, Medusa JS SDK)
 
@@ -288,13 +287,11 @@ production, `docs/security-remediation.md`).
 
 - `lock-single-run`: a lock that keeps a sync or batch to one run at a time is acquired in the L7
   trigger that starts the workflow: try once, skip if held, release in `finally`.
-- `lock-critical-section`: a lock around changing specific data (an order, a cart, a shared
-  configuration) is acquired by a workflow step whose compensation releases it and released by a
-  later step; a step that acquires and releases in its own body uses try/finally.
+- `lock-critical-section`: a lock around changing specific data is acquired by a step whose
+  compensation releases it and released by a later step (or try/finally within one step).
   `acquireLockStep` skips itself under `runAsStep` unless `executeOnSubWorkflow: true`.
-- `lock-ttl`: every lock sets a TTL (`expire`/`ttl`) longer than the worst-case run, and an
-  `ownerId` wherever a release could free another run's lock; without one the in-memory provider
-  never expires the lock.
+- `lock-ttl`: every lock sets a TTL longer than the worst-case run, and an `ownerId` where a release
+  could free another run's lock.
 - `NO_LOCKING_IN_ROUTES`: no `.acquire()` in `B/api/**`.
 
 ## Medusa boundary (`ai/architecture/medusa-boundary.md`)
@@ -309,10 +306,9 @@ packages. Code examples and detail: the `medusa-backend` skill (`reference/medus
   or the `medusa` MCP (otherwise the Medusa documentation). Record the primitive, the evidence and
   the behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
   unverified claim is marked UNVERIFIED in the plan and blocks dispatch.
-- Security-relevant vendor claims (signatures, lock ownership, replay, token checks) are verified
-  from dist code or a runnable probe, never type-doc or README prose.
-- `query.graph` selection is string-based and weakly typed, so a wrong path fails silently. Verify a
-  result shape once against real data and mock only the shape you verified.
+- Security-relevant vendor claims are verified from dist code or a runnable probe, never docs.
+- A `query.graph` path that is wrong fails silently: verify the shape once against real data and
+  mock only that shape.
 - Installed source: `apps/backend` uses `node-linker=hoisted` (`apps/backend/.npmrc`), so read
   `apps/backend/node_modules/@medusajs/<pkg>/dist/...`; if a package is missing there, grep the
   store `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is
@@ -320,10 +316,9 @@ packages. Code examples and detail: the `medusa-backend` skill (`reference/medus
 
 ### OOTB first
 
-Use Medusa's workflow or step before writing your own; core workflows emit the events that raw
-service calls skip. Add no pre-check, dedup, retry or compensation around an OOTB primitive unless
-verified evidence shows it lacks that guarantee. Extend core flows through the hooks in
-`apps/backend/src/workflows/hooks/`, not by copying the flow.
+Use Medusa's workflow or step before writing your own (core workflows emit events raw service calls
+skip); add no pre-check, dedup, retry or compensation around it without evidence it lacks that
+guarantee. Extend core flows through `apps/backend/src/workflows/hooks/`, never by copying them.
 
 ### Reading core data
 
@@ -423,11 +418,9 @@ What a test must prove and at which layer. Commands are in `ai/AGENTS.md` (Comma
   framework guarantees and trivial rendering.
 - Assert at the depth the caller consumes: the type of each field it uses, not that its container
   exists.
-- Security work carries negative cases per property (company membership, role, cross-company access;
-  `integration-tests/http/security/security-boundaries.spec.ts` is the home for them). Every
-  security-critical path is tested somewhere in the branch.
-- Where a security property depends on vendor behaviour, at least one test exercises the real
-  library, not a stub.
+- Security work carries negative cases per property (membership, role, cross-company access) in
+  `integration-tests/http/security/security-boundaries.spec.ts`; a property that depends on vendor
+  behaviour is tested once against the real library.
 - Never mock framework-resolved services to assert their call order; test the extracted pure decision
   or move the case to integration. Keep dependency resolution and I/O where the framework puts them
   and extract only pure logic, never a `*Logic(input, deps)` mocking seam.

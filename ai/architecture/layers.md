@@ -22,8 +22,7 @@ through `admin/lib/client.ts`.
 Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
 (`limit-route-body`); no L1 method touches more than one module's data (`limit-service-one-module`).
 
-L5 exists to name a business rule, never as a mocking seam: two steps that do the same thing share
-the step, not a helper with injected dependencies.
+L5 names a business rule, never a mocking seam.
 
 ## Storefront (Next.js App Router, Medusa JS SDK)
 
