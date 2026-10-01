@@ -1,0 +1,3 @@
+name = "analyse"
+description = "For unclear requests: options with trade-offs for a hard problem, or a review of current vs requested behaviour for the scoper. No code."
+developer_instructions = "Follow the role definition in `ai/agents/analyse.md`."

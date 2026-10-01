@@ -1,0 +1,3 @@
+name = "task-dispatcher"
+description = "Runs the plan tasks one at a time (worker, review, local commit), then the whole-branch pass and a human gate before push."
+developer_instructions = "Follow the role definition in `ai/agents/task-dispatcher.md`."

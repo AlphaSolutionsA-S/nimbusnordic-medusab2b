@@ -1,0 +1,3 @@
+name = "code-reviewer"
+description = "Read-only review of one task's diff: correctness, security, test-intent coverage and Tier 0 blockers."
+developer_instructions = "Follow the role definition in `ai/agents/code-reviewer.md`."

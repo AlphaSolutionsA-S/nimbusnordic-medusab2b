@@ -1,0 +1,44 @@
+{
+  "harness_version": "2.1.2",
+  "harness_released": "2026-09-30",
+  "harness_repo": "https://bitbucket.org/alphasolutionsdk/agentic-setups",
+  "check_runner": "node",
+  "tools": ["claude-code", "github-copilot-vscode", "codex"],
+  "context_sections": ["Project context", "Skills", "Instructions"],
+  "tier0": ["layers", "boundaries", "medusa-boundary", "data-ownership", "decisions", "verification", "rules"],
+  "instructions": {
+    "agent-discipline": "**",
+    "commit-messages": "**",
+    "typescript-style": "**/*.{ts,tsx,mts,cts}",
+    "medusa-backend": "apps/backend/**"
+  },
+  "limits": { "tier0_lines": 300, "agents_md_bytes": 32768 },
+  "answers": {
+    "CUSTOMER_NAME": "Nimbus Nordic",
+    "CUSTOMER_SLUG": "nimbus-nordic",
+    "DEFAULT_BRANCH": "develop",
+    "REPO_URL": "https://github.com/AlphaSolutionsA-S/nimbusnordic-medusab2b",
+    "tools": ["claude-code", "github-copilot-vscode", "codex"],
+    "trackers": [
+      {
+        "TRACKER_TYPE": "jira",
+        "TRACKER_SLUG": "dev",
+        "JIRA_CLOUD_ID": "alphasolutionsdk.atlassian.net",
+        "ISSUE_PREFIX": "NIMBUS"
+      }
+    ],
+    "PRIMARY_TRACKER": "dev",
+    "require_issue_in_commit": true,
+    "NO_TRACKER_FORMAT": "chore",
+    "QUICK_FIX_CONFIRMATION": "always",
+    "VERIFICATION_READ_ACCESS": "",
+    "stack": ["node"],
+    "typescript": true,
+    "CHECK_COMMAND": "pnpm ai:check",
+    "TRACKER_NAME": "Jira (NIMBUS)",
+    "TRACKER_SKILL": "jira-workflow-dev",
+    "COMMIT_PREFIX_PATTERN": "NIMBUS-<number>",
+    "skills_requested": ["code-review"],
+    "skills_declined": ["definition-of-done", "medusa-internal-agents", "prove-it-works"]
+  }
+}

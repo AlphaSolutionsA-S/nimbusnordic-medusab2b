@@ -14,7 +14,8 @@
     "test:unit": "turbo run test:unit",
     "clean": "turbo run clean && rm -rf node_modules",
     "backend:dev": "turbo dev --filter=@dtc/backend",
-    "storefront:dev": "turbo dev --filter=@dtc/storefront"
+    "storefront:dev": "turbo dev --filter=@dtc/storefront",
+    "ai:check": "node ai/tools/ai-check.mjs"
   },
   "devDependencies": {
     "@medusajs/eslint-plugin": "2.21.0",

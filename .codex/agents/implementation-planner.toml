@@ -1,0 +1,3 @@
+name = "implementation-planner"
+description = "Explores the codebase, designs the solution, and writes a plan, a manifest and short task files; creates the tracker tasks."
+developer_instructions = "Follow the role definition in `ai/agents/implementation-planner.md`."

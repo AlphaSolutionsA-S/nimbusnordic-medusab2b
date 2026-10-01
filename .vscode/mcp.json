@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "medusa-mcp-token",
+      "description": "Medusa docs MCP token (Medusa Cloud)",
+      "password": true
+    }
+  ],
+  "servers": {
+    "medusa": {
+      "type": "http",
+      "url": "https://docs.medusajs.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:medusa-mcp-token}"
+      }
+    }
+  }
+}

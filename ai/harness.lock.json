@@ -1,0 +1,888 @@
+{
+  "harness_version": "2.1.2",
+  "source_commit": "33d01ecacaaa4d3f5a369fe4de582453fd305771",
+  "files": {
+    "ai/agents/analyse.md": {
+      "owner": "harness",
+      "source": "harness/agents/analyse.md",
+      "hash": "5511eac93361de400fccccac726a1127bd5db85e49d51724158c57059e8edbae"
+    },
+    "ai/agents/cleanup.md": {
+      "owner": "harness",
+      "source": "harness/agents/cleanup.md",
+      "hash": "f9174871d0912f812cb6a8f60d763c4e6a1bd0387b4a869e0c8d795a1910edcd"
+    },
+    "ai/agents/code-reviewer.md": {
+      "owner": "harness",
+      "source": "harness/agents/code-reviewer.md",
+      "hash": "69a9182844012c01d3521ce9041f5bc9f0a9207e68776572eb55f597a2a2047e"
+    },
+    "ai/agents/committer.md": {
+      "owner": "harness",
+      "source": "harness/agents/committer.md",
+      "hash": "c22ca386f69caf722e71456c7926c3c026fcc5ff5d99a9c651d8974aba47ab8e"
+    },
+    "ai/agents/documentation-writer.md": {
+      "owner": "harness",
+      "source": "harness/agents/documentation-writer.md",
+      "hash": "85dc1603134ae6a400439a1c8066782b3c456acb73769151d87eb2a4cde21055"
+    },
+    "ai/agents/implementation-planner.md": {
+      "owner": "harness",
+      "source": "harness/agents/implementation-planner.md",
+      "hash": "3d82c39da30d49c4d54c293fb4bce557a0c2093510e099cce31f0e0c87036df1"
+    },
+    "ai/agents/integration-reviewer.md": {
+      "owner": "harness",
+      "source": "harness/agents/integration-reviewer.md",
+      "hash": "08356d75e039e85064943f53dd96a053ae3795dfd97626d8c22e8f5b942d449f"
+    },
+    "ai/agents/quick-fix.md": {
+      "owner": "harness",
+      "source": "harness/agents/quick-fix.md",
+      "hash": "4e4c8684be92a572c97006599385541acf37c38aa2afafd5de4279105af899b0"
+    },
+    "ai/agents/scoper.md": {
+      "owner": "harness",
+      "source": "harness/agents/scoper.md",
+      "hash": "dfc2147004bf049219c43c0fdd633458eeb8a381d6991ee00a086de4ea85c46e"
+    },
+    "ai/agents/task-dispatcher.md": {
+      "owner": "harness",
+      "source": "harness/agents/task-dispatcher.md",
+      "hash": "b3440785fbe56bc1908939a603879cdf4050eb95b4177204130a0cb82307bf43"
+    },
+    "ai/agents/tdd-worker.md": {
+      "owner": "harness",
+      "source": "harness/agents/tdd-worker.md",
+      "hash": "d21c7ba23bfcaa35c707c9364c7ba49e20bfdcb2c81efb3aa70962aad70abfd2"
+    },
+    "ai/agents/triage.md": {
+      "owner": "harness",
+      "source": "harness/agents/triage.md",
+      "hash": "44374bb06ebc57b373239ddd75208e7cacda59a22d41a16e5f5be6a4483c045d"
+    },
+    "ai/tools/ai-check.mjs": {
+      "owner": "harness",
+      "source": "harness/check/ai-check.mjs",
+      "hash": "017764faed8b254a5998aaad6948ec3e87dcaa810d0cf66dd6b7901c2dca3ea3"
+    },
+    "ai/CONTRIBUTING.md": {
+      "owner": "harness",
+      "source": "harness/templates/ai/CONTRIBUTING.md",
+      "hash": "5990bf12ed20797e5ad8882871d0cfce9304a319e8b561e676955bbf803a6f8f"
+    },
+    "ai/skills/tracker-workflow/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/tracker-workflow",
+      "version": "1.0.0",
+      "hash": "a39b6abc97c61c857365250e7bf1c6729905188fa1267bc166b35539eba29ce0"
+    },
+    "ai/skills/jira-workflow-dev/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/jira-workflow",
+      "version": "2.0.0",
+      "hash": "00c074e62694d4c8ce18a1762f7ad479f0cfe174c0325f3b3eeaf7bc4ba88231"
+    },
+    "ai/skills/commit-messages/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/commit-messages",
+      "version": "1.1.1",
+      "hash": "162e2938eeeeaf3d1a74807d0125f1069d48db4b2ecfbcc6ae1a32229b1a02bb"
+    },
+    "ai/skills/bug-reporting/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/bug-reporting",
+      "version": "2.1.1",
+      "hash": "19ca4ea1f7d7b54de4f55344d13a2bde69673e04ea202e22b74184c33e89fdc2"
+    },
+    "ai/skills/feature-requests/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/feature-requests",
+      "version": "2.1.1",
+      "hash": "151f9c710e5dc0aa51ef6ff743f995f9fd73f7e876cb82fa01a7fe3d9edd87ad"
+    },
+    "ai/skills/secure-coding-owasp/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/secure-coding-owasp",
+      "version": "1.1.1",
+      "hash": "6468a72a3601edf00e9588586e96d4cae8ee08871c19b10f78299fcbb8dd4bfa"
+    },
+    "ai/skills/memory-discipline/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/memory-discipline",
+      "version": "1.2.1",
+      "hash": "77a905444938f3aa0b295ddb82faad199ae73e745f5da7ee4506dd039644fbd8"
+    },
+    "ai/skills/design-interview/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/design-interview",
+      "version": "1.0.0",
+      "hash": "a4afc653058f9fe5b5481d292d0a83b5345658e24904cd0d56dd1d4185e39097"
+    },
+    "ai/skills/code-review/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/code-review",
+      "version": "1.1.1",
+      "hash": "8f1b8ed68ebfa9ab85d7b4140299a22ec862d26aef7f4e603bd527c1bfa5b43c"
+    },
+    "ai/skills/medusa-backend/reference/api-routes.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "20d7193ab1ec13ce9523197700d7f521dd755b765b76c7ed5217b4a04abd36e4"
+    },
+    "ai/skills/medusa-backend/reference/authentication.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "899a712dca557b12071572e5fec2a176cbfd080707a6e84bbaee39132a1e2110"
+    },
+    "ai/skills/medusa-backend/reference/custom-modules.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "6dbc72b7e4a1ed257a71d194aeeb5812e1de11575aabe4895bc776e1ae2c1466"
+    },
+    "ai/skills/medusa-backend/reference/data-models.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "c4dced0863b82b6d936366006cc257c43114da731f080bccd184a5f263a57f37"
+    },
+    "ai/skills/medusa-backend/reference/error-handling.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "96554a6f32938f00efed5199d36ac66c1444663b279d1705f80d7ddda5a0251d"
+    },
+    "ai/skills/medusa-backend/reference/medusa-boundary.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "1f8d9aeaa501a774eaf2f7be8584ad089a39ef0057fa6054da88502c5d5c6942"
+    },
+    "ai/skills/medusa-backend/reference/module-links.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "c067380f93de2801e81ec69a1f844543ddb6ca8ae4fab03316997562bd8c5b5e"
+    },
+    "ai/skills/medusa-backend/reference/querying-data.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "17d39f0a509ce40e89038f0ad9df91f4f7cf13a108c904f2fe11136e13d00122"
+    },
+    "ai/skills/medusa-backend/reference/scheduled-jobs.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "41b6fb1758dc8de0209ae7ce90145025db93be53df68b0923a2d8b6d1a65261d"
+    },
+    "ai/skills/medusa-backend/reference/subscribers-and-events.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "a27c1121783ca6d3a7cb2bee3804f98189b4ac0a3a0b2cd78a84f92cd07f07aa"
+    },
+    "ai/skills/medusa-backend/reference/troubleshooting.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "4d211fe7d9b2054293810971ff008aa945c767e27a5fdd7f9e8075501e0d3d50"
+    },
+    "ai/skills/medusa-backend/reference/workflow-hooks.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "f3a93c9c139f116162dd9bcbc11a89026b37b5d6de2d2a84dc0726bc27c74503"
+    },
+    "ai/skills/medusa-backend/reference/workflows.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "64cf9fa0f29d92e8081dc4db4c15c9dd3de20c482953983d421caf5bd7dbeb9b"
+    },
+    "ai/skills/medusa-backend/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-backend",
+      "version": "1.0.2",
+      "hash": "69f17dc1865f0a43d0ee22dc7dbd501c44341c58d166a9a08882a95fafcec710"
+    },
+    "ai/skills/medusa-module-and-data/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-module-and-data",
+      "version": "1.0.1",
+      "hash": "9e8e4d944e8ba347a47c102d128baa15f7418c0e85ef9d6b24bd611796a7c38d"
+    },
+    "ai/skills/medusa-infra-adapter/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-infra-adapter",
+      "version": "1.0.1",
+      "hash": "26f71b49819de601271aaf4cfcc5f0ca382682e063a1238cf2471ef9808f7458"
+    },
+    "ai/skills/medusa-workflow-and-steps/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-workflow-and-steps",
+      "version": "1.0.1",
+      "hash": "acc860a9657e720b6d48d360ff7957cb9fe1d32d5cfef16438f49fbb7a1d52d5"
+    },
+    "ai/skills/medusa-api-route/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-api-route",
+      "version": "1.0.1",
+      "hash": "8c113b289b6fb5ded0af52cc1334f9ab0f58cffb2036ba11e87b49c1629c5a01"
+    },
+    "ai/skills/medusa-triggers/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-triggers",
+      "version": "1.0.1",
+      "hash": "254a58ff301ae833310b52d8eaf5829311d77b595f220a38958cad0a341d6f72"
+    },
+    "ai/skills/medusa-admin/references/data-loading.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "faf5b9f3bdecafc2a0616319b232797a7f0b20d4e336d2213c30f0af1bacd751"
+    },
+    "ai/skills/medusa-admin/references/display-patterns.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "2f82e9c28ecb0ea4ec50aedd580e9231f6e8a12bb0d4203576279dd2e10fdf3d"
+    },
+    "ai/skills/medusa-admin/references/forms.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "82fc4eb2afedba079accdc80bc93c32a1d3861c9eac806f00d56e5900de70078"
+    },
+    "ai/skills/medusa-admin/references/navigation.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "51748718ed593eead1857623685335d8d33216e24e975347fb552b7498cfd6b3"
+    },
+    "ai/skills/medusa-admin/references/table-selection.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "6026f6827ddc10108d2af91b5482844563168a936af793ae9f6d6a5e55f46274"
+    },
+    "ai/skills/medusa-admin/references/typography.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "3fb995b294d4825d07be95e8274a14889e7ebfc3e588f54127fc6f7c54a20b2d"
+    },
+    "ai/skills/medusa-admin/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-admin",
+      "version": "1.0.2",
+      "hash": "48663cef3cc9dde231f452ac47de7d3ace9d330eeaa249da32fff28cd622a11f"
+    },
+    "ai/skills/medusa-cloud/reference/debugging-deployments.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-cloud",
+      "version": "1.0.0",
+      "hash": "da9dbcd851b0596e260cb60b43b05466fb2d3e3fd01c5fe22643f6d288dfccfe"
+    },
+    "ai/skills/medusa-cloud/reference/environments-and-variables.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-cloud",
+      "version": "1.0.0",
+      "hash": "0fe21bb649e9c728c46c9ba207554adeddd337e20f0272d9f6d22e3cae211929"
+    },
+    "ai/skills/medusa-cloud/reference/setup.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-cloud",
+      "version": "1.0.0",
+      "hash": "4c28d8b264cb4a9984ce671f7a63a9ffe71a9062753fb343befa2abb5a6bf870"
+    },
+    "ai/skills/medusa-cloud/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-cloud",
+      "version": "1.0.0",
+      "hash": "c70caaf8627ae539a945f62fe7a15d215648ccdf0b6c951313beffeca873a671"
+    },
+    "ai/skills/medusa-storefront/references/frontend-integration.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-storefront",
+      "version": "1.0.2",
+      "hash": "741418c295d6b9f74cb3619fb29e75ad32cadc329fa8433dd3a93ac5959ae428"
+    },
+    "ai/skills/medusa-storefront/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/medusa-storefront",
+      "version": "1.0.2",
+      "hash": "a5c73770d9aaec669ab441725042a1c4a38bcc3d7ef839b1910e54189d1288ea"
+    },
+    "ai/skills/nextjs-data-layer/SKILL.md": {
+      "owner": "catalog",
+      "source": "skills/nextjs-data-layer",
+      "version": "1.0.1",
+      "hash": "c6233c8c0ed47d8397fb2da9218e94ce8235c10ac24c0c8fdade07bb8cba385e"
+    },
+    "ai/instructions/agent-discipline.md": {
+      "owner": "catalog",
+      "source": "instructions/agent-discipline.instructions.md",
+      "hash": "330b2d3e98d095d36eb784f61071102ff1efd60ba8254e78470c8817d44b3333"
+    },
+    "ai/instructions/commit-messages.md": {
+      "owner": "catalog",
+      "source": "instructions/commit-messages.instructions.md",
+      "hash": "8bc47ae879a0ac6819a2b164174a17564f22fddcea6959421e6e7493a38b726e"
+    },
+    "ai/instructions/typescript-style.md": {
+      "owner": "catalog",
+      "source": "instructions/typescript-style.instructions.md",
+      "hash": "38460cacafdf78dc2b4bcaf43a77bf91c82f040e1377dc609649fb686b6969a2"
+    },
+    "ai/instructions/medusa-backend.md": {
+      "owner": "catalog",
+      "source": "instructions/medusa-backend.instructions.md",
+      "hash": "0a37190f3fc6a212dfd83a418ec1e01ba0e8a1b0f5f75964ade01d2420c186e8"
+    },
+    ".claude/skills/bug-reporting/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "53dcf53f992e43db4507fb7a1daa3ee170c06e6dac7e2dbb292f0383b0e3ff7c"
+    },
+    ".github/skills/bug-reporting/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "53dcf53f992e43db4507fb7a1daa3ee170c06e6dac7e2dbb292f0383b0e3ff7c"
+    },
+    ".agents/skills/bug-reporting/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "53dcf53f992e43db4507fb7a1daa3ee170c06e6dac7e2dbb292f0383b0e3ff7c"
+    },
+    ".claude/skills/code-review/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "de0420a5c50c8cdb44fc32d8cc181b5985d4b1c58f9ca4988eb426bcdffc2ee6"
+    },
+    ".github/skills/code-review/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "de0420a5c50c8cdb44fc32d8cc181b5985d4b1c58f9ca4988eb426bcdffc2ee6"
+    },
+    ".agents/skills/code-review/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "de0420a5c50c8cdb44fc32d8cc181b5985d4b1c58f9ca4988eb426bcdffc2ee6"
+    },
+    ".claude/skills/commit-messages/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d5a80666571e3ed38cd99b0437281fb2543e84cc55d0604daea6a918f7b2e9d9"
+    },
+    ".github/skills/commit-messages/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d5a80666571e3ed38cd99b0437281fb2543e84cc55d0604daea6a918f7b2e9d9"
+    },
+    ".agents/skills/commit-messages/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d5a80666571e3ed38cd99b0437281fb2543e84cc55d0604daea6a918f7b2e9d9"
+    },
+    ".claude/skills/design-interview/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "40131deb8a9d5d3ba2d7b30812ca426f1abf07cfb4db53de4b3a22be221e7d20"
+    },
+    ".github/skills/design-interview/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "40131deb8a9d5d3ba2d7b30812ca426f1abf07cfb4db53de4b3a22be221e7d20"
+    },
+    ".agents/skills/design-interview/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "40131deb8a9d5d3ba2d7b30812ca426f1abf07cfb4db53de4b3a22be221e7d20"
+    },
+    ".claude/skills/feature-requests/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d638d9d50d8f50eabd3edfe8d55b70afa8b96ae0526bbb38bb9c62674629e5de"
+    },
+    ".github/skills/feature-requests/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d638d9d50d8f50eabd3edfe8d55b70afa8b96ae0526bbb38bb9c62674629e5de"
+    },
+    ".agents/skills/feature-requests/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d638d9d50d8f50eabd3edfe8d55b70afa8b96ae0526bbb38bb9c62674629e5de"
+    },
+    ".claude/skills/jira-workflow-dev/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "16235632edd88123da1e5310f226a1588bfc7278458b860f1595147fb7437ed5"
+    },
+    ".github/skills/jira-workflow-dev/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "16235632edd88123da1e5310f226a1588bfc7278458b860f1595147fb7437ed5"
+    },
+    ".agents/skills/jira-workflow-dev/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "16235632edd88123da1e5310f226a1588bfc7278458b860f1595147fb7437ed5"
+    },
+    ".claude/skills/medusa-admin/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "9e6c62e53e94dde2659e97038ab6bd5ef9399e1ba126c7cba136bf7128ca1dcb"
+    },
+    ".github/skills/medusa-admin/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "9e6c62e53e94dde2659e97038ab6bd5ef9399e1ba126c7cba136bf7128ca1dcb"
+    },
+    ".agents/skills/medusa-admin/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "9e6c62e53e94dde2659e97038ab6bd5ef9399e1ba126c7cba136bf7128ca1dcb"
+    },
+    ".claude/skills/medusa-api-route/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "97382f1e83159065f0898573140220f3bc440361c1ec67101a4b3fb1c0404625"
+    },
+    ".github/skills/medusa-api-route/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "97382f1e83159065f0898573140220f3bc440361c1ec67101a4b3fb1c0404625"
+    },
+    ".agents/skills/medusa-api-route/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "97382f1e83159065f0898573140220f3bc440361c1ec67101a4b3fb1c0404625"
+    },
+    ".claude/skills/medusa-backend/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "0c1cf402bdb373b8206263763c29a6bcbba3dc9219a00abfade6d79290d003e1"
+    },
+    ".github/skills/medusa-backend/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "0c1cf402bdb373b8206263763c29a6bcbba3dc9219a00abfade6d79290d003e1"
+    },
+    ".agents/skills/medusa-backend/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "0c1cf402bdb373b8206263763c29a6bcbba3dc9219a00abfade6d79290d003e1"
+    },
+    ".claude/skills/medusa-cloud/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "559242d6dde70e1b5c9552a935c721b3892a186158ead433332cbe4f731ec157"
+    },
+    ".github/skills/medusa-cloud/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "559242d6dde70e1b5c9552a935c721b3892a186158ead433332cbe4f731ec157"
+    },
+    ".agents/skills/medusa-cloud/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "559242d6dde70e1b5c9552a935c721b3892a186158ead433332cbe4f731ec157"
+    },
+    ".claude/skills/medusa-infra-adapter/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "bac414c63be487958ff339c4e3f679e4e449a27f786bf1a235372fbd4af303f2"
+    },
+    ".github/skills/medusa-infra-adapter/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "bac414c63be487958ff339c4e3f679e4e449a27f786bf1a235372fbd4af303f2"
+    },
+    ".agents/skills/medusa-infra-adapter/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "bac414c63be487958ff339c4e3f679e4e449a27f786bf1a235372fbd4af303f2"
+    },
+    ".claude/skills/medusa-module-and-data/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "e69fda97c84e73fbd190b198c5dfcf582c8d57b6f227989a3d683c481d857073"
+    },
+    ".github/skills/medusa-module-and-data/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "e69fda97c84e73fbd190b198c5dfcf582c8d57b6f227989a3d683c481d857073"
+    },
+    ".agents/skills/medusa-module-and-data/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "e69fda97c84e73fbd190b198c5dfcf582c8d57b6f227989a3d683c481d857073"
+    },
+    ".claude/skills/medusa-storefront/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "ee1f2b536005bdce0dc4daea83f06d2d1b6b00bd1dcc154cebb36dfc9998f2c4"
+    },
+    ".github/skills/medusa-storefront/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "ee1f2b536005bdce0dc4daea83f06d2d1b6b00bd1dcc154cebb36dfc9998f2c4"
+    },
+    ".agents/skills/medusa-storefront/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "ee1f2b536005bdce0dc4daea83f06d2d1b6b00bd1dcc154cebb36dfc9998f2c4"
+    },
+    ".claude/skills/medusa-triggers/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "acd966d2d1247a26cc9af41eccbc33cc5b99346e01c0cb37ef7fbae9aad6ec82"
+    },
+    ".github/skills/medusa-triggers/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "acd966d2d1247a26cc9af41eccbc33cc5b99346e01c0cb37ef7fbae9aad6ec82"
+    },
+    ".agents/skills/medusa-triggers/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "acd966d2d1247a26cc9af41eccbc33cc5b99346e01c0cb37ef7fbae9aad6ec82"
+    },
+    ".claude/skills/medusa-workflow-and-steps/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f8c93f3a3dfb3bfd0f8c749428ad6668bc8753b008615634c98032d9c28a873e"
+    },
+    ".github/skills/medusa-workflow-and-steps/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f8c93f3a3dfb3bfd0f8c749428ad6668bc8753b008615634c98032d9c28a873e"
+    },
+    ".agents/skills/medusa-workflow-and-steps/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f8c93f3a3dfb3bfd0f8c749428ad6668bc8753b008615634c98032d9c28a873e"
+    },
+    ".claude/skills/memory-discipline/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f87269dab6b3b11ebc695369c818168f4d52b9bd57df56a4ccd5271588f2d21a"
+    },
+    ".github/skills/memory-discipline/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f87269dab6b3b11ebc695369c818168f4d52b9bd57df56a4ccd5271588f2d21a"
+    },
+    ".agents/skills/memory-discipline/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f87269dab6b3b11ebc695369c818168f4d52b9bd57df56a4ccd5271588f2d21a"
+    },
+    ".claude/skills/nextjs-data-layer/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "73d60d02118fce9462718b65e8c05619d24f08509c26a72b3a291bcfd02df7d0"
+    },
+    ".github/skills/nextjs-data-layer/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "73d60d02118fce9462718b65e8c05619d24f08509c26a72b3a291bcfd02df7d0"
+    },
+    ".agents/skills/nextjs-data-layer/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "73d60d02118fce9462718b65e8c05619d24f08509c26a72b3a291bcfd02df7d0"
+    },
+    ".claude/skills/secure-coding-owasp/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "216d7cc38f03d6039c1663228e71f08cca08180b870a65ebe9cfce2ac1629027"
+    },
+    ".github/skills/secure-coding-owasp/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "216d7cc38f03d6039c1663228e71f08cca08180b870a65ebe9cfce2ac1629027"
+    },
+    ".agents/skills/secure-coding-owasp/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "216d7cc38f03d6039c1663228e71f08cca08180b870a65ebe9cfce2ac1629027"
+    },
+    ".claude/skills/storefront-best-practices/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "5b7ca736b151b0c99d4a8637c4d4fa1218e6d1a12069926c9abacf55ef0e4e26"
+    },
+    ".github/skills/storefront-best-practices/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "5b7ca736b151b0c99d4a8637c4d4fa1218e6d1a12069926c9abacf55ef0e4e26"
+    },
+    ".agents/skills/storefront-best-practices/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "5b7ca736b151b0c99d4a8637c4d4fa1218e6d1a12069926c9abacf55ef0e4e26"
+    },
+    ".claude/skills/tracker-workflow/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "941fcd67ce3774cf5d4249a73a4afaea8086f44bbcb34d29e297f81683b2bacd"
+    },
+    ".github/skills/tracker-workflow/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "941fcd67ce3774cf5d4249a73a4afaea8086f44bbcb34d29e297f81683b2bacd"
+    },
+    ".agents/skills/tracker-workflow/SKILL.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "941fcd67ce3774cf5d4249a73a4afaea8086f44bbcb34d29e297f81683b2bacd"
+    },
+    ".claude/agents/triage.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "f25881206876069d6dea590441b7a160bec44f559b28463d6c771d5c2e85abd0"
+    },
+    ".github/agents/triage.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "a39bae41d015473f4193bcbe81bf1515508a17abf06fbbef55064c43b447baad"
+    },
+    ".codex/agents/triage.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "18e86edbd7f7b6e9a71d1030c9058d13c2475fe7238561303a5d83b52a5af3f9"
+    },
+    ".claude/agents/quick-fix.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "8878bb3035e5a5e6fe5653fcb7c47f58c9784012991903be3f7b2d91b6560ccf"
+    },
+    ".github/agents/quick-fix.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "e0e298e151be432a0d49beb68129cafd3f74d9cb853e0cfc575311416860c540"
+    },
+    ".codex/agents/quick-fix.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "7daa6ad0b624693d9edb8d573ee0558cf73a24aef3660b5364fcaa6c3be01118"
+    },
+    ".claude/agents/analyse.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "befb9eb1c22321dfc3854d098bba983700f7030f7f9faaf1529d7fbeaf2988e7"
+    },
+    ".github/agents/analyse.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "51b6fcfcdb9ef8de6b1c7a1a9dd561c18a669a54cdca5209eca8a0f96841ac5d"
+    },
+    ".codex/agents/analyse.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "5e933499fb751cf5cb0f4af538c205150990266ffe25d85e5b1fec4a3070d6e6"
+    },
+    ".claude/agents/scoper.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "492b7e017cfb8c8773807360f435fad017a26c2bd0e270c01ad0818c905d2cc8"
+    },
+    ".github/agents/scoper.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "cff72431f28334880f1e9377e0b9fc36fce29eb3f9d0b3d37164ab2ace3ca04a"
+    },
+    ".codex/agents/scoper.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "cdfede502a99fd70ab6a42c9d67960693cd9eb2dc1f6bc112b6ef9d424c6ba0b"
+    },
+    ".claude/agents/implementation-planner.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "941191a5b148cc46b42efa2a7afcb1a28055dcbe1dda5713eaed2329e2c70188"
+    },
+    ".github/agents/implementation-planner.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "5857162c359b5d7ec44d50977b55356282d9f2d44d6954a3906e5fd6c7864bdf"
+    },
+    ".codex/agents/implementation-planner.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "4a9ded3b7648a6800d43c0467769701013a221f8610de8c5ba784d6c1b990b75"
+    },
+    ".claude/agents/task-dispatcher.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "373c16b89cd2989c884f945a0d3272675ddf3ed9e455cc10fb3a7172bd754cbc"
+    },
+    ".github/agents/task-dispatcher.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "ae311f39c4472910926753d41e8a96773de3036c4fc4345678f99134c3d46d71"
+    },
+    ".codex/agents/task-dispatcher.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d206fe241c5879c54d0596ea5c5a66f26256be055416f564e4e82bab29ffc654"
+    },
+    ".claude/agents/tdd-worker.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "e2a875d7f81c4d0a0cde12051b81dc05fb56ef8c2e253d649fb26f2323562508"
+    },
+    ".github/agents/tdd-worker.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "9d40d09fb1dec6430215f04d7ad7c390d832b25ab1bd3616384a0b9cc50caea9"
+    },
+    ".codex/agents/tdd-worker.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "c000981113d0e873a480fe8c33aed30b888b2f3d49ea7aed980d49c9edbe6565"
+    },
+    ".claude/agents/code-reviewer.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "56513415135b3606884eee8a696c5472f52b183a9da615299eff51304d2149c0"
+    },
+    ".github/agents/code-reviewer.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "576efd4e67b3954e6b386a287e1e9041acbf02cf3869c40d78f7913a3c936b03"
+    },
+    ".codex/agents/code-reviewer.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "a0ee724f66bc6d70cd3938403a7da35174f8afba37e91413af99978d58f0707f"
+    },
+    ".claude/agents/integration-reviewer.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "ba19165833e0730c3ca4bc26eb45f6f1a0b4b5ab208b0f3bebee1bce12c6091c"
+    },
+    ".github/agents/integration-reviewer.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "c943b9e604c71309b000a5e38eb69ea47b5f28b8249e0c2b675e0a146cd3031a"
+    },
+    ".codex/agents/integration-reviewer.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "071d28c9ea07eb4d50b2dd230704912bdf7a134cd7c4abf518fb6007e94908d0"
+    },
+    ".claude/agents/committer.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "a80129824fd26bde0d5c391d77c72e1c44375de3ae25138840eb439e36842f7a"
+    },
+    ".github/agents/committer.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "51bb46dd594d2b02d2eee70a794231ffacc069c92237102aff181b820d33f489"
+    },
+    ".codex/agents/committer.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "31bdb5e47e63b41f7b3b5052eea81ded05b95d8e0cff3d3fcf57ff738525b3ee"
+    },
+    ".claude/agents/documentation-writer.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "02b9e76814991eb447cb549e1a9bd885aa6506d108db152d84e74500e2ca54db"
+    },
+    ".github/agents/documentation-writer.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "57ef00f00e24aee006e081a0922d2e89250b2b6b0a715da068beabfb2a10b79f"
+    },
+    ".codex/agents/documentation-writer.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "fc2da202bd68e919d839d5d604fcc22ebdcfe4c83347d448b2e716b76544208c"
+    },
+    ".claude/agents/cleanup.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "4d03037a3c33d4f2629df48668af0b809751fec448b3ff8d31ba6f4f8967f91e"
+    },
+    ".github/agents/cleanup.agent.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d28e888f0096a4fcecebaec24dcf2d22768c042c22a95056afc6ee123a2531b2"
+    },
+    ".codex/agents/cleanup.toml": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "05d7ca34455784f47f1da20d3b02b05f839a750772e51ef894d18e1dfd48a2df"
+    },
+    ".claude/rules/agent-discipline.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "0a5fb14410cfc66816444d504a0c4ae91552c5927c040187e5074c62d9efb452"
+    },
+    ".github/instructions/agent-discipline.instructions.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "2e08f29a2fd6fdbafea5e113924794aec9a44b60294dd9d0862414a54cd22bfb"
+    },
+    ".claude/rules/commit-messages.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "497962f64862ca9ed1149669e0d788a173a97bf23a8fcdb35c0daeacc337db8c"
+    },
+    ".github/instructions/commit-messages.instructions.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "57eb012f9f53cabd90565310f372bcdaf2f1e9fc9d76aabc44674ac7b8090210"
+    },
+    ".claude/rules/typescript-style.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "303a5d5a46e0c661060a7c7846a4e633dadbc5e0ad121eb9942664d72f208c24"
+    },
+    ".github/instructions/typescript-style.instructions.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "593a5971c3ab002c16a9e978be6152a4ee32ceb141780f6a398895e16695771c"
+    },
+    ".claude/rules/medusa-backend.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d6fcaa2ca65b09c1d5375048c4dc1545a2ceda9348b398e35f62947af0cb4eb5"
+    },
+    ".github/instructions/medusa-backend.instructions.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "a57ed4df372dea01133e7675d11b266a172285f7b62eb260723abeca745f2970"
+    },
+    "apps/backend/AGENTS.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "79f229a46677695b1ebabc8fc2719dcb190bf428f8640dcf5b92172260f2ec5e"
+    },
+    "CLAUDE.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "d84b1513e4658f2c9817e50c190fadb570ad13b338bddc998e43e248ffdb2c46"
+    },
+    "AGENTS.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "9cd4ddadd0cf7765b09c0a2756398015e605483d54fd29f7dcc0f359bc37381f"
+    },
+    ".github/copilot-instructions.md": {
+      "owner": "generated",
+      "source": "adapters",
+      "hash": "4a7f705c29b8a089bee4f676df7fe522af2dafdd2c52bf496820765c7a405bb4"
+    }
+  }
+}

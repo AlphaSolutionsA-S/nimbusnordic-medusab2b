@@ -1,0 +1,3 @@
+name = "triage"
+description = "The entry point for all work: reads an issue or a pasted request, registers new work, and routes it to quick-fix, the full pipeline or analyse."
+developer_instructions = "Follow the role definition in `ai/agents/triage.md`."

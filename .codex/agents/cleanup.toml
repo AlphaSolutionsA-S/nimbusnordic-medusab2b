@@ -1,0 +1,3 @@
+name = "cleanup"
+description = "Deletes the pipeline's working files from the case folder, leaving its records frozen."
+developer_instructions = "Follow the role definition in `ai/agents/cleanup.md`."

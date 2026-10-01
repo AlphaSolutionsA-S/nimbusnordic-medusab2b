@@ -1,0 +1,3 @@
+name = "tdd-worker"
+description = "Implements one task test-first from its test intent and records deviations; also runs the consolidation pass."
+developer_instructions = "Follow the role definition in `ai/agents/tdd-worker.md`."
