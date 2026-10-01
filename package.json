@@ -18,7 +18,7 @@
     "ai:check": "node ai/tools/ai-check.mjs"
   },
   "devDependencies": {
-    "@medusajs/eslint-plugin": "2.21.0",
+    "@medusajs/eslint-plugin": "2.21.2",
     "eslint": "^9.13.0",
     "jiti": "^2.7.0",
     "turbo": "^2.3.3"
@@ -27,6 +27,13 @@
     "overrides": {
       "@types/react": "19.0.5",
       "@types/react-dom": "19.0.5"
+    },
+    "packageExtensions": {
+      "@hookform/resolvers@3": {
+        "peerDependencies": {
+          "zod": "^3"
+        }
+      }
     }
   }
 }
