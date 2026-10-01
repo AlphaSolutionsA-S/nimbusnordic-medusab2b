@@ -177,3 +177,20 @@
   existing group are now ignored, as reports below a text already were. Module tests 40/40 pass on
   disposable Postgres; tsc and lint add nothing new.
 - **Handover to:** user (as in the previous entry).
+
+- **Date:** 2026-10-01
+- **Updated by:** coordinating agent
+- **Outcome:** The language switcher now loads the newest texts. Before it navigates,
+  `RegionSwitcher` calls the server action `refreshUiTranslationsForCountry`
+  (`apps/storefront/src/lib/data/ui-translations-refresh.ts`). The action invalidates the target
+  locale's `ui-translations:<locale>` tag, so the next page load reads from the backend instead of a
+  copy that can be up to 300 s old.
+  - Unknown country input maps to the default locale, so only the 8 known tags can be touched.
+  - Each locale is invalidated at most once per 10 s per process, which bounds backend reads from
+    this public action.
+  - A failed refresh is logged and the switch still happens.
+  - Known trade-off: if the backend is down at that moment, the invalidated locale falls back to the
+    last-good copy, or to raw keys on a worker that has none.
+  - **Checks:** switcher and action tests 11/11; tsc at the baseline (8); `next lint` clean on the
+    changed files. Not committed.
+- **Handover to:** user (review, commit).

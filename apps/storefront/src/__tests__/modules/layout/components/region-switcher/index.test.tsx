@@ -1,9 +1,14 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, waitFor } from "@testing-library/react"
 import { useParams } from "next/navigation"
 
 jest.mock("next/navigation", () => ({
   useParams: jest.fn(() => ({ countryCode: "gb" })),
 }))
+jest.mock("@/lib/data/ui-translations-refresh", () => ({
+  refreshUiTranslationsForCountry: jest.fn(() => Promise.resolve()),
+}))
+
+import { refreshUiTranslationsForCountry } from "@/lib/data/ui-translations-refresh"
 
 import CountrySelect from "@/modules/checkout/components/country-select"
 import { RegionSwitcher, RegionSwitcherOption } from "@/modules/layout/components/region-switcher"
@@ -26,6 +31,7 @@ describe("RegionSwitcher", () => {
 
   beforeEach(() => {
     ;(useParams as jest.Mock).mockReturnValue({ countryCode: "gb" })
+    ;(refreshUiTranslationsForCountry as jest.Mock).mockClear()
     // `window.location.href` is reassigned (not `router.push`) so the
     // navigation re-triggers middleware.ts — jsdom doesn't implement real
     // navigation, so location is replaced with a writable stand-in per test.
@@ -71,12 +77,12 @@ describe("RegionSwitcher", () => {
     ).toBeInTheDocument()
   })
 
-  it("TC-2: selecting a different region redirects to that region's homepage", () => {
+  it("TC-2: selecting a different region redirects to that region's homepage", async () => {
     render(<RegionSwitcher options={options} />)
 
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "dk" } })
 
-    expect(window.location.href).toBe("/dk")
+    await waitFor(() => expect(window.location.href).toBe("/dk"))
   })
 
   it("TC-3: re-selecting the currently-active region is a no-op", () => {
@@ -85,6 +91,35 @@ describe("RegionSwitcher", () => {
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "gb" } })
 
     expect(window.location.href).toBe("")
+    expect(refreshUiTranslationsForCountry).not.toHaveBeenCalled()
+  })
+
+  it("TC-5: refreshes the new language's texts before navigating", async () => {
+    let finishRefresh: () => void = () => {}
+    ;(refreshUiTranslationsForCountry as jest.Mock).mockReturnValueOnce(
+      new Promise<void>((resolve) => {
+        finishRefresh = resolve
+      })
+    )
+    render(<RegionSwitcher options={options} />)
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "de" } })
+
+    expect(refreshUiTranslationsForCountry).toHaveBeenCalledWith("de")
+    expect(window.location.href).toBe("")
+    finishRefresh()
+    await waitFor(() => expect(window.location.href).toBe("/de"))
+  })
+
+  it("TC-6: still navigates when the refresh fails", async () => {
+    ;(refreshUiTranslationsForCountry as jest.Mock).mockReturnValueOnce(
+      Promise.reject(new Error("offline"))
+    )
+    render(<RegionSwitcher options={options} />)
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "se" } })
+
+    await waitFor(() => expect(window.location.href).toBe("/se"))
   })
 
   it("TC-4: is a distinct control from the checkout country-select", () => {
