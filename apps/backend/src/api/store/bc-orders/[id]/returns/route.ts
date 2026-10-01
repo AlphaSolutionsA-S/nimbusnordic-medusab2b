@@ -71,14 +71,9 @@ export const POST = async (
       }
     }
 
-    // TEMP (NIMBUS-138): debug logging of unexpected return errors; remove after sandbox verification.
     req.scope
       .resolve(ContainerRegistrationKeys.LOGGER)
-      .error(
-        `BC return request failed: ${
-          error instanceof Error ? `${error.name}: ${error.message}\n${error.stack}` : String(error)
-        }`
-      );
+      .error("BC return request failed");
 
     res.status(500).json({
       message: "The return request could not be completed. Please try again later.",

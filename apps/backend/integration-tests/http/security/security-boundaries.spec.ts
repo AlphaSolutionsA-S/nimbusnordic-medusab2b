@@ -162,11 +162,11 @@ medusaIntegrationTestRunner({
       },
     );
 
-    it('requires customer authentication for Business Central operations', async () => {
+    it('does not expose Business Central operations', async () => {
       const response = await api.get('/store/business-central/operations', {
-        ...publicHeaders, validateStatus: () => true,
+        ...headers, validateStatus: () => true,
       });
-      expect(response.status).toBe(401);
+      expect(response.status).toBe(404);
     });
 
     it.each(['/store/bc-returns', '/store/bc-returns/1001'])(

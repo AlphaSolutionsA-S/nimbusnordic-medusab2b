@@ -1486,10 +1486,6 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       sourceOrderNo: params.sourceOrderNo,
       lines: JSON.stringify(lines),
     });
-    // TEMP (NIMBUS-138): debug logging of the BC return request; remove after sandbox verification.
-    this.logger?.info(
-      `Business Central create return request: POST ${actionUrl.toString()} body=${requestBody}`
-    );
 
     let actionResponse: Response;
 
@@ -1504,10 +1500,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
         body: requestBody,
         signal: AbortSignal.timeout(CREATE_RETURN_TIMEOUT_MS),
       });
-    } catch (error) {
-      this.logger?.info(
-        `Business Central create return request did not complete: ${String(error)}`
-      );
+    } catch {
       throw new BusinessCentralAmbiguousOutcomeError(
         "Business Central return request did not complete",
         params.requestId
@@ -1515,9 +1508,6 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     const responseText = await actionResponse.text().catch(() => "");
-    this.logger?.info(
-      `Business Central create return response: status=${actionResponse.status} body=${responseText}`
-    );
 
     if (actionResponse.status >= 500 || actionResponse.status === 408) {
       throw new BusinessCentralAmbiguousOutcomeError(

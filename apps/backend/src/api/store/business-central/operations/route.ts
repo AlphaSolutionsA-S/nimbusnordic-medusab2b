@@ -1,3 +1,11 @@
+import type { MedusaRequest, MedusaResponse } from "@medusajs/framework";
+
+export const GET = (_req: MedusaRequest, res: MedusaResponse): void => {
+  res.status(404).end();
+};
+
+/* Disabled after the API security review: the raw Business Central discovery document
+ * must not be exposed to storefront customers.
 import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
@@ -18,3 +26,4 @@ export const GET = async (
     operations,
   });
 };
+*/
