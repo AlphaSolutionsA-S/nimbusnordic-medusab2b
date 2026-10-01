@@ -122,15 +122,22 @@ function valueAt(messages: MessageDocument, key: string): string | undefined {
   return Object.prototype.hasOwnProperty.call(flat, key) ? flat[key] : undefined;
 }
 
-/** True when a proper prefix of the key path is a text, so the key can never be added. */
-function hasTextAncestor(messages: MessageDocument, key: string): boolean {
+/**
+ * True when the key can never become a text: a proper prefix of its path is a text, or the
+ * key itself is an existing group.
+ */
+function clashesWithDocument(messages: MessageDocument, key: string): boolean {
+  const segments = key.split(".");
   let node: MessageDocument = messages;
-  for (const segment of key.split(".").slice(0, -1)) {
+  for (const [index, segment] of segments.entries()) {
     if (!Object.prototype.hasOwnProperty.call(node, segment)) {
       return false;
     }
     const child = node[segment];
     if (typeof child === "string") {
+      return index < segments.length - 1;
+    }
+    if (index === segments.length - 1) {
       return true;
     }
     node = child;
@@ -480,12 +487,12 @@ export default class StorefrontTranslationModuleService extends MedusaService({
       if (report.kind === "key") {
         const document = documents.get(report.locale);
         // Individual keys only for provisioned locales, and only while still absent or empty.
-        // A key below an existing text can never be resolved, so it is not recorded either.
+        // A key below an existing text, or naming an existing group, can never be resolved.
         if (
           !document ||
           keyPathProblem(key) ||
           (valueAt(document, key) ?? "").trim() !== "" ||
-          hasTextAncestor(document, key)
+          clashesWithDocument(document, key)
         ) {
           continue;
         }

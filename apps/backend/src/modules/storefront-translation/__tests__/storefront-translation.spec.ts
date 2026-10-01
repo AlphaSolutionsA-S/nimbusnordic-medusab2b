@@ -326,15 +326,17 @@ moduleIntegrationTestRunner<StorefrontTranslationModuleService>({
         expect(count).toBe(MAX_REPORTS_GLOBAL);
       });
 
-      it("TC-4: ignores keys below an existing text but accepts new keys and group children", async () => {
+      it("TC-4: ignores keys below an existing text or naming a group but accepts new keys and group children", async () => {
         await importLocale("pl");
         const result = await service.reportMissing([
           { locale: "pl", page_path: "/", kind: "key", key: "Cart.title.sub" },
           { locale: "pl", page_path: "/", kind: "key", key: "Cart.title.sub.deeper" },
+          { locale: "pl", page_path: "/", kind: "key", key: "Cart" },
+          { locale: "pl", page_path: "/", kind: "key", key: "Common.group" },
           { locale: "pl", page_path: "/", kind: "key", key: "Common.group.child" },
           { locale: "pl", page_path: "/", kind: "key", key: "Cart.newKey" },
         ]);
-        expect(result).toEqual({ accepted: 2, ignored: 2 });
+        expect(result).toEqual({ accepted: 2, ignored: 4 });
         const rows = await service.listTranslationMissingKeys({ locale: "pl" });
         expect(rows.map((row) => row.key).sort()).toEqual(["Cart.newKey", "Common.group.child"]);
       });
