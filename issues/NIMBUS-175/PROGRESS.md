@@ -170,3 +170,10 @@
 - **Handover to:** user (review the fixes, move Jira out of Estimation, push and open a PR to `develop`).
 - **Handover prompt:** Re-review the fix commits on `feature/NIMBUS-175`, then push and open a PR. Roll out
   per `ROLLOUT.md`.
+
+- **Date:** 2026-10-01
+- **Updated by:** coordinating agent
+- **Outcome:** Fixed the remaining review item (`9e2975b`): missing-key reports that name an
+  existing group are now ignored, as reports below a text already were. Module tests 40/40 pass on
+  disposable Postgres; tsc and lint add nothing new.
+- **Handover to:** user (as in the previous entry).
