@@ -14,6 +14,10 @@ jest.mock("@/lib/data/regions", () => ({
   ]),
 }))
 
+jest.mock("@/lib/data/ui-translations-refresh", () => ({
+  refreshUiTranslationsForCountry: jest.fn(() => Promise.resolve()),
+}))
+
 import Footer from "@/modules/layout/templates/footer"
 
 describe("Footer", () => {
