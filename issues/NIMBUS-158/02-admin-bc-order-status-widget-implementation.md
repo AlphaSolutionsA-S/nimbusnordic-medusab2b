@@ -465,3 +465,26 @@ No existing files are modified. The widget is auto-discovered by Medusa's admin 
   `@medusajs/framework/types`.
 - **Reconcile response shape** — the `BcIntegrationStatus` interface must match the actual GET
   response from Task 01, which in turn must match the actual metadata shape from NIMBUS-148/149.
+
+## Deviations
+
+- Actual Task 01 DTO fields replace placeholders; the hook reuses AdminBcIntegration through a type-only import.
+- Approved manual Refresh supersedes the legacy mutation-invalidation skeleton and generic skill guideline. No mutation invalidation, polling, focus/reconnect refresh or automatic query retry occurs; mount loads current status.
+- Installed Medusa UI exports Prompt instead of Dialog. Confirmation uses its real accessible title/description/action/cancel primitives and warns about duplicates with the recorded BC identifier.
+- Submission waits for a successful status read; fetching/error/pending states disable it. Both controls disable during submission. Local messages replace raw backend errors and response text.
+- Eight RTL cases run the actual widget, hooks, React Query and Medusa UI with only SDK transport mocked.
+- Admin Jest maps React and JSX runtimes to backend React 18. Installed workspace icons otherwise bind React 19 while the renderer/UI/Radix/testing-library use React 18; mappings fix the observed element/runtime failure without mocking UI or changing dependencies.
+- Updated the Admin skill project.md's stale no-widgets statement and manual-refresh exception. No docs/architecture directory exists.
+
+## Done-when evidence
+
+- Status, attempts, last-attempt timestamp and partial outcomes: waits for status before allowing submission and shows partial line outcomes.
+- Untracked/missing BC identifier: shows an untracked order with a clear missing identifier.
+- Normal false payload, accepted feedback, manual Refresh and no focus/reconnect/mutation refetch: submits normally, keeps reads manual after acceptance/focus/reconnect, and refreshes the outcome.
+- Duplicate warning/current ID/cancel without API/confirmed true payload: requires explicit force confirmation with the BC id and cancellation sends nothing.
+- Sent status OR recorded BC header requires confirmation: two parameterized requires confirmation when sent or a BC header exists cases.
+- Failed read blocks submission until manual recovery: blocks submission on a failed status read and permits recovery only after manual refresh.
+- Pending controls and sanitized start failure: disables both actions during submission and sanitizes a start failure.
+- Installed source confirms order.details.side zone and Prompt API. Browser rendering and deployed delivery remain unverified.
+- Also update: Admin skill project.md, manifest state, branch-notes and PROGRESS. No previous behavior tests/current docs describing this new widget found.
+- Verification: eight scoped Admin tests pass; lint 0 errors/13 existing warnings; typecheck 22 unchanged baseline errors. Rerun scoped tests after adding consumed-field assertions.

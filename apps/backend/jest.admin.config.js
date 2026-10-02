@@ -4,8 +4,14 @@ module.exports = {
   testEnvironment: "jsdom",
   testMatch: ["**/src/admin/**/__tests__/**/*.test.tsx"],
   modulePathIgnorePatterns: ["dist/", "<rootDir>/.medusa/"],
+  // Workspace dependencies include React 19; Admin tests use the backend's React 18 renderer.
+  moduleNameMapper: {
+    "^react$": require.resolve("react"),
+    "^react/jsx-runtime$": require.resolve("react/jsx-runtime"),
+    "^react/jsx-dev-runtime$": require.resolve("react/jsx-dev-runtime"),
+  },
   transform: {
-    "^.+\.[jt]sx?$": [
+    "^.+\\.[jt]sx?$": [
       "@swc/jest",
       {
         jsc: {

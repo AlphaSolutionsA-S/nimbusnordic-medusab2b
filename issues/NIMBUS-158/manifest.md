@@ -6,12 +6,10 @@
 
 ## Dependency Status
 
-NIMBUS-148 (BC submission workflow) and NIMBUS-149 (order persistence + integration-state
-metadata) are **scoped but not yet implemented**. This plan is ready for dispatch once those
-stories are implemented and their actual contracts (metadata key names, workflow name, input
-shape, in-progress status value, partial-failure fields) are available. The task files contain
-explicit `TODO` markers at every point that requires reconciliation with NIMBUS-148/149's actual
-implementation.
+NIMBUS-148 and NIMBUS-149 are implemented. Task 01 reconciled their actual metadata contract and
+reusable delivery workflow; the dispatch reconciliation section and branch-notes.md record the
+current seams. Placeholder skeletons remain historical design context and are superseded by each
+task's recorded deviations and the implemented code.
 
 ## Branch
 
@@ -22,7 +20,7 @@ implementation.
 | # | Title | File | App | Depends On | Status |
 |---|-------|------|-----|------------|--------|
 | 01 | Admin API routes for BC integration status and submission | `01-admin-bc-integration-api-routes-implementation.md` | backend | NIMBUS-148, NIMBUS-149 | DONE |
-| 02 | Admin order-detail widget for BC status and retry | `02-admin-bc-order-status-widget-implementation.md` | backend | 01 | TODO |
+| 02 | Admin order-detail widget for BC status and retry | `02-admin-bc-order-status-widget-implementation.md` | backend | 01 | DONE |
 | 03 | Integration tests for BC integration admin API | `03-admin-bc-integration-tests-implementation.md` | backend | 01 | TODO |
 
 ## Cross-Task Wiring Summary

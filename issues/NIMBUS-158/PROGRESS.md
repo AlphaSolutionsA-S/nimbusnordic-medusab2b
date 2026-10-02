@@ -43,3 +43,16 @@
 
 - Outcome: Addressed the lease-expiry review blocker with serialized owner renewal during delivery and timer/drain/release cleanup. Scoped behavior tests remain 4/4 passing. Runtime proof beyond initial TTL belongs to Task 03.
 - Next owner: code-reviewer for final Task 01 verdict, then Task 02 and Task 03 workers.
+
+## 2026-10-02 - Task 02 implementation complete; review pending
+
+- Updated by: Task 02 tdd-worker; root executed authorized writes and checks.
+- Outcome: Admin order BC widget/hooks implemented with manual Refresh, explicit force confirmation/cancellation, disabled controls and sanitized feedback. Eight RTL cases passed; lint 0 errors/13 existing warnings; typecheck unchanged at 22 baseline errors.
+- Next owner: dispatcher/code-reviewer, then Task 03 integration-test worker.
+- Handover prompt: Review Task 02 against manual-refresh and confirmation requirements, then implement real HTTP/authentication/background-delivery/reservation-renewal tests using branch-notes.md. Browser and deployed outcomes remain unverified.
+
+## 2026-10-02 - Task 02 review approved
+
+- Outcome: Dedicated review approved the widget, manual-refresh hooks, real confirmation UI and test-runtime mapping. Scoped Admin tests reran successfully: 8/8 passed, including attempt count and last-attempt timestamp assertions.
+- Next owner: dispatcher/Task 03 integration-test worker after the local Task 02 commit.
+- Handover prompt: Verify Admin authentication, asynchronous acceptance, ordinary duplicate protection, confirmed force resend and reservation renewal/cleanup through the real HTTP/framework runtime. No deployed result has been checked.
