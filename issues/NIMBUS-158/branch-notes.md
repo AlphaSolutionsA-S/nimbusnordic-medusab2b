@@ -22,3 +22,14 @@
 - Raw backend errors/messages never render; local feedback says accepted and asks for Refresh, without claiming BC completion.
 - Eight RTL behavior cases use actual React Query/Prompt, SDK-only mocking. Jest maps React/JSX imports to backend React 18 because workspace icons otherwise bind React 19.
 - Browser placement and deployed delivery remain unverified; Task 03 needs real HTTP/auth/background/renewal evidence.
+
+## Task 03 - Real HTTP and reservation verification
+
+- `integration-tests/http/admin/bc-integration.spec.ts` adds 12 cases against the actual Medusa app/PostgreSQL and real delivery workflows; vendor HTTP responses alone are synthetic.
+- Both operations deny anonymous, invalid bearer and customer bearer requests with 401. Real Admin bearer/session requests work. Strict invalid bodies return 400 and missing orders return 404.
+- Exact response/line whitelists exclude raw payload/vendor details. Deferred vendor lookup proves 202 precedes completion and both normal/force overlaps return 409.
+- Ordinary already-sent requests perform no BC header write; explicit force writes, and failed force retains previous BC identity. Completed attempts can retry using the shared deterministic transaction ID.
+- Automatic/Admin overlap, wrong-owner release protection and event-emission compensation use real lock/event/workflow primitives.
+- A held vendor lookup remains reserved beyond the initial 3600s TTL, recovers one transient renewal failure and releases the reservation/timer after completion; subsequent force succeeds.
+- Test-utils local PostgreSQL URL must contain `localhost` to avoid its forced-TLS branch; shell-only port55432/IPv4-first environment was used. Seeded reservations are drained before database reset because stored-workflow waiting does not await queued subscriber cleanup.
+- Oct2 scoped HTTP12/12 passed54.6s; lint0errors13existingwarnings; tsc22unchanged baseline. Dedicated review and whole-branch finalization remain next. No live vendor/deployed result is claimed.

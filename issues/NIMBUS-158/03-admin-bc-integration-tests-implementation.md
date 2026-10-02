@@ -1,6 +1,6 @@
 # Task 03: Integration Tests for BC Integration Admin API
 
-**Status:** TODO
+**Status:** DONE
 **App:** backend
 **App Root:** apps/backend
 **Task ID:** 03
@@ -254,3 +254,23 @@ medusaIntegrationTestRunner({
   The test uses `'pending'` as a placeholder; the implementor must reconcile with the actual
   value.
 - **Reconcile `BC_INTEGRATION_STATE_KEY`** — same as Task 01.
+
+## Deviations
+
+- The historical placeholder design is superseded: NIMBUS-148/149 are implemented. Tests use the actual `business_central_integration` contract and the real stored delivery workflow; pending metadata is not an in-progress signal.
+- HTTP tests run the actual Medusa application and PostgreSQL. Only vendor fetch responses are replaced at the HTTP boundary; unexpected outbound URLs are blocked. Synthetic credentials and data remain in the test process.
+- Authentication uses real Admin users/auth identities and installed middleware. Both routes deny anonymous, invalid bearer and customer bearer requests with 401; real Admin bearer and session requests succeed.
+- Overlap is exercised against real shared owner reservations for Admin and automatic dispatch. Selective fake timers control Date/renewal intervals while PostgreSQL and network scheduling stay real. A deferred vendor lookup crosses the original 3600-second TTL; one injected transient renewal failure recovers.
+- Narrow event-emission and lease-acquisition fault injection verifies actual compensation and lease outcomes. Tests do not mock workflow dependency resolution or assert framework service call order.
+- Installed test-utils forces TLS unless its database URL contains literal `localhost`. Disposable local PostgreSQL therefore uses shell-only `localhost:55432` plus IPv4-first resolution; production configuration is unchanged.
+- Actual `waitWorkflowExecutions` does not await queued subscriber reservation cleanup. Tests drain seeded-order reservations by acquiring/releasing a separate owner after workflow execution and before database reset. Vendor Response objects are freshly generated for retries.
+- Also-update search found no stale subscriber-event assertion and no existing `docs/architecture` directory. The manifest now names the actual DTO and reconciled primitives. Architecture rule documentation belongs to the subsequent consolidation stage.
+
+## Done when
+
+- [x] Twelve real HTTP/framework tests pass: typed exact response/line whitelists; null untracked state; negative authentication; strict request validation and missing-order errors; asynchronous 202 while vendor lookup is deferred; ordinary duplicate protection; explicit force and failed-force identity retention; Admin session authentication; completed retry; automatic/Admin overlap; owner-safe release; event-emission compensation; lease renewal beyond original TTL and final timer/reservation cleanup.
+- [x] Normal and forced overlapping requests return 409 while delivery is active, including beyond the initial TTL; a later forced delivery succeeds after cleanup.
+- [x] Raw canonical payload, vendor details and extra line fields are excluded from the whole HTTP response.
+- [x] Scoped HTTP verification on 2026-10-02: 12/12 passed in 54.6 seconds. Lint: 0 errors, 13 existing warnings. Whole backend typecheck: 22 unchanged baseline errors; no new diagnostics.
+- [x] Dedicated review and dispatcher approval on 2026-10-02.
+- [ ] Whole-branch finalization checks and deployed result verification, owned by later stages. Local tests use fake vendor HTTP responses; live Business Central delivery and browser placement are unverified.
