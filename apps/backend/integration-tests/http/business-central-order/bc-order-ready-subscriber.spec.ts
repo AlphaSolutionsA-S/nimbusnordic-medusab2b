@@ -22,6 +22,7 @@ import {
   createInitialBcIntegrationState,
 } from "../../../src/modules/order-ingestion/bc-integration-state";
 import type { BcIntegrationState } from "../../../src/modules/order-ingestion/bc-integration-state";
+import { ADMIN_BC_SUBMISSION_REQUESTED_EVENT } from "../../../src/workflows/business-central-order/utils/submission-reservation";
 import { singleLineCanonicalOrder } from "../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures";
 
 jest.setTimeout(60 * 1000);
@@ -113,7 +114,9 @@ medusaIntegrationTestRunner({
           .spyOn(bcService, "findItemsForOrderLines")
           .mockResolvedValue(LOOKUP_RESULTS);
 
-        return jest.spyOn(bcService, "createSalesOrder").mockResolvedValue(CREATED);
+        return jest
+          .spyOn(bcService, "createSalesOrder")
+          .mockResolvedValue(CREATED);
       }
 
       async function readIntegrationState(
@@ -192,12 +195,13 @@ medusaIntegrationTestRunner({
       });
 
       it("TC-3: is registered for the boundary event the ingestion chain emits", () => {
-        expect(businessCentralOrderReadyConfig.event).toEqual(
-          READY_FOR_BUSINESS_CENTRAL_EVENT
-        );
-        expect(businessCentralOrderReadyConfig.event).toEqual(
+        expect(READY_FOR_BUSINESS_CENTRAL_EVENT).toBe(
           "order_ingestion.ready_for_business_central"
         );
+        expect(businessCentralOrderReadyConfig.event).toEqual([
+          READY_FOR_BUSINESS_CENTRAL_EVENT,
+          ADMIN_BC_SUBMISSION_REQUESTED_EVENT,
+        ]);
       });
 
       it("TC-4: the real event chain drives the order to sent end to end", async () => {

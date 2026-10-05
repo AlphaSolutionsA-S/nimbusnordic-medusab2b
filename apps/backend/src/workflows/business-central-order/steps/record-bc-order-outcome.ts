@@ -44,8 +44,8 @@ export const recordBcOrderOutcomeStep = createStep(
     const now = new Date().toISOString();
     const nextState: BcIntegrationState = {
       status: input.status,
-      bc_order_id: input.bcOrderId,
-      bc_order_number: input.bcOrderNumber,
+      bc_order_id: input.bcOrderId ?? previousState.bc_order_id,
+      bc_order_number: input.bcOrderNumber ?? previousState.bc_order_number,
       attempt_count: previousState.attempt_count + 1,
       initialized_at: previousState.initialized_at,
       last_attempt_at: now,
