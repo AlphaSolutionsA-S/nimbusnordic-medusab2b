@@ -175,6 +175,9 @@ export function parseBcIntegrationState(value: unknown): BcIntegrationState {
  * Medusa order — either the last attempt reported `sent`, or a BC order id was recorded at all
  * (which also happens on a `failed` outcome where BC created the header but rejected every line).
  */
-export function hasBusinessCentralOrder(state: BcIntegrationState): boolean {
+export function hasBusinessCentralOrder(state: {
+  status: BcIntegrationStatus | null;
+  bc_order_id: string | null;
+}): boolean {
   return state.bc_order_id !== null || state.status === "sent";
 }

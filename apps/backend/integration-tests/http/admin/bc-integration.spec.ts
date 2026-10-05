@@ -24,7 +24,7 @@ import {
 } from "../../../src/workflows/business-central-order/utils/submission-reservation";
 
 jest.setTimeout(120_000);
-const JWT_SECRET = "nimbus158-synthetic-jwt";
+const JWT_SECRET = "supersecret";
 const INITIALIZED_AT = "2026-10-01T00:00:00.000Z";
 const DISCOVERY =
   "https://api.businesscentral.dynamics.com/v2.0/00000000-0000-0000-0000-000000000001/TestDK/api/v2.0";

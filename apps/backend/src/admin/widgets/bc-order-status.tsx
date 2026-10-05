@@ -10,6 +10,7 @@ import {
   Text,
 } from "@medusajs/ui";
 import { Spinner } from "@medusajs/icons";
+import { hasBusinessCentralOrder } from "../../modules/order-ingestion/bc-integration-state";
 import {
   useBcIntegrationStatus,
   useSubmitOrderToBc,
@@ -44,7 +45,7 @@ const BcOrderStatusWidget = ({
 
   const writeToBc = () => {
     if (!canSubmit || !integration) return;
-    if (integration.status === "sent" || integration.bc_order_id) {
+    if (hasBusinessCentralOrder(integration)) {
       setForceResendOpen(true);
     } else {
       submission.mutate({ force_resend: false });

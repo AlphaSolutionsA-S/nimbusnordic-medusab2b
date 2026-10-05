@@ -69,3 +69,12 @@
 - Outcome: Dedicated reviewer approved the 12 real HTTP/framework cases and reconciled records. All three implementation tasks are reviewed.
 - Next owner: dispatcher for whole-branch finalization, consolidation and integration review.
 - Handover prompt: Complete full backend checks, reconcile the shared duplicate-warning predicate and business-rule registry, and prepare the deviation report for the human gate. No branch has been pushed and no deployed result is verified.
+
+## 2026-10-05 - Consolidation implementation; final verification pending
+
+- Updated by: consolidation tdd-worker; root executes authorized writes and checks.
+- Outcome: The widget and submission guard now share `hasBusinessCentralOrder`, accepting nullable Admin status without changing the duplicate rule. Added nullable-state coverage, reconciled the existing subscriber registration assertion with both events, aligned the new HTTP fixture with the common synthetic JWT secret, and registered both business rules. Generated instructions are refreshed from the registry.
+- Correction: Task 03's earlier Also-update search missed `businessCentralOrderReadyConfig.event`; full HTTP verification found the stale scalar assertion. Consolidation preserves the original ingestion event assertion and checks both subscribed events.
+- Verification: Before consolidation, full unit 32 suites/258 tests and Admin 4 suites/37 tests passed; scoped new HTTP 12/12 passed. Full HTTP originally had 33 failures across 5 suites; one stale event assertion was new. With a common JWT environment, companies and translations pass; the Admin quote case reaches the documented cart-seeding failure. The aligned full HTTP run and consolidation checks remain pending. Backend and Admin builds passed before consolidation.
+- Next owner: dispatcher/root for final checks, then integration reviewer and the human deviation gate. Architecture documentation is handed to documentation-writer after the gate.
+- Handover prompt: Finish verification without assuming old failures are baseline, review the shared predicate/registry and security coverage in branch-notes, and prepare the deviation report. Do not push. Deployed browser placement, live Business Central delivery and multi-instance locking remain unverified.
