@@ -1,7 +1,7 @@
 # Show Business Central status and retry in Medusa Admin
 
 - **Date:** 2026-09-02
-- **Status:** Scoped
+- **Status:** Implemented
 - **Type:** Story
 - **Tracker:** JIRA — https://alphasolutionsdk.atlassian.net/browse/NIMBUS-158
 - **Priority:** Medium
@@ -133,3 +133,9 @@ general rule that a previously sent order must always be short-circuited.
 - **NIMBUS-148** — supplies the reusable Business Central submission workflow, duplicate guard,
   status updates, and Business Central order identifier. Its already-sent guard must gain a
   narrowly scoped, explicit force-resend override for this story.
+
+## Documentation
+
+- [Business Central order submission](../../docs/architecture/business-central-order.md) — Current workflow, Admin API/widget, state, duplicate/force policy, reservation flow and runtime/deployment limitations (created).
+
+AI base files updated during implementation: `ai/architecture/decisions.md` (shared duplicate/force rules) and `ai/skills/medusa-admin/project.md` (widget/manual-refresh convention). No additional AI base change is needed for documentation.

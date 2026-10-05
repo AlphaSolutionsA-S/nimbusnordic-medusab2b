@@ -85,3 +85,19 @@
 - Outcome: Removed export modifiers from three file-local types after checking all source/integration-test references. Runtime behavior is unchanged. Added concrete `Verify after deploy:` lines to all three task files for deployed route/overlap, widget/manual-refresh/confirmation and actual stored BC completion checks.
 - Verification: Import-site scan confirms no external consumer of the removed exports. Root reruns lint/typecheck after this compile-only patch; no repeated HTTP run is needed for export visibility alone. Deployment checks remain instructions, not observed results.
 - Next owner: root/dispatcher and integration reviewer for final verification/deviation report. Documentation and deployment follow the human gate.
+
+## 2026-10-05 - Integration review approved; documentation and cleanup next
+
+- Updated by: integration reviewer; root records the report and final measured checks.
+- Outcome: Cross-task design and wiring approved. Shared duplicate rule, authenticated sanitized APIs, asynchronous event dispatch, force confirmation and owner reservation lifecycle have local behavior evidence. Removed three unused type exports and preserved explicit deployment checks. No unresolved feature design questions remain.
+- Final verification: Backend unit 33 suites/269 tests passed; Admin 4 suites/37 tests passed; full HTTP 11 passed/2 failed suites, 146 passed/8 failed tests; modules 26 passed/2 failed suites, 301 passed/2 failed tests. Quote cart-seeding and legacy BC fixture failures match documented baseline categories but were not reproduced at merge-base. Typecheck retains 22 baseline diagnostics; lint 0 errors/13 existing warnings; generated instruction check and final backend/Admin build passed.
+- Next owner: root-authorized documentation-writer and cleanup through the project workflow, then the final push permission step.
+- Handover prompt: Preserve deviation-report.md and its exact deployment checks while completing current architecture documentation, reviewable PR description and temporary pipeline cleanup. No push or deployment has occurred. Live BC delivery, deployed widget placement and cross-instance exclusion remain unverified; this is an implementation record with delivery pending.
+
+## 2026-10-05 - Architecture documentation complete
+
+- Updated by: documentation-writer; root applies authorized documentation writes.
+- Outcome: Added domain documentation for reusable Business Central delivery, sanitized Admin APIs/state, widget/manual-refresh/confirmation behavior, shared reservation/event flow and current runtime limitations. Scope links the document and existing AI base rule updates. Documentation describes the implemented behavior rather than historical plan placeholders.
+- Verification: Cross-checked against current routes, workflow, subscriber, state contract and Admin hooks/widget. Local automated evidence is separated from pending deployed/live BC checks. No source, tests or configuration changed in this stage.
+- Next owner: dispatcher/cleanup and PR description preparation.
+- Handover prompt: Preserve the durable scope/plan/report/progress record, remove temporary pipeline files through cleanup, prepare the reviewable PR description and request final push permission. Local implementation is complete; shipping/deployment and frozen-case status are not claimed.
