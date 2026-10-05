@@ -478,6 +478,8 @@ No existing files are modified. The widget is auto-discovered by Medusa's admin 
 
 ## Done-when evidence
 
+Verify after deploy: Open the deployed Admin order detail for a designated BC test order; verify status loads, submission reports acceptance without automatically reloading, and Refresh shows the later outcome. On an order with sent status or a BC identifier, verify the warning includes the identifier when present, Cancel sends no POST, and explicit confirmation sends force_resend true. Verify focus/reconnect alone sends no status GET.
+
 - Status, attempts, last-attempt timestamp and partial outcomes: waits for status before allowing submission and shows partial line outcomes.
 - Untracked/missing BC identifier: shows an untracked order with a clear missing identifier.
 - Normal false payload, accepted feedback, manual Refresh and no focus/reconnect/mutation refetch: submits normally, keeps reads manual after acceptance/focus/reconnect, and refreshes the outcome.

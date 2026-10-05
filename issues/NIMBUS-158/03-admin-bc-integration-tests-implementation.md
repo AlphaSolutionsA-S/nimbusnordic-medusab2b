@@ -268,6 +268,8 @@ medusaIntegrationTestRunner({
 
 ## Done when
 
+Verify after deploy: For a designated order in the approved BC test environment, read the completed state after an accepted submission and compare its BC identifier/order number with the actual BC sales order. Verify an ordinary repeat creates no additional BC order, and an explicitly confirmed force resend creates a new BC order whose identifier is persisted and visible after manual Refresh.
+
 - [x] Twelve real HTTP/framework tests pass: typed exact response/line whitelists; null untracked state; negative authentication; strict request validation and missing-order errors; asynchronous 202 while vendor lookup is deferred; ordinary duplicate protection; explicit force and failed-force identity retention; Admin session authentication; completed retry; automatic/Admin overlap; owner-safe release; event-emission compensation; lease renewal beyond original TTL and final timer/reservation cleanup.
 - [x] Normal and forced overlapping requests return 409 while delivery is active, including beyond the initial TTL; a later forced delivery succeeds after cleanup.
 - [x] Raw canonical payload, vendor details and extra line fields are excluded from the whole HTTP response.

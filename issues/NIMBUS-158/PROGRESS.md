@@ -78,3 +78,10 @@
 - Verification: Before consolidation, full unit 32 suites/258 tests and Admin 4 suites/37 tests passed; scoped new HTTP 12/12 passed. Full HTTP originally had 33 failures across 5 suites; one stale event assertion was new. With a common JWT environment, companies and translations pass; the Admin quote case reaches the documented cart-seeding failure. The aligned full HTTP run and consolidation checks remain pending. Backend and Admin builds passed before consolidation.
 - Next owner: dispatcher/root for final checks, then integration reviewer and the human deviation gate. Architecture documentation is handed to documentation-writer after the gate.
 - Handover prompt: Finish verification without assuming old failures are baseline, review the shared predicate/registry and security coverage in branch-notes, and prepare the deviation report. Do not push. Deployed browser placement, live Business Central delivery and multi-instance locking remain unverified.
+
+## 2026-10-05 - Integration review mechanical corrections
+
+- Updated by: consolidation worker; root applies writes after the active build completes.
+- Outcome: Removed export modifiers from three file-local types after checking all source/integration-test references. Runtime behavior is unchanged. Added concrete `Verify after deploy:` lines to all three task files for deployed route/overlap, widget/manual-refresh/confirmation and actual stored BC completion checks.
+- Verification: Import-site scan confirms no external consumer of the removed exports. Root reruns lint/typecheck after this compile-only patch; no repeated HTTP run is needed for export visibility alone. Deployment checks remain instructions, not observed results.
+- Next owner: root/dispatcher and integration reviewer for final verification/deviation report. Documentation and deployment follow the human gate.

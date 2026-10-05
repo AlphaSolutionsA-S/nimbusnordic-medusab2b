@@ -14,7 +14,7 @@
 
 ## Task 02 - Admin order widget
 
-- widgets/bc-order-status.tsx exports the auto-discovered order.details.side widget; hooks/api/bc-integration.tsx exports useBcIntegrationStatus/useSubmitOrderToBc and BcIntegrationResponse/SubmitOrderToBcInput.
+- widgets/bc-order-status.tsx exports the auto-discovered order.details.side widget; hooks/api/bc-integration.tsx exports useBcIntegrationStatus/useSubmitOrderToBc; response/input types stay file-local.
 - Requests use existing session SDK; DTO import from Task 01 is type-only.
 - Initial mount loads status; explicit Refresh is the only later reload. No mutation invalidation, focus/reconnect or polling refresh.
 - Normal start sends false. Sent OR any BC ID opens real Medusa Prompt; cancel makes no API call, confirmed force sends true with a duplicate warning/current ID.

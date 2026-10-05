@@ -318,6 +318,8 @@ Test cases are defined in Task 03.
 
 ## Done-when evidence
 
+Verify after deploy: On a designated order in the approved BC test environment, verify unauthenticated GET and POST return 401; an Admin POST returns 202 before completion, another request during active processing returns 409, and a later GET returns the persisted outcome and BC identifier.
+
 - Status read returns only the sanitized current state: `admin-bc-integration.unit.spec.ts`, `returns null status for untracked orders` and `whitelists failure codes and drops vendor messages and canonical data`; route HTTP proof is Task 03.
 - Submission validates `force_resend` and returns 202 after reservation and event emission: registered `AdminSubmitOrderToBc` middleware and `requestBcSubmissionWorkflow`; real HTTP acceptance proof is Task 03.
 - Normal duplicate protection and explicit force exception: unit tests `keeps ordinary retries duplicate-safe when a BC id exists even on failure` and `guards a sent state without an identifier and allows a failed retry without one`.

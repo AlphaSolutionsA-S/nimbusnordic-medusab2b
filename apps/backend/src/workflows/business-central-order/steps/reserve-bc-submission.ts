@@ -7,7 +7,7 @@ import {
   getBcSubmissionReservationKey,
 } from "../utils/submission-reservation";
 
-export type BcSubmissionRequest = {
+type BcSubmissionRequest = {
   order_id: string;
   force_resend: boolean;
   reservation_owner_id: string;

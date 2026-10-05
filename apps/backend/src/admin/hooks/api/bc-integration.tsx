@@ -2,8 +2,8 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { sdk } from "../../lib/client";
 import type { AdminBcIntegration } from "../../../workflows/business-central-order/utils/admin-bc-integration";
 
-export type BcIntegrationResponse = { bc_integration: AdminBcIntegration };
-export type SubmitOrderToBcInput = { force_resend: boolean };
+type BcIntegrationResponse = { bc_integration: AdminBcIntegration };
+type SubmitOrderToBcInput = { force_resend: boolean };
 export const useBcIntegrationStatus = (orderId: string) =>
   useQuery({
     queryKey: ["bc-integration", orderId],
