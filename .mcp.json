@@ -8,7 +8,7 @@
       "type": "http",
       "url": "https://docs.medusajs.com/mcp",
       "headers": {
-        "Authorization": "Bearer ${MEDUSA_MCP_TOKEN}"
+        "Authorization": "Bearer tkn_endusr_01KWV4KMDWG46B0A3ZPGCCKDD3_9af5a8ea03eea0c2b4969c63f328dd0321ff67d3d04499d252063c6ed7a30676"
       }
     }
   }
