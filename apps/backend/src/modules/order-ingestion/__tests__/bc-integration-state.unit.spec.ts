@@ -102,6 +102,15 @@ describe("parseBcIntegrationState", () => {
 });
 
 describe("hasBusinessCentralOrder", () => {
+  it("accepts untracked Admin state and still recognizes a recorded BC identity", () => {
+    expect(hasBusinessCentralOrder({ status: null, bc_order_id: null })).toBe(
+      false
+    );
+    expect(hasBusinessCentralOrder({ status: null, bc_order_id: "bc-1" })).toBe(
+      true
+    );
+  });
+
   it("TC-5: reports an existing BC order from either the id or a sent status", () => {
     const base = createInitialBcIntegrationState("2026-09-29T10:00:00.000Z");
 

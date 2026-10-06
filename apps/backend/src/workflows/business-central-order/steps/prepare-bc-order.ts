@@ -16,7 +16,6 @@ import type {
 } from "../../../modules/business-central/types";
 import {
   BC_INTEGRATION_STATE_METADATA_KEY,
-  hasBusinessCentralOrder,
   parseBcIntegrationState,
 } from "../../../modules/order-ingestion/bc-integration-state";
 import type {
@@ -33,9 +32,11 @@ import type {
   BcOrderPayloadAddress,
 } from "../../../modules/order-ingestion/bc-order-payload";
 import { resolveBcCurrencyOverride } from "../utils/resolve-bc-currency-override";
+import { shouldSkipBcSubmission } from "../utils/admin-bc-integration";
 
 export type PrepareBcOrderInput = {
   order_id: string;
+  force_resend?: boolean;
 };
 
 export type PreparedBcOrderOutcome = "skip" | "abort" | "submit";
@@ -150,9 +151,8 @@ export const prepareBcOrderStep = createStep(
       metadata[BC_INTEGRATION_STATE_METADATA_KEY]
     );
 
-    // Duplicate-submission guard: a Business Central sales order already exists for this Medusa
-    // order, so do not create a second one. No attempt is made, so nothing is recorded.
-    if (hasBusinessCentralOrder(integrationState)) {
+    // Normal sends remain duplicate-safe; only an explicit Admin force resend bypasses this guard.
+    if (shouldSkipBcSubmission(integrationState, input.force_resend)) {
       return new StepResponse({
         orderId: order.id,
         outcome: "skip",
