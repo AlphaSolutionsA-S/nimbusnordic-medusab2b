@@ -3,9 +3,9 @@
     "type": "string",
     "value": "<GLOBALLISTS_API_URL - see token-list-schema.md>"
   },
-  "globalListsApiKey": {
+  "struct-api-key": {
     "type": "string",
-    "value": "<GLOBALLISTS_SUBSCRIPTION_KEY - enter in the Portal only, never commit>"
+    "value": "<GLOBALLISTS_AUTHORIZATION_HEADER_VALUE - enter in the Portal only, never commit>"
   },
   "medusaOrderApiBaseUrl": {
     "type": "string",
@@ -13,6 +13,6 @@
   },
   "medusaSecretApiKey": {
     "type": "string",
-    "value": "<MEDUSA_SECRET_API_KEY - enter in the Portal only, never commit>"
+    "value": "<BASE64 OF '<medusa secret api key>:' - enter in the Portal only, never commit>"
   }
 }

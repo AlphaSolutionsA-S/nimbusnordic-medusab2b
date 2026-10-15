@@ -185,3 +185,24 @@
 - **Handover prompt:** Deploy NIMBUS-146 as a Logic App Standard following
   `issues/NIMBUS-146/artifacts/deployment-instructions.md`, then give the Standard-shape
   workflow URL to the NIMBUS-145 APIM owner and run `test-payloads.md`.
+
+## 2026-10-15 — Deployed and working
+- **Updated by:** main session; the user deployed it.
+- **Outcome:** The user deployed the Logic App (Standard) and APIM, and reports the end-to-end
+  path working. `logic-app-workflow-definition.json` is now the deployed definition. It differs from
+  the planned one:
+  - The token list is the real GlobalLists envelope (`GlobalListValues[]`). Each entry's `Value` is
+    an object `{ apikey, bccustomernumber }`, replacing the planned `"<token>::<customerNumber>"`
+    string. `Filter_Matching_Token` matches `Value.apikey` against the path token.
+  - The GlobalLists auth is the `struct-api-key` parameter in an `authorization` header, replacing
+    `globalListsApiKey` in `Ocp-Apim-Subscription-Key`.
+  - The Medusa call sends `Authorization: basic <medusaSecretApiKey>`, so that parameter holds
+    Base64 of `<secret key>:`.
+  - `parameters.json`, `token-list-schema.md`, `deployment-instructions.md` and `test-payloads.md`
+    (TC-1, TC-3, TC-4) were aligned to the deployed shape.
+- **Noted, not changed (deployed as-is):** `Condition_Token_Matched` also runs after
+  `Filter_Matching_Token` fails. A failed filter then errors on `length(null)`, so the request fails
+  closed with no response action rather than a designed 401. `Compose_Matched_Value` is no longer
+  read by any step.
+- **Verified:** the user reports a working end-to-end call. Which test cases were run is not recorded.
+- **Handover to:** reviewer (NIMBUS-146 to Internal review on the user's go-ahead).

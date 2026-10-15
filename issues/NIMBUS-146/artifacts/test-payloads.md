@@ -4,7 +4,7 @@
 
 **Known blocker:** TC-1, TC-5, and TC-6 require NIMBUS-129's `POST /orderapi/orders` endpoint to be implemented and deployed. TC-2, TC-3, TC-4, and TC-7 can be run once this Logic App is deployed.
 
-Assume the token list includes `Value = "a1b2c3d4e5f6::579000283084"`. For TC-1, the target Medusa environment must contain a Company with `business_central_customer_number = "579000283084"`.
+Assume the token list includes an entry with `Value = { "apikey": "a1b2c3d4e5f6", "bccustomernumber": "579000283084" }` (shape: `token-list-schema.md`). For TC-1, the target Medusa environment must contain a Company with `business_central_customer_number = "579000283084"`.
 
 ## TC-1: Valid token and order
 
@@ -44,25 +44,25 @@ Expect exactly `401 {"error":"Token not recognized"}`. Confirm neither the token
 
 ## TC-3: Token without a customer number
 
-Seed `Value = "missing-customer-number::"`, then send a structurally valid order to:
+Seed `Value = { "apikey": "missing-customer-number", "bccustomernumber": "" }`, then send a structurally valid order to:
 
 ```http
 POST <LOGIC_APP_TRIGGER_URL>/orders/missing-customer-number
 Content-Type: application/json
 ```
 
-Expect exactly `401 {"error":"Not allowed"}`. Confirm `Response_Not_Allowed` ran and `Forward_Order_To_Medusa` was skipped. Repeat with a fallback `CustomerNumber` of `null` and `""` if that schema is used.
+Expect exactly `401 {"error":"Not allowed"}`. Confirm `Response_Not_Allowed` ran and `Forward_Order_To_Medusa` was skipped.
 
-## TC-4: Token entry with no `::` delimiter
+## TC-4: Token entry with no `bccustomernumber`
 
-Seed `Value = "no-delimiter-token"` — a token with the customer number never encoded — then send a structurally valid order to:
+Seed `Value = { "apikey": "no-delimiter-token" }`, a token whose customer number was never set, then send a structurally valid order to:
 
 ```http
 POST <LOGIC_APP_TRIGGER_URL>/orders/no-delimiter-token
 Content-Type: application/json
 ```
 
-Expect exactly `401 {"error":"Not allowed"}`. In the run history, confirm `Filter_Matching_Token` *did* match the entry, that `Compose_Customer_Number` output is the empty string (not `no-delimiter-token`), and that `Forward_Order_To_Medusa` was skipped. This is the regression check that a malformed entry never reaches Medusa as `?customerNumber=no-delimiter-token`.
+Expect exactly `401 {"error":"Not allowed"}`. In the run history, confirm `Filter_Matching_Token` *did* match the entry, that `Compose_Customer_Number` output is empty, and that `Forward_Order_To_Medusa` was skipped. This is the regression check that an entry without a customer number never reaches Medusa.
 
 ## TC-5: Downstream structural validation failure
 

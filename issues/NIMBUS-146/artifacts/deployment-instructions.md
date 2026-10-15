@@ -20,7 +20,7 @@ only: **enter the real keys in the Portal and never commit them.**
 
 - [ ] Confirm the real GlobalLists API URL, list identifier, and read-auth mechanism, then populate the placeholders in `token-list-schema.md`.
 - [ ] Confirm NIMBUS-129's `POST /orderapi/orders` endpoint is deployed to the intended Medusa environment before routing live traffic.
-- [ ] Create a dedicated Medusa secret API key for this Logic App. It is used as the HTTP Basic-auth username with an empty password.
+- [ ] Create a dedicated Medusa secret API key for this Logic App. The workflow sends it as `Authorization: basic <medusaSecretApiKey>`, so the parameter holds the Base64 encoding of `<secret key>:` (key as username, empty password), not the raw key.
 - [ ] Agree who may access the Logic App resource: without Key Vault, anyone who can open its Parameters, or read its files through the storage account or Kudu, can read both keys.
 
 ## Deployment
@@ -31,9 +31,9 @@ only: **enter the real keys in the Portal and never commit them.**
    | Parameter | Value |
    |---|---|
    | `globalListsApiUrl` | The GlobalLists list URL from `token-list-schema.md` |
-   | `globalListsApiKey` | The GlobalLists subscription key |
+   | `struct-api-key` | The value of the `authorization` header for reading the GlobalLists list |
    | `medusaOrderApiBaseUrl` | The Medusa backend base URL, no trailing slash |
-   | `medusaSecretApiKey` | The dedicated Medusa secret API key |
+   | `medusaSecretApiKey` | Base64 of `<dedicated Medusa secret API key>:` |
 
 3. Under **Workflows → Workflows**, add a workflow (state type **Stateful**, so run history is kept). In **Code view**, replace the content with `logic-app-workflow-definition.json` and save.
 4. On the workflow's **Overview**, copy the trigger's **Workflow URL**. It has the Standard shape `https://<app>.azurewebsites.net/api/<workflow>/triggers/manual/invoke/orders/{token}?api-version=…&sp=…&sv=1.0&sig=…`.
@@ -46,7 +46,6 @@ only: **enter the real keys in the Portal and never commit them.**
 - Without `securestring`, a parameter value is not masked by its type.
 - `Get_Token_List` carries `runtimeConfiguration.secureData` on `inputs`, so run history hides the GlobalLists key. Its outputs (the fetched list) stay visible for debugging.
 - `Forward_Order_To_Medusa` is deliberately **not** secured (decided 2026-10-15): its inputs, including the forwarded order body **and the Medusa secret API key**, are visible in run history for debugging. Anyone who can read the Logic App's run history can read that key.
-- If the Portal rejects an empty Basic-auth password, replace the `authentication` block with an `Authorization: @concat('Basic ', base64(concat(parameters('medusaSecretApiKey'), ':')))` header.
 - The customer's own path token is not redacted. That is explicitly out of scope for NIMBUS-146, per SCOPE.md.
 - Rotating a key: edit its value under **Workflows → Parameters**. No workflow edit is needed.
 

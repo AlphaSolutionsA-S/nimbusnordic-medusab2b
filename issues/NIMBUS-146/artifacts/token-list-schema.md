@@ -1,57 +1,43 @@
-# NIMBUS-146 — Token List Store Schema (GlobalLists Extension)
+# NIMBUS-146 — Token List Store Schema (GlobalLists)
 
 ## Store identity
 
-- **GlobalLists API base URL:** `<TBD - confirm with Azure environment owner; NOT the same list as the unrelated structpim.com product-feed example>`
-- **List identifier:** `<TBD - confirm with Azure environment owner>`
-- **Auth mechanism for reading this list:** `<TBD - confirm; likely a subscription key or similar, matching whatever the example Get_APIkeys action uses>`
+- **GlobalLists API URL:** the `globalListsApiUrl` parameter (set in the Logic App's `parameters.json`).
+- **Auth for reading this list:** the `struct-api-key` parameter, sent as the `authorization` header.
 
-This is a genuinely new, dedicated list for this project — not the same list as the unrelated product-feed example. It must be created (or an existing customer-token list repointed) in the real GlobalLists store before the workflow is deployed.
+This is a dedicated list for this project, not the unrelated product-feed example list.
 
-## Entry schema (primary design)
+## Response shape (as deployed, 2026-10-15)
 
-Each entry uses the example list's existing three fields, encoding the customer number into `Value` with a `::` delimiter:
+`Get_Token_List` returns an envelope, and the entries are in `GlobalListValues`. Each entry's
+`Value` is an object holding the customer's token and Business Central customer number:
 
-| Field | Type | Meaning |
-|---|---|---|
-| `Uid` | string | Unique row identifier (unchanged from example) |
-| `SortOrder` | number | Display/sort order (unchanged from example) |
-| `Value` | string | `"<token>::<customerNumber>"` |
+```json
+{
+  "Total": 2,
+  "Remaining": 0,
+  "LastId": "…",
+  "GlobalListValues": [
+    {
+      "Created": "…", "CreatedBy": "…", "LastModified": "…", "LastModifiedBy": "…",
+      "GlobalListUid": "…", "Uid": "…", "SortOrder": 1,
+      "Value": { "apikey": "a1b2c3d4e5f6", "bccustomernumber": "579000283084" }
+    }
+  ]
+}
+```
 
-The customer-number portion is required and must not be empty. Two malformed shapes are rejected at runtime with `401 Not allowed`, and neither is ever forwarded to Medusa:
-
-| Malformed `Value` | Why it is rejected |
+| `Value` field | Meaning |
 |---|---|
-| `"a1b2c3d4e5f6::"` | Delimiter present, customer number empty |
-| `"a1b2c3d4e5f6"` | No `::` delimiter at all — the customer number was never encoded |
+| `apikey` | The customer's token: the `{token}` path segment of `POST …/orders/{token}`. Matched exactly (case-sensitive). |
+| `bccustomernumber` | The Business Central customer number forwarded to Medusa as `?customerNumber=`. Must match a Medusa company's `business_central_customer_number`. |
 
-The second shape matters because it is what a row copied from the example list, or an operator forgetting the encoding, looks like. It still *matches* the token, so the workflow explicitly checks for the delimiter before extracting rather than taking the last `::`-separated part (which would otherwise resolve to the token itself).
+An entry whose `apikey` matches but whose `bccustomernumber` is missing, null or empty is rejected
+with `401 {"error":"Not allowed"}` and is never forwarded to Medusa. An unknown token gets
+`401 {"error":"Token not recognized"}`.
 
-## Sample entries
+## Populating the list
 
-```json
-[
-  { "Uid": "1", "SortOrder": 1, "Value": "a1b2c3d4e5f6::579000283084" },
-  { "Uid": "2", "SortOrder": 2, "Value": "f6e5d4c3b2a1::441122334455" }
-]
-```
-
-## Fallback design
-
-Use this only if the real GlobalLists list type supports custom properties:
-
-```json
-[
-  { "Uid": "1", "SortOrder": 1, "Value": "a1b2c3d4e5f6", "CustomerNumber": "579000283084" }
-]
-```
-
-If this fallback is selected, the workflow must match `Value` directly and read `CustomerNumber` directly; its Parse JSON schema must permit `CustomerNumber` as a string or null. Missing, null, and empty customer numbers remain unauthorized.
-
-## Verification required before deployment
-
-- [ ] Confirm the real GlobalLists API/list identity with the Azure environment owner and populate the store identity values above.
-- [ ] Confirm whether the list supports a custom `CustomerNumber` property; otherwise use the primary delimiter encoding.
-- [ ] Confirm real customer tokens never contain the `::` delimiter.
-- [ ] Populate one entry per authorized customer token, resolving to the corresponding Business Central customer number.
-- [ ] Confirm no entry has a null or empty customer number, and that every entry in the primary design actually contains the `::` delimiter.
+- [ ] One entry per authorized customer token, with `apikey` and `bccustomernumber` both set.
+- [ ] Tokens are unique across entries. If two entries share an `apikey`, the first one is used.
+- [ ] Tokens use URL-safe characters only, so the path segment arrives exactly as stored.
