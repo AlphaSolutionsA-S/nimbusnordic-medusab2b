@@ -120,3 +120,50 @@
   `deployment-instructions.md`. Run `test-payloads.md` (APIM-only cases first). Record the answers
   to the open items and verification points in this file. When everything passes, move NIMBUS-145
   to Internal Review.
+
+## 2026-10-15 — XML namespace added after APIM rejected the XSD
+- **Updated by:** main session, on the user's decision.
+- **Outcome:** Registering `canonical-order-schema.xsd` in APIM failed with "XML schemas without
+  targetNamespace are not allowed". The user chose to add a namespace over dropping the XSD.
+  - `canonical-order-schema.xsd`: `targetNamespace="urn:nimbusnordic:canonical-order:v1"`, also as
+    the default namespace. The `uniqueLineNumber` XPath now uses the `co:` prefix, because
+    unprefixed XPath names mean "no namespace".
+  - `apim-policy.xml`: after `xml-to-json`, `set-body` removes `xmlns*` properties from the order.
+    The backend zod schema is `.strict()` and would otherwise reject every XML order.
+  - XML samples now declare the default namespace: `test-payloads.md` TC-3 and TC-5, and
+    `issues/NIMBUS-129/artifacts/e2e/valid-order.xml`. `deployment-instructions.md` documents the
+    rule.
+- **Contract change:** customers' XML must declare the namespace on the root as the default
+  namespace, with no prefixes. A prefixed root passes the XSD but breaks the conversion.
+- **Verified locally:** the .NET `XmlReader` XSD validator accepts the e2e fixture and both test
+  payloads. It rejects no namespace, the wrong namespace and a duplicate `lineNumber`.
+- **Still unverified:** schema registration in APIM. Also unverified is what `xml-to-json`
+  (`javascript-friendly`) names the `xmlns` property. The strip covers both `xmlns` and `@xmlns`.
+  TC-3 is the check.
+- **Policy deploy fix (same day):** APIM rejected the policy with "Usage of type
+  'System.Globalization.CultureInfo' is not supported within expressions". System.Globalization
+  is not on the list of types allowed in policy expressions (Microsoft Learn, "API Management
+  policy expressions", read 2026-10-15). `long.Parse` now takes no culture, which is safe because
+  the XSD allows digits only. Decimals are built digit by digit from the XSD-guaranteed `xs:decimal`
+  form. A plain `decimal.Parse` would depend on the gateway culture: under `da-DK` it reads
+  `134.75` as `13475`. The new parsing was compiled and run under `da-DK` and matches
+  invariant-culture parsing for `134.75`, `.5`, `5.`, `+1.25`, `-2.5`, `007`, `1.50` and a 20-digit
+  value.
+- **First test call (same day):** TC-1 (valid JSON) got the generic 400. The trace showed
+  `validate-content` `Unspecified`: "Unspecified content type application/json is not allowed."
+  `unspecified-content-type-action="prevent"` rejects content types the APIM operation does not
+  declare, and the operation declares none. Both `validate-content` elements now use `ignore`. The
+  `choose` already admits only JSON and XML and returns 415 otherwise.
+- **Must verify on deploy:** an invalid payload still gets a 400 from `validate-content`
+  (`IncorrectMessage` in the trace), which proves the `content` elements validate on their own.
+  TC-2 is that check.
+- **Handover to:** the user: deploy the policy again, run TC-1 and TC-2, then continue deployment.
+
+## 2026-10-15 — Deployed and working
+- **Updated by:** main session; the user deployed it.
+- **Outcome:** The user deployed the schemas and the policy with today's three fixes (XML
+  namespace, culture-free number parsing, `unspecified-content-type-action="ignore"`). The user
+  reports the APIM to Logic App to Medusa path working.
+- **Verified:** the user reports a working end-to-end call. TC-2's trace check (`IncorrectMessage`
+  rather than `Unspecified`) is not recorded.
+- **Handover to:** reviewer.

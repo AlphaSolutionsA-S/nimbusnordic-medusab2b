@@ -3,8 +3,13 @@
   Canonical order XML representation for APIM validate-content (schema-id: canonical-order-xml).
 
   Mirrors CanonicalOrderSchema in apps/backend/src/modules/order-ingestion/canonical-order-schema.ts
-  1:1: element names are the JSON property names (camelCase), no namespace, root <canonicalOrder>,
-  and the lines array is <lines> holding one or more <line> elements.
+  1:1: element names are the JSON property names (camelCase), root <canonicalOrder>, and the lines
+  array is <lines> holding one or more <line> elements.
+
+  Namespace urn:nimbusnordic:canonical-order:v1, declared as the default namespace on the root
+  (<canonicalOrder xmlns="urn:nimbusnordic:canonical-order:v1">) with no element prefixes. APIM
+  refuses to register an XSD without a targetNamespace. The policy drops the xmlns attribute after
+  xml-to-json, because the Medusa schema rejects unknown properties.
 
   Numbers use the XSD decimal lexical form (dot decimal separator). Comma decimals such as
   "134,75" are rejected here, so no comma-to-dot normalization is needed after xml-to-json.
@@ -13,7 +18,11 @@
   the Medusa endpoint. Unique lineNumber within an order is enforced here by xs:unique. The address
   country is a shape check only (NIMBUS-171): the ISO 3166-1 alpha-2 list is checked by Medusa.
 -->
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns="urn:nimbusnordic:canonical-order:v1"
+           xmlns:co="urn:nimbusnordic:canonical-order:v1"
+           targetNamespace="urn:nimbusnordic:canonical-order:v1"
+           elementFormDefault="qualified">
 
   <xs:element name="canonicalOrder">
     <xs:complexType>
@@ -36,9 +45,10 @@
               <xs:element name="line" type="orderLineType" minOccurs="1" maxOccurs="unbounded"/>
             </xs:sequence>
           </xs:complexType>
+          <!-- Unprefixed XPath names mean "no namespace", so the selector needs the co: prefix. -->
           <xs:unique name="uniqueLineNumber">
-            <xs:selector xpath="line"/>
-            <xs:field xpath="lineNumber"/>
+            <xs:selector xpath="co:line"/>
+            <xs:field xpath="co:lineNumber"/>
           </xs:unique>
         </xs:element>
       </xs:all>

@@ -62,7 +62,9 @@ The body is forwarded byte-for-byte unchanged.
 
 Send TC-1's body without `externalOrderNumber`.
 
-**Expect:** `400` with the generic validation error body. There is no Logic App run.
+**Expect:** `400` with the generic validation error body. There is no Logic App run. In the trace,
+`validate-content` must report `IncorrectMessage` (a missing required property), not `Unspecified`.
+That proves the schema validation itself runs while `unspecified-content-type-action` is `ignore`.
 
 ## TC-3: Valid XML order, several lines, with address
 
@@ -73,7 +75,7 @@ POST <APIM_ORDER_URL>/a1b2c3d4e5f6
 Content-Type: application/xml
 
 <?xml version="1.0" encoding="UTF-8"?>
-<canonicalOrder>
+<canonicalOrder xmlns="urn:nimbusnordic:canonical-order:v1">
   <externalOrderNumber>NIMBUS145-TC3</externalOrderNumber>
   <orderDate>26-08-2026</orderDate>
   <currencyCode>DKK</currencyCode>
@@ -134,7 +136,7 @@ Send TC-3's body without `<externalOrderNumber>`.
 POST <APIM_ORDER_URL>/a1b2c3d4e5f6
 Content-Type: text/xml; charset=utf-8
 
-<canonicalOrder>
+<canonicalOrder xmlns="urn:nimbusnordic:canonical-order:v1">
   <externalOrderNumber>NIMBUS145-TC5</externalOrderNumber>
   <orderDate>27-08-2026</orderDate>
   <currencyCode>DKK</currencyCode>

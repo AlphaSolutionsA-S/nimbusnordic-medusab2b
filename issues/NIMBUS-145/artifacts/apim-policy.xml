@@ -23,17 +23,22 @@
         <!-- Media type without parameters such as "; charset=utf-8". -->
         <set-variable name="orderMediaType" value="@(context.Request.Headers.GetValueOrDefault("Content-Type", "").Split(';')[0].Trim().ToLowerInvariant())" />
 
+        <!--
+          unspecified-content-type-action is "ignore" on purpose: "prevent" rejects any content type
+          the APIM operation does not declare (ours declares none), even application/json. This
+          choose already admits only JSON and XML and returns 415 for anything else.
+        -->
         <choose>
             <!-- JSON: validate only; the body is already canonical JSON. -->
             <when condition="@((string)context.Variables["orderMediaType"] == "application/json")">
-                <validate-content unspecified-content-type-action="prevent" max-size="524288" size-exceeded-action="prevent" errors-variable-name="orderValidationErrors">
+                <validate-content unspecified-content-type-action="ignore" max-size="524288" size-exceeded-action="prevent" errors-variable-name="orderValidationErrors">
                     <content type="application/json" validate-as="json" schema-id="canonical-order-json" action="prevent" allow-additional-properties="false" />
                 </validate-content>
             </when>
 
             <!-- XML: validate against the canonical XML representation, then convert to canonical JSON. -->
             <when condition="@((string)context.Variables["orderMediaType"] == "application/xml" || (string)context.Variables["orderMediaType"] == "text/xml")">
-                <validate-content unspecified-content-type-action="prevent" max-size="524288" size-exceeded-action="prevent" errors-variable-name="orderValidationErrors">
+                <validate-content unspecified-content-type-action="ignore" max-size="524288" size-exceeded-action="prevent" errors-variable-name="orderValidationErrors">
                     <content type="application/xml" validate-as="xml" schema-id="canonical-order-xml" action="prevent" />
                     <content type="text/xml" validate-as="xml" schema-id="canonical-order-xml" action="prevent" />
                 </validate-content>
@@ -50,6 +55,12 @@
                 <set-body>@{
                     var converted = context.Request.Body.As<JObject>(preserveContent: true);
                     var order = (JObject)converted["canonicalOrder"];
+
+                    // The root's xmlns declaration becomes a property; Medusa rejects unknown ones.
+                    foreach (var property in order.Properties().Where(p => p.Name.TrimStart('@').StartsWith("xmlns")).ToList())
+                    {
+                        property.Remove();
+                    }
 
                     var integerFields = new string[] { "lineNumber" };
                     var decimalFields = new string[] { "quantity", "unitPrice", "discountAmount", "discountPercent", "taxPercent" };
@@ -89,11 +100,29 @@
                             var text = ((string)property.Value).Trim();
                             if (integerFields.Contains(property.Name))
                             {
-                                property.Value = long.Parse(text, System.Globalization.CultureInfo.InvariantCulture);
+                                // Digits only (XSD), so the gateway culture cannot change the result.
+                                property.Value = long.Parse(text);
                             }
                             else if (decimalFields.Contains(property.Name))
                             {
-                                property.Value = decimal.Parse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture);
+                                // Policy expressions disallow System.Globalization, and a culture-dependent
+                                // decimal.Parse would misread "134.75" on a comma-decimal gateway. The XSD
+                                // guarantees xs:decimal form: optional sign, digits, optional "." and digits.
+                                var negative = text.StartsWith("-");
+                                var unsigned = text.TrimStart('+', '-');
+                                var dot = unsigned.IndexOf('.');
+                                var digits = dot < 0 ? unsigned : unsigned.Remove(dot, 1);
+                                var scale = dot < 0 ? 0 : unsigned.Length - dot - 1;
+                                var number = 0m;
+                                foreach (var digit in digits)
+                                {
+                                    number = number * 10m + (digit - '0');
+                                }
+                                for (var i = 0; i < scale; i++)
+                                {
+                                    number = number / 10m;
+                                }
+                                property.Value = negative ? -number : number;
                             }
                             else if (booleanFields.Contains(property.Name))
                             {

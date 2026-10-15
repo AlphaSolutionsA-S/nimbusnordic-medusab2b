@@ -30,8 +30,15 @@ to match.
   optional.
 - Dates are `DD-MM-YYYY`. `eanNo` is exactly 13 digits and stays a string. `currencyCode` is 3 letters.
 - Unknown fields are rejected, as with zod's `.strict()`.
-- The XML form mirrors the JSON 1:1. Element names are the JSON property names in camelCase, there
-  is no namespace, the root is `<canonicalOrder>`, and lines are `<lines><line>…</line></lines>`.
+- The XML form mirrors the JSON 1:1. Element names are the JSON property names in camelCase, the
+  root is `<canonicalOrder>`, and lines are `<lines><line>…</line></lines>`.
+- The XML must declare the namespace `urn:nimbusnordic:canonical-order:v1` as the **default**
+  namespace on the root, `<canonicalOrder xmlns="urn:nimbusnordic:canonical-order:v1">`, with no
+  element prefixes. APIM refuses an XSD without a `targetNamespace` ("XML schemas without
+  targetNamespace are not allowed"). XML with no namespace, or with a different one, gets a 400 from
+  the XSD. The policy removes the `xmlns` property after `xml-to-json`, because Medusa rejects unknown
+  fields. A prefixed root (`<co:canonicalOrder xmlns:co="…">`) passes the XSD but fails the
+  conversion, so give customers the default-namespace form only.
   Numbers use a dot as the decimal separator. Comma decimals such as `134,75` fail the XSD with a
   400, so the policy does not normalize them.
 - Three rules APIM cannot fully enforce are left to the Medusa endpoint, which still validates every

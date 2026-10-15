@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<canonicalOrder>
+<canonicalOrder xmlns="urn:nimbusnordic:canonical-order:v1">
   <externalOrderNumber>NIMBUS129-E2E-REPLACE-WITH-RUN-ID-XML</externalOrderNumber>
   <orderDate>15-10-2026</orderDate>
   <requestedDeliveryDate>22-10-2026</requestedDeliveryDate>
