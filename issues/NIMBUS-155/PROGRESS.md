@@ -39,3 +39,10 @@
 - **Outcome:** Implementation is complete and the story is now in Internal Review.
 - **Handover to:** reviewer
 - **Handover prompt:** Review the NIMBUS-155 storefront read-only BC customer number behavior and Store API validator enforcement, then proceed with normal review/approval flow.
+
+## 2026-10-15 — Merged; in Internal review
+- **Updated by:** main session (status reconciliation).
+- **Outcome:** The work is on `develop` (commit `1c7cb14` "readonly bc number…"; no commit carries the NIMBUS-155 key), and Jira shows NIMBUS-155 in **Internal review**.
+  The earlier handover to a reviewer or PR owner is done: the code is merged. This entry records
+  the current state only. It does not review or re-verify the work.
+- **Handover to:** reviewer (internal review in Jira), then close with a closing comment.

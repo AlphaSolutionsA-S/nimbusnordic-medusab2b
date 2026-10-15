@@ -64,3 +64,10 @@ You are the implementation-planner for `NIMBUS-136` in `D:\projects\Nimbus\nimbu
 - **Outcome:** Story implementation is complete and the issue is now in review.
 - **Handover to:** reviewer
 - **Handover prompt:** Review NIMBUS-136 against the approved scope and acceptance criteria, with focus on company-scoped BC order listing, filters, pagination, and unchanged `/account/orders` behavior.
+
+## 2026-10-15 — Merged; in Internal review
+- **Updated by:** main session (status reconciliation).
+- **Outcome:** The work is on `develop` (commit `b8f411f`), and Jira shows NIMBUS-136 in **Internal review**.
+  The earlier handover to a reviewer or PR owner is done: the code is merged. This entry records
+  the current state only. It does not review or re-verify the work.
+- **Handover to:** reviewer (internal review in Jira), then close with a closing comment.

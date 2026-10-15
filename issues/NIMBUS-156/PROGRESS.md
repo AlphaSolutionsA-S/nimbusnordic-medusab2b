@@ -106,3 +106,10 @@
 	build passed, and disposable PostgreSQL verification confirmed the `not_blocked` default,
 	invalid-enum rejection, existing-row migration, and clean rollback.
 - **Handover to:** reviewer / pull-request owner
+
+## 2026-10-15 — Merged; in Internal review
+- **Updated by:** main session (status reconciliation).
+- **Outcome:** The work is on `develop` (merge commit `ace747a` (PR #2)), and Jira shows NIMBUS-156 in **Internal review**.
+  The earlier handover to a reviewer or PR owner is done: the code is merged. This entry records
+  the current state only. It does not review or re-verify the work.
+- **Handover to:** reviewer (internal review in Jira), then close with a closing comment.

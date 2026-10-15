@@ -31,3 +31,10 @@
 - **Outcome:** Adjusted landing behavior to be auth-dependent: `/{countryCode}` now checks `retrieveCustomer()` and only redirects unauthenticated users to `/{countryCode}/account`; authenticated users now see the normal frontpage content (Hero + FeaturedProducts). No backend functional changes.
 - **Handover to:** user/developer
 - **Handover prompt:** Run `pnpm lint` and `pnpm build` in a Node-enabled environment, then verify: logged-out user is redirected to account/login and logged-in user sees the frontpage when opening `/{countryCode}`.
+
+## 2026-10-15 — Merged; in Internal review
+- **Updated by:** main session (status reconciliation).
+- **Outcome:** The work is on `develop` (most likely commit `0e33838` "Add forgot-password and login-protected changes"; no commit carries the NIMBUS-132 key), and Jira shows NIMBUS-132 in **Internal review**.
+  The earlier handover to a reviewer or PR owner is done: the code is merged. This entry records
+  the current state only. It does not review or re-verify the work.
+- **Handover to:** reviewer (internal review in Jira), then close with a closing comment.

@@ -35,3 +35,10 @@
 - **Outcome:** Implementation plan is ready; implementation is the next stage. Created manifest.md with 5 ordered tasks, task implementation files (01–05), and PLAN.md.
 - **Handover to:** implementor agent
 - **Handover prompt:** Implement NIMBUS-153 using the manifest and task files in `issues/NIMBUS-153/`. Execute tasks 01 through 05 in order: (1) create the Business Central module at `apps/backend/src/modules/business-central/` with index.ts, service.ts, and types.ts — migrating all logic from `apps/backend/src/utils/business-central-client.ts` into the service class; (2) wire the module in `apps/backend/medusa-config.ts`; (3) update `apps/backend/src/api/store/business-central/operations/route.ts` to resolve the service from DI; (4) delete the old utility file; (5) verify build passes with `pnpm build`. Branch from `develop` as `feature/NIMBUS-153`.
+
+## 2026-10-15 — Merged; in Internal review
+- **Updated by:** main session (status reconciliation).
+- **Outcome:** The work is on `develop` (merge commit `4e8d90c`), and Jira shows NIMBUS-153 in **Internal review**.
+  The earlier handover to a reviewer or PR owner is done: the code is merged. This entry records
+  the current state only. It does not review or re-verify the work.
+- **Handover to:** reviewer (internal review in Jira), then close with a closing comment.

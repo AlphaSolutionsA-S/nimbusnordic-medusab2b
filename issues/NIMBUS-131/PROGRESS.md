@@ -30,3 +30,10 @@
 - **Outcome:** Implementation complete. All 16 files changed in commit `962f951` on branch `agents/nimbus-131-business-central-customer-number`. Backend build: 0 errors. Storefront tsc: 0 new errors (4 pre-existing in unrelated files). Integration tests extended with TC-1..TC-5. Ready for PR review, migration run, and integration test run.
 - **Handover to:** developer / PR reviewer
 - **Handover prompt:** Review and merge branch `agents/nimbus-131-business-central-customer-number`. Run `pnpm backend:migrate` to apply `Migration20260715000000`. Run `cd apps/backend && pnpm test:integration:http` to verify. Close NIMBUS-131 after merge.
+
+## 2026-10-15 — Merged; in Internal review
+- **Updated by:** main session (status reconciliation).
+- **Outcome:** The work is on `develop` (commit `962f951`), and Jira shows NIMBUS-131 in **Internal review**.
+  The earlier handover to a reviewer or PR owner is done: the code is merged. This entry records
+  the current state only. It does not review or re-verify the work.
+- **Handover to:** reviewer (internal review in Jira), then close with a closing comment.
