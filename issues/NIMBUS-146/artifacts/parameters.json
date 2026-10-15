@@ -1,0 +1,18 @@
+{
+  "globalListsApiUrl": {
+    "type": "string",
+    "value": "<GLOBALLISTS_API_URL - see token-list-schema.md>"
+  },
+  "globalListsApiKey": {
+    "type": "string",
+    "value": "<GLOBALLISTS_SUBSCRIPTION_KEY - enter in the Portal only, never commit>"
+  },
+  "medusaOrderApiBaseUrl": {
+    "type": "string",
+    "value": "<MEDUSA_ORDER_API_BASE_URL - e.g. https://<env>.medusa.example.com, no trailing slash>"
+  },
+  "medusaSecretApiKey": {
+    "type": "string",
+    "value": "<MEDUSA_SECRET_API_KEY - enter in the Portal only, never commit>"
+  }
+}

@@ -72,7 +72,7 @@ With the valid token, send a body without `lines`:
 { "externalOrderNumber": "MANUAL-TEST-4", "orderDate": "2026-09-02", "currencyCode": "DKK" }
 ```
 
-Expect Medusa's unchanged `400` response. This confirms `Response_Success` runs after both successful and failed downstream HTTP actions. Also confirm the run history shows the forwarded order body (secured `authentication`, not secured `inputs`) and does **not** show the Medusa API key.
+Expect Medusa's unchanged `400` response. This confirms `Response_Success` runs after both successful and failed downstream HTTP actions. Also confirm that the run history shows `Forward_Order_To_Medusa`'s forwarded order body and Medusa's `400` response. The Medusa API key is visible there by decision (2026-10-15), while `Get_Token_List`'s inputs stay hidden, so the GlobalLists key does **not** appear.
 
 ## TC-6: Unknown Medusa customer number
 

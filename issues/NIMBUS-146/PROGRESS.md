@@ -162,3 +162,26 @@
   notes" section; populate the dedicated token list from `token-list-schema.md`; then execute and
   record the manual checks in `test-payloads.md` — now seven cases, with the new TC-4 covering the
   malformed-entry regression.
+
+## 2026-10-15 — Hosting decided: Logic App Standard, no Key Vault
+- **Updated by:** main session, on the user's decision.
+- **Outcome:** The open hosting question is settled: a Logic App **Standard** (Workflow Standard
+  plan) and **no Key Vault**. The artifacts were converted to match:
+  - `logic-app-workflow-definition.json` is now in Standard `workflow.json` shape (`definition` +
+    `kind: Stateful`), with its `parameters` block removed.
+  - New `parameters.json`: all four parameters are plain `string`s. Per the user's decision,
+    the real values, secrets included, go directly into the Logic App's `parameters.json`, not
+    into app settings. The repo copy holds placeholders only, and real keys are never committed.
+    Standard does not support `securestring` (Microsoft Learn, "Create parameters for workflow
+    inputs", read 2026-10-15).
+  - `deployment-instructions.md` was rewritten for Standard with values in `parameters.json`.
+- **Deviation from plan (accepted by the user):** without `securestring`, nothing masks the
+  Medusa secret API key. The user decided it may be visible in `Forward_Order_To_Medusa`'s run
+  history for debugging, so that action stays unsecured. Only `Get_Token_List` keeps
+  `secureData` on `inputs`. TC-5 in `test-payloads.md` was updated to match.
+- **Still unverified:** nothing has run against Azure. That includes the empty Basic-auth
+  password.
+- **Handover to:** Azure environment owner.
+- **Handover prompt:** Deploy NIMBUS-146 as a Logic App Standard following
+  `issues/NIMBUS-146/artifacts/deployment-instructions.md`, then give the Standard-shape
+  workflow URL to the NIMBUS-145 APIM owner and run `test-payloads.md`.
