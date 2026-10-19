@@ -101,3 +101,26 @@
   `cancelled` when the decision's status is `cancelled`.
 - Hash is sha256 hex over net > 0 lines only; a `cancelled` revision stores the hash of no lines.
 - `pnpm ai:check` fails locally on AGENTS.md size (CRLF on disk); see task 05 deviations.
+
+## Task 06: discovery scan
+
+- `workflows/shipment-notice/workflows/discover-shipments.ts`: `discoverShipmentsWorkflow`,
+  input `{ deadline: Date }`, result `DiscoverShipmentsResult` `{ headers, matched, tracked,
+  lead_lag_ms, trail_lag_ms, complete }`; lags = run start − cursor after the run.
+- It does not check `bc_backoff_until` (task 08 skips the run); on throttling it sets the back-off
+  (`max(Retry-After, 60 s)`) and returns `complete: false` without throwing. Any other BC or DB
+  error rejects the workflow (cursor kept at the last complete window), so wrap it if checks must
+  still run.
+- The scan loop lives in `steps/scan-shipment-windows.ts` (used twice with `.config({ name })`:
+  `scan-lead-shipment-windows`, `scan-trail-shipment-windows`). Deadline is checked with
+  `Date.now()` before each BC request; tests spy `Date.now` to pass it mid-window.
+- Pure helpers in `utils/discovery-window.ts`: `shipmentScanBounds`, `halveShipmentWindow`,
+  `shipmentTrackingForHeaders`, constants `SHIPMENT_SETTLING_MS`, `SHIPMENT_TRAIL_LAG_MS`,
+  `SHIPMENT_WINDOW_HEADER_BUDGET`, `SHIPMENT_MIN_BACKOFF_SECONDS`.
+- Order candidates: companies via Query (`companies`, filter on `business_central_customer_number`),
+  references via `listOrderExternalReferences`, order metadata via a commented narrow
+  `query.graph` on `order` (the same read task 07 needs for `isCurrentBcOrder`).
+- Step results carry dates as ISO strings. Integration spec
+  `integration-tests/http/shipment-notice/discover-shipments.spec.ts` (about 2 min) has a
+  window-honouring BC fake and a `seedApiOrder` helper (company + order with BC state + reference);
+  `createCompanies` needs every `ModuleCreateCompany` field or it adds typecheck errors.
