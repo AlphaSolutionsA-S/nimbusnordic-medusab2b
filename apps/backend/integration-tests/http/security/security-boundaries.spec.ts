@@ -1,6 +1,7 @@
 import { medusaIntegrationTestRunner } from '@medusajs/test-utils';
-import { ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils';
+import { ApiKeyType, ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils';
 import type {
+  IApiKeyModuleService,
   ICartModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
@@ -9,6 +10,8 @@ import type {
 import CompanyModuleService from '../../../src/modules/company/service';
 import QuoteModuleService from '../../../src/modules/quote/service';
 import ApprovalModuleService from '../../../src/modules/approval/service';
+import { singleLineCanonicalOrder } from
+  '../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures';
 import { ApprovalStatusType, ApprovalType, type IApprovalModuleService } from '../../../src/types';
 import { createStoreUser } from '../../utils/admin';
 import { generatePublishableKey, generateStoreHeaders } from '../../utils/store';
@@ -176,6 +179,18 @@ medusaIntegrationTestRunner({
         expect(response.status).toBe(401);
       },
     );
+
+    // NIMBUS-192: an unknown customer number gets a generic 404 that never echoes the number.
+    it('answers an unknown order API customer number without revealing it', async () => {
+      const secretKey = await container.resolve<IApiKeyModuleService>(Modules.API_KEY)
+        .createApiKeys({ title: 'orderapi key', type: ApiKeyType.SECRET, created_by: 'test' });
+      const response = await api.post('/orderapi/orders?customerNumber=unknown-security-customer',
+        { ...singleLineCanonicalOrder, externalOrderNumber: 'SECURITY-UNKNOWN-CUSTOMER-1' },
+        { headers: { authorization: `Basic ${secretKey.token}` }, validateStatus: () => true });
+      expect(response.status).toBe(404);
+      expect(response.data).toEqual({ type: 'not_found', message: 'Customer not found' });
+      expect(JSON.stringify(response.data)).not.toContain('unknown-security-customer');
+    });
 
     it.each([false, true])('allows cart edits and item deletion with rejected approval: %s',
       async (hasRejectedApproval) => {

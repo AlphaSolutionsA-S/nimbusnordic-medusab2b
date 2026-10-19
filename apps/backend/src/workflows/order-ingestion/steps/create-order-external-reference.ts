@@ -12,7 +12,7 @@ export type CreateOrderExternalReferenceInput = {
 /*
   Records the per-company external order number. The (company_id, external_order_number) unique
   index makes this insert the atomic duplicate guard: a concurrent duplicate that slipped past
-  matchCompanyAndCheckDuplicateStep fails here, and the workflow rolls back the order and link.
+  checkDuplicateExternalOrderStep fails here, and the workflow rolls back the order and link.
 */
 export const createOrderExternalReferenceStep = createStep(
   "create-order-external-reference",
@@ -29,7 +29,7 @@ export const createOrderExternalReferenceStep = createStep(
       reference = await orderIngestionService.createOrderExternalReferences(input);
     } catch (error) {
       // A concurrent winner's reference means this insert lost the race on the unique index.
-      // Report it like matchCompanyAndCheckDuplicateStep does, instead of the mapped DB error
+      // Report it like checkDuplicateExternalOrderStep does, instead of the mapped DB error
       // (which is a 400 exposing the internal company id).
       const existing = await orderIngestionService.listOrderExternalReferences({
         external_order_number: input.external_order_number,

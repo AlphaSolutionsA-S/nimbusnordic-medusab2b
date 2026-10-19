@@ -152,16 +152,24 @@ medusaIntegrationTestRunner({
         const container = getContainer();
         const secretHeaders = await generateSecretApiKeyHeaders(container);
 
-        await expect(
-          api.post(
-            "/orderapi/orders?customerNumber=no-such-customer-http",
-            {
-              ...singleLineCanonicalOrder,
-              externalOrderNumber: "UNKNOWN-CUSTOMER-HTTP-1",
-            },
-            secretHeaders
-          )
-        ).rejects.toMatchObject({ response: { status: 404 } });
+        const response = await api.post(
+          "/orderapi/orders?customerNumber=no-such-customer-http",
+          {
+            ...singleLineCanonicalOrder,
+            externalOrderNumber: "UNKNOWN-CUSTOMER-HTTP-1",
+          },
+          { ...secretHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toEqual(404);
+        expect(response.data).toEqual({
+          type: "not_found",
+          message: "Customer not found",
+        });
+        // NIMBUS-192: the customer number must not reach the caller anywhere in the body.
+        expect(JSON.stringify(response.data)).not.toContain(
+          "no-such-customer-http"
+        );
       });
 
       it("TC-6: rejects a duplicate externalOrderNumber for the same company with a 422, synchronously", async () => {

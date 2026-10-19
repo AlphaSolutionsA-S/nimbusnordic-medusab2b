@@ -1,6 +1,6 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
-import { Modules } from "@medusajs/framework/utils";
-import type { IOrderModuleService } from "@medusajs/framework/types";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
+import type { IOrderModuleService, Logger } from "@medusajs/framework/types";
 import {
   createWorkflow,
   transform,
@@ -125,23 +125,44 @@ medusaIntegrationTestRunner({
         expect(references[0].order_id).toEqual(order.id);
       });
 
-      it("TC-2: rejects with a 404-mapped NOT_FOUND error when the customer_number matches no company", async () => {
+      // NIMBUS-192: the caller gets a generic message; the number goes to the server log only.
+      it("TC-2: rejects an unknown customer_number with a generic NOT_FOUND", async () => {
         const container = getContainer();
+        const logger = container.resolve<Logger>(
+          ContainerRegistrationKeys.LOGGER
+        );
+        const warn = jest.spyOn(logger, "warn");
 
-        await expect(
-          createOrderFromCanonicalPayloadWorkflow(container).run({
-            input: {
-              customer_number: "no-such-customer-number",
-              canonicalOrder: {
-                ...singleLineCanonicalOrder,
-                externalOrderNumber: "UNKNOWN-CUST-1",
+        try {
+          const error = await createOrderFromCanonicalPayloadWorkflow(container)
+            .run({
+              input: {
+                customer_number: "no-such-customer-number",
+                canonicalOrder: {
+                  ...singleLineCanonicalOrder,
+                  externalOrderNumber: "UNKNOWN-CUST-1",
+                },
               },
-            },
-          })
-        ).rejects.toMatchObject({
-          type: "not_found",
-          message: expect.stringContaining("No company found"),
-        });
+            })
+            .then(
+              () => null,
+              (e) => e
+            );
+
+          expect(error).toMatchObject({
+            type: "not_found",
+            message: "Customer not found",
+          });
+          expect(error.message).not.toContain("no-such-customer-number");
+
+          const warnLines = warn.mock.calls
+            .map(([message]) => String(message))
+            .filter((message) => message.includes("no-such-customer-number"));
+          expect(warnLines).toHaveLength(1);
+          expect(warnLines[0]).not.toContain("UNKNOWN-CUST-1");
+        } finally {
+          warn.mockRestore();
+        }
       });
 
       it("TC-3: rejects a second submission of the same externalOrderNumber for the same company with a DUPLICATE_ERROR (per-company duplicate rule)", async () => {

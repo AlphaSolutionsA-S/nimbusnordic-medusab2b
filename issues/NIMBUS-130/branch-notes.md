@@ -157,3 +157,18 @@
   and `transform`; the poll spec covers both skip paths.
 - Pure helpers: `isShipmentPollBackedOff`, `shipmentPollDeadline`, `shipmentPollLogLines`.
 - `integration-tests/http/shipment-notice/poll-shipment-notices.spec.ts` takes about 75 s.
+
+## Task 12: shared company resolution
+
+- `workflows/order-ingestion/steps/resolve-company-by-customer-number.ts`:
+  `resolveCompanyByCustomerNumberStep({ customer_number })` → `{ company_id }` (step id
+  `resolve-company-by-customer-number`), `CUSTOMER_NOT_FOUND_MESSAGE` ("Customer not found").
+  Task 09 imports it from there; it logs the warn line itself, so the caller adds no logging.
+- Over HTTP the unknown-number body is exactly `{ type: "not_found", message: "Customer not found" }`
+  (no `code`), asserted in `orders.spec.ts` TC-5 and the security spec.
+- The duplicate check is now `steps/check-duplicate-external-order.ts`
+  (`checkDuplicateExternalOrderStep({ company_id, external_order_number })`).
+- The security spec's `beforeEach` registers a store user and company; an order API case there just
+  needs its own secret key (`ApiKeyType.SECRET`, header `Basic <token>`).
+- A logger spy works: `jest.spyOn(container.resolve(ContainerRegistrationKeys.LOGGER), "warn")` sees
+  the step's warn line in an `inApp` integration spec.
