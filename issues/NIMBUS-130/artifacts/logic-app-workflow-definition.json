@@ -1,0 +1,237 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "contentVersion": "1.0.0.0",
+        "triggers": {
+            "manual": {
+                "type": "Request",
+                "kind": "Http",
+                "inputs": {
+                    "method": "GET",
+                    "relativePath": "shipment-notices/{token}"
+                }
+            }
+        },
+        "actions": {
+            "Get_Token_List": {
+                "type": "Http",
+                "inputs": {
+                    "uri": "@parameters('globalListsApiUrl')",
+                    "method": "GET",
+                    "headers": {
+                        "authorization": "@{parameters('struct-api-key')}"
+                    },
+                    "retryPolicy": {
+                        "type": "fixed",
+                        "count": 3,
+                        "interval": "PT5S"
+                    }
+                },
+                "runAfter": {},
+                "runtimeConfiguration": {
+                    "secureData": {
+                        "properties": [
+                            "inputs"
+                        ]
+                    }
+                }
+            },
+            "Parse_Token_List": {
+                "type": "ParseJson",
+                "inputs": {
+                    "content": "@body('Get_Token_List')",
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "Total": {
+                                "type": "integer"
+                            },
+                            "Remaining": {
+                                "type": "integer"
+                            },
+                            "LastId": {
+                                "type": "string"
+                            },
+                            "GlobalListValues": {
+                                "type": "array",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "Created": {
+                                            "type": "string"
+                                        },
+                                        "CreatedBy": {
+                                            "type": "string"
+                                        },
+                                        "LastModified": {
+                                            "type": "string"
+                                        },
+                                        "LastModifiedBy": {
+                                            "type": "string"
+                                        },
+                                        "GlobalListUid": {
+                                            "type": "string"
+                                        },
+                                        "Uid": {
+                                            "type": "string"
+                                        },
+                                        "SortOrder": {
+                                            "type": "integer"
+                                        },
+                                        "Value": {
+                                            "type": "object",
+                                            "properties": {
+                                                "apikey": {
+                                                    "type": "string"
+                                                },
+                                                "bccustomernumber": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "Created",
+                                        "CreatedBy",
+                                        "LastModified",
+                                        "LastModifiedBy",
+                                        "GlobalListUid",
+                                        "Uid",
+                                        "SortOrder",
+                                        "Value"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Get_Token_List": [
+                        "Succeeded"
+                    ]
+                }
+            },
+            "Filter_Matching_Token": {
+                "type": "Query",
+                "inputs": {
+                    "from": "@array(body('Parse_Token_List')?['GlobalListValues'])",
+                    "where": "@equals(item()?['Value']?['apikey'], triggerOutputs()?['relativePathParameters']?['token'])"
+                },
+                "runAfter": {
+                    "Parse_Token_List": [
+                        "SUCCEEDED"
+                    ]
+                }
+            },
+            "Condition_Token_Matched": {
+                "type": "If",
+                "expression": {
+                    "and": [
+                        {
+                            "greater": [
+                                "@length(body('Filter_Matching_Token'))",
+                                0
+                            ]
+                        }
+                    ]
+                },
+                "actions": {
+                    "Compose_Customer_Number": {
+                        "type": "Compose",
+                        "inputs": "@first(body('Filter_Matching_Token'))?['Value']?['bccustomernumber']"
+                    },
+                    "Condition_Customer_Number_Present": {
+                        "type": "If",
+                        "expression": "@not(equals(coalesce(outputs('Compose_Customer_Number'), ''), ''))",
+                        "actions": {
+                            "Compose_Medusa_Url": {
+                                "type": "Compose",
+                                "inputs": "@concat(parameters('medusaOrderApiBaseUrl'), '/orderapi/shipment-notices?customerNumber=', encodeUriComponent(outputs('Compose_Customer_Number')), if(equals(triggerOutputs()?['queries']?['after'], null), '', concat('&after=', encodeUriComponent(triggerOutputs()?['queries']?['after']))), if(equals(triggerOutputs()?['queries']?['since'], null), '', concat('&since=', encodeUriComponent(triggerOutputs()?['queries']?['since']))), if(equals(triggerOutputs()?['queries']?['limit'], null), '', concat('&limit=', encodeUriComponent(triggerOutputs()?['queries']?['limit']))))"
+                            },
+                            "Get_Shipment_Notices_From_Medusa": {
+                                "type": "Http",
+                                "inputs": {
+                                    "uri": "@outputs('Compose_Medusa_Url')",
+                                    "method": "GET",
+                                    "headers": {
+                                        "Accept": "application/json",
+                                        "Authorization": "basic @{parameters('medusaSecretApiKey')}"
+                                    },
+                                    "retryPolicy": {
+                                        "type": "none"
+                                    }
+                                },
+                                "runAfter": {
+                                    "Compose_Medusa_Url": [
+                                        "Succeeded"
+                                    ]
+                                }
+                            },
+                            "Response_Medusa": {
+                                "type": "Response",
+                                "inputs": {
+                                    "statusCode": "@outputs('Get_Shipment_Notices_From_Medusa')['statusCode']",
+                                    "headers": {
+                                        "Content-Type": "application/json"
+                                    },
+                                    "body": "@body('Get_Shipment_Notices_From_Medusa')"
+                                },
+                                "runAfter": {
+                                    "Get_Shipment_Notices_From_Medusa": [
+                                        "Succeeded",
+                                        "Failed"
+                                    ]
+                                }
+                            }
+                        },
+                        "else": {
+                            "actions": {
+                                "Response_Not_Allowed": {
+                                    "type": "Response",
+                                    "inputs": {
+                                        "statusCode": 401,
+                                        "headers": {
+                                            "Content-Type": "application/json"
+                                        },
+                                        "body": {
+                                            "error": "Not allowed"
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "runAfter": {
+                            "Compose_Customer_Number": [
+                                "Succeeded"
+                            ]
+                        }
+                    }
+                },
+                "else": {
+                    "actions": {
+                        "Response_Unauthorized": {
+                            "type": "Response",
+                            "inputs": {
+                                "statusCode": 401,
+                                "headers": {
+                                    "Content-Type": "application/json"
+                                },
+                                "body": {
+                                    "error": "Token not recognized"
+                                }
+                            }
+                        }
+                    }
+                },
+                "runAfter": {
+                    "Filter_Matching_Token": [
+                        "Succeeded",
+                        "FAILED"
+                    ]
+                }
+            }
+        },
+        "outputs": {}
+    },
+    "kind": "Stateful"
+}

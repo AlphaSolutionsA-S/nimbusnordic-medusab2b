@@ -1,0 +1,18 @@
+{
+  "globalListsApiUrl": {
+    "type": "string",
+    "value": "<ALREADY SET by NIMBUS-146 - the GlobalLists token list URL; leave the existing value>"
+  },
+  "struct-api-key": {
+    "type": "string",
+    "value": "<ALREADY SET by NIMBUS-146 - GlobalLists authorization header value; Portal only, never commit>"
+  },
+  "medusaOrderApiBaseUrl": {
+    "type": "string",
+    "value": "<ALREADY SET by NIMBUS-146 - Medusa backend base URL, no trailing slash; leave the existing value>"
+  },
+  "medusaSecretApiKey": {
+    "type": "string",
+    "value": "<ALREADY SET by NIMBUS-146 - BASE64 OF '<medusa secret api key>:'; Portal only, never commit>"
+  }
+}

@@ -274,3 +274,28 @@
 - **Handover prompt:** Commit the case folders (`issues/NIMBUS-130/`, `issues/NIMBUS-192/`, and the
   others as you decide). Create `feature/NIMBUS-130` from `develop`, then run `task-dispatcher` with
   `issues/NIMBUS-130/`. Task 12 runs before task 09.
+
+## 2026-10-19 — Implementation resumed after interruption
+
+- **Updated by:** task 10 worker, on dispatcher handover.
+- **Outcome:** The previous progress entry was stale: tasks 01–09 and 12 are already committed on
+  `feature/NIMBUS-130`. Task 10 artifacts and its evidence notes exist as uncommitted work; task 10
+  is resumed to inspect and verify them. Task 11 remains pending.
+- **Handover to:** task 10 worker, then dispatcher for review and task 11.
+- **Handover prompt:** Finish task 10 without changing unrelated work or NIMBUS-179; record fresh
+  offline evidence and the deployment checks that still require Azure.
+
+## 2026-10-19 — Task 10 artifacts verified on resumption
+
+- **Updated by:** task 10 worker.
+- **Outcome:** Existing five task 10 artifacts reviewed; no artifact changes needed. Recreated the
+  missing offline harness in `.tmp/NIMBUS-130-20261019-resume/task10-render/`: 69 policy-expression
+  and XSD checks plus 29 workflow-reference, token-parity and URL-encoding checks pass. Updated
+  task evidence and branch notes. No Azure deployment or live manual calls; gateway acceptance
+  and actual forwarding remain after-deploy checks. Dispatcher measured 22 existing backend
+  type errors (`typecheck-baseline.log` in the run scratchpad); this artifacts-only task did not
+  repeat backend checks. Dispatcher checked pull, but the local branch has no tracking branch.
+- **Handover to:** dispatcher for task 10 review, then task 11 implementation.
+- **Handover prompt:** Review the five task 10 artifacts and fresh evidence, then continue with
+  `11-admin-gave-up-retry.md`. Preserve unrelated work, including NIMBUS-179. Nothing was committed
+  by the worker.

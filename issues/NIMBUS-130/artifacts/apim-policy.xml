@@ -1,0 +1,252 @@
+<!--
+  NIMBUS-130 - shipment notices APIM policy (operation: GET /shipment-notices/{token}).
+
+  Apply manually in the Azure Portal per deployment-instructions.md. This is APIM policy syntax:
+  C# policy expressions (@(...) / @{...}) are written as in Microsoft's policy docs, with quotes and
+  generics inside attribute values, and are not meant to be parsed as strict XML. The multi-statement
+  expressions carry no "//" comments: an attribute value may be whitespace-normalized to one line.
+
+  Required APIM configuration before this policy works:
+    Named values: nimbus-shipment-logicapp-base-url     Logic App callback URL up to (not including)
+                                                        "/shipment-notices/{token}", without the query string
+                  nimbus-shipment-logicapp-api-version  "api-version" value from the callback URL
+                  nimbus-shipment-logicapp-sig          "sig" value from the callback URL (Secret)
+
+  Contract: shipment-notice-schema.json / shipment-notice-error-schema.json (JSON, the default) and
+  shipment-notice-schema.xsd (XML, when the request's Accept header contains application/xml).
+-->
+<policies>
+    <inbound>
+        <base />
+
+        <!--
+          Forward to the Logic App Request trigger (relativePath "shipment-notices/{token}").
+          rewrite-uri substitutes this request's token and drops every caller query parameter
+          (copy-unmatched-params="false"), so an injected customerNumber never leaves APIM. Only
+          after, since and limit are copied back, each only when the caller sent it; the Logic App
+          sets customerNumber itself from the token. The SAS query parameters are then re-added.
+        -->
+        <set-backend-service base-url="{{nimbus-shipment-logicapp-base-url}}" />
+        <rewrite-uri template="/shipment-notices/{token}" copy-unmatched-params="false" />
+        <choose>
+            <when condition="@(context.Request.OriginalUrl.Query.ContainsKey("after"))">
+                <set-query-parameter name="after" exists-action="override">
+                    <value>@(context.Request.OriginalUrl.Query.GetValueOrDefault("after", ""))</value>
+                </set-query-parameter>
+            </when>
+        </choose>
+        <choose>
+            <when condition="@(context.Request.OriginalUrl.Query.ContainsKey("since"))">
+                <set-query-parameter name="since" exists-action="override">
+                    <value>@(context.Request.OriginalUrl.Query.GetValueOrDefault("since", ""))</value>
+                </set-query-parameter>
+            </when>
+        </choose>
+        <choose>
+            <when condition="@(context.Request.OriginalUrl.Query.ContainsKey("limit"))">
+                <set-query-parameter name="limit" exists-action="override">
+                    <value>@(context.Request.OriginalUrl.Query.GetValueOrDefault("limit", ""))</value>
+                </set-query-parameter>
+            </when>
+        </choose>
+        <set-query-parameter name="api-version" exists-action="override">
+            <value>{{nimbus-shipment-logicapp-api-version}}</value>
+        </set-query-parameter>
+        <set-query-parameter name="sp" exists-action="override">
+            <value>/triggers/manual/run</value>
+        </set-query-parameter>
+        <set-query-parameter name="sv" exists-action="override">
+            <value>1.0</value>
+        </set-query-parameter>
+        <set-query-parameter name="sig" exists-action="override">
+            <value>{{nimbus-shipment-logicapp-sig}}</value>
+        </set-query-parameter>
+    </inbound>
+
+    <backend>
+        <base />
+    </backend>
+
+    <!--
+      The Logic App returns Medusa's status and JSON body, or its own 401 body. Without
+      "application/xml" in Accept the JSON passes through unchanged.
+
+      With it, shipmentNoticeXml holds the XML rendering (shipment-notice-schema.xsd), or "" when the
+      response is left as it is (a 1xx-3xx that is not a 2xx page):
+        - 2xx with a shipment_notices array: <shipment_notice_response>. Each JSON property becomes
+          an element of the same name; arrays become a wrapper holding one element per item
+          (shipment_notices/shipment_notice, lines/line); null properties are omitted. The objects
+          are walked breadth-first with two lists instead of recursion or lambdas, which policy
+          expressions do not reliably allow.
+        - 4xx/5xx: <error_response>. <error> takes the service's "type" or the gateway's "error"
+          (a Logic App platform error nests {code, message} under "error"); <message> is the
+          body's "message" when it is a string. A body with neither, or that is not JSON, gets the
+          HTTP reason phrase as <error>. The service's "code" is not rendered.
+      Scalars: numbers and dates are written invariantly (no System.Globalization in policy
+      expressions; decimal.ToString() then "," to "." for a comma-decimal gateway culture), booleans
+      as true/false, and characters XML 1.0 cannot carry are removed instead of failing the response.
+      JObject.Parse turns ISO date-time strings (recorded_at) into dates; they are written back in
+      UTC with exactly three fraction digits, the form the service sends (Date#toISOString()).
+    -->
+    <outbound>
+        <base />
+        <set-variable name="shipmentNoticeXml" value="@{
+            if (!context.Request.Headers.GetValueOrDefault("Accept", "").ToLowerInvariant().Contains("application/xml"))
+            {
+                return "";
+            }
+            var status = context.Response.StatusCode;
+            var invalidXmlChars = "[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]";
+            JObject json = null;
+            try
+            {
+                json = JObject.Parse(context.Response.Body.As<string>(preserveContent: true));
+            }
+            catch (Exception)
+            {
+                json = null;
+            }
+
+            XElement root = null;
+            if (status >= 200 && status < 300 && json != null && json["shipment_notices"] is JArray)
+            {
+                root = new XElement("shipment_notice_response");
+                var sources = new List<JObject> { json };
+                var targets = new List<XElement> { root };
+                for (var i = 0; i < sources.Count; i++)
+                {
+                    foreach (var property in sources[i].Properties())
+                    {
+                        var value = property.Value;
+                        if (value.Type == JTokenType.Null)
+                        {
+                            continue;
+                        }
+                        var element = new XElement(property.Name);
+                        targets[i].Add(element);
+                        if (value.Type == JTokenType.Object)
+                        {
+                            sources.Add((JObject)value);
+                            targets.Add(element);
+                        }
+                        else if (value.Type == JTokenType.Array)
+                        {
+                            var itemName = property.Name == "shipment_notices" ? "shipment_notice" : (property.Name == "lines" ? "line" : "item");
+                            foreach (var item in (JArray)value)
+                            {
+                                var itemElement = new XElement(itemName);
+                                element.Add(itemElement);
+                                if (item.Type == JTokenType.Object)
+                                {
+                                    sources.Add((JObject)item);
+                                    targets.Add(itemElement);
+                                }
+                            }
+                        }
+                        else if (value.Type == JTokenType.String)
+                        {
+                            element.Value = Regex.Replace((string)value, invalidXmlChars, "");
+                        }
+                        else if (value.Type == JTokenType.Boolean)
+                        {
+                            element.Value = (bool)value ? "true" : "false";
+                        }
+                        else if (value.Type == JTokenType.Float)
+                        {
+                            element.Value = ((decimal)value).ToString().Replace(',', '.');
+                        }
+                        else if (value.Type == JTokenType.Date)
+                        {
+                            element.Value = ((DateTimeOffset)value).ToUniversalTime().ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'");
+                        }
+                        else
+                        {
+                            element.Value = value.ToString(Newtonsoft.Json.Formatting.None).Trim('"');
+                        }
+                    }
+                }
+            }
+            else if (status >= 400)
+            {
+                string error = null;
+                string message = null;
+                if (json != null)
+                {
+                    var errorToken = json["type"] ?? json["error"];
+                    var messageToken = json["message"];
+                    if (errorToken != null && errorToken.Type == JTokenType.Object)
+                    {
+                        messageToken = errorToken["message"];
+                        errorToken = errorToken["code"];
+                    }
+                    if (errorToken != null && errorToken.Type == JTokenType.String)
+                    {
+                        error = (string)errorToken;
+                    }
+                    if (messageToken != null && messageToken.Type == JTokenType.String)
+                    {
+                        message = (string)messageToken;
+                    }
+                }
+                if (string.IsNullOrEmpty(error))
+                {
+                    error = string.IsNullOrEmpty(context.Response.StatusReason) ? status.ToString() : context.Response.StatusReason;
+                }
+                root = new XElement("error_response", new XElement("error", Regex.Replace(error, invalidXmlChars, "")));
+                if (message != null)
+                {
+                    root.Add(new XElement("message", Regex.Replace(message, invalidXmlChars, "")));
+                }
+            }
+            else
+            {
+                return "";
+            }
+            return new XDeclaration("1.0", "UTF-8", null).ToString() + "\n" + root.ToString();
+        }" />
+        <choose>
+            <when condition="@(((string)context.Variables["shipmentNoticeXml"]).Length > 0)">
+                <set-body>@((string)context.Variables["shipmentNoticeXml"])</set-body>
+                <set-header name="Content-Type" exists-action="override">
+                    <value>application/xml</value>
+                </set-header>
+            </when>
+        </choose>
+    </outbound>
+
+    <!--
+      APIM's own errors (subscription key, rate limit, Logic App unreachable or timed out, a failing
+      expression) get the gateway error shape instead of APIM's default {statusCode, message}:
+      {"error": <LastError.Reason>, "message": ...} in JSON, or <error_response> when Accept
+      contains application/xml. LastError.Message is passed on only for the caller-facing sources
+      (authorization, configuration, rate-limit, quota); backend and expression messages stay in the
+      trace, so nothing about the Logic App URL reaches the caller. set-body is not allowed directly
+      in on-error, hence return-response.
+    -->
+    <on-error>
+        <base />
+        <set-variable name="gatewayErrorStatus" value="@(context.Response != null && context.Response.StatusCode >= 400 ? context.Response.StatusCode : 500)" />
+        <set-variable name="gatewayErrorReason" value="@(context.Response != null && context.Response.StatusCode >= 400 && !string.IsNullOrEmpty(context.Response.StatusReason) ? context.Response.StatusReason : ((int)context.Variables["gatewayErrorStatus"] == 500 ? "Internal Server Error" : "Error"))" />
+        <set-variable name="gatewayErrorAsXml" value="@(context.Request.Headers.GetValueOrDefault("Accept", "").ToLowerInvariant().Contains("application/xml"))" />
+        <set-variable name="gatewayErrorBody" value="@{
+            var source = context.LastError == null ? "" : (context.LastError.Source ?? "");
+            var error = context.LastError == null || string.IsNullOrEmpty(context.LastError.Reason) ? "GatewayError" : context.LastError.Reason;
+            var message = (source == "authorization" || source == "configuration" || source == "rate-limit" || source == "quota") && !string.IsNullOrEmpty(context.LastError.Message)
+                ? context.LastError.Message
+                : "The request could not be completed.";
+            if ((bool)context.Variables["gatewayErrorAsXml"])
+            {
+                var root = new XElement("error_response", new XElement("error", error), new XElement("message", message));
+                return new XDeclaration("1.0", "UTF-8", null).ToString() + "\n" + root.ToString();
+            }
+            return new JObject(new JProperty("error", error), new JProperty("message", message)).ToString(Newtonsoft.Json.Formatting.None);
+        }" />
+        <return-response>
+            <set-status code="@((int)context.Variables["gatewayErrorStatus"])" reason="@((string)context.Variables["gatewayErrorReason"])" />
+            <set-header name="Content-Type" exists-action="override">
+                <value>@((bool)context.Variables["gatewayErrorAsXml"] ? "application/xml" : "application/json")</value>
+            </set-header>
+            <set-body>@((string)context.Variables["gatewayErrorBody"])</set-body>
+        </return-response>
+    </on-error>
+</policies>

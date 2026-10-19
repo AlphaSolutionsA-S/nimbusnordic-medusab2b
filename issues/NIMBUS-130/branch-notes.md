@@ -191,3 +191,25 @@
   `createApiCustomerCompany`, `storeShipmentNoticeRevision` (initializes the poll state and tracks
   the shipment on revision 1), and `EXAMPLE_SHIPMENT_NOTICE_PAYLOAD`.
 - The HTTP spec takes about 1–2 min; the security spec about 2 min.
+
+## Task 10: APIM operation and Logic App workflow
+
+- Artifacts in `issues/NIMBUS-130/artifacts/`: `apim-policy.xml` (operation `GET
+  /shipment-notices/{token}`), `logic-app-workflow-definition.json` (workflow `shipment-notices` in
+  the NIMBUS-146 Logic App, reusing its four app-level parameters), `parameters.json`,
+  `deployment-instructions.md`, `test-calls.md`. APIM named values `nimbus-shipment-logicapp-*`.
+- The XML rendering is generic (property → element, null omitted, arrays → wrapper with
+  `shipment_notice`/`line`, else `item`): a new contract field appears in XML without a policy
+  change, but needs an XSD change in task 01's artifact.
+- If the policy changes, re-run the recreated harness in
+  `.tmp/NIMBUS-130-20261019-resume/task10-render/`: `gen.ps1 -Artifacts <artifacts dir>`, then
+  `dotnet run --project <harness dir> -- <artifacts dir>` (Newtonsoft 13.0.3 from the local NuGet
+  cache; `da-DK`; 69 checks PASS). `node <harness dir>/validate-workflow.cjs <repo root>` evaluates
+  the URL expression and compares token lookup/401 branches with NIMBUS-146 (29 checks PASS).
+- Pitfalls: no `//` comments inside attribute expressions (an attribute may be normalized to one
+  line); `set-body` is not allowed directly in `on-error` (use `return-response`); `DateTime.Kind` /
+  `ToUniversalTime` are not on APIM's allow-list (`DateTimeOffset` is); `JObject.Parse` turns ISO
+  date-time strings into dates.
+- No Azure deployment happened: expression acceptance, actual query forwarding and gateway error
+  status remain the manual checks in `test-calls.md`. Backend baseline on resumption: 22 errors;
+  task 10 changes no backend code.
