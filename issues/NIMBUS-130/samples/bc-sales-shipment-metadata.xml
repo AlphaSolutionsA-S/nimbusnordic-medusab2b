@@ -1,0 +1,91 @@
+<!-- Excerpt of the Business Central standard API v2.0 $metadata, copied from the NIMBUS-129 snapshot
+     (issues/NIMBUS-129/bc metadata/std odata metadata.xml, lines 3325-3414) for NIMBUS-130.
+     Posted sales shipments (tables 110/111), used as shipment notices. The property names were checked
+     read-only against live TestDK data on 2026-10-19 (every header and line key matched). -->
+<EntityType Name="salesShipment">
+    <Key><PropertyRef Name="id" /></Key>
+    <Property Name="id" Type="Edm.Guid" Nullable="false" />
+    <Property Name="number" Type="Edm.String" MaxLength="20" />
+    <Property Name="externalDocumentNumber" Type="Edm.String" MaxLength="35" />
+    <Property Name="invoiceDate" Type="Edm.Date" />
+    <Property Name="postingDate" Type="Edm.Date" />
+    <Property Name="dueDate" Type="Edm.Date" />
+    <Property Name="customerPurchaseOrderReference" Type="Edm.String" MaxLength="35" />
+    <Property Name="customerId" Type="Edm.Guid" />
+    <Property Name="customerNumber" Type="Edm.String" Nullable="false" MaxLength="20" />
+    <Property Name="customerName" Type="Edm.String" MaxLength="100" />
+    <Property Name="billToCustomerId" Type="Edm.Guid" />
+    <Property Name="billToName" Type="Edm.String" MaxLength="100" />
+    <Property Name="billToCustomerNumber" Type="Edm.String" Nullable="false" MaxLength="20" />
+    <Property Name="shipToName" Type="Edm.String" MaxLength="100" />
+    <Property Name="shipToContact" Type="Edm.String" MaxLength="100" />
+    <Property Name="sellToAddressLine1" Type="Edm.String" MaxLength="100" />
+    <Property Name="sellToAddressLine2" Type="Edm.String" MaxLength="50" />
+    <Property Name="sellToCity" Type="Edm.String" MaxLength="30" />
+    <Property Name="sellToCountry" Type="Edm.String" MaxLength="10" />
+    <Property Name="sellToState" Type="Edm.String" MaxLength="30" />
+    <Property Name="sellToPostCode" Type="Edm.String" MaxLength="20" />
+    <Property Name="billToAddressLine1" Type="Edm.String" MaxLength="100" />
+    <Property Name="billToAddressLine2" Type="Edm.String" MaxLength="50" />
+    <Property Name="billToCity" Type="Edm.String" MaxLength="30" />
+    <Property Name="billToCountry" Type="Edm.String" MaxLength="10" />
+    <Property Name="billToState" Type="Edm.String" MaxLength="30" />
+    <Property Name="billToPostCode" Type="Edm.String" MaxLength="20" />
+    <Property Name="shipToAddressLine1" Type="Edm.String" MaxLength="100" />
+    <Property Name="shipToAddressLine2" Type="Edm.String" MaxLength="50" />
+    <Property Name="shipToCity" Type="Edm.String" MaxLength="30" />
+    <Property Name="shipToCountry" Type="Edm.String" MaxLength="10" />
+    <Property Name="shipToState" Type="Edm.String" MaxLength="30" />
+    <Property Name="shipToPostCode" Type="Edm.String" MaxLength="20" />
+    <Property Name="currencyCode" Type="Edm.String" />
+    <Property Name="orderNumber" Type="Edm.String" MaxLength="20" />
+    <Property Name="paymentTermsCode" Type="Edm.String" MaxLength="10" />
+    <Property Name="shipmentMethodCode" Type="Edm.String" MaxLength="10" />
+    <Property Name="salesperson" Type="Edm.String" MaxLength="20" />
+    <Property Name="pricesIncludeTax" Type="Edm.Boolean" />
+    <Property Name="lastModifiedDateTime" Type="Edm.DateTimeOffset" />
+    <Property Name="phoneNumber" Type="Edm.String" MaxLength="30" />
+    <Property Name="email" Type="Edm.String" MaxLength="80" />
+    <NavigationProperty Name="customer" Type="Microsoft.NAV.customer" ContainsTarget="true">
+        <ReferentialConstraint Property="customerId" ReferencedProperty="id" />
+    </NavigationProperty>
+    <NavigationProperty Name="salesShipmentLines" Type="Collection(Microsoft.NAV.salesShipmentLine)" Partner="salesShipment" ContainsTarget="true">
+        <ReferentialConstraint Property="id" ReferencedProperty="documentId" />
+    </NavigationProperty>
+    <NavigationProperty Name="pdfDocument" Type="Microsoft.NAV.pdfDocument" Partner="salesShipment" ContainsTarget="true">
+        <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+    </NavigationProperty>
+    <NavigationProperty Name="attachments" Type="Collection(Microsoft.NAV.attachment)" Partner="salesShipment" ContainsTarget="true">
+        <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+    </NavigationProperty>
+    <NavigationProperty Name="documentAttachments" Type="Collection(Microsoft.NAV.documentAttachment)" Partner="salesShipment" ContainsTarget="true">
+        <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+    </NavigationProperty>
+    <NavigationProperty Name="dimensionSetLines" Type="Collection(Microsoft.NAV.dimensionSetLine)" Partner="salesShipment" ContainsTarget="true">
+        <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+    </NavigationProperty>
+</EntityType>
+<EntityType Name="salesShipmentLine">
+    <Key><PropertyRef Name="id" /></Key>
+    <Property Name="id" Type="Edm.Guid" Nullable="false" />
+    <Property Name="documentId" Type="Edm.Guid" />
+    <Property Name="documentNo" Type="Edm.String" MaxLength="20" />
+    <Property Name="sequence" Type="Edm.Int32" />
+    <Property Name="lineType" Type="Microsoft.NAV.salesLineType" />
+    <Property Name="lineObjectNumber" Type="Edm.String" MaxLength="20" />
+    <Property Name="description" Type="Edm.String" MaxLength="100" />
+    <Property Name="description2" Type="Edm.String" MaxLength="50" />
+    <Property Name="unitOfMeasureCode" Type="Edm.String" MaxLength="10" />
+    <Property Name="unitPrice" Type="Edm.Decimal" Scale="Variable" />
+    <Property Name="quantity" Type="Edm.Decimal" Scale="Variable" />
+    <Property Name="discountPercent" Type="Edm.Decimal" Scale="Variable" />
+    <Property Name="taxPercent" Type="Edm.Decimal" Scale="Variable" />
+    <Property Name="shipmentDate" Type="Edm.Date" />
+    <NavigationProperty Name="salesShipment" Type="Microsoft.NAV.salesShipment" Partner="salesShipmentLines" ContainsTarget="true">
+        <ReferentialConstraint Property="documentId" ReferencedProperty="id" />
+    </NavigationProperty>
+    <NavigationProperty Name="dimensionSetLines" Type="Collection(Microsoft.NAV.dimensionSetLine)" Partner="salesShipmentLine" ContainsTarget="true">
+        <ReferentialConstraint Property="id" ReferencedProperty="parentId" />
+    </NavigationProperty>
+</EntityType>
+<EntitySet Name="salesShipments" EntityType="Microsoft.NAV.salesShipment" />
