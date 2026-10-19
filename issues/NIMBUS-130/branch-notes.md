@@ -230,3 +230,50 @@
 - HTTP six passed; RTL four passed; security three credential cases passed. Typecheck exactly matches all 22
   baseline diagnostics; lint has zero errors / 13 existing warnings. Logs `task11-*.log` in the
   resumption scratchpad. Live deployment/UI verification remains a later gate.
+
+## Consolidation and finalization (2026-10-19)
+
+- Consolidated against `1b6e33ab5de42272f71dbd6cd10cc4df8e1e5af7..84259bd`: no source changes needed.
+  Company resolution, tracking schedules, state constants and back-off steps already have shared
+  homes. Contract exports are intentional; no duplicate units, dead APIs or uncovered inter-task
+  security path requiring a code change were identified. Compiled `.medusa` Jest duplicates are
+  generated output, not duplicate source tests; leave unrelated Jest configuration unchanged.
+- Branch line counts (`git diff --numstat`, backend `.ts`/`.tsx`): test files +4,322/-39;
+  fixtures/test helpers +266/-0; source including generated migration +3,510/-90.
+  Excludes generated migration JSON, case artifacts, Markdown and scratch files.
+- Final evidence in `.tmp/NIMBUS-130-20261019-resume/`: unit 389/389, Admin 41/41;
+  modules 369 passed/2 failed (source/generated duplicate of documented BC listOrders round-trip
+  guardrail); build passed; lint zero errors/13 existing warnings. Counts include generated tests.
+- Corrected complete HTTP run: 181 passed/31 failed, 15/18 suites passed. Of the failures, 23 were
+  one companies startup-hook timeout; unchanged scoped rerun passed all 23 with unchanged timeout.
+  Remaining eight quote failures have the documented unpublished-product fixture/cartSeeder 400
+  signature; causal fixtures and routes equal merge-base (see `http-process-db-audit.md`). No fresh
+  merge-base test execution was performed. Initial `final-http.log` was interrupted and is not a
+  completed check; `final-http-correct-env.log` sets synthetic JWT before Jest configuration loads.
+- Typecheck: 22 diagnostics, exactly the resumption baseline. Independently compared every failing
+  line plus its following eight lines with merge-base: all 22 snippets occur verbatim there.
+  Nineteen concern incomplete company fixtures, two untyped container calls, one optional JWT
+  secret. Company module, `src/types`, affected shared helpers, package manifest, tsconfig and lock
+  file are unchanged from merge-base. This supports pre-epic causes, not merely resume equality;
+  no fresh merge-base compiler execution was performed. No diagnostic was suppressed.
+
+Security matrix evidence (plan section 7):
+
+| Property | Branch evidence and remaining limit |
+|---|---|
+| Known gateway token only | Task 10 offline workflow harness compares GlobalLists lookup and both 401 branches with existing order workflow; 29 checks. Live unknown/disabled token calls and confirmation Medusa was not called remain in `artifacts/test-calls.md`; no Azure deployment occurred. |
+| Secret key on Medusa GET | `security-boundaries.spec.ts`, shipment-notices credential matrix: absent, customer and publishable credentials denied. |
+| Own company's notices only | Same spec, `never returns another company's notices`. |
+| No parameter injection | `orderapi/shipment-notices.spec.ts`, `rejects %s with 400 and Medusa's error body`, extra-parameter case; task 10 harness checks query allowlist and encoding. Actual APIM forwarding remains a deployment check. |
+| Generic unknown customer, GET and POST | Security spec `answers an unknown customer number with a 404 that does not reveal it` and `answers an unknown order API customer number without revealing it`; workflow spec TC-2 verifies one warning containing only the customer identifier. |
+| Right company/order/BC order association | `discover-shipments.spec.ts`, `tracks only shipments of the API order under its current BC order number`; `match-shipment-order.unit.spec.ts` covers foreign company, previous BC number and pre-go-live posting. |
+| No personal data in job/error logs | `check-shipments.spec.ts`, `backs off an unpairable shipment, then gives up after the window`, asserts safe error codes and absence of receiver name/address; pure poll log tests assert counts. |
+| Admin authentication for list and retry | Security spec `denies %s credentials on both admin shipment tracking endpoints`, three credential cases/six denied requests. |
+| Admin list has safe fields | `admin/shipment-tracking.spec.ts`, `lists only gave-up rows newest first with safe typed fields and paging`. |
+| Logic App history, replay and retention | History exposure accepted in plan; repeated reads covered by `returns the same page when called twice`; retention is a policy decision, no deletion feature added. |
+
+- Task 10 offline policy/XSD harness: 69 checks, plus the 29 workflow checks above. These prove
+  artifact behavior offline, not Azure policy acceptance or customer delivery.
+- Next owner: integration reviewer, then dispatcher/human gate. Retain after-deploy checks for
+  Azure policy/forwarding/token failures, real TestDK posting/undo, production shipment matching,
+  deployed Admin/next poll and monitoring. No push or deployment by consolidation worker.

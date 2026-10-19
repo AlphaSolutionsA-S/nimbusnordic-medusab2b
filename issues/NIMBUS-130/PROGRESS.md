@@ -314,3 +314,24 @@
   while user bearer/session actors supply the admin user id); run final whole-branch checks.
   No worker commit or tracker update. Deployed Admin and next-minute poll checks remain after
   deployment; unrelated NIMBUS-179 and manifest changes were preserved.
+
+## 2026-10-19 — Consolidation and local finalization evidence recorded
+
+- **Updated by:** consolidation worker, on dispatcher handover.
+- **Outcome:** All twelve tasks reviewed locally. Compared the implementation with merge-base
+  `1b6e33ab5de42272f71dbd6cd10cc4df8e1e5af7`, task deviations and plan security matrix. No duplicate
+  units, dead APIs or inter-task test gaps justified a source change. Security coverage, branch
+  source/test line counts and completed check results are recorded in `branch-notes.md`.
+  Unit 389/389 and Admin 41/41 passed; build passed; lint zero errors/13 existing warnings.
+  Module run: 369 passed, two documented BC guardrail failures (source/generated duplicates).
+  Full corrected HTTP: 181 passed/31 failed; 23 companies failures were a startup-hook timeout,
+  and a scoped unchanged-timeout rerun passed all 23. The other eight match the documented quote
+  fixture failure with unchanged causal code. Typecheck still has 22 diagnostics; exact failing
+  snippets and owning types/helpers/config were compared with merge-base and remain unchanged.
+  No fresh merge-base test/compiler execution; no suppression. Initial interrupted HTTP run is
+  incomplete evidence. Documentation-only consolidation did not repeat the completed checks.
+- **Handover to:** integration reviewer, then dispatcher for the human implementation gate.
+- **Handover prompt:** Review the full branch against plan/seams and this evidence. Carry the live
+  Azure/token/forwarding, TestDK posting/undo, production matching, deployed Admin/poll and alert
+  checks into the deviation report and ship gate. Nothing pushed, deployed, committed or changed
+  in the tracker by this worker; unrelated NIMBUS-179 and scratch files preserved.
