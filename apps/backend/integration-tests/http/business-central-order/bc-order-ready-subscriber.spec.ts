@@ -64,6 +64,7 @@ const CREATED: BCCreatedSalesOrder = {
   number: "SO-009999",
   status: "Draft",
   acceptedLineNumbers: [1],
+  acceptedLines: [{ lineNumber: 1, sequence: 10000 }],
   rejectedLines: [],
 };
 

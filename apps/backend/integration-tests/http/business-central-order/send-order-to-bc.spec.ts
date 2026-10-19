@@ -57,12 +57,19 @@ const unmatchedLine = (lineNumber: number): BCItemLookupResult => ({
 
 const createdSalesOrder = (
   acceptedLineNumbers: number[],
-  rejectedLines: BCCreatedSalesOrder["rejectedLines"] = []
+  rejectedLines: BCCreatedSalesOrder["rejectedLines"] = [],
+  identity: { id: string; number: string } = {
+    id: "22222222-2222-2222-2222-222222222222",
+    number: "SO-001234",
+  }
 ): BCCreatedSalesOrder => ({
-  id: "22222222-2222-2222-2222-222222222222",
-  number: "SO-001234",
+  ...identity,
   status: "Draft",
   acceptedLineNumbers,
+  acceptedLines: acceptedLineNumbers.map((lineNumber) => ({
+    lineNumber,
+    sequence: lineNumber * 10000,
+  })),
   rejectedLines,
 });
 
@@ -191,9 +198,9 @@ medusaIntegrationTestRunner({
         return { findItems, createSalesOrder, getCustomer };
       }
 
-      async function run(orderId: string) {
+      async function run(orderId: string, forceResend = false) {
         await sendOrderToBusinessCentralWorkflow(getContainer()).run({
-          input: { order_id: orderId },
+          input: { order_id: orderId, force_resend: forceResend },
         });
       }
 
@@ -602,6 +609,93 @@ medusaIntegrationTestRunner({
         const state = await readIntegrationState(order.id);
         expect(state.status).toEqual("sent");
         expect(state.attempt_count).toEqual(2);
+      });
+
+      it("records the BC line map with the canonical EAN in the same update as the BC order number", async () => {
+        const { order } = await seedOrder();
+        stubBusinessCentral(
+          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          createdSalesOrder(
+            [1],
+            [
+              {
+                lineNumber: 2,
+                message: "Business Central rejected the sales order line with status 400",
+              },
+            ]
+          )
+        );
+
+        await run(order.id);
+
+        const state = await readIntegrationState(order.id);
+        expect(state.status).toEqual("sent");
+        expect(state.bc_order_number).toEqual("SO-001234");
+        expect(state.bc_lines).toEqual([
+          { line_number: 1, ean_no: "5712094143628", bc_sequence: 10000 },
+        ]);
+      });
+
+      it("replaces the BC order number and the line map together on a force resend", async () => {
+        const { order } = await seedOrder();
+        const { createSalesOrder } = stubBusinessCentral(
+          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          createdSalesOrder([1])
+        );
+
+        await run(order.id);
+        createSalesOrder.mockResolvedValue(
+          createdSalesOrder([1, 2], [], {
+            id: "44444444-4444-4444-4444-444444444444",
+            number: "SO-005678",
+          })
+        );
+        await run(order.id, true);
+
+        expect(createSalesOrder).toHaveBeenCalledTimes(2);
+        const state = await readIntegrationState(order.id);
+        expect(state.bc_order_number).toEqual("SO-005678");
+        expect(state.bc_lines).toEqual([
+          { line_number: 1, ean_no: "5712094143628", bc_sequence: 10000 },
+          { line_number: 2, ean_no: "5712094143635", bc_sequence: 20000 },
+        ]);
+      });
+
+      it("leaves the BC order number and the line map unchanged when a resend fails", async () => {
+        const { order } = await seedOrder();
+        const { createSalesOrder } = stubBusinessCentral(
+          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          createdSalesOrder([1, 2])
+        );
+
+        await run(order.id);
+        const sentState = await readIntegrationState(order.id);
+        createSalesOrder.mockRejectedValue(
+          new BusinessCentralAmbiguousOutcomeError("timeout", "BC-ORDER-x")
+        );
+        await run(order.id, true);
+
+        const state = await readIntegrationState(order.id);
+        expect(state.status).toEqual("failed");
+        expect(state.bc_order_number).toEqual(sentState.bc_order_number);
+        expect(state.bc_lines).toEqual(sentState.bc_lines);
+        expect(state.bc_lines).toHaveLength(2);
+      });
+
+      it("keeps an ordinary retry after a sent outcome stopped by the duplicate guard", async () => {
+        const { order } = await seedOrder();
+        const { createSalesOrder } = stubBusinessCentral(
+          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          createdSalesOrder([1, 2])
+        );
+
+        await run(order.id);
+        const sentState = await readIntegrationState(order.id);
+        await run(order.id);
+
+        expect(createSalesOrder).toHaveBeenCalledTimes(1);
+        expect(await readIntegrationState(order.id)).toEqual(sentState);
+        expect(sentState.bc_lines).toHaveLength(2);
       });
     });
   },

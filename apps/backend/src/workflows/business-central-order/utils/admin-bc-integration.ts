@@ -22,7 +22,7 @@ const FAILURE_REASONS = new Set([
 ]);
 export type AdminBcIntegration = Omit<
   BcIntegrationState,
-  "status" | "line_failures"
+  "status" | "line_failures" | "bc_lines"
 > & {
   status: BcIntegrationState["status"] | null;
   line_failures: { line_number: number; reason: BcOrderLineFailureReason }[];

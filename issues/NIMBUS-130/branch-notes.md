@@ -47,3 +47,20 @@
 - Module specs run with `pnpm --filter @b2b-starter/backend test:integration:modules -- <path>`
   (local Postgres works here); the runner builds the schema from the models, not the migration.
 - `medusa db:migrate` hangs after applying here (link-sync prompt); check the DB instead.
+
+## Task 03: BC line map at submission
+
+- Read the map with `parseBcIntegrationState(order.metadata[BC_INTEGRATION_STATE_METADATA_KEY]).bc_lines`
+  (`modules/order-ingestion/bc-integration-state.ts`): `BcOrderLineMapEntry[] | null`, entries
+  `{ line_number, ean_no: string | null, bc_sequence: number | null }`. `null` = older order, no map.
+- Only accepted lines are in the map; `bc_sequence` can be null (BC 201 body without `sequence`),
+  so a shipment line with no matching entry must be handled, not assumed impossible.
+- The map always belongs to the current `bc_order_number` (both replaced together when an attempt
+  creates a BC order, including an all-lines-rejected one, which records an empty map).
+- Adapter: `BCCreatedSalesOrder.acceptedLines: BCAcceptedSalesOrderLine[]` (`types.ts`) beside the
+  existing `acceptedLineNumbers`; test fixtures of `BCCreatedSalesOrder` need both.
+- `AdminBcIntegration` omits `bc_lines` (the Admin spec asserts exact keys and no `ean_no`).
+- `sales-order-create.spec.ts` is not `*.unit.spec.ts`: run it with
+  `pnpm --filter @b2b-starter/backend test:integration:modules -- <path>` (no DB needed).
+- `send-order-to-bc.spec.ts` plus the subscriber spec take about 10 minutes locally; run them in
+  the background with a timeout above 600 s.

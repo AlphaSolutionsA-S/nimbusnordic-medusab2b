@@ -5,6 +5,7 @@ import { BusinessCentralAmbiguousOutcomeError } from "../../../modules/business-
 import type { IBusinessCentralModuleService } from "../../../modules/business-central/types";
 import type {
   BcOrderLineFailure,
+  BcOrderLineMapEntry,
   BcSubmissionFailureReason,
 } from "../../../modules/order-ingestion/bc-integration-state";
 import type { PreparedBcOrder } from "./prepare-bc-order";
@@ -16,6 +17,8 @@ export type BcSubmissionOutcome = {
   status: BcSubmissionStatus;
   bcOrderId: string | null;
   bcOrderNumber: string | null;
+  // Set exactly when BC created an order (with bcOrderId); null when no BC order was created.
+  bcLines: BcOrderLineMapEntry[] | null;
   partial: boolean;
   failureReason: BcSubmissionFailureReason | null;
   lineFailures: BcOrderLineFailure[];
@@ -33,6 +36,7 @@ export const submitBcOrderStep = createStep(
         status: "skipped",
         bcOrderId: null,
         bcOrderNumber: null,
+        bcLines: null,
         partial: false,
         failureReason: null,
         lineFailures: [],
@@ -45,6 +49,7 @@ export const submitBcOrderStep = createStep(
         status: "failed",
         bcOrderId: null,
         bcOrderNumber: null,
+        bcLines: null,
         partial: input.lineFailures.length > 0,
         failureReason: input.failureReason ?? "bc_submission_failed",
         lineFailures: input.lineFailures,
@@ -94,6 +99,14 @@ export const submitBcOrderStep = createStep(
         status: allRejected ? "failed" : "sent",
         bcOrderId: created.id,
         bcOrderNumber: created.number,
+        bcLines: created.acceptedLines.map((line) => ({
+          line_number: line.lineNumber,
+          ean_no:
+            input.lineIdentifiers.find(
+              (identifiers) => identifiers.line_number === line.lineNumber
+            )?.ean_no ?? null,
+          bc_sequence: line.sequence,
+        })),
         partial: lineFailures.length > 0,
         failureReason,
         lineFailures,
@@ -114,6 +127,7 @@ export const submitBcOrderStep = createStep(
         status: "failed",
         bcOrderId: null,
         bcOrderNumber: null,
+        bcLines: null,
         partial: input.lineFailures.length > 0,
         failureReason: outcomeUnknown
           ? "bc_submission_outcome_unknown"

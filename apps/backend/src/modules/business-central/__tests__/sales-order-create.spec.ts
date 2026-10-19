@@ -27,8 +27,8 @@ function headerResponse(
   return new Response(JSON.stringify(body), { status });
 }
 
-function lineResponse(status = 201): Response {
-  return new Response(JSON.stringify({ id: "line" }), { status });
+function lineResponse(status = 201, sequence?: number): Response {
+  return new Response(JSON.stringify({ id: "line", sequence }), { status });
 }
 
 function mockBusinessCentral(responses: Response[]): jest.Mock {
@@ -103,8 +103,8 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
   it("TC-1: posts the header then one request per line", async () => {
     const fetchMock = mockBusinessCentral([
       headerResponse(),
-      lineResponse(),
-      lineResponse(),
+      lineResponse(201, 10000),
+      lineResponse(201, 20000),
     ]);
     const service = new BusinessCentralModuleService();
 
@@ -113,6 +113,10 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
       number: "SO-001234",
       status: "Draft",
       acceptedLineNumbers: [1, 2],
+      acceptedLines: [
+        { lineNumber: 1, sequence: 10000 },
+        { lineNumber: 2, sequence: 20000 },
+      ],
       rejectedLines: [],
     });
 
@@ -206,8 +210,8 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
   it("TC-5: collects a rejected line and still returns the BC order id", async () => {
     const fetchMock = mockBusinessCentral([
       headerResponse(),
-      lineResponse(),
-      lineResponse(400),
+      lineResponse(201, 10000),
+      lineResponse(400, 20000),
     ]);
     const service = new BusinessCentralModuleService();
 
@@ -215,6 +219,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
 
     expect(result.id).toEqual(SALES_ORDER_ID);
     expect(result.acceptedLineNumbers).toEqual([1]);
+    expect(result.acceptedLines).toEqual([{ lineNumber: 1, sequence: 10000 }]);
     expect(result.rejectedLines).toEqual([
       {
         lineNumber: 2,
@@ -232,6 +237,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
 
     expect(result.id).toEqual(SALES_ORDER_ID);
     expect(result.acceptedLineNumbers).toEqual([]);
+    expect(result.acceptedLines).toEqual([]);
     expect(result.rejectedLines.map((line) => line.lineNumber)).toEqual([1, 2]);
   });
 
@@ -334,5 +340,38 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     await service.createSalesOrder({ ...twoLineOrder, currencyCode: "EUR" });
 
     expect(bcRequests(fetchMock)[0].body.currencyCode).toEqual("EUR");
+  });
+
+  it("keeps a line accepted with a null BC line number when its 201 body has no usable sequence", async () => {
+    mockBusinessCentral([
+      headerResponse(),
+      new Response(null, { status: 201 }),
+      new Response("not json", { status: 201 }),
+    ]);
+    const service = new BusinessCentralModuleService();
+
+    const result = await service.createSalesOrder(twoLineOrder);
+
+    expect(result.rejectedLines).toEqual([]);
+    expect(result.acceptedLines).toEqual([
+      { lineNumber: 1, sequence: null },
+      { lineNumber: 2, sequence: null },
+    ]);
+  });
+
+  it("ignores a sequence that is not an integer", async () => {
+    mockBusinessCentral([
+      headerResponse(),
+      new Response(JSON.stringify({ id: "line", sequence: "10000" }), { status: 201 }),
+      new Response(JSON.stringify({ id: "line", sequence: 1.5 }), { status: 201 }),
+    ]);
+    const service = new BusinessCentralModuleService();
+
+    const result = await service.createSalesOrder(twoLineOrder);
+
+    expect(result.acceptedLines).toEqual([
+      { lineNumber: 1, sequence: null },
+      { lineNumber: 2, sequence: null },
+    ]);
   });
 });

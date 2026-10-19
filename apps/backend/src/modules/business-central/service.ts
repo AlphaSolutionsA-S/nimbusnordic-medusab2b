@@ -1,6 +1,7 @@
 import type { Logger } from "@medusajs/framework/types";
 import { MedusaError } from "@medusajs/framework/utils";
 import type {
+  BCAcceptedSalesOrderLine,
   BCCreatedSalesOrder,
   BCCreateSalesOrderLineInput,
   BCCreateSalesOrderParams,
@@ -1300,7 +1301,10 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     accessToken: string,
     salesOrderId: string,
     line: BCCreateSalesOrderLineInput
-  ): Promise<BCSalesOrderLineRejection | null> {
+  ): Promise<
+    | { accepted: true; line: BCAcceptedSalesOrderLine }
+    | { accepted: false; rejection: BCSalesOrderLineRejection }
+  > {
     const linesUrl = `${discoveryUrl.toString()}/salesOrders(${salesOrderId})/salesOrderLines`;
     let lineResponse: Response;
 
@@ -1317,19 +1321,41 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       });
     } catch {
       return {
-        lineNumber: line.lineNumber,
-        message: "Business Central sales order line request did not complete",
+        accepted: false,
+        rejection: {
+          lineNumber: line.lineNumber,
+          message: "Business Central sales order line request did not complete",
+        },
       };
     }
 
     if (!lineResponse.ok) {
       return {
-        lineNumber: line.lineNumber,
-        message: `Business Central rejected the sales order line with status ${lineResponse.status}`,
+        accepted: false,
+        rejection: {
+          lineNumber: line.lineNumber,
+          message: `Business Central rejected the sales order line with status ${lineResponse.status}`,
+        },
       };
     }
 
-    return null;
+    // BC already created the line, so an unreadable body only loses its line number.
+    let sequence: unknown;
+
+    try {
+      sequence = ((await lineResponse.json()) as { sequence?: unknown } | null)?.sequence;
+    } catch {
+      sequence = undefined;
+    }
+
+    return {
+      accepted: true,
+      line: {
+        lineNumber: line.lineNumber,
+        sequence:
+          typeof sequence === "number" && Number.isInteger(sequence) ? sequence : null,
+      },
+    };
   }
 
   async createSalesOrder(
@@ -1419,30 +1445,31 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     const salesOrderId = created.id;
-    const acceptedLineNumbers: number[] = [];
+    const acceptedLines: BCAcceptedSalesOrderLine[] = [];
     const rejectedLines: BCSalesOrderLineRejection[] = [];
 
     for (const line of params.lines) {
-      const rejection = await this.postSalesOrderLine(
+      const result = await this.postSalesOrderLine(
         discoveryUrl,
         accessToken,
         salesOrderId,
         line
       );
 
-      if (rejection) {
-        rejectedLines.push(rejection);
+      if (!result.accepted) {
+        rejectedLines.push(result.rejection);
         continue;
       }
 
-      acceptedLineNumbers.push(line.lineNumber);
+      acceptedLines.push(result.line);
     }
 
     return {
       id: salesOrderId,
       number: optionalString(created.number),
       status: optionalString(created.status),
-      acceptedLineNumbers,
+      acceptedLineNumbers: acceptedLines.map((line) => line.lineNumber),
+      acceptedLines,
       rejectedLines,
     };
   }

@@ -53,6 +53,8 @@ export const recordBcOrderOutcomeStep = createStep(
       partial: input.partial,
       failure_reason: input.failureReason,
       line_failures: input.lineFailures,
+      // Like the BC order fields: a new BC order replaces the map, an attempt with none keeps it.
+      bc_lines: input.bcLines ?? previousState.bc_lines,
     };
 
     // metadata is one jsonb column: read-merge-write, or this update would wipe out

@@ -26,6 +26,17 @@ export type BcOrderLineFailure = {
   message: string | null;
 };
 
+/**
+ * One accepted line of the BC sales order: the customer's line number, the EAN from the canonical
+ * line and BC's line number (`sequence`, null when BC's response did not carry it). Shipment lines
+ * carry the same `sequence`, so this is how a shipment line is matched to the customer's line.
+ */
+export type BcOrderLineMapEntry = {
+  line_number: number;
+  ean_no: string | null;
+  bc_sequence: number | null;
+};
+
 export type BcIntegrationState = {
   status: BcIntegrationStatus;
   bc_order_id: string | null;
@@ -37,6 +48,8 @@ export type BcIntegrationState = {
   partial: boolean;
   failure_reason: string | null;
   line_failures: BcOrderLineFailure[];
+  // Written together with bc_order_number; null on states recorded before the map existed.
+  bc_lines: BcOrderLineMapEntry[] | null;
 };
 
 /**
@@ -56,6 +69,7 @@ export function createInitialBcIntegrationState(
     partial: false,
     failure_reason: null,
     line_failures: [],
+    bc_lines: null,
   };
 }
 
@@ -121,6 +135,27 @@ function parseLineFailure(value: unknown): BcOrderLineFailure | null {
   };
 }
 
+function parseLineMapEntry(value: unknown): BcOrderLineMapEntry | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+
+  const raw = value as Record<string, unknown>;
+
+  if (typeof raw.line_number !== "number") {
+    return null;
+  }
+
+  return {
+    line_number: raw.line_number,
+    ean_no: optionalString(raw.ean_no),
+    bc_sequence:
+      typeof raw.bc_sequence === "number" && Number.isInteger(raw.bc_sequence)
+        ? raw.bc_sequence
+        : null,
+  };
+}
+
 /**
  * Reads an untrusted `Order.metadata[BC_INTEGRATION_STATE_METADATA_KEY]` value into a well-formed
  * state object. Anything missing or malformed falls back to the pending state, so a partially
@@ -140,6 +175,7 @@ export function parseBcIntegrationState(value: unknown): BcIntegrationState {
       partial: false,
       failure_reason: null,
       line_failures: [],
+      bc_lines: null,
     };
   }
 
@@ -167,6 +203,11 @@ export function parseBcIntegrationState(value: unknown): BcIntegrationState {
     partial: raw.partial === true,
     failure_reason: optionalString(raw.failure_reason),
     line_failures: lineFailures,
+    bc_lines: Array.isArray(raw.bc_lines)
+      ? raw.bc_lines
+          .map(parseLineMapEntry)
+          .filter((entry): entry is BcOrderLineMapEntry => entry !== null)
+      : null,
   };
 }
 

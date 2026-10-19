@@ -326,10 +326,17 @@ export type BCSalesOrderLineRejection = {
   message: string;
 };
 
+// `sequence` is BC's own line number from the line's 201 body; null when the body lacks it.
+export type BCAcceptedSalesOrderLine = {
+  lineNumber: number;
+  sequence: number | null;
+};
+
 export type BCCreatedSalesOrder = {
   id: string;
   number: string;
   status: string;
   acceptedLineNumbers: number[];
+  acceptedLines: BCAcceptedSalesOrderLine[];
   rejectedLines: BCSalesOrderLineRejection[];
 };

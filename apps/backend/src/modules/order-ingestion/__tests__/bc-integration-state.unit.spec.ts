@@ -20,6 +20,7 @@ describe("createInitialBcIntegrationState", () => {
       partial: false,
       failure_reason: null,
       line_failures: [],
+      bc_lines: null,
     });
   });
 });
@@ -45,6 +46,10 @@ describe("parseBcIntegrationState", () => {
           reason: "not_found",
           message: null,
         },
+      ],
+      bc_lines: [
+        { line_number: 1, ean_no: "5712094143628", bc_sequence: 10000 },
+        { line_number: 3, ean_no: null, bc_sequence: null },
       ],
     };
 
@@ -98,6 +103,38 @@ describe("parseBcIntegrationState", () => {
       reason: "not_found",
       message: null,
     });
+  });
+
+  it("reads a state written before the line map existed as having no line map", () => {
+    const parsed = parseBcIntegrationState({
+      status: "sent",
+      bc_order_id: "bc-1",
+      bc_order_number: "SO-001234",
+      line_failures: [],
+    });
+
+    expect(parsed.bc_order_number).toEqual("SO-001234");
+    expect(parsed.bc_lines).toBeNull();
+    expect(parseBcIntegrationState({ status: "sent", bc_lines: "nope" }).bc_lines).toBeNull();
+    expect(parseBcIntegrationState(undefined).bc_lines).toBeNull();
+  });
+
+  it("keeps usable line-map entries and drops malformed ones", () => {
+    const parsed = parseBcIntegrationState({
+      status: "sent",
+      bc_lines: [
+        { line_number: 1, ean_no: "5712094143628", bc_sequence: 10000 },
+        null,
+        { ean_no: "5712094143635", bc_sequence: 20000 },
+        { line_number: "2", ean_no: "5712094143635", bc_sequence: 20000 },
+        { line_number: 4, ean_no: 42, bc_sequence: "30000" },
+      ],
+    });
+
+    expect(parsed.bc_lines).toEqual([
+      { line_number: 1, ean_no: "5712094143628", bc_sequence: 10000 },
+      { line_number: 4, ean_no: null, bc_sequence: null },
+    ]);
   });
 });
 

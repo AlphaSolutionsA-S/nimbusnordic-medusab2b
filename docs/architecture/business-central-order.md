@@ -26,6 +26,8 @@ Delivery uses the existing Business Central module adapter, canonical order meta
 
 The current state lives at `Order.metadata.business_central_integration`. Persisted statuses are `pending`, `sent` and `failed`; `pending` never indicates that a submission is currently running. An untracked Admin response has null status and a zero attempt count.
 
+The state also holds `bc_lines`, the line map of the BC sales order: one `{ line_number, ean_no, bc_sequence }` entry per line BC accepted, with the customer's line number, the EAN from the canonical line and BC's line number (`sequence` from the line's 201 response, null when the response lacks it). The outcome step writes it in the same metadata update as `bc_order_id`/`bc_order_number`: an attempt that created a BC order (including a force resend) replaces the map, an attempt that created none keeps the previous map. States recorded before the map existed parse as `bc_lines: null`. Shipment notices use it to match BC shipment lines to the customer's lines (NIMBUS-130).
+
 Both endpoints use Medusa's default Admin user authentication. All authenticated Admin users have access; there is no separate role restriction. Anonymous, invalid bearer and customer bearer requests are denied. The widget uses the existing session SDK client.
 
 | Endpoint | Behavior |
@@ -33,7 +35,7 @@ Both endpoints use Medusa's default Admin user authentication. All authenticated
 | `GET /admin/orders/:id/bc-integration` | Core order-detail workflow read; returns `{ bc_integration }`, or 404 for a missing order |
 | `POST /admin/orders/:id/bc-integration/submit` | Strict `{ force_resend?: boolean }`, default false; returns 202 after reservation/event acceptance, 409 for active overlap, 400 for invalid/extra fields and 404 for a missing order |
 
-The status DTO exposes only `status`, `bc_order_id`, `bc_order_number`, `attempt_count`, `initialized_at`, `last_attempt_at`, `sent_at`, `partial`, known `failure_reason` codes and `line_failures` containing `line_number`/known `reason`. Unknown free-text failure reasons become null. Raw canonical payloads, line identifiers, vendor messages and exception details are excluded. Widget request failures use fixed local feedback rather than displaying backend error text.
+The status DTO exposes only `status`, `bc_order_id`, `bc_order_number`, `attempt_count`, `initialized_at`, `last_attempt_at`, `sent_at`, `partial`, known `failure_reason` codes and `line_failures` containing `line_number`/known `reason`. Unknown free-text failure reasons become null. Raw canonical payloads, line identifiers, the `bc_lines` map, vendor messages and exception details are excluded. Widget request failures use fixed local feedback rather than displaying backend error text.
 
 ## Submission flow
 

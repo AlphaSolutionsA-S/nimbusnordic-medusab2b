@@ -35,6 +35,15 @@ describe("Admin BC integration contract", () => {
     ]);
     expect(JSON.stringify(result)).not.toMatch(/secret|personal|customer/);
   });
+  it("does not expose the BC line map", () => {
+    const result = toAdminBcIntegration({
+      ...createInitialBcIntegrationState("2026-10-01T00:00:00.000Z"),
+      status: "sent",
+      bc_lines: [{ line_number: 1, ean_no: "5712094143628", bc_sequence: 10000 }],
+    });
+    expect(Object.keys(result)).not.toContain("bc_lines");
+    expect(JSON.stringify(result)).not.toMatch(/5712094143628/);
+  });
   it("keeps ordinary retries duplicate-safe when a BC id exists even on failure", () => {
     const state = {
       ...createInitialBcIntegrationState("2026-10-01T00:00:00.000Z"),
