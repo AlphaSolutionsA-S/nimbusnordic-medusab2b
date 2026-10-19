@@ -41,7 +41,7 @@ separate go-ahead; run task 12 before task 09)
 | 07 | Shipment checks (bounded, against expected revision) | `07-shipment-checks.md` | backend | R5–R7, R9 (F1, F4, F5, F6) | 02, 03, 04, 05 | NIMBUS-189 | DONE |
 | 08 | Polling job with run deadline and progress warnings | `08-poll-job.md` | backend | Polling schedule, lock-single-run, observability (F4) | 06, 07 | NIMBUS-190 | DONE |
 | 12 | One company-resolution step with a generic 404 (fixes NIMBUS-192); run before 09 | `12-shared-company-resolution.md` | backend | R8 generic 404; NIMBUS-192 | None | NIMBUS-193 | DONE |
-| 09 | `GET /orderapi/shipment-notices` read endpoint | `09-read-endpoint.md` | backend | Read endpoint, R8, cursor API, security | 01, 02, 12 | NIMBUS-187 | TODO |
+| 09 | `GET /orderapi/shipment-notices` read endpoint | `09-read-endpoint.md` | backend | Read endpoint, R8, cursor API, security | 01, 02, 12 | NIMBUS-187 | DONE |
 | 10 | APIM GET operation (XML incl. errors) and Logic App workflow | `10-apim-logic-app.md` | Azure artifacts | Customer path, Response format | 01, 09 | NIMBUS-188 | TODO |
 | 11 | Admin page: list `gave_up` shipments and retry | `11-admin-gave-up-retry.md` | backend (admin routes + Admin UI) | Decision 8 recovery | 02, 05, 07 | NIMBUS-191 | TODO |
 

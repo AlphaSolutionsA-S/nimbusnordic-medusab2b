@@ -172,3 +172,22 @@
   needs its own secret key (`ApiKeyType.SECRET`, header `Basic <token>`).
 - A logger spy works: `jest.spyOn(container.resolve(ContainerRegistrationKeys.LOGGER), "warn")` sees
   the step's warn line in an `inApp` integration spec.
+
+## Task 09: read endpoint
+
+- Exact Medusa contract for task 10: `GET /orderapi/shipment-notices?customerNumber=&after=|since=&limit=`.
+  It returns 200 with the envelope; errors are 400 `{ type: "invalid_data", message }`, 401
+  (no or non-secret key), and 404 `{ type: "not_found", message: "Customer not found" }`.
+- Query schema: `api/orderapi/shipment-notices/validators.ts`. Medusa's `zodValidator` calls
+  `.strict()` on the schema itself; a zod 4 `.refine` survives that (probed). `after` must match
+  `^(0|[1-9]\d{0,14})$`; `since` needs `Z` or an offset; `limit` is coerced, 1–200, default 50.
+- Workflow `listShipmentNoticesWorkflow` (`workflows/shipment-notice/workflows/list-shipment-notices.ts`),
+  input `{ customer_number, limit, after: string | null, since: string | null }`, returns the
+  `ShipmentNoticeEnvelope`.
+- Pure helpers `utils/shipment-notice-page.ts`: `companyShipmentNoticeQuery` (caps `after` at the
+  int4 maximum; an uncapped value is a Postgres out-of-range error, which becomes a 500) and
+  `shipmentNoticePage`.
+- Test seeding: `integration-tests/utils/shipment-notices.ts`: `orderApiSecretHeaders`,
+  `createApiCustomerCompany`, `storeShipmentNoticeRevision` (initializes the poll state and tracks
+  the shipment on revision 1), and `EXAMPLE_SHIPMENT_NOTICE_PAYLOAD`.
+- The HTTP spec takes about 1–2 min; the security spec about 2 min.

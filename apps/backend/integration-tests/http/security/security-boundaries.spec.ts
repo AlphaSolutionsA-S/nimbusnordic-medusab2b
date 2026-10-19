@@ -15,6 +15,12 @@ import { singleLineCanonicalOrder } from
 import { ApprovalStatusType, ApprovalType, type IApprovalModuleService } from '../../../src/types';
 import { createStoreUser } from '../../utils/admin';
 import { generatePublishableKey, generateStoreHeaders } from '../../utils/store';
+import {
+  createApiCustomerCompany,
+  EXAMPLE_SHIPMENT_NOTICE_PAYLOAD,
+  orderApiSecretHeaders,
+  storeShipmentNoticeRevision,
+} from '../../utils/shipment-notices';
 
 jest.setTimeout(120_000);
 
@@ -190,6 +196,52 @@ medusaIntegrationTestRunner({
       expect(response.status).toBe(404);
       expect(response.data).toEqual({ type: 'not_found', message: 'Customer not found' });
       expect(JSON.stringify(response.data)).not.toContain('unknown-security-customer');
+    });
+
+    // NIMBUS-130: shipment notices carry names and addresses; only the Logic App's secret key reads
+    // them, and only for the company the customer number resolves to.
+    describe('GET /orderapi/shipment-notices', () => {
+      const path = '/orderapi/shipment-notices?customerNumber=security-notices-a';
+      const seed = (company_id: string, bc_shipment_id: string, order_id?: string) =>
+        storeShipmentNoticeRevision(container, {
+          company_id, bc_shipment_id, revision: 1,
+          payload: { ...EXAMPLE_SHIPMENT_NOTICE_PAYLOAD, order_id: order_id ?? 'order_own' },
+        });
+
+      it.each([
+        ['no authentication', () => ({})],
+        ['a publishable key', () => publicHeaders.headers],
+      ])('rejects %s with 401', async (_label, requestHeaders) => {
+        const companyA = await createApiCustomerCompany(container, 'security-notices-a');
+        await seed(companyA, 'security-ship-a');
+        const response = await api.get(path,
+          { headers: requestHeaders(), validateStatus: () => true });
+        expect(response.status).toBe(401);
+        expect(JSON.stringify(response.data)).not.toContain('shipment_notices');
+      });
+
+      it("never returns another company's notices", async () => {
+        const companyA = await createApiCustomerCompany(container, 'security-notices-a');
+        const companyB = await createApiCustomerCompany(container, 'security-notices-b');
+        await seed(companyB, 'security-ship-b1', 'order_foreign');
+        const own = await seed(companyA, 'security-ship-a');
+        await seed(companyB, 'security-ship-b2', 'order_foreign');
+
+        const response = await api.get(path, { headers: await orderApiSecretHeaders(container) });
+        expect(response.status).toBe(200);
+        expect(response.data.shipment_notices.map((notice) => [notice.cursor, notice.order_id]))
+          .toEqual([[String(own), 'order_own']]);
+        expect(response.data.has_more).toBe(false);
+      });
+
+      it('answers an unknown customer number with a 404 that does not reveal it', async () => {
+        const response = await api.get(
+          '/orderapi/shipment-notices?customerNumber=unknown-notices-customer',
+          { headers: await orderApiSecretHeaders(container), validateStatus: () => true });
+        expect(response.status).toBe(404);
+        expect(response.data).toEqual({ type: 'not_found', message: 'Customer not found' });
+        expect(JSON.stringify(response.data)).not.toContain('unknown-notices-customer');
+      });
     });
 
     it.each([false, true])('allows cart edits and item deletion with rejected approval: %s',

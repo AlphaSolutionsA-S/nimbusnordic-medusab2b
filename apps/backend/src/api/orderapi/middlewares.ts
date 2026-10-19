@@ -6,6 +6,7 @@ import {
 import { MiddlewareRoute } from "@medusajs/medusa";
 import { CanonicalOrderSchema } from "../../modules/order-ingestion/canonical-order-schema";
 import { OrderApiOrdersQuerySchema } from "./orders/validators";
+import { OrderApiShipmentNoticesQuerySchema } from "./shipment-notices/validators";
 
 export const orderApiMiddlewares: MiddlewareRoute[] = [
   {
@@ -24,5 +25,16 @@ export const orderApiMiddlewares: MiddlewareRoute[] = [
       validateAndTransformQuery(OrderApiOrdersQuerySchema, {}),
       validateAndTransformBody(CanonicalOrderSchema),
     ],
+  },
+  {
+    method: "ALL",
+    matcher: "/orderapi/shipment-notices*",
+    // The same Logic App secret key as the orders entry above, with the same accepted trade-off.
+    middlewares: [authenticate("user", ["api-key"])],
+  },
+  {
+    method: ["GET"],
+    matcher: "/orderapi/shipment-notices",
+    middlewares: [validateAndTransformQuery(OrderApiShipmentNoticesQuerySchema, {})],
   },
 ];
