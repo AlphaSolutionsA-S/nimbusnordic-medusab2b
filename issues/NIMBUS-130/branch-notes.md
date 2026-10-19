@@ -81,3 +81,23 @@
 - The token cache lives on the service instance (a container singleton), so it survives across runs.
 - Workflow tests stub these three methods on the resolved `businessCentral` service; no fetch mocking.
 - `service.spec.ts` "round-trip guardrail" fails on HEAD too (baseline), not a regression.
+
+## Task 05: decision and schedule
+
+- `workflows/shipment-notice/utils/match-shipment-order.ts`: `matchShipmentToOrder(header,
+  candidates, goLiveAt)` (generic: returns the candidate object you passed) with
+  `ShipmentOrderCandidate { company_id, business_central_customer_number, order_id,
+  external_order_number, bc_state }` (`bc_state` = `parseBcIntegrationState(...)`);
+  `isCurrentBcOrder(bcOrderNumber, state)` for task 07's `superseded` check.
+- `utils/decide-shipment-notice.ts`: `decideShipmentNotice({ shipment: BCShipment, order: { order_id,
+  external_order_number, bc_order_number, posting_date, bc_lines }, latest })`, `latest` =
+  `{ revision, content_hash, listed_bc_line_numbers }` or null (build the list from the latest
+  notice's `payload.lines[].bc_line_number`). Returns `record | nothing | unpairable(sequence)`.
+- `utils/shipment-check-schedule.ts`: `initialShipmentSchedule({ postingDate, lastModifiedDateTime })`
+  for discovery's `next_check_at`/`recheck_until`; `scheduleShipmentCheck(row, outcome, now)` →
+  `ShipmentTrackingSchedule` (pass as `tracking` to the store, or to reschedule/close). Outcomes:
+  `checked` (nothing or shipped/revised stored), `cancelled`, `superseded`, `conflict`,
+  `failed { error }` (error code only). Compute it before the store: a "record" uses `checked`, or
+  `cancelled` when the decision's status is `cancelled`.
+- Hash is sha256 hex over net > 0 lines only; a `cancelled` revision stores the hash of no lines.
+- `pnpm ai:check` fails locally on AGENTS.md size (CRLF on disk); see task 05 deviations.

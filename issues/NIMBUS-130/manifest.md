@@ -36,7 +36,7 @@ separate go-ahead; run task 12 before task 09)
 | 02 | Storage: notices, tracking, poll state; store against expected revision | `02-shipment-notice-storage.md` | backend | Stored notice, Watermark design, Data model, correctness (F1, F7) | None | NIMBUS-182 | DONE |
 | 03 | Keep BC line numbers in the BC outcome at submission | `03-capture-bc-line-map.md` | backend | P1, Q10 (F3) | None | NIMBUS-183 | DONE |
 | 04 | Business Central shipment reads (count, complete window, by number) | `04-bc-shipment-reads.md` | backend | Polling BC side, BC load (F2, F4) | None | NIMBUS-184 | DONE |
-| 05 | Decision and schedule: match, netting, revision, check schedule | `05-shipment-notice-decision.md` | backend | R1, R2, R4–R7, P8 (F5, F6, F8) | 01, 04 | NIMBUS-185 | TODO |
+| 05 | Decision and schedule: match, netting, revision, check schedule | `05-shipment-notice-decision.md` | backend | R1, R2, R4–R7, P8 (F5, F6, F8) | 01, 04 | NIMBUS-185 | DONE |
 | 06 | Discovery scan (lead and trail windows, tracking upsert) | `06-discovery-scan.md` | backend | Polling discovery, R1, R2, R4 (F2) | 02, 03, 04, 05 | NIMBUS-186 | TODO |
 | 07 | Shipment checks (bounded, against expected revision) | `07-shipment-checks.md` | backend | R5–R7, R9 (F1, F4, F5, F6) | 02, 03, 04, 05 | NIMBUS-189 | TODO |
 | 08 | Polling job with run deadline and progress warnings | `08-poll-job.md` | backend | Polling schedule, lock-single-run, observability (F4) | 06, 07 | NIMBUS-190 | TODO |
