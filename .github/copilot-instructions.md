@@ -380,7 +380,7 @@ Every table has one owning module. Core tables belong to their Medusa module. Th
 | `company` | `company`, `employee` | `modules/company/migrations/` |
 | `quote` | `quote`, `message` | `modules/quote/migrations/` |
 | `approval` | `approval`, `approval_settings`, `approval_status` | `modules/approval/migrations/` |
-| `orderIngestion` | `order_external_reference` | `modules/order-ingestion/migrations/` |
+| `orderIngestion` | `order_external_reference`, `shipment_notice`, `shipment_tracking`, `shipment_notice_state` | `modules/order-ingestion/migrations/` |
 | `storefrontTranslation` | `storefront_translation`, `translation_missing_key` | `modules/storefront-translation/migrations/` |
 | `businessCentral` | none (HTTP client for Dynamics 365 Business Central) | — |
 
