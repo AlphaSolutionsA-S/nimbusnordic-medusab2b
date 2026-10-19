@@ -14,7 +14,7 @@ Paths are relative to `apps/backend/src/`, `apps/storefront/src/` and `apps/cms/
 | L4 | Workflow | `workflows/<domain>/workflows/*.ts`; core-flow hooks in `workflows/hooks/*.ts` | logic spanning more than one module; compensation | L3, L5 inside `transform()`, other workflows via `runAsStep` | `await`, branch outside `when()`, `new Date()` |
 | L5 | Decision fn | `workflows/<domain>/utils/*.ts`, `utils/*.ts` (pure parts) | one pure business rule | nothing | any I/O |
 | L6 | API route | `api/{store,admin,orderapi,internal}/**/route.ts`, `api/**/middlewares.ts`, `api/middlewares/*.ts` | validate → run L4 or Query → shape the response | L4, Query, event bus | branch on a business condition; mutate via L1 |
-| L7 | Trigger | `subscribers/*.ts`; `jobs/` (none yet) | call one workflow | L4 | hold logic |
+| L7 | Trigger | `subscribers/*.ts`; `jobs/*.ts` | call one workflow | L4 | hold logic |
 
 Only the pure functions in `utils/` are L5. Admin UI (`admin/**`) calls the backend only over HTTP
 through `admin/lib/client.ts`.

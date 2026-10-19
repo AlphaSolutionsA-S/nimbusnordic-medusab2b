@@ -142,3 +142,18 @@
 - The spec takes about 2 min (250-row batch test); knex "Connection ended unexpectedly" console
   lines in its output are pool noise, not failures. Check for stale jest processes holding the DB
   before re-running.
+
+## Task 08: polling job
+
+- `jobs/poll-shipment-notices.ts`: default `pollShipmentNoticesJob(container)`, `config`
+  (`shipment-notice-poll`, every minute), `SHIPMENT_NOTICE_POLL_LOCK_KEY`, `..._LOCK_TTL_SECONDS`.
+  It never throws (Medusa's job wrapper would log `error.message`).
+- The job is disabled under `NODE_ENV=test` via `defineFileConfig`; a spec imports and calls it.
+  Any later job needs the same guard or it fires inside every integration spec.
+- `workflows/poll-shipment-notices.ts`: `pollShipmentNoticesWorkflow` (no input) →
+  `ShipmentPollSummary` (`utils/shipment-poll.ts`); discovery and checks via `runAsStep` (step
+  names `discover-shipments-as-step`, `check-shipments-as-step`, no collision).
+- Verified: inside `when()`, a skipped sibling's result is `undefined` to a later `when` condition
+  and `transform`; the poll spec covers both skip paths.
+- Pure helpers: `isShipmentPollBackedOff`, `shipmentPollDeadline`, `shipmentPollLogLines`.
+- `integration-tests/http/shipment-notice/poll-shipment-notices.spec.ts` takes about 75 s.
