@@ -32,7 +32,7 @@ separate go-ahead; run task 12 before task 09)
 
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | Shipment notice contract (schemas incl. error, JSON Schema, XSD, examples) | `01-shipment-notice-contract.md` | backend + artifacts | Contract, Response format (incl. XML errors) | None | NIMBUS-181 | TODO |
+| 01 | Shipment notice contract (schemas incl. error, JSON Schema, XSD, examples) | `01-shipment-notice-contract.md` | backend + artifacts | Contract, Response format (incl. XML errors) | None | NIMBUS-181 | DONE |
 | 02 | Storage: notices, tracking, poll state; store against expected revision | `02-shipment-notice-storage.md` | backend | Stored notice, Watermark design, Data model, correctness (F1, F7) | None | NIMBUS-182 | TODO |
 | 03 | Keep BC line numbers in the BC outcome at submission | `03-capture-bc-line-map.md` | backend | P1, Q10 (F3) | None | NIMBUS-183 | TODO |
 | 04 | Business Central shipment reads (count, complete window, by number) | `04-bc-shipment-reads.md` | backend | Polling BC side, BC load (F2, F4) | None | NIMBUS-184 | TODO |

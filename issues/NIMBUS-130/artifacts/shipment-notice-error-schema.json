@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ShipmentNoticeErrorResponse",
+  "description": "Error body of GET /shipment-notices/{token} (JSON, the default). Mirrors ShipmentNoticeErrorBodySchema in apps/backend/src/modules/order-ingestion/shipment-notice-contract.ts. Errors from the order service carry `type` and `message` (and sometimes `code`); errors from the gateway (unknown token, request validation) carry `error` and sometimes `message`.",
+  "oneOf": [
+    {
+      "title": "ServiceError",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "message"],
+      "properties": {
+        "type": { "type": "string" },
+        "message": { "type": "string" },
+        "code": { "type": "string" }
+      }
+    },
+    {
+      "title": "GatewayError",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["error"],
+      "properties": {
+        "error": { "type": "string" },
+        "message": { "type": "string" }
+      }
+    }
+  ]
+}

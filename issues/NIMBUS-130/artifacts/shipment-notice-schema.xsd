@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  XML rendering of GET /shipment-notices/{token}, returned when the request sends
+  Accept: application/xml. Two document roots: <shipment_notice_response> for a success and
+  <error_response> for an error.
+
+  Mirrors the JSON contract (shipment-notice-schema.json, shipment-notice-error-schema.json and
+  ShipmentNoticeEnvelopeSchema in apps/backend/src/modules/order-ingestion/shipment-notice-contract.ts):
+  element names are the JSON property names, arrays are a wrapper element holding one element per
+  item (shipment_notices/shipment_notice, lines/line), and a field that is null in JSON is omitted
+  here (minOccurs="0"). No namespace: APIM renders this document and does not validate it.
+
+  error_response: <error> carries the service's `type` or the gateway's `error`; <message> is
+  omitted when the JSON body has none. The service's `code` is not rendered.
+
+  Rules XSD 1.0 cannot express (real-calendar dates) are guaranteed by the service.
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="unqualified">
+
+  <xs:element name="shipment_notice_response">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="shipment_notices">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="shipment_notice" type="shipmentNoticeType" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="next_cursor" type="cursor" minOccurs="0"/>
+        <xs:element name="has_more" type="xs:boolean"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name="error_response">
+    <xs:complexType>
+      <xs:all>
+        <xs:element name="error" type="xs:string"/>
+        <xs:element name="message" type="xs:string" minOccurs="0"/>
+      </xs:all>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:complexType name="shipmentNoticeType">
+    <xs:all>
+      <xs:element name="cursor" type="cursor"/>
+      <xs:element name="previous_cursor" type="cursor" minOccurs="0"/>
+      <xs:element name="recorded_at" type="utcDateTime"/>
+      <xs:element name="revision" type="xs:positiveInteger"/>
+      <xs:element name="status" type="status"/>
+      <xs:element name="order_id" type="nonEmptyString"/>
+      <xs:element name="external_order_number" type="nonEmptyString"/>
+      <xs:element name="bc_order_number" type="nonEmptyString"/>
+      <xs:element name="shipment_number" type="nonEmptyString"/>
+      <xs:element name="shipment_date" type="plainDate"/>
+      <xs:element name="shipment_method_code" type="xs:string" minOccurs="0"/>
+      <xs:element name="your_reference" type="xs:string" minOccurs="0"/>
+      <xs:element name="sell_to" type="partyType"/>
+      <xs:element name="bill_to" type="partyType"/>
+      <xs:element name="ship_to" type="shipToType"/>
+      <xs:element name="lines">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element name="line" type="lineType" maxOccurs="unbounded"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="partyType">
+    <xs:all>
+      <xs:element name="customer_number" type="xs:string" minOccurs="0"/>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="address_line_1" type="xs:string" minOccurs="0"/>
+      <xs:element name="address_line_2" type="xs:string" minOccurs="0"/>
+      <xs:element name="city" type="xs:string" minOccurs="0"/>
+      <xs:element name="state" type="xs:string" minOccurs="0"/>
+      <xs:element name="post_code" type="xs:string" minOccurs="0"/>
+      <xs:element name="country" type="xs:string" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="shipToType">
+    <xs:all>
+      <xs:element name="name" type="xs:string" minOccurs="0"/>
+      <xs:element name="contact" type="xs:string" minOccurs="0"/>
+      <xs:element name="address_line_1" type="xs:string" minOccurs="0"/>
+      <xs:element name="address_line_2" type="xs:string" minOccurs="0"/>
+      <xs:element name="city" type="xs:string" minOccurs="0"/>
+      <xs:element name="state" type="xs:string" minOccurs="0"/>
+      <xs:element name="post_code" type="xs:string" minOccurs="0"/>
+      <xs:element name="country" type="xs:string" minOccurs="0"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:complexType name="lineType">
+    <xs:all>
+      <xs:element name="line_number" type="xs:nonNegativeInteger" minOccurs="0"/>
+      <xs:element name="ean_no" type="xs:string" minOccurs="0"/>
+      <xs:element name="bc_line_number" type="xs:nonNegativeInteger"/>
+      <xs:element name="item_number" type="nonEmptyString"/>
+      <xs:element name="description" type="xs:string" minOccurs="0"/>
+      <xs:element name="description_2" type="xs:string" minOccurs="0"/>
+      <xs:element name="unit_of_measure_code" type="xs:string" minOccurs="0"/>
+      <xs:element name="quantity" type="nonNegativeDecimal"/>
+      <xs:element name="shipment_date" type="plainDate"/>
+    </xs:all>
+  </xs:complexType>
+
+  <xs:simpleType name="cursor">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="0|[1-9][0-9]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="status">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="shipped"/>
+      <xs:enumeration value="revised"/>
+      <xs:enumeration value="cancelled"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="nonEmptyString">
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- YYYY-MM-DD with no time zone. -->
+  <xs:simpleType name="plainDate">
+    <xs:restriction base="xs:date">
+      <xs:pattern value="[0-9]{4}-[0-9]{2}-[0-9]{2}"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <!-- ISO 8601 in UTC, e.g. 2026-10-20T07:32:05.118Z. -->
+  <xs:simpleType name="utcDateTime">
+    <xs:restriction base="xs:dateTime">
+      <xs:pattern value=".+Z"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="nonNegativeDecimal">
+    <xs:restriction base="xs:decimal">
+      <xs:minInclusive value="0"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+</xs:schema>

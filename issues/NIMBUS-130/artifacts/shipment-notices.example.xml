@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shipment_notice_response>
+  <shipment_notices>
+    <shipment_notice>
+      <cursor>1041</cursor>
+      <recorded_at>2026-10-20T07:32:05.118Z</recorded_at>
+      <revision>1</revision>
+      <status>shipped</status>
+      <order_id>order_01K7XAMPLE0000000000000001</order_id>
+      <external_order_number>PO-778812</external_order_number>
+      <bc_order_number>SO-104233</bc_order_number>
+      <shipment_number>30951120</shipment_number>
+      <shipment_date>2026-10-20</shipment_date>
+      <shipment_method_code>DSV</shipment_method_code>
+      <your_reference>Store 12 restock</your_reference>
+      <sell_to>
+        <customer_number>10045</customer_number>
+        <name>Example Retail A/S</name>
+        <address_line_1>Eksempelvej 1</address_line_1>
+        <city>Aarhus C</city>
+        <post_code>8000</post_code>
+        <country>DK</country>
+      </sell_to>
+      <bill_to>
+        <customer_number>10045</customer_number>
+        <name>Example Retail A/S</name>
+        <address_line_1>Eksempelvej 1</address_line_1>
+        <city>Aarhus C</city>
+        <post_code>8000</post_code>
+        <country>DK</country>
+      </bill_to>
+      <ship_to>
+        <name>Example Retail Store 12</name>
+        <contact>Goods receiving</contact>
+        <address_line_1>Butiksgade 12</address_line_1>
+        <address_line_2>Gate 3</address_line_2>
+        <city>Odense C</city>
+        <post_code>5000</post_code>
+        <country>DK</country>
+      </ship_to>
+      <lines>
+        <line>
+          <line_number>1</line_number>
+          <ean_no>5701234567892</ean_no>
+          <bc_line_number>10000</bc_line_number>
+          <item_number>NN-1001</item_number>
+          <description>Winter jacket, navy</description>
+          <description_2>Size M</description_2>
+          <unit_of_measure_code>PCS</unit_of_measure_code>
+          <quantity>12</quantity>
+          <shipment_date>2026-10-20</shipment_date>
+        </line>
+        <line>
+          <bc_line_number>20000</bc_line_number>
+          <item_number>NN-2040</item_number>
+          <description>Wool scarf, grey</description>
+          <unit_of_measure_code>PCS</unit_of_measure_code>
+          <quantity>3</quantity>
+          <shipment_date>2026-10-20</shipment_date>
+        </line>
+      </lines>
+    </shipment_notice>
+    <shipment_notice>
+      <cursor>1057</cursor>
+      <previous_cursor>1041</previous_cursor>
+      <recorded_at>2026-10-21T09:02:47.530Z</recorded_at>
+      <revision>2</revision>
+      <status>cancelled</status>
+      <order_id>order_01K7XAMPLE0000000000000001</order_id>
+      <external_order_number>PO-778812</external_order_number>
+      <bc_order_number>SO-104233</bc_order_number>
+      <shipment_number>30951120</shipment_number>
+      <shipment_date>2026-10-20</shipment_date>
+      <shipment_method_code>DSV</shipment_method_code>
+      <your_reference>Store 12 restock</your_reference>
+      <sell_to>
+        <customer_number>10045</customer_number>
+        <name>Example Retail A/S</name>
+        <address_line_1>Eksempelvej 1</address_line_1>
+        <city>Aarhus C</city>
+        <post_code>8000</post_code>
+        <country>DK</country>
+      </sell_to>
+      <bill_to>
+        <customer_number>10045</customer_number>
+        <name>Example Retail A/S</name>
+        <address_line_1>Eksempelvej 1</address_line_1>
+        <city>Aarhus C</city>
+        <post_code>8000</post_code>
+        <country>DK</country>
+      </bill_to>
+      <ship_to>
+        <name>Example Retail Store 12</name>
+        <contact>Goods receiving</contact>
+        <address_line_1>Butiksgade 12</address_line_1>
+        <address_line_2>Gate 3</address_line_2>
+        <city>Odense C</city>
+        <post_code>5000</post_code>
+        <country>DK</country>
+      </ship_to>
+      <lines>
+        <line>
+          <line_number>1</line_number>
+          <ean_no>5701234567892</ean_no>
+          <bc_line_number>10000</bc_line_number>
+          <item_number>NN-1001</item_number>
+          <description>Winter jacket, navy</description>
+          <description_2>Size M</description_2>
+          <unit_of_measure_code>PCS</unit_of_measure_code>
+          <quantity>0</quantity>
+          <shipment_date>2026-10-20</shipment_date>
+        </line>
+        <line>
+          <bc_line_number>20000</bc_line_number>
+          <item_number>NN-2040</item_number>
+          <description>Wool scarf, grey</description>
+          <unit_of_measure_code>PCS</unit_of_measure_code>
+          <quantity>0</quantity>
+          <shipment_date>2026-10-20</shipment_date>
+        </line>
+      </lines>
+    </shipment_notice>
+  </shipment_notices>
+  <next_cursor>1057</next_cursor>
+  <has_more>false</has_more>
+</shipment_notice_response>
