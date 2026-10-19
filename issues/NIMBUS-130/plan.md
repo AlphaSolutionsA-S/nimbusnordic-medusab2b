@@ -2,7 +2,8 @@
 
 **Key:** NIMBUS-130 · **Scope:** `scope.md` (approved 2026-10-19) · **Branch:** `feature/NIMBUS-130` from
 `develop` · **Planned:** 2026-10-19 · **Revised:** 2026-10-19 after the independent review
-(`plan-review.md`, findings F1–F8) · **Status:** approved by the human 2026-10-19; dispatch awaits a separate go-ahead
+(`plan-review.md`, findings F1–F8) · **Status:** approved by the human 2026-10-19; re-approved the same day with NIMBUS-192 folded in (task 12);
+dispatch awaits a separate go-ahead
 
 ## 1. Summary [High]
 
@@ -87,6 +88,15 @@ Answered on 2026-10-19 (accepted with their defaults; decision 8 extended by the
     stored-BC-number column, to avoid F3). A shipment whose external document number was edited in BC
     is not matched. *Default:* accept. **Answer:** accepted.
 
+Added 2026-10-19 with bug NIMBUS-192, folded into this epic by the human; answered and re-approved the
+same day:
+
+12. **Log the unknown customer number server-side?** *Default:* yes, one warn line with the number
+    only. It is a business identifier for company customers. It may identify a sole trader, so the log
+    line carries nothing else. **Answer:** accepted (sole traders flagged).
+13. **Duplicate-order 422s keep echoing the caller's own `externalOrderNumber`?** *Default:* keep. The
+    caller sent it, and it is no internal identifier. **Answer:** accepted.
+
 ## 3. Flows [High]
 
 ### A. Order submission keeps the line map (task 03)
@@ -163,7 +173,8 @@ Answered on 2026-10-19 (accepted with their defaults; decision 8 extended by the
 3. The Logic App validates the token against the GlobalLists token list exactly as the order flow
    does (401 "Token not recognized" / "Not allowed") and calls Medusa
    `GET /orderapi/shipment-notices?customerNumber=…` with the secret key.
-4. Medusa resolves the company (unknown → generic 404). It returns the notices above `after`, or
+4. Medusa resolves the company through the shared company-resolution step (unknown → 404 "Customer
+   not found"; task 12). It returns the notices above `after`, or
    recorded on or after `since`, oldest first, reading `limit` + 1 rows to set `has_more`.
 5. The Logic App passes status and body through. With `Accept: application/xml`, APIM renders success
    and error bodies as XML; otherwise it returns JSON.
@@ -326,6 +337,15 @@ Backend:
 The page calls the backend through `admin/lib/client.ts` and follows the existing admin pages
 (literal English text, as the other admin pages use; the translation-key rule is storefront-only).
 
+### 12 One company-resolution step with a generic 404 (NIMBUS-192)
+
+A shared, read-only step (L3) resolves a company from a BC customer number for both
+`POST /orderapi/orders` and the shipment-notice read workflow. Today the POST's 404 message repeats
+the customer number, and Medusa returns the message verbatim. With this step, an unknown number throws
+not-found with the fixed message "Customer not found", and the number goes only to a warn log line
+(decision 12). The order-ingestion workflow is rewired to call it before the duplicate check, which
+keeps its 422 (decision 13). This fixes bug NIMBUS-192.
+
 ## 5. Data model [High]
 
 | Entity / field | Meaning | Owner | Written by | Stored / derived | Mutable until | Retention, deletion | Index |
@@ -367,7 +387,8 @@ Cardinality and relations:
 **Contract (wire names, task 01).**
 - **Envelope:** `{ shipment_notices, next_cursor: string|null, has_more: boolean }`. `next_cursor`
   echoes `after` when the page is empty (null if none was sent).
-- **Error body:** `{ error: string, message: string }`.
+- **Error body:** Medusa's errors are `{ type, message, code? }` (its error handler). Gateway errors are
+  `{ error, message? }` (Logic App 401s, APIM validation).
 - **Notice:**
   - `cursor`, `previous_cursor`, `recorded_at` (ISO 8601 UTC), `revision` (int), `status`;
   - `order_id`, `external_order_number`, `bc_order_number`, `shipment_number`, `shipment_date`
@@ -380,7 +401,8 @@ Cardinality and relations:
     `item_number`, `description`, `description_2`, `unit_of_measure_code`, `quantity` (number, net),
     `shipment_date`}.
 - **XML:** root `shipment_notice_response`, then `shipment_notices/shipment_notice` and `lines/line`;
-  errors are `error_response` with `error` and `message`. Scalars are child elements; null fields are
+  errors are `error_response` with `error` (Medusa `type`, or the gateway's `error`) and `message`
+  (omitted when absent). Scalars are child elements; null fields are
   omitted.
 
 ## 6. Business rules as state tables [High]
@@ -440,7 +462,7 @@ both only if a later step of the same workflow fails, and no step follows it.
 | Medusa accepts only the Logic App | Secret API key; own `authenticate` entry for `/orderapi/shipment-notices*` | Medusa secret key | 401 | no auth → 401; publishable key → 401 (task 09, `security-boundaries.spec.ts`) |
 | A customer sees only its own notices | Filter by the company resolved from `customerNumber`, set only by the Logic App | Logic App (admin-equivalent key, accepted NIMBUS-129 trade-off) | never another company's row | company A's number never returns B's notices (task 09) |
 | Caller cannot inject parameters | APIM forwards only `after`, `since`, `limit`; Medusa schema is strict | APIM policy, Zod | dropped by APIM; 400 at Medusa | unknown parameter → 400 (task 09); injected `customerNumber` ignored (task 10) |
-| Unknown customer reveals nothing | Generic 404, no number echoed | code | 404 | body has no number (task 09) |
+| Unknown customer reveals nothing (GET and POST) | Shared step throws not-found with a fixed message; the number is logged only | code; Medusa's handler returns the message verbatim | 404 | body has no number: GET (task 09), POST (task 12) |
 | A shipment is attached to the right order | Company by BC customer number, order by external number within that company, confirmed by the current BC order number | Medusa data | unmatched shipments skipped | other company's external number, earlier BC number and non-API order → not tracked (task 06) |
 | Personal data not in job or route logs | Counts, order and shipment numbers only; `last_error` holds codes | code review | — | a failing check's log and `last_error` contain no address (task 07) |
 | Only admin users list or retry gave-up rows | Medusa's default `/admin` authentication (user: bearer, session, api-key) | Medusa auth | 401 | no auth, store token, publishable key → 401 (task 11) |
@@ -493,8 +515,10 @@ New in this plan, verified or not:
 - **The store step has no compensation.** A stored notice may already have been read.
 - **Counter row rather than an advisory lock plus `max(sequence)`.** A max would reuse numbers if a
   row ever disappeared.
-- **New company-resolution step with a generic 404.** The order POST's 404 echoes the customer number
-  (not changed here; section 10).
+- **One shared company-resolution step with a generic 404, used by GET and POST (task 12, bug
+  NIMBUS-192).** Medusa's error handler maps `NOT_FOUND` to 404 and returns the error's message in
+  the body unchanged; it logs 4xx messages at info level. `verified` (`@medusajs/framework@2.21.2`
+  `dist/http/middlewares/error-handler.js`).
 - **Does the framework already do this?** Medusa has no shipment, BC or cursor-feed primitive;
   scheduled jobs, locking, `runAsStep` and module services are used as shipped. No core internal is
   called.
@@ -520,6 +544,7 @@ From the scope:
 |---|---|---|
 | Scheduled job | default export `(container)`, `config { name, schedule }`; runs inside a generated workflow; loaded on every `worker`/`shared` instance | `@medusajs/framework@2.21.2` `dist/jobs/job-loader.js`; scope Facts |
 | Admin route authentication | every `/admin` route gets `authenticate("user", ["bearer", "session", "api-key"])` by default | `@medusajs/framework@2.21.2` `dist/http/router.js` (`_ApiLoader_applyAuthMiddleware`) |
+| Error handler | `NOT_FOUND` → 404 `{ code, type: "not_found", message }` with the thrown message verbatim; 4xx message logged at info | `@medusajs/framework@2.21.2` `dist/http/middlewares/error-handler.js` |
 | Locking module | `acquire(key, { ownerId, expire })` throws when held; `release(key, { ownerId })` | `subscribers/business-central-order-ready.ts` and its spec |
 | Workflow compensation | a failing later step compensates earlier executed steps | review F3 (installed workflows-sdk / orchestration 2.21.2); hence no new step after the outcome |
 | Transaction + raw SQL in a module service | `@InjectManager` / `@InjectTransactionManager`, `manager.execute` in one transaction; row locks held to commit | `modules/storefront-translation/service.ts`; Postgres semantics; interleaving test in task 02 |
@@ -540,5 +565,4 @@ From the scope:
 | Stalled-progress warnings are log lines; a log alert in Medusa Cloud has to be configured | lead dev | before go-live |
 | NIMBUS-180 changes the same adapter code (`createSalesOrder`, line POST) and must keep returning the BC line number per accepted line; notices do not depend on it otherwise | lead dev | no |
 | NIMBUS-179 not shipped: duplicate BC reads across instances only | — | no |
-| Order POST 404 echoes the customer number (`match-company-and-check-duplicate.ts`) | human (register or not) | no |
 | Azure deployment of task 10 artifacts | Azure environment owner | before go-live |

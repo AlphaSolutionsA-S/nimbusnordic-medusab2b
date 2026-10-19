@@ -253,3 +253,24 @@
 - **Handover prompt:** Commit the case folders (`issues/NIMBUS-130/`, and `issues/NIMBUS-179/` and
   `issues/NIMBUS-180/` as you decide). Create `feature/NIMBUS-130` from `develop`, then run
   `task-dispatcher` with `issues/NIMBUS-130/`. Approving the plan is not that go-ahead.
+
+## 2026-10-19 — NIMBUS-192 folded in; plan re-approved
+- **Updated by:** implementation-planner agent
+- **Outcome:** The human folded bug NIMBUS-192 into this epic as task 12
+  (`12-shared-company-resolution.md`, Jira NIMBUS-193 under NIMBUS-152, linked "implements"
+  NIMBUS-192). One shared, read-only step resolves the company for `POST /orderapi/orders` and the GET.
+  An unknown number → 404 "Customer not found", with the number in one warn log line only. Task 09 now
+  depends on 12.
+  - bug.md Q4 verified: `@medusajs/framework@2.21.2` `dist/http/middlewares/error-handler.js` maps
+    `NOT_FOUND` to 404 and returns the thrown message verbatim (and logs 4xx messages at info).
+  - Contract correction found on the way: Medusa error bodies are `{ type, message, code? }`, not
+    `{ error, message }`; tasks 01, 09 and 10 updated so APIM maps both error shapes.
+  - Decisions 12 (log the number server-side, sole traders flagged) and 13 (duplicate 422s keep
+    echoing the caller's own order number) were accepted, and the plan was re-approved with the
+    change.
+  - `Ready for Dispatch: true`. Jira: comments on NIMBUS-130 and NIMBUS-192. Nothing committed; no
+    branch.
+- **Handover to:** human, for the separate dispatch go-ahead.
+- **Handover prompt:** Commit the case folders (`issues/NIMBUS-130/`, `issues/NIMBUS-192/`, and the
+  others as you decide). Create `feature/NIMBUS-130` from `develop`, then run `task-dispatcher` with
+  `issues/NIMBUS-130/`. Task 12 runs before task 09.

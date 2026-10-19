@@ -12,7 +12,7 @@ instructions and manual test calls.
 - **APIM outbound,** when `Accept` contains `application/xml`:
   - renders a 200 JSON body to the task 01 XML (root `shipment_notice_response`);
   - renders any error body (400/401/404/5xx, including Logic App 401s and APIM's own errors) to
-    `error_response`;
+    `error_response`, mapping both JSON error shapes (task 01);
   - uses `set-body` (`JObject` → `XElement`) and sets `Content-Type: application/xml`.
   Otherwise the JSON passes through.
 - **Logic App:**

@@ -1,11 +1,11 @@
 # 09: GET /orderapi/shipment-notices
-**App:** backend · **Layer:** L6 (route, middleware), L3/L4 (read workflow) · **Depends on:** 01, 02
+**App:** backend · **Layer:** L6 (route, middleware), L3/L4 (read workflow) · **Depends on:** 01, 02, 12
 
 **Goal:** Serve a company's shipment notices after a cursor (or since a time), oldest first and paged,
 in the task 01 contract. It is a pure read.
 **Files / areas:**
 - `apps/backend/src/api/orderapi/` (new route folder, `middlewares.ts`);
-- `src/workflows/shipment-notice/` (read workflow and a company-resolution step).
+- `src/workflows/shipment-notice/` (read workflow, reusing task 12's company-resolution step).
 **Seam contracts:**
 - `GET /orderapi/shipment-notices?customerNumber=&after=|since=&limit=`. Task 10 calls exactly this
   path.
@@ -15,7 +15,8 @@ in the task 01 contract. It is a pure read.
   - `limit`: 1–200, default 50.
 - `after` with `since` → 400; an unknown parameter → 400.
 - 200 body: the task 01 envelope; `next_cursor` echoes `after` on an empty page.
-- Error bodies use the task 01 error schema. An unknown customer → 404 with a generic message.
+- Error bodies are Medusa's `{ type, message, code? }`. An unknown customer → 404 "Customer not
+  found" from task 12's step.
 - Auth: its own `authenticate("user", ["api-key"])` entry for `/orderapi/shipment-notices*`.
 **Test intent:**
 - HTTP contract (`integration-tests/http/orderapi/shipment-notices.spec.ts`):
