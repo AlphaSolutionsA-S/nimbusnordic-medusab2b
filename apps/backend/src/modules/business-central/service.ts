@@ -31,8 +31,28 @@ import type {
   BCReturnSource,
   BCSalesOrderAddressInput,
   BCSalesOrderLineRejection,
+  BCShipment,
+  BCShipmentHeader,
+  BCShipmentWindow,
   IBusinessCentralModuleService,
 } from "./types";
+import {
+  BusinessCentralThrottledError,
+  buildShipmentNumberFilter,
+  buildShipmentWindowFilter,
+  chunkShipmentNumbers,
+  isThrottlingStatus,
+  mapShipment,
+  mapShipmentHeader,
+  parseRetryAfterSeconds,
+  SHIPMENT_DETAIL_FIELDS,
+  SHIPMENT_HEADER_FIELDS,
+  SHIPMENT_LINE_FIELDS,
+  SHIPMENT_PAGE_SIZE,
+  SHIPMENT_REQUEST_TIMEOUT_MS,
+  SHIPMENT_TOKEN_RENEW_BEFORE_MS,
+} from "./shipment-reads";
+import type { BCSalesShipmentRaw } from "./shipment-reads";
 import {
   buildPostedReturnReceipts,
   buildReturnListRows,
@@ -741,6 +761,7 @@ function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturn
 
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
   private readonly logger?: Logger;
+  private shipmentReadToken: { accessToken: string; renewAtMs: number } | null = null;
 
   constructor({ logger }: { logger?: Logger } = {}) {
     this.logger = logger;
@@ -1005,6 +1026,15 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     clientId: string,
     clientSecret: string
   ): Promise<string> {
+    return (await this.requestTokenWithLifetime(tenantId, clientId, clientSecret)).accessToken;
+  }
+
+  private async requestTokenWithLifetime(
+    tenantId: string,
+    clientId: string,
+    clientSecret: string,
+    signal?: AbortSignal
+  ): Promise<{ accessToken: string; expiresInSeconds: number | null }> {
     const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
     const tokenRequest = new URLSearchParams({
       client_id: clientId,
@@ -1022,6 +1052,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
           "content-type": "application/x-www-form-urlencoded",
         },
         body: tokenRequest.toString(),
+        signal,
       });
     } catch {
       throw new MedusaError(
@@ -1048,7 +1079,193 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       );
     }
 
+    return {
+      accessToken,
+      expiresInSeconds:
+        typeof tokenBody.expires_in === "number" && Number.isFinite(tokenBody.expires_in)
+          ? tokenBody.expires_in
+          : null,
+    };
+  }
+
+  // Shared by the shipment reads only, so a polling run asks for one token, not one per call.
+  private async getShipmentReadToken(discoveryUrl: URL): Promise<string> {
+    const cached = this.shipmentReadToken;
+
+    if (cached && Date.now() < cached.renewAtMs) {
+      return cached.accessToken;
+    }
+
+    const { clientId, clientSecret } = this.getClientCredentials();
+    const { accessToken, expiresInSeconds } = await this.requestTokenWithLifetime(
+      this.getTenantId(discoveryUrl),
+      clientId,
+      clientSecret,
+      AbortSignal.timeout(SHIPMENT_REQUEST_TIMEOUT_MS)
+    );
+
+    // Without a lifetime the token is used for this call only.
+    this.shipmentReadToken =
+      expiresInSeconds === null
+        ? null
+        : {
+            accessToken,
+            renewAtMs: Date.now() + expiresInSeconds * 1000 - SHIPMENT_TOKEN_RENEW_BEFORE_MS,
+          };
+
     return accessToken;
+  }
+
+  private async getShipmentJson(
+    url: string,
+    accessToken: string
+  ): Promise<{ value?: BCSalesShipmentRaw[]; "@odata.nextLink"?: unknown; "@odata.count"?: unknown }> {
+    let response: Response;
+
+    try {
+      response = await fetch(url, {
+        method: "GET",
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: "application/json",
+          prefer: `odata.maxpagesize=${SHIPMENT_PAGE_SIZE}`,
+        },
+        signal: AbortSignal.timeout(SHIPMENT_REQUEST_TIMEOUT_MS),
+      });
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central shipment request did not complete"
+      );
+    }
+
+    if (isThrottlingStatus(response.status)) {
+      throw new BusinessCentralThrottledError(
+        `Business Central throttled the shipment request with status ${response.status}`,
+        parseRetryAfterSeconds(response.headers.get("retry-after"), Date.now())
+      );
+    }
+
+    if (!response.ok) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Business Central shipment request failed with status ${response.status}`
+      );
+    }
+
+    try {
+      return (await response.json()) as {
+        value?: BCSalesShipmentRaw[];
+        "@odata.nextLink"?: unknown;
+        "@odata.count"?: unknown;
+      };
+    } catch {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Malformed Business Central shipment response"
+      );
+    }
+  }
+
+  // Follows @odata.nextLink to the end, so a window is read completely or not at all.
+  private async getAllShipmentPages(
+    firstUrl: URL,
+    discoveryUrl: URL,
+    accessToken: string
+  ): Promise<BCSalesShipmentRaw[]> {
+    const rows: BCSalesShipmentRaw[] = [];
+    let nextUrl: string | null = firstUrl.toString();
+
+    while (nextUrl !== null) {
+      const body = await this.getShipmentJson(nextUrl, accessToken);
+      rows.push(...(body.value ?? []));
+      nextUrl = this.resolveShipmentNextLink(body["@odata.nextLink"], discoveryUrl);
+    }
+
+    return rows;
+  }
+
+  // The bearer token is only ever sent to the configured Business Central origin.
+  private resolveShipmentNextLink(nextLink: unknown, discoveryUrl: URL): string | null {
+    if (nextLink === undefined || nextLink === null) {
+      return null;
+    }
+
+    let url: URL | null = null;
+
+    try {
+      url = typeof nextLink === "string" ? new URL(nextLink, discoveryUrl) : null;
+    } catch {
+      url = null;
+    }
+
+    if (url === null || url.origin !== discoveryUrl.origin) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central shipment nextLink is not a Business Central URL"
+      );
+    }
+
+    return url.toString();
+  }
+
+  async countShipments(window: BCShipmentWindow): Promise<number> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const accessToken = await this.getShipmentReadToken(discoveryUrl);
+    const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
+    url.searchParams.set("$filter", buildShipmentWindowFilter(window));
+    url.searchParams.set("$count", "true");
+    url.searchParams.set("$top", "1");
+    url.searchParams.set("$select", "id");
+
+    const count = (await this.getShipmentJson(url.toString(), accessToken))["@odata.count"];
+
+    if (typeof count !== "number" || !Number.isInteger(count)) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        "Business Central shipment response did not include a count"
+      );
+    }
+
+    return count;
+  }
+
+  async listShipmentHeaders(window: BCShipmentWindow): Promise<BCShipmentHeader[]> {
+    const discoveryUrl = this.getDiscoveryUrl();
+    const accessToken = await this.getShipmentReadToken(discoveryUrl);
+    const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
+    url.searchParams.set("$filter", buildShipmentWindowFilter(window));
+    url.searchParams.set("$orderby", "lastModifiedDateTime asc");
+    url.searchParams.set("$select", SHIPMENT_HEADER_FIELDS);
+
+    const rows = await this.getAllShipmentPages(url, discoveryUrl, accessToken);
+
+    return rows.map(mapShipmentHeader);
+  }
+
+  async getShipmentsByNumbers(numbers: readonly string[]): Promise<BCShipment[]> {
+    const chunks = chunkShipmentNumbers(numbers);
+
+    if (chunks.length === 0) {
+      return [];
+    }
+
+    const discoveryUrl = this.getDiscoveryUrl();
+    const accessToken = await this.getShipmentReadToken(discoveryUrl);
+    const shipments: BCShipment[] = [];
+
+    // One request at a time keeps the polling run's load on BC predictable.
+    for (const chunk of chunks) {
+      const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
+      url.searchParams.set("$filter", buildShipmentNumberFilter(chunk));
+      url.searchParams.set("$select", SHIPMENT_DETAIL_FIELDS);
+      url.searchParams.set("$expand", `salesShipmentLines($select=${SHIPMENT_LINE_FIELDS})`);
+
+      const rows = await this.getAllShipmentPages(url, discoveryUrl, accessToken);
+      shipments.push(...rows.map(mapShipment));
+    }
+
+    return shipments;
   }
 
   async getOperations(): Promise<unknown> {

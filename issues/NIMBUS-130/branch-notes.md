@@ -64,3 +64,20 @@
   `pnpm --filter @b2b-starter/backend test:integration:modules -- <path>` (no DB needed).
 - `send-order-to-bc.spec.ts` plus the subscriber spec take about 10 minutes locally; run them in
   the background with a timeout above 600 s.
+
+## Task 04: BC shipment reads
+
+- Service methods (`IBusinessCentralModuleService`): `countShipments({ after, until })` → number,
+  `listShipmentHeaders({ after, until })` → `BCShipmentHeader[]` (ascending, whole window or throw),
+  `getShipmentsByNumbers(numbers)` → `BCShipment[]` (unknown numbers absent, `[]` → no request).
+- Types in `modules/business-central/types.ts`: `BCShipmentWindow`, `BCShipmentHeader`, `BCShipment`
+  (`shipmentMethodCode`, `yourReference`, `sellTo`/`billTo` `BCShipmentParty`, `shipTo`
+  `BCShipmentShipTo`, `lines`), `BCShipmentLine`, `BCShipmentLineType` (`item | comment | other`).
+- Every text field is `string | null` (empty → null); dates `YYYY-MM-DD` or null; `lastModifiedDateTime`
+  is BC's ISO string (parse it if you need a `Date`). Lines come unsorted, as BC returns them.
+- Throttling: `BusinessCentralThrottledError` (`modules/business-central/shipment-reads.ts`, importable
+  without the service) with `retryAfterSeconds: number | null`; apply the plan's "at least 1 min" in
+  the caller. Other failures (incl. 20 s timeouts) are `MedusaError` `UNEXPECTED_STATE`.
+- The token cache lives on the service instance (a container singleton), so it survives across runs.
+- Workflow tests stub these three methods on the resolved `businessCentral` service; no fetch mocking.
+- `service.spec.ts` "round-trip guardrail" fails on HEAD too (baseline), not a regression.

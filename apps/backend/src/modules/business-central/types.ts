@@ -249,7 +249,75 @@ export interface IBusinessCentralModuleService {
   ): Promise<BCReturnOrder>;
   listReturnReasons(): Promise<BCReturnReason[]>;
   listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult>;
+  countShipments(window: BCShipmentWindow): Promise<number>;
+  listShipmentHeaders(window: BCShipmentWindow): Promise<BCShipmentHeader[]>;
+  getShipmentsByNumbers(numbers: readonly string[]): Promise<BCShipment[]>;
 }
+
+// Posted sales shipments modified in (after, until].
+export type BCShipmentWindow = {
+  after: Date;
+  until: Date;
+};
+
+// Text fields are null when BC sends an empty string; dates are YYYY-MM-DD.
+export type BCShipmentHeader = {
+  id: string;
+  number: string;
+  orderNumber: string | null;
+  externalDocumentNumber: string | null;
+  customerNumber: string | null;
+  postingDate: string | null;
+  // As BC sends it (ISO 8601, UTC).
+  lastModifiedDateTime: string;
+};
+
+export type BCShipmentParty = {
+  customerNumber: string | null;
+  name: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postCode: string | null;
+  country: string | null;
+};
+
+export type BCShipmentShipTo = {
+  name: string | null;
+  contact: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
+  city: string | null;
+  state: string | null;
+  postCode: string | null;
+  country: string | null;
+};
+
+// "comment" is BC's blank line type (text lines).
+export type BCShipmentLineType = "item" | "comment" | "other";
+
+export type BCShipmentLine = {
+  sequence: number;
+  lineType: BCShipmentLineType;
+  itemNumber: string | null;
+  description: string | null;
+  description2: string | null;
+  unitOfMeasureCode: string | null;
+  quantity: number;
+  shipmentDate: string | null;
+};
+
+export type BCShipment = BCShipmentHeader & {
+  shipmentMethodCode: string | null;
+  // BC customerPurchaseOrderReference.
+  yourReference: string | null;
+  sellTo: BCShipmentParty;
+  billTo: BCShipmentParty;
+  shipTo: BCShipmentShipTo;
+  // In BC's response order, not sorted.
+  lines: BCShipmentLine[];
+};
 
 export type BCItem = {
   id: string;
