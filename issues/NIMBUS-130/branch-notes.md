@@ -213,3 +213,20 @@
 - No Azure deployment happened: expression acceptance, actual query forwarding and gateway error
   status remain the manual checks in `test-calls.md`. Backend baseline on resumption: 22 errors;
   task 10 changes no backend code.
+
+## Task 11: Admin shipment recovery
+
+- `/admin/shipment-tracking` lists closed/gave_up rows, with `company_name` resolved via Query;
+  pagination defaults to 20/0, limit 1–200, unknown query keys rejected. Fields are fixed.
+- `/admin/shipment-tracking/:id/retry` runs `reopenShipmentTrackingWorkflow` from
+  `workflows/shipment-notice/workflows/reopen-shipment-tracking.ts`; its single step uses the
+  existing atomic storage reopen method. Empty strict body/query and strict shtr_ id params.
+- Default Admin auth remains installed. Verified installed authenticate middleware and HTTP:
+  bearer/session actors identify users; secret-key actors identify the API key (stored as actor).
+- Page `/app/shipment-tracking` uses `admin/hooks/api/shipment-tracking.tsx`; successful retry
+  invalidates the `['shipment-tracking']` query prefix and pending actions are disabled.
+- Tests authenticate Admin bearer requests through real `/auth/user/emailpass`: hand-signed
+  fixtures using environment secrets were rejected by the running app's loaded configuration.
+- HTTP six passed; RTL four passed; security three credential cases passed. Typecheck exactly matches all 22
+  baseline diagnostics; lint has zero errors / 13 existing warnings. Logs `task11-*.log` in the
+  resumption scratchpad. Live deployment/UI verification remains a later gate.

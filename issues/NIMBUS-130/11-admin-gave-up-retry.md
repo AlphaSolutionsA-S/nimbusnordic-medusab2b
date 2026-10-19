@@ -53,3 +53,42 @@ Closest precedent: `api/admin/orders/[id]/bc-integration/` and `admin/routes/tra
 `shipment_tracking` row's `state` = `open` and `reopened_by` is set, and the next run's summary counts
 it as checked.
 **Also update:** `ai/skills/medusa-admin/project.md` (new admin route) if it lists admin pages.
+
+## Deviations
+
+- `reopened_by` records the authenticated actor id. For user bearer/session authentication this is
+  the admin user id; for secret API keys Medusa supplies the API key id, not a user id. Keeping
+  default Admin authentication (as required) means retaining that actor identity. Verified in
+  installed `@medusajs/framework/dist/http/middlewares/authenticate-middleware.js` and a real HTTP
+  secret-key retry test; no user is inferred from the key.
+- Reused task 02's atomic `reopenShipmentTracking` mutation inside the new workflow step instead
+  of duplicating its state guard. The workflow consists of this single terminal transaction; no
+  compensation is added because no later step can fail and reverting could undo a polling run.
+- Added invalid-input, open-row refusal, secret-key audit identity and list-load-error cases to
+  cover the strict input boundary, complete state guard and visible failure state.
+
+## Done-when evidence
+
+- Routes, workflow and page: `api/admin/shipment-tracking/`,
+  `workflows/shipment-notice/{steps,workflows}/reopen-shipment-tracking.ts`,
+  `admin/routes/shipment-tracking/page.tsx` and `admin/hooks/api/shipment-tracking.tsx`.
+- Route bodies within `limit-route-body`: GET 19 lines and POST 6 lines; no domain branching or
+  service mutation in either route. List reads tracking and company names through Query, selects
+  only contract fields, filters closed/gave_up in the database and orders closed_at/id descending.
+- Tests written: HTTP `integration-tests/http/admin/shipment-tracking.spec.ts` covers safe exact
+  listing and paging, atomic reopen audit/reset/revision preservation, repeat/open/window-ended
+  refusal, unknown id, strict validation, API key identity and retry-to-check-run recovery with
+  a fresh three-day failure window (six passed, `task11-http.log`). `security-boundaries.spec.ts` named
+  `denies %s credentials on both admin shipment tracking endpoints` covers no auth, real store
+  customer token and publishable key (three passed; six denied HTTP requests).
+- Admin tests: `admin/routes/shipment-tracking/__tests__/page.test.tsx`, four passed: spinner then
+  rows, pending disable plus display invalidation/removal, failure toast, load-error state.
+- Lint: PASS, zero errors and 13 existing warnings (`task11-lint.log` in the run scratchpad).
+- Whole backend typecheck: 22 existing errors, zero new diagnostics. Compared diagnostic lines
+  with `typecheck-baseline.log`, normalizing only the leading `apps/backend/` path prefix;
+  `task11-typecheck.log` contains the new run.
+- Also update: `ai/skills/medusa-admin/project.md` now lists the recovery page and display hook.
+  Search found no existing shipment-recovery documentation or other stale consumers to update.
+- Not provable in this task: deployed Admin rendering and the deployed minute poll's summary;
+  after deployment open `/app/shipment-tracking`, retry a gave-up row, verify open/reopened_by
+  in storage and the next poll's checked count. No deployment was performed.

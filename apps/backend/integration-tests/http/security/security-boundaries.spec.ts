@@ -53,6 +53,19 @@ medusaIntegrationTestRunner({
       foreignCompanyId = foreign.id;
     });
 
+    it.each(['none', 'customer', 'publishable'] as const)(
+      'denies %s credentials on both admin shipment tracking endpoints', async (credentials) => {
+        const selected = credentials === 'customer' ? headers : credentials === 'publishable' ? publicHeaders : { headers: {} };
+        for (const [method, url] of [
+          ['GET', '/admin/shipment-tracking'],
+          ['POST', '/admin/shipment-tracking/shtr_missing/retry'],
+        ]) {
+          const response = await api.request({ method, url, ...selected, data: method === 'POST' ? {} : undefined, validateStatus: () => true });
+          expect({ method, status: response.status }).toEqual({ method, status: 401 });
+        }
+      },
+    );
+
     async function createApproval(status: ApprovalStatusType, targetCompany = companyId) {
       const cart = await container.resolve<ICartModuleService>(Modules.CART).createCarts({
         currency_code: 'dkk', customer_id: customerId,

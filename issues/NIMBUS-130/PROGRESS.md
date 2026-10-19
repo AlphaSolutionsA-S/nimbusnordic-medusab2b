@@ -299,3 +299,18 @@
 - **Handover prompt:** Review the five task 10 artifacts and fresh evidence, then continue with
   `11-admin-gave-up-retry.md`. Preserve unrelated work, including NIMBUS-179. Nothing was committed
   by the worker.
+
+## 2026-10-19 — Task 11 implemented and scoped checks passed
+
+- **Updated by:** task 11 worker.
+- **Outcome:** Added Admin gave-up shipment listing, atomic retry workflow and recovery page.
+  Real HTTP contract/integration: six passed, including retry to polling check and the renewed
+  three-day failure window. Security: three credential cases passed (six denied HTTP requests).
+  Admin RTL: four passed. Lint: zero errors, 13 existing warnings. Backend typecheck: exactly
+  the same 22 baseline diagnostics, zero new. Logs are `task11-{http,security,admin,lint,typecheck}.log`
+  in `.tmp/NIMBUS-130-20261019-resume/`.
+- **Handover to:** dispatcher for task 11 review and finalization.
+- **Handover prompt:** Review task 11 files and deviations (API keys supply their own actor id,
+  while user bearer/session actors supply the admin user id); run final whole-branch checks.
+  No worker commit or tracker update. Deployed Admin and next-minute poll checks remain after
+  deployment; unrelated NIMBUS-179 and manifest changes were preserved.

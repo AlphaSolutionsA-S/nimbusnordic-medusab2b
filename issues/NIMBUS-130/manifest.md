@@ -43,7 +43,7 @@ separate go-ahead; run task 12 before task 09)
 | 12 | One company-resolution step with a generic 404 (fixes NIMBUS-192); run before 09 | `12-shared-company-resolution.md` | backend | R8 generic 404; NIMBUS-192 | None | NIMBUS-193 | DONE |
 | 09 | `GET /orderapi/shipment-notices` read endpoint | `09-read-endpoint.md` | backend | Read endpoint, R8, cursor API, security | 01, 02, 12 | NIMBUS-187 | DONE |
 | 10 | APIM GET operation (XML incl. errors) and Logic App workflow | `10-apim-logic-app.md` | Azure artifacts | Customer path, Response format | 01, 09 | NIMBUS-188 | DONE |
-| 11 | Admin page: list `gave_up` shipments and retry | `11-admin-gave-up-retry.md` | backend (admin routes + Admin UI) | Decision 8 recovery | 02, 05, 07 | NIMBUS-191 | TODO |
+| 11 | Admin page: list `gave_up` shipments and retry | `11-admin-gave-up-retry.md` | backend (admin routes + Admin UI) | Decision 8 recovery | 02, 05, 07 | NIMBUS-191 | DONE |
 
 ## Scope items with no task
 
