@@ -124,3 +124,21 @@
   `integration-tests/http/shipment-notice/discover-shipments.spec.ts` (about 2 min) has a
   window-honouring BC fake and a `seedApiOrder` helper (company + order with BC state + reference);
   `createCompanies` needs every `ModuleCreateCompany` field or it adds typecheck errors.
+
+## Task 07: shipment checks
+
+- `workflows/shipment-notice/workflows/check-shipments.ts`: `checkShipmentsWorkflow`, input
+  `{ deadline: Date }`, result `CheckShipmentsWorkflowResult` `{ checked, recorded, unchanged,
+  conflicts, errors, backlog_due, oldest_due_age_ms, status }`; `SHIPMENT_CHECK_BATCH_SIZE` (200) is
+  exported from `steps/prepare-shipment-checks.ts`.
+- It never throws for a per-shipment or BC problem (they become `errors` and `last_error` codes);
+  only DB errors reject. It does not check `bc_backoff_until` itself; a throttled run sets it.
+- `backlog_due` / `oldest_due_age_ms` are measured after the checks: use them as-is for the
+  stalled-progress warning.
+- Step names `prepare-shipment-checks`, `check-shipments`, `set-shipment-check-backoff`,
+  `measure-shipment-backlog` do not collide with the discovery workflow's. The workflow id is also
+  `check-shipments` (same as its step); harmless standalone, but give it a `.config({ name })` if
+  nesting with `runAsStep` complains.
+- The spec takes about 2 min (250-row batch test); knex "Connection ended unexpectedly" console
+  lines in its output are pool noise, not failures. Check for stale jest processes holding the DB
+  before re-running.
