@@ -417,7 +417,7 @@ Every table has one owning module. Core tables belong to their Medusa module. Th
 | `quote` | `quote`, `message` | `modules/quote/migrations/` |
 | `approval` | `approval`, `approval_settings`, `approval_status` | `modules/approval/migrations/` |
 | `orderIngestion` | `order_external_reference`, `shipment_notice`, `shipment_tracking`, `shipment_notice_state` | `modules/order-ingestion/migrations/` |
-| `storefrontTranslation` | `storefront_translation`, `translation_missing_key` | `modules/storefront-translation/migrations/` |
+| `storefrontTranslation` | `storefront_translation`, `translation_missing_key`, `country_language_configuration` | `modules/storefront-translation/migrations/` |
 | `businessCentral` | none (HTTP client for Dynamics 365 Business Central) | — |
 
 Legacy exceptions: `medusa-module-and-data` `project.md`.
@@ -439,6 +439,7 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | Free-shipping threshold | `B/api/store/free-shipping/utils.ts` | `/store/free-shipping/prices` | `S/lib/data/fulfillment.ts` | ok |
 | Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale` | `B/admin/lib/translations.ts`, `S/lib/i18n/country-language-map.ts` | duplicate |
 | Runtime UI text from the database, not `S/messages/*.json` | `B/modules/storefront-translation` | `/store/ui-translations/:locale` (300 s cache) | `S/lib/data/ui-translations.ts` | ok |
+| Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | module methods | none yet (NIMBUS-176) | ok |
 
 Domain types are duplicated in `B/types/` and `S/types/` (no shared package yet).
 

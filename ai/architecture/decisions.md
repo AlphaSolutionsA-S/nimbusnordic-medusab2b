@@ -15,5 +15,6 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | Free-shipping threshold | `B/api/store/free-shipping/utils.ts` | `/store/free-shipping/prices` | `S/lib/data/fulfillment.ts` | ok |
 | Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale` | `B/admin/lib/translations.ts`, `S/lib/i18n/country-language-map.ts` | duplicate |
 | Runtime UI text from the database, not `S/messages/*.json` | `B/modules/storefront-translation` | `/store/ui-translations/:locale` (300 s cache) | `S/lib/data/ui-translations.ts` | ok |
+| Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | module methods | none yet (NIMBUS-176) | ok |
 
 Domain types are duplicated in `B/types/` and `S/types/` (no shared package yet).

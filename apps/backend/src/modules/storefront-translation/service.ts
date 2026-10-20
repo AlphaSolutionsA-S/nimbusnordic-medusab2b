@@ -11,6 +11,13 @@ import type { SqlEntityManager } from "@medusajs/framework/mikro-orm/knex";
 import { StorefrontTranslation } from "./models/storefront-translation";
 import { TranslationMissingKey } from "./models/translation-missing-key";
 import type {
+  CountryLanguageAssignmentInput,
+  CountryLanguageAssignments,
+  CountryLanguageBootstrapReport,
+  CountryLanguageBootstrapResult,
+  CountryLanguageConfiguration,
+  CountryLanguageManagement,
+  CountryLanguagePublication,
   CreateInput,
   ImportInput,
   MessageDocument,
@@ -20,6 +27,16 @@ import type {
   PreviewResponse,
   TranslationDocument,
 } from "../../types/storefront-translation";
+import {
+  assignmentsProblem,
+  countriesUsing,
+  DEFAULT_COUNTRY_LOCALE,
+  effectiveCountryLanguages,
+  isCanonicalLocale,
+  isCountryCode,
+  MAX_CONFIGURATION_BYTES,
+  serializedAssignments,
+} from "./country-languages";
 import {
   diffMessages,
   flattenMessages,
@@ -42,6 +59,12 @@ export const REFERENCE_LOCALE = "en";
 
 const LOCK_NAMESPACE = "storefront-translation";
 const REPORTING_CAP_LOCK = `${LOCK_NAMESPACE}:reporting-cap`;
+// Taken before any locale lock by bootstrap, assignment saves and activation changes, so an
+// assignment and a deactivation never commit against each other's stale view (NIMBUS-176).
+const CONFIGURATION_LOCK = `${LOCK_NAMESPACE}:country-language-configuration`;
+const CONFIGURATION_ID = "country_language_configuration";
+const CONFIGURATION_LOCK_TIMEOUT = "5s";
+const LOCK_NOT_AVAILABLE = "55P03";
 const MAX_COUNT = 2147483647;
 
 const TRANSLATION_COLUMNS = "id, locale, messages, version, is_active, updated_at";
@@ -64,6 +87,64 @@ interface MissingRow {
   id: string;
   key: string;
   dismissed: boolean;
+}
+
+interface ConfigurationRow {
+  assignments: CountryLanguageAssignments;
+  version: number;
+}
+
+interface ConfigurationSnapshotRow extends ConfigurationRow {
+  active_locales: string[];
+}
+
+function toConfiguration(row: ConfigurationRow): CountryLanguageConfiguration {
+  return { assignments: row.assignments, version: Number(row.version) };
+}
+
+function unavailable(): MedusaError {
+  return new MedusaError(MedusaError.Types.UNEXPECTED_STATE, "Country languages are not available");
+}
+
+function isLockTimeout(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === LOCK_NOT_AVAILABLE;
+}
+
+async function failFastOnBusyLock<T>(operation: () => Promise<T>): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    if (isLockTimeout(error)) {
+      throw conflict("Country languages are being changed by someone else. Try again.");
+    }
+    throw error;
+  }
+}
+
+function assertValidAssignments(value: unknown): asserts value is CountryLanguageAssignments {
+  const problem = assignmentsProblem(value);
+  if (problem) {
+    throw invalid(problem);
+  }
+}
+
+function assertValidCountryCodes(codes: unknown): asserts codes is string[] {
+  if (!Array.isArray(codes) || !codes.every(isCountryCode)) {
+    throw invalid("Configured country codes must be two lowercase letters");
+  }
+}
+
+function assertValidAssignmentInput(input: CountryLanguageAssignmentInput): void {
+  if (!isCountryCode(input.country_code)) {
+    throw invalid("Country code must be two lowercase letters");
+  }
+  if (!isCanonicalLocale(input.locale)) {
+    throw invalid("Language must be a canonical BCP 47 language tag");
+  }
+  if (!Number.isInteger(input.expected_version) || input.expected_version < 1) {
+    throw invalid("Expected version must be a positive integer");
+  }
+  assertValidCountryCodes(input.configured_country_codes);
 }
 
 function toIso(value: Date | string): string {
@@ -153,6 +234,14 @@ function transactionManagerOf(context: Context<SqlEntityManager>): SqlEntityMana
   return manager;
 }
 
+function managerOf(context: Context<SqlEntityManager>): SqlEntityManager {
+  const manager = context.transactionManager ?? context.manager;
+  if (!manager) {
+    throw new MedusaError(MedusaError.Types.UNEXPECTED_STATE, "Missing manager");
+  }
+  return manager;
+}
+
 export default class StorefrontTranslationModuleService extends MedusaService({
   StorefrontTranslation,
   TranslationMissingKey,
@@ -164,6 +253,65 @@ export default class StorefrontTranslationModuleService extends MedusaService({
 
   private async lockLocale(manager: SqlEntityManager, locale: string): Promise<void> {
     await this.lock(manager, `${LOCK_NAMESPACE}:locale:${locale}`);
+  }
+
+  /** Bounded wait: a stuck holder fails this transaction instead of queueing Admin requests. */
+  private async lockConfiguration(manager: SqlEntityManager): Promise<void> {
+    await manager.execute(`SET LOCAL lock_timeout = '${CONFIGURATION_LOCK_TIMEOUT}'`);
+    await this.lock(manager, CONFIGURATION_LOCK);
+  }
+
+  private async findConfiguration(manager: SqlEntityManager): Promise<ConfigurationRow | null> {
+    const rows = await manager.execute<ConfigurationRow[]>(
+      `SELECT assignments, version FROM country_language_configuration
+       WHERE id = ? AND deleted_at IS NULL`,
+      [CONFIGURATION_ID]
+    );
+    return rows[0] ?? null;
+  }
+
+  /** Configuration and active languages from one statement, hence one consistent snapshot. */
+  private async findConfigurationSnapshot(
+    manager: SqlEntityManager
+  ): Promise<ConfigurationSnapshotRow | null> {
+    const rows = await manager.execute<ConfigurationSnapshotRow[]>(
+      `SELECT c.assignments, c.version,
+         (SELECT coalesce(jsonb_agg(t.locale ORDER BY t.locale), '[]'::jsonb)
+          FROM storefront_translation t
+          WHERE t.is_active AND t.deleted_at IS NULL) AS active_locales
+       FROM country_language_configuration c
+       WHERE c.id = ? AND c.deleted_at IS NULL`,
+      [CONFIGURATION_ID]
+    );
+    return rows[0] ?? null;
+  }
+
+  /** The given locales that are missing or inactive, sorted and unique. */
+  private async unavailableLocales(manager: SqlEntityManager, locales: string[]): Promise<string[]> {
+    const wanted = [...new Set(locales)].sort();
+    const rows = await manager.execute<Array<{ locale: string }>>(
+      `SELECT locale FROM storefront_translation
+       WHERE is_active AND deleted_at IS NULL
+         AND locale IN (SELECT jsonb_array_elements_text(CAST(? AS jsonb)))`,
+      [JSON.stringify(wanted)]
+    );
+    const active = new Set(rows.map((row) => row.locale));
+    return wanted.filter((locale) => !active.has(locale));
+  }
+
+  /** Caller holds the configuration lock, so no assignment can commit until this transaction ends. */
+  private async assertDeactivatable(manager: SqlEntityManager, locale: string): Promise<void> {
+    if (locale === DEFAULT_COUNTRY_LOCALE) {
+      throw conflict("English is the default storefront language and cannot be deactivated.");
+    }
+    const configuration = await this.findConfiguration(manager);
+    const countries = countriesUsing(configuration?.assignments ?? {}, locale);
+    if (countries.length) {
+      throw conflict(
+        `Language "${locale}" is still assigned to countries: ${countries.join(", ")}. ` +
+          "Reassign them before deactivating it."
+      );
+    }
   }
 
   private async findRow(manager: SqlEntityManager, locale: string): Promise<TranslationRow | null> {
@@ -384,7 +532,7 @@ export default class StorefrontTranslationModuleService extends MedusaService({
     input: MutationInput,
     @MedusaContext() context: Context<SqlEntityManager> = {}
   ): Promise<MutationResult> {
-    const { row, reference } = await this.mutateDocument_(input, context);
+    const { row, reference } = await failFastOnBusyLock(() => this.mutateDocument_(input, context));
     // ICU parsing runs after the commit so the locale lock is not held while it runs.
     return {
       translation: toTranslationDocument(row),
@@ -425,8 +573,12 @@ export default class StorefrontTranslationModuleService extends MedusaService({
         break;
       }
       case "activate":
+        await this.lockConfiguration(manager);
         await this.lockLocale(manager, input.locale);
         await this.requireCurrent(manager, input.locale, input.expected_version);
+        if (!input.is_active) {
+          await this.assertDeactivatable(manager, input.locale);
+        }
         row = await this.compareAndSwapActive(
           manager,
           input.locale,
@@ -447,6 +599,175 @@ export default class StorefrontTranslationModuleService extends MedusaService({
     }
     await this.clearResolved(manager, row, clearOutage);
     return { row, reference: await this.referenceFor(manager, row) };
+  }
+
+  /** The stored document, or null while uninitialized. */
+  @InjectManager()
+  async getCountryLanguageConfiguration(
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageConfiguration | null> {
+    const row = await this.findConfiguration(managerOf(context));
+    return row ? toConfiguration(row) : null;
+  }
+
+  /** Read-only bootstrap prerequisites: English plus every target must exist and be active. */
+  @InjectManager()
+  async previewCountryLanguageBootstrap(
+    assignments: CountryLanguageAssignments,
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageBootstrapReport> {
+    assertValidAssignments(assignments);
+    const manager = managerOf(context);
+    return {
+      initialized: (await this.findConfiguration(manager)) !== null,
+      unavailable_locales: await this.unavailableLocales(manager, [
+        DEFAULT_COUNTRY_LOCALE,
+        ...Object.values(assignments),
+      ]),
+    };
+  }
+
+  /**
+   * Inserts the version-1 document only when none exists; an existing document is returned
+   * unchanged. Never activates a language.
+   */
+  @InjectManager()
+  async bootstrapCountryLanguages(
+    assignments: CountryLanguageAssignments,
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageBootstrapResult> {
+    return failFastOnBusyLock(() => this.bootstrapCountryLanguages_(assignments, context));
+  }
+
+  @InjectTransactionManager()
+  protected async bootstrapCountryLanguages_(
+    assignments: CountryLanguageAssignments,
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageBootstrapResult> {
+    assertValidAssignments(assignments);
+    const manager = transactionManagerOf(context);
+    await this.lockConfiguration(manager);
+    const existing = await this.findConfiguration(manager);
+    if (existing) {
+      return { created: false, configuration: toConfiguration(existing) };
+    }
+    const missing = await this.unavailableLocales(manager, [
+      DEFAULT_COUNTRY_LOCALE,
+      ...Object.values(assignments),
+    ]);
+    if (missing.length) {
+      throw conflict(
+        `Activate these languages before initializing country languages: ${missing.join(", ")}.`
+      );
+    }
+    const rows = await manager.execute<ConfigurationRow[]>(
+      `INSERT INTO country_language_configuration (id, assignments, version)
+       VALUES (?, CAST(? AS jsonb), 1)
+       ON CONFLICT (id) DO NOTHING
+       RETURNING assignments, version`,
+      [CONFIGURATION_ID, serializedAssignments(assignments)]
+    );
+    if (!rows[0]) {
+      throw conflict("Country languages could not be initialized because a removed configuration exists.");
+    }
+    return { created: true, configuration: toConfiguration(rows[0]) };
+  }
+
+  /**
+   * Sets one country's explicit language at the caller's loaded version. A new key needs a
+   * configured country; a retained key (country left every region) may only be reassigned.
+   */
+  @InjectManager()
+  async assignCountryLanguage(
+    input: CountryLanguageAssignmentInput,
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageConfiguration> {
+    return failFastOnBusyLock(() => this.assignCountryLanguage_(input, context));
+  }
+
+  @InjectTransactionManager()
+  protected async assignCountryLanguage_(
+    input: CountryLanguageAssignmentInput,
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageConfiguration> {
+    assertValidAssignmentInput(input);
+    const manager = transactionManagerOf(context);
+    await this.lockConfiguration(manager);
+    const current = await this.findConfiguration(manager);
+    if (!current) {
+      throw conflict("Country languages are not initialized yet.");
+    }
+    if (Number(current.version) !== input.expected_version) {
+      throw conflict("Country languages were changed by someone else. Reload them and try again.");
+    }
+    const hasEntry = Object.prototype.hasOwnProperty.call(current.assignments, input.country_code);
+    if (!hasEntry && !input.configured_country_codes.includes(input.country_code)) {
+      throw invalid(`Country "${input.country_code}" is not part of any region.`);
+    }
+    if ((await this.unavailableLocales(manager, [input.locale])).length) {
+      throw conflict(`Language "${input.locale}" is not an active language.`);
+    }
+    const next = serializedAssignments({ ...current.assignments, [input.country_code]: input.locale });
+    if (Buffer.byteLength(next) > MAX_CONFIGURATION_BYTES) {
+      throw invalid("Assignments are too large");
+    }
+    const rows = await manager.execute<ConfigurationRow[]>(
+      `UPDATE country_language_configuration
+       SET assignments = CAST(? AS jsonb), version = version + 1, updated_at = now()
+       WHERE id = ? AND version = ? AND deleted_at IS NULL
+       RETURNING assignments, version`,
+      [next, CONFIGURATION_ID, input.expected_version]
+    );
+    if (!rows[0]) {
+      throw conflict("Country languages were changed by someone else. Reload them and try again.");
+    }
+    return toConfiguration(rows[0]);
+  }
+
+  /** Configured and retained entries for Admin; does not require the publication invariant. */
+  @InjectManager()
+  async getCountryLanguageManagement(
+    configuredCountryCodes: string[],
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguageManagement> {
+    assertValidCountryCodes(configuredCountryCodes);
+    const snapshot = await this.findConfigurationSnapshot(managerOf(context));
+    if (!snapshot) {
+      throw unavailable();
+    }
+    const configured = new Set(configuredCountryCodes);
+    const codes = [...new Set([...configuredCountryCodes, ...Object.keys(snapshot.assignments)])];
+    return {
+      version: Number(snapshot.version),
+      default_locale: DEFAULT_COUNTRY_LOCALE,
+      countries: effectiveCountryLanguages(snapshot.assignments, codes).map((entry) => ({
+        ...entry,
+        configured: configured.has(entry.country_code),
+      })),
+      active_locales: snapshot.active_locales,
+    };
+  }
+
+  /**
+   * Effective language per configured country. Fails closed while uninitialized or when English
+   * or a published target is not active, so callers keep their previous publication instead.
+   */
+  @InjectManager()
+  async publishCountryLanguages(
+    configuredCountryCodes: string[],
+    @MedusaContext() context: Context<SqlEntityManager> = {}
+  ): Promise<CountryLanguagePublication> {
+    assertValidCountryCodes(configuredCountryCodes);
+    const snapshot = await this.findConfigurationSnapshot(managerOf(context));
+    if (!snapshot) {
+      throw unavailable();
+    }
+    const countries = effectiveCountryLanguages(snapshot.assignments, configuredCountryCodes);
+    const active = new Set(snapshot.active_locales);
+    if (!active.has(DEFAULT_COUNTRY_LOCALE) || countries.some((entry) => !active.has(entry.locale))) {
+      throw unavailable();
+    }
+    return { default_locale: DEFAULT_COUNTRY_LOCALE, countries };
   }
 
   @InjectManager()
