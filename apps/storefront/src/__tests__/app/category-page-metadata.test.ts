@@ -21,6 +21,20 @@ jest.mock("@/lib/data/categories", () => ({
   listCategories: jest.fn(async () => []),
 }))
 
+// Generated metadata reads the request's country-language publication; the legacy snapshot
+// stands in for it here.
+jest.mock("@/lib/data/country-languages", () => {
+  const map = jest.requireActual("@/lib/i18n/country-language-map")
+  const snapshot = map.legacyCountryLanguageSnapshot()
+  return {
+    getCountryLanguageSnapshot: jest.fn(async () => snapshot),
+    getCountryLanguageForCountry: jest.fn(async (code: string) => ({
+      locale: map.localeForCountry(snapshot, code),
+      availability: snapshot.availability,
+    })),
+  }
+})
+
 jest.mock("@/lib/data/regions", () => ({
   listRegions: jest.fn(async () => []),
 }))
@@ -69,6 +83,6 @@ describe("Category page generateMetadata", () => {
       string
     >
     expect(Object.keys(languages)).toHaveLength(8)
-    expect(languages.da).toContain("/dk/categories/test-category")
+    expect(languages["da-DK"]).toContain("/dk/categories/test-category")
   })
 })

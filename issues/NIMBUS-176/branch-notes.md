@@ -46,3 +46,15 @@
 - Jest pitfalls: jsdom has no `AbortSignal.timeout` (polyfilled in `__tests__/app/country-code-layout.test.tsx`); a jsdom test that imports the real loader must mock `server-only` and `@/lib/config`. Any test rendering `(main)/layout.tsx` must mock `@/lib/data/country-languages`.
 - Missing-text reports accept any canonical tag (`isCanonicalLocale`, ≤64 chars); `refreshUiTranslationsForCountry` invalidates only a published country's locale tag.
 - Still stale for 05: `lib/i18n/README.md` (describes `getLocaleForCountry`), Tier 0 `layers.md`/`boundaries.md` (`bound-sf-server-only` and S2 list only `cms.ts` and `ui-translations.ts`; the new loader is `server-only` too), `decisions.md` locale row.
+
+## 05: formatting, SEO and verification
+
+- `buildLocaleAlternates(publication: CountryLanguagePublication, path)` (`lib/seo/locale-alternates.ts`): keys are language[-script]-COUNTRY[-variants] from `Intl.Locale.baseName`, so hreflang for the legacy eight is now `da-DK`, `en-GB`, ... (no longer bare `da`). Product, collection and category `generateMetadata` read `getCountryLanguageForCountry` + `getCountryLanguageSnapshot`.
+- `getFormattingLocale` keeps the eight legacy tags in a `Map` (no prototype lookups); any other `Intl.getCanonicalLocales`-valid tag is returned canonical; malformed → `en-GB`. Verified on Node 22.17: `Intl.NumberFormat("xx")` resolves to the host default (here `en-DK`).
+- Deleted `SUPPORTED_LOCALES`, `Locale`, `getLocaleForCountry`; nothing in `apps/storefront` references them.
+- Playwright journey and security case are NOT run yet: they need a running backend plus `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`, `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` (see `e2e/visual/README.md`) and they change backend data. Run only against a local or disposable backend: `pnpm --filter @b2b-starter/storefront test:visual -- locale-links region-switcher --project gb-desktop`.
+- Medusa sets the session cookie's `SameSite=Lax; Secure` only when the backend's NODE_ENV is production or staging, and no SameSite otherwise (`@medusajs/framework/dist/http/express-loader.js`, `resolveSessionCookieSecurity`); Playwright's `context.cookies()` may report a missing attribute as `Lax`, so read the raw `Set-Cookie` (`loginAdmin` now returns it). Admin route order is `requireAdminSession` then `requireJsonBody`: 401 means the cookie was withheld, 415 that it was sent.
+- The main layout renders `data-testid="region-switcher"` twice (header and footer); scope to `locator('header')`.
+- Full storefront Jest: 2 failing suites, both outside this branch's changes: `main-layout.test.tsx` (known) and `product-tabs/index.test.tsx` ("A React Element from an older version of React", react-markdown resolving a second React).
+- `pnpm ai:check` still fails only on `AGENTS.md` size (33,861 bytes after this task's Tier 0 edits).
+- New architecture page `docs/architecture/country-languages.md` holds the rollout order and the after-deploy checklist.

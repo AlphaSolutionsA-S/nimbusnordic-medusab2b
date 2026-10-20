@@ -3,7 +3,8 @@
 Paths under `apps/storefront/src/`. Tier 0 `layers.md` maps S0–S4 to this app.
 
 - S2 lives in `lib/data/*.ts` (15 `"use server"` files); `lib/data/cms.ts` (Payload, with
-  `PAYLOAD_API_KEY`) and `lib/data/ui-translations.ts` are `server-only` loaders.
+  `PAYLOAD_API_KEY`), `lib/data/ui-translations.ts` and `lib/data/country-languages.ts` (the
+  request's country-language snapshot) are `server-only` loaders.
 - Fetch layout and catalog data at the route level and pass it as props; child components don't fetch.
 - Server components by default; `"use client"` only for state, effects or event handlers.
 - UI text: `getTranslations('Namespace')` (server) or `useTranslations('Namespace')` (client) from

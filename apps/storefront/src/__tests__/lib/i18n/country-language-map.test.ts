@@ -2,11 +2,9 @@ import {
   COUNTRY_LANGUAGE_MAP,
   DEFAULT_LOCALE,
   findPublishedCountry,
-  getLocaleForCountry,
   isCanonicalLocale,
   legacyCountryLanguageSnapshot,
   localeForCountry,
-  SUPPORTED_LOCALES,
   type CountryLanguagePublication,
 } from "@/lib/i18n/country-language-map"
 
@@ -67,15 +65,9 @@ describe("legacy fallback", () => {
     expect(localeForCountry(snapshot, "us")).toBe(DEFAULT_LOCALE)
   })
 
-  it("still maps every legacy locale to at least one country", () => {
-    const mappedLocales = new Set(Object.values(COUNTRY_LANGUAGE_MAP))
-    SUPPORTED_LOCALES.forEach((locale) => {
-      expect(mappedLocales.has(locale)).toBe(true)
-    })
-  })
-
-  it("keeps the legacy lookup for consumers not yet on the request snapshot", () => {
-    expect(getLocaleForCountry("DK")).toBe("da")
-    expect(getLocaleForCountry("us")).toBe(DEFAULT_LOCALE)
+  it("still maps each of the eight legacy languages to its country", () => {
+    expect(new Set(Object.values(COUNTRY_LANGUAGE_MAP))).toEqual(
+      new Set(["da", "en", "sv", "no", "pl", "it", "fr", "de"])
+    )
   })
 })

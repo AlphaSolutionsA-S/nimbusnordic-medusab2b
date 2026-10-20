@@ -274,7 +274,7 @@ L5 names a business rule, never a mocking seam.
 |---|---|---|---|
 | S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` because the Edge runtime cannot load the SDK | map, validate, decide |
 | S1 | Mapper | `lib/util/*.ts` (pure helpers; no dedicated mapper files yet, UNVERIFIED as a layer) | fetch |
-| S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions; `cms.ts` and `ui-translations.ts` are `server-only` loaders | hold a domain rule |
+| S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions; `cms.ts`, `ui-translations.ts` and `country-languages.ts` are `server-only` loaders | hold a domain rule |
 | S3 | Route / server component | `app/[countryCode]/**`, `app/api/**`, `i18n/request.ts` | fetch vendor APIs directly |
 | S4 | Feature component | `modules/<feature>/{components,templates}/**` | fetch, or import `lib/` beyond S1 helpers and S2 actions |
 
@@ -310,7 +310,7 @@ No import-boundary lint runs yet: every row is enforced by review. `@medusajs/es
 | `bound-trigger-thin` | `B/{subscribers,jobs}/**` | `B/modules/*/service.ts` (value), `B/**/steps/**` | forbidden |
 | `bound-app-isolation` | any app (`apps/backend`, `apps/storefront`, `apps/cms`) | another app's source | forbidden |
 | `bound-sf-transport-private` | `S/**` outside `S/lib/config.ts`, `S/lib/data/**`, `S/middleware.ts` | `@medusajs/js-sdk`, `S/lib/config.ts` | forbidden |
-| `bound-sf-server-only` | `S/lib/data/cms.ts`, `S/lib/data/ui-translations.ts` | `server-only` | required |
+| `bound-sf-server-only` | `S/lib/data/cms.ts`, `S/lib/data/ui-translations.ts`, `S/lib/data/country-languages.ts` | `server-only` | required |
 
 Baseline: `bound-route-no-service` in `B/api/store/bc-orders/[id]/returns/route.ts`,
 `B/api/store/ui-translations/[locale]/route.ts` and `B/api/admin/ui-translations/*`;
@@ -437,9 +437,10 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | BC submission skips existing orders unless force is explicit | `B/workflows/business-central-order/utils/admin-bc-integration.ts` (`shouldSkipBcSubmission`) | preparation outcome | automatic and Admin workflows | ok |
 | Shipment notice match (R1, R2, R4), netting, revision and check schedule | `B/workflows/shipment-notice/utils/` | pure verdicts | shipment discovery and check workflows | ok |
 | Free-shipping threshold | `B/api/store/free-shipping/utils.ts` | `/store/free-shipping/prices` | `S/lib/data/fulfillment.ts` | ok |
-| Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale` | `B/admin/lib/translations.ts`, `S/lib/i18n/country-language-map.ts` | duplicate |
+| Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale`; `default_locale` of `/store/country-languages` | `B/admin/lib/translations.ts`, `S/lib/data/country-languages.ts` | duplicate: `REFERENCE_LOCALE` in `B/admin/lib/translations.ts`; `DEFAULT_LOCALE` in `S/lib/i18n/country-language-map.ts` (cold-outage fallback only) |
 | Runtime UI text from the database, not `S/messages/*.json` | `B/modules/storefront-translation` | `/store/ui-translations/:locale` (300 s cache) | `S/lib/data/ui-translations.ts` | ok |
-| Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | module methods | none yet (NIMBUS-176) | ok |
+| Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | `/admin/country-languages`, `/store/country-languages` | Admin Translations page; `S/lib/data/country-languages.ts` (request config, layouts, metadata, switcher, text refresh) | ok; `COUNTRY_LANGUAGE_MAP` in `S/lib/i18n/country-language-map.ts` is the approved cold-outage fallback, not a second rule |
+| Formatting tag and hreflang key of a country's language | `S/lib/i18n/formatting-locale.ts`, `S/lib/seo/locale-alternates.ts` | pure helpers | prices and dates; product, collection and category metadata | ok |
 
 Domain types are duplicated in `B/types/` and `S/types/` (no shared package yet).
 

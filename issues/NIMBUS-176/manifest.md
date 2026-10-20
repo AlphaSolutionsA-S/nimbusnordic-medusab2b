@@ -23,7 +23,7 @@ Finalization runs backend full unit, module and HTTP integration suites, Admin t
 | 02 | Publish validated country-language contracts and bootstrap | 02-contracts-bootstrap.md | Backend | F1 management read, F2, F4 public contract, F6 rollout operation; NFR protected operations | 01 | NIMBUS-195 | DONE |
 | 03 | Add Admin assignment management and feedback | 03-admin-management.md | Admin | F1 display, F7 UI; NFR Admin accessibility | 02 | NIMBUS-196 | DONE |
 | 04 | Resolve runtime language from one cached publication | 04-runtime-resolution.md | Storefront | F3 dynamic consumers, F4 request/render/reporting; NFR cache/outage/restarts/message preservation | 02 | NIMBUS-197 | DONE |
-| 05 | Preserve formatting and SEO with rollout verification | 05-formatting-seo-verification.md | Storefront / docs | F4 metadata/alternates, F8; NFR current documentation and storefront text | 03, 04 | NIMBUS-198 | TODO |
+| 05 | Preserve formatting and SEO with rollout verification | 05-formatting-seo-verification.md | Storefront / docs | F4 metadata/alternates, F8; NFR current documentation and storefront text | 03, 04 | NIMBUS-198 | DONE |
 
 ## Scope items with no task
 

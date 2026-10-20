@@ -17,11 +17,6 @@ export const COUNTRY_LANGUAGE_MAP: Readonly<Record<string, string>> = {
   de: "de",
 }
 
-/** The eight legacy languages. Only the formatting and alternate-link helpers still use it. */
-export const SUPPORTED_LOCALES = ["da", "en", "sv", "no", "pl", "it", "fr", "de"] as const
-
-export type Locale = (typeof SUPPORTED_LOCALES)[number]
-
 export const DEFAULT_LOCALE = "en"
 
 // Mirrors the backend bounds: 676 possible two-letter codes, locale tags of at most 64 characters.
@@ -136,12 +131,4 @@ export function findPublishedCountry(
 /** The published language of a country; a missing or unpublished country gets the default. */
 export function localeForCountry(snapshot: CountryLanguagePublication, countryCode: unknown): string {
   return findPublishedCountry(snapshot, countryCode)?.locale ?? snapshot.default_locale
-}
-
-/**
- * Legacy lookup for the metadata pages that do not yet read the request snapshot.
- * @deprecated read the request snapshot through `getCountryLanguageForCountry` instead.
- */
-export function getLocaleForCountry(countryCode: string): string {
-  return COUNTRY_LANGUAGE_MAP[countryCode.toLowerCase()] ?? DEFAULT_LOCALE
 }
