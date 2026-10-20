@@ -387,3 +387,16 @@
   complete the existing Azure, BC shipment/undo, Admin retry, polling and alert checks in
   `deviation-report.md`. Do not treat the review status or completed implementation tasks as
   proof of deployed behavior.
+
+## 2026-10-20 — Local develop integration
+
+- **Updated by:** primary agent, following the user's merge and commit instruction.
+- **Outcome:** Fast-forwarded local `develop` to reviewed `feature/NIMBUS-130` at `054fb75`,
+  after fetching and confirming it was based on current `origin/develop`. Added the root-only
+  `/.tmp/` ignore rule so local scratch evidence stays outside Git. Application source is identical
+  to the reviewed feature branch; no conflict resolution or additional implementation was needed.
+- **Handover to:** human reviewer and deployment owners.
+- **Handover prompt:** Local `develop` contains the implementation and ignore-rule commit. The
+  current instruction did not request publishing `develop`; retain the D1 review question and
+  existing live-verification checkpoints. NIMBUS-179 intake is committed separately and remains
+  an unimplemented case.
