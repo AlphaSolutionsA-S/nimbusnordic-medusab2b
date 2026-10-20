@@ -255,10 +255,18 @@ export default class StorefrontTranslationModuleService extends MedusaService({
     await this.lock(manager, `${LOCK_NAMESPACE}:locale:${locale}`);
   }
 
-  /** Bounded wait: a stuck holder fails this transaction instead of queueing Admin requests. */
+  /**
+   * Bounded wait: a stuck holder fails this transaction instead of queueing Admin requests. The
+   * caller's own lock_timeout is restored afterwards, because a transaction passed in by a
+   * workflow keeps running other statements after this lock.
+   */
   private async lockConfiguration(manager: SqlEntityManager): Promise<void> {
-    await manager.execute(`SET LOCAL lock_timeout = '${CONFIGURATION_LOCK_TIMEOUT}'`);
+    const [previous] = await manager.execute<Array<{ lock_timeout: string }>>(
+      "SELECT current_setting('lock_timeout') AS lock_timeout"
+    );
+    await manager.execute("SELECT set_config('lock_timeout', ?, true)", [CONFIGURATION_LOCK_TIMEOUT]);
     await this.lock(manager, CONFIGURATION_LOCK);
+    await manager.execute("SELECT set_config('lock_timeout', ?, true)", [previous.lock_timeout]);
   }
 
   private async findConfiguration(manager: SqlEntityManager): Promise<ConfigurationRow | null> {

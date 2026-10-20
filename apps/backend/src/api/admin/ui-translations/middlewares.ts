@@ -3,6 +3,8 @@ import {
   validateAndTransformQuery,
 } from "@medusajs/framework";
 import { MiddlewareRoute } from "@medusajs/medusa";
+import { requireAdminSession, smallJsonBodyParser } from "../../middlewares/require-admin-session";
+import { requireJsonBody } from "../../middlewares/require-json-body";
 import {
   ActivationSchema,
   CreateTranslationSchema,
@@ -15,6 +17,7 @@ import {
 } from "./validators";
 
 // Framework admin authentication applies to every /admin route; nothing here relaxes it.
+// Activation is tightened further below.
 const documentBodyParser = { sizeLimit: "1mb" };
 
 export const adminUiTranslationsMiddlewares: MiddlewareRoute[] = [
@@ -48,9 +51,16 @@ export const adminUiTranslationsMiddlewares: MiddlewareRoute[] = [
     middlewares: [validateAndTransformBody(ImportTranslationSchema)],
   },
   {
+    // Deactivation can unpublish a language for whole countries, so it takes the same
+    // session-only, JSON-only, 1 KiB contract as country-language management.
     method: ["POST"],
     matcher: "/admin/ui-translations/:locale/activation",
-    middlewares: [validateAndTransformBody(ActivationSchema)],
+    bodyParser: smallJsonBodyParser,
+    middlewares: [
+      requireAdminSession,
+      requireJsonBody,
+      validateAndTransformBody(ActivationSchema),
+    ],
   },
   {
     method: ["POST"],

@@ -428,6 +428,17 @@ moduleIntegrationTestRunner<StorefrontTranslationModuleService>({
           type: MedusaError.Types.CONFLICT,
         });
       });
+
+      it("the bounded lock wait does not carry into the rest of a caller's transaction", async () => {
+        await service.bootstrapCountryLanguages({});
+        const settings = await MikroOrmWrapper.forkManager().transactional(async (manager: SqlEntityManager) => {
+          await manager.execute("SET LOCAL lock_timeout = '17s'");
+          await assign({ country_code: "dk", locale: "sv" }, service, { transactionManager: manager });
+          await deactivate(service, "da", { transactionManager: manager });
+          return manager.execute<Array<{ lock_timeout: string }>>("SHOW lock_timeout");
+        });
+        expect(settings[0].lock_timeout).toBe("17s");
+      });
     });
 
     describe("reads", () => {
