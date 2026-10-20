@@ -30,6 +30,10 @@ class FakeBackend {
   missing: MissingKeyRecord[] = [];
   calls: Array<{ method: string; url: string; body?: Body }> = [];
   previewWarnings: IcuWarning[] = [];
+  configuredCountries: string[] = [];
+  /** Explicit country assignments, including retained ones for countries no longer in a region. */
+  assignments: Record<string, string> = {};
+  countryVersion = 1;
 
   put(locale: string, messages: MessageDocument, version = 1, is_active = true): TranslationDocument {
     const document = { id: `sftr_${locale}`, locale, version, is_active, updated_at: NOW, messages };
@@ -45,10 +49,39 @@ class FakeBackend {
     return { translation: document, warnings: [], refresh: document.is_active ? "deferred" : "not_needed" };
   }
 
+  private countryLanguages() {
+    const codes = [...new Set([...this.configuredCountries, ...Object.keys(this.assignments)])].sort();
+    return {
+      version: this.countryVersion,
+      default_locale: "en",
+      countries: codes.map((country_code) => ({
+        country_code,
+        locale: this.assignments[country_code] ?? "en",
+        source: this.assignments[country_code] ? "explicit" : "default",
+        configured: this.configuredCountries.includes(country_code),
+      })),
+      active_locales: Object.values(this.documents)
+        .filter((document) => document.is_active)
+        .map((document) => document.locale)
+        .sort(),
+    };
+  }
+
   handle = async (url: string, init?: { method?: string; body?: Body }) => {
     const method = init?.method ?? "GET";
     this.calls.push({ method, url, body: init?.body });
     const path = url.split("?")[0];
+    if (method === "GET" && path === "/admin/country-languages") {
+      return this.countryLanguages();
+    }
+    if (method === "POST" && path.startsWith("/admin/country-languages/")) {
+      if (init?.body?.expected_version !== this.countryVersion) {
+        throw httpError(409, "Country languages were changed by someone else.");
+      }
+      this.assignments[path.split("/").pop() as string] = init.body.locale as string;
+      this.countryVersion += 1;
+      return this.countryLanguages();
+    }
     const [, , , rawLocale, action, id, subAction] = path.split("/");
     const locale = rawLocale ? decodeURIComponent(rawLocale) : undefined;
     const current = locale ? this.documents[locale] : undefined;
@@ -98,6 +131,18 @@ class FakeBackend {
     if (method === "POST" && locale && action === "activation" && current) {
       if (current.version !== body.expected_version) {
         throw httpError(409);
+      }
+      if (body.is_active === false && locale === "en") {
+        throw httpError(409, "English is the default storefront language and cannot be deactivated.");
+      }
+      const assigned = Object.keys(this.assignments)
+        .filter((country) => this.assignments[country] === locale)
+        .sort();
+      if (body.is_active === false && assigned.length) {
+        throw httpError(
+          409,
+          `Language "${locale}" is still assigned to countries: ${assigned.join(", ")}. Reassign them before deactivating it.`
+        );
       }
       return this.mutation(this.put(locale, current.messages, current.version + 1, body.is_active as boolean));
     }
@@ -435,6 +480,73 @@ describe("Translation tools", () => {
     await user.click(within(dialog).getByRole("button", { name: "Dismiss" }));
     expect(await within(dialog).findByText("1–20 of 20")).toBeInTheDocument();
     expect(within(dialog).queryByText("No missing texts have been reported.")).not.toBeInTheDocument();
+  });
+
+  it("keeps the refusal to deactivate English visible", async () => {
+    backend.put("en", english);
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByDisplayValue("Welcome {name}");
+
+    await user.click(screen.getByRole("button", { name: "Deactivate" }));
+    await confirmPrompt("Deactivate");
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "English is the default storefront language and cannot be deactivated."
+    );
+    expect(backend.documents.en).toMatchObject({ version: 1, is_active: true });
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("names configured and retained countries blocking deactivation; the retry after reassignment succeeds", async () => {
+    backend.put("en", english);
+    backend.put("sv", english);
+    backend.configuredCountries = ["se"];
+    backend.assignments = { se: "sv", no: "sv" };
+    renderWorkspace();
+    const user = userEvent.setup();
+    await screen.findByDisplayValue("Welcome {name}");
+    await user.click(screen.getByRole("combobox", { name: "Language" }));
+    await user.click(await screen.findByRole("option", { name: "sv" }));
+    await screen.findByText("Export saved sv");
+
+    await user.click(screen.getByRole("button", { name: "Deactivate" }));
+    await confirmPrompt("Deactivate");
+    const refusal = await screen.findByRole("alert");
+    expect(refusal).toHaveTextContent('Language "sv" is still assigned to countries: no, se.');
+    expect(backend.documents.sv.is_active).toBe(true);
+
+    for (const country of ["se", "no"]) {
+      await user.click(screen.getByRole("button", { name: `Edit language for ${country}` }));
+      const dialog = await screen.findByRole("dialog");
+      await user.click(within(dialog).getByRole("combobox", { name: "Storefront language" }));
+      await user.click(await screen.findByRole("option", { name: "en" }));
+      await user.click(within(dialog).getByRole("button", { name: "Save language" }));
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(await screen.findByLabelText(`${country}: en (set explicitly)`)).toBeInTheDocument();
+    }
+    expect(backend.posts(/country-languages/).map((call) => call.body)).toEqual([
+      { locale: "en", expected_version: 1 },
+      { locale: "en", expected_version: 2 },
+    ]);
+
+    await user.click(screen.getByRole("button", { name: "Deactivate" }));
+    await confirmPrompt("Deactivate");
+    await waitFor(() => expect(backend.documents.sv).toMatchObject({ version: 2, is_active: false }));
+    expect(backend.posts(/activation$/).map((call) => call.body)).toEqual([
+      { expected_version: 1, is_active: false },
+      { expected_version: 1, is_active: false },
+    ]);
+    expect(await screen.findByRole("button", { name: "Activate" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+
+    // The deactivated language is no longer offered for countries.
+    await user.click(screen.getByRole("button", { name: "Edit language for se" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("combobox", { name: "Storefront language" }));
+    await waitFor(async () =>
+      expect((await screen.findAllByRole("option")).map((option) => option.textContent)).toEqual(["en"])
+    );
   });
 
   it.each([
