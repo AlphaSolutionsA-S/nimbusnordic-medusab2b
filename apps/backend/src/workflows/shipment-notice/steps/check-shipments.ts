@@ -4,6 +4,7 @@ import type { Logger } from "@medusajs/framework/types";
 import { BUSINESS_CENTRAL_MODULE } from "../../../modules/business-central";
 import {
   BusinessCentralThrottledError,
+  ShipmentReadDeadlineError,
   chunkShipmentNumbers,
 } from "../../../modules/business-central/shipment-reads";
 import type {
@@ -192,8 +193,11 @@ export const checkShipmentsStep = createStep(
 
       let shipments: BCShipment[];
       try {
-        shipments = await bc.getShipmentsByNumbers(numbers);
+        shipments = await bc.getShipmentsByNumbers(numbers, deadline);
       } catch (error) {
+        if (error instanceof ShipmentReadDeadlineError) {
+          break;
+        }
         if (error instanceof BusinessCentralThrottledError) {
           result.throttled = true;
           result.retry_after_seconds = error.retryAfterSeconds;

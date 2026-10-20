@@ -335,3 +335,31 @@
   Azure/token/forwarding, TestDK posting/undo, production matching, deployed Admin/poll and alert
   checks into the deviation report and ship gate. Nothing pushed, deployed, committed or changed
   in the tracker by this worker; unrelated NIMBUS-179 and scratch files preserved.
+
+## 2026-10-19 — Cross-task integration review: changes requested
+
+- **Updated by:** integration reviewer.
+- **Outcome:** Wrote `deviation-report.md` against merge-base `1b6e33ab5de42272f71dbd6cd10cc4df8e1e5af7` through `d21d9cc`. M1 is a mechanical blocker: workflow deadlines are not propagated to token/data/page requests in the BC adapter, so pagination can dispatch after the four-minute deadline. Preserve complete-window cursor semantics and stop unread checks without a BC error. D1 (persistent non-throttling discovery failure starves checks and summary/stall warnings) remains a human design question, alongside the recorded CRLF size limitation and baseline-check acceptance. All task after-deploy lines copied into the report; no deployment verified. No source/test/build/lint changes or runs by this reviewer.
+- **Handover to:** dispatcher for a surgical M1 fix, independent review and affected verification, then integration re-review before the human gate.
+- **Handover prompt:** Carry the absolute deadline to every actual token/data/page dispatch; stop before starting another request once expired. Discard incomplete windows without advancing their cursor; leave unread checks due without a failure/throttle. A final page started before expiry may finish and its complete window may commit. Cover expiry across token refresh and nextLink and a later successful retry. Retain D1 for the gate. Preserve unrelated NIMBUS-179 and run scratch evidence; nothing pushed.
+
+## 2026-10-20 — M1 deadline propagation implemented and verified
+
+- **Updated by:** M1 worker, resumed from the existing uncommitted fix.
+- **Outcome:** Absolute deadlines now reach every shipment token/data/page dispatch. Expiry is a
+  normal incomplete outcome: unfinished discovery windows keep their cursor and unread checks
+  retain schedule/attempts/error without BC backoff. Complete responses started before expiry
+  can still commit afterward. Adapter unit 27/27 and affected module 48/48 passed. Fresh affected
+  workflow HTTP 31/31 across three suites passed with original timeouts, including cursor retry
+  and final-response cases. The original overnight runner-hook stall remains unexplained; no
+  fixture, timeout or clock-spy workaround was required. See scratch `deadline-resume-audit.md`.
+  Fresh typecheck: same 22 baseline diagnostic headers, zero new. Lint: zero errors/13 existing
+  warnings; ai:check passed; post-M1 production build passed, exit 0; diff whitespace check passed.
+  Full-suite evidence from finalization remains recorded; those suites were not repeated for M1.
+- **Handover to:** dispatcher for independent M1 review and integration re-review, then human gate.
+- **Handover prompt:** Review the eight adapter/workflow/test files and the evidence in
+  `fix-deadline-propagation.md` and `branch-notes.md`. Keep D1 discovery-failure coupling and the
+  recorded live Azure/BC/Admin/poll checks for the gate. This is local implementation evidence;
+  no deployed behavior or customer delivery is verified. No commits, tracker updates, pushes or
+  deployments by this worker. Unrelated NIMBUS-179, root AGENTS.md normalization and scratch
+  evidence were preserved.

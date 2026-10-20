@@ -4,6 +4,7 @@ import type { IOrderModuleService } from "@medusajs/framework/types";
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
 import {
   BusinessCentralThrottledError,
+  ShipmentReadDeadlineError,
 } from "../../../src/modules/business-central/shipment-reads";
 import type {
   BCShipmentHeader,
@@ -283,6 +284,54 @@ medusaIntegrationTestRunner({
         );
         state = (await orderIngestion().retrieveShipmentPollState())!;
         expect(state.lead_cursor.getTime()).toBeGreaterThan(goLive.getTime());
+      });
+
+      it("preserves an incomplete expired window and retries it successfully", async () => {
+        const now = new Date();
+        const goLive = at(now, -60 * MINUTE);
+        const deadline = at(now, 4 * MINUTE);
+        await seedApiOrder({ customerNumber: "C-100", externalOrderNumber: "METZ-1", bcOrderNumber: "SO-100" });
+        await startPollStateAt(goLive);
+        fake.headers = [header(at(now, -30 * MINUTE))];
+        listShipmentHeaders.mockImplementationOnce(async (_window, receivedDeadline) => {
+          expect(receivedDeadline).toBe(deadline.getTime());
+          jest.spyOn(Date, "now").mockReturnValue(deadline.getTime());
+          throw new ShipmentReadDeadlineError();
+        });
+
+        const incomplete = await run(deadline);
+
+        expect(incomplete).toMatchObject({ complete: false, tracked: 0 });
+        expect(await trackingRows()).toHaveLength(0);
+        expect(await orderIngestion().retrieveShipmentPollState()).toMatchObject({
+          lead_cursor: goLive, trail_cursor: goLive, bc_backoff_until: null,
+        });
+        jest.spyOn(Date, "now").mockRestore();
+        const complete = await run();
+        expect(complete.complete).toBe(true);
+        expect(await trackingRows()).toHaveLength(1);
+        expect((await orderIngestion().retrieveShipmentPollState())!.lead_cursor.getTime())
+          .toBeGreaterThan(goLive.getTime());
+      });
+
+      it("commits a complete final window returned after the deadline", async () => {
+        const now = new Date();
+        const goLive = at(now, -60 * MINUTE);
+        const deadline = at(now, 4 * MINUTE);
+        await seedApiOrder({ customerNumber: "C-100", externalOrderNumber: "METZ-1", bcOrderNumber: "SO-100" });
+        await startPollStateAt(goLive);
+        fake.headers = [header(at(now, -30 * MINUTE))];
+        listShipmentHeaders.mockImplementationOnce(async (window, receivedDeadline) => {
+          expect(receivedDeadline).toBe(deadline.getTime());
+          jest.spyOn(Date, "now").mockReturnValue(deadline.getTime() + 1);
+          return fake.inWindow(window);
+        });
+
+        await run(deadline);
+
+        expect(await trackingRows()).toHaveLength(1);
+        expect((await orderIngestion().retrieveShipmentPollState())!.lead_cursor.getTime())
+          .toBeGreaterThan(goLive.getTime());
       });
 
       it("tracks only shipments of the API order under its current BC order number", async () => {

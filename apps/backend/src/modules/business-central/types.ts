@@ -249,9 +249,9 @@ export interface IBusinessCentralModuleService {
   ): Promise<BCReturnOrder>;
   listReturnReasons(): Promise<BCReturnReason[]>;
   listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult>;
-  countShipments(window: BCShipmentWindow): Promise<number>;
-  listShipmentHeaders(window: BCShipmentWindow): Promise<BCShipmentHeader[]>;
-  getShipmentsByNumbers(numbers: readonly string[]): Promise<BCShipment[]>;
+  countShipments(window: BCShipmentWindow, deadlineMs?: number): Promise<number>;
+  listShipmentHeaders(window: BCShipmentWindow, deadlineMs?: number): Promise<BCShipmentHeader[]>;
+  getShipmentsByNumbers(numbers: readonly string[], deadlineMs?: number): Promise<BCShipment[]>;
 }
 
 // Posted sales shipments modified in (after, until].

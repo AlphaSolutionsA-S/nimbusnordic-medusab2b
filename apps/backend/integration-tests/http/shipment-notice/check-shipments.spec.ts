@@ -4,6 +4,7 @@ import type { IOrderModuleService, Logger } from "@medusajs/framework/types";
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
 import {
   BusinessCentralThrottledError,
+  ShipmentReadDeadlineError,
 } from "../../../src/modules/business-central/shipment-reads";
 import type {
   BCShipment,
@@ -519,6 +520,44 @@ medusaIntegrationTestRunner({
         });
         const state = (await orderIngestion().retrieveShipmentPollState())!;
         expect(state.bc_backoff_until!.getTime()).toBeGreaterThanOrEqual(before + MINUTE);
+      });
+
+      it("leaves unread expired checks due with their previous error and attempts", async () => {
+        const order = await seedOrder("SO-100", null);
+        const tracked = await track(order.id);
+        const initial = await row(tracked);
+        await orderIngestion().updateShipmentTrackings({ id: initial.id, attempts: 2, last_error: "bc_error" });
+        const before = await row(tracked);
+        const deadline = at(new Date(), 4 * MINUTE);
+        getShipmentsByNumbers.mockImplementationOnce(async (_numbers, receivedDeadline) => {
+          expect(receivedDeadline).toBe(deadline.getTime());
+          throw new ShipmentReadDeadlineError();
+        });
+
+        const result = await run(deadline);
+
+        expect(result).toMatchObject({ checked: 0, errors: 0, backlog_due: 1 });
+        expect(await row(tracked)).toMatchObject({
+          state: "open", attempts: 2, last_error: "bc_error",
+          next_check_at: before.next_check_at, last_checked_at: before.last_checked_at,
+        });
+        expect((await orderIngestion().retrieveShipmentPollState())!.bc_backoff_until).toBeNull();
+        expect(await notices(tracked)).toHaveLength(0);
+      });
+
+      it("records a complete check returned after the request deadline", async () => {
+        const order = await seedOrder("SO-100", null);
+        const tracked = await track(order.id);
+        const snapshot = inBc(tracked, [line(10000, 5)]);
+        const deadline = at(new Date(), 4 * MINUTE);
+        getShipmentsByNumbers.mockImplementationOnce(async (_numbers, receivedDeadline) => {
+          expect(receivedDeadline).toBe(deadline.getTime());
+          jest.spyOn(Date, "now").mockReturnValue(deadline.getTime() + 1);
+          return [snapshot];
+        });
+
+        expect(await run(deadline)).toMatchObject({ checked: 1, recorded: 1, errors: 0 });
+        expect(await notices(tracked)).toHaveLength(1);
       });
 
       it("makes no BC request after the deadline", async () => {

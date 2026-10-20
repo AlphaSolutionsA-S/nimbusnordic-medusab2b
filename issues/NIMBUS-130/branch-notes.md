@@ -274,6 +274,23 @@ Security matrix evidence (plan section 7):
 
 - Task 10 offline policy/XSD harness: 69 checks, plus the 29 workflow checks above. These prove
   artifact behavior offline, not Azure policy acceptance or customer delivery.
+
+## M1: polling deadline propagation (2026-10-20)
+
+- Shipment adapter read methods now accept optional absolute `deadlineMs: number` as their last
+  argument; discovery and checks pass the run deadline. Existing callers may omit it.
+- `ShipmentReadDeadlineError` lives in `modules/business-central/shipment-reads.ts`. Each actual
+  token/data dispatch checks the deadline, including nextLink pages and by-number chunks.
+- Callers treat this error as normal incomplete work: discovery keeps the last complete cursor;
+  unread checks keep schedule/attempts/error and do not set BC backoff. Complete final responses
+  may still commit after expiry. The 20-second request timeout, token caching and throttle handling
+  are retained; D1 discovery failure coupling is not changed.
+- Evidence: adapter 27/27, affected module 48/48, fresh workflow HTTP 31/31; fresh typecheck matches
+  the same 22 diagnostic headers, zero new. Lint zero errors/13 existing warnings; ai:check passed.
+  Logs are `deadline-*` in the resumption scratchpad; `deadline-resume-audit.md` explains why the
+  overnight incomplete HTTP log was replaced by a fresh scoped result with original timeouts.
+- Production build result and handover are recorded in the M1 brief and PROGRESS entry. No live
+  Business Central, Azure, deployment or customer-delivery result is established by these tests.
 - Next owner: integration reviewer, then dispatcher/human gate. Retain after-deploy checks for
   Azure policy/forwarding/token failures, real TestDK posting/undo, production shipment matching,
   deployed Admin/next poll and monitoring. No push or deployment by consolidation worker.

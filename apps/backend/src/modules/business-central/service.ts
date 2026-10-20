@@ -37,6 +37,7 @@ import type {
   IBusinessCentralModuleService,
 } from "./types";
 import {
+  ShipmentReadDeadlineError,
   BusinessCentralThrottledError,
   buildShipmentNumberFilter,
   buildShipmentWindowFilter,
@@ -1033,7 +1034,8 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     tenantId: string,
     clientId: string,
     clientSecret: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    deadlineMs?: number
   ): Promise<{ accessToken: string; expiresInSeconds: number | null }> {
     const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
     const tokenRequest = new URLSearchParams({
@@ -1044,6 +1046,10 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     });
 
     let tokenResponse: Response;
+
+    if (deadlineMs !== undefined && Date.now() >= deadlineMs) {
+      throw new ShipmentReadDeadlineError();
+    }
 
     try {
       tokenResponse = await fetch(tokenUrl, {
@@ -1089,7 +1095,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   // Shared by the shipment reads only, so a polling run asks for one token, not one per call.
-  private async getShipmentReadToken(discoveryUrl: URL): Promise<string> {
+  private async getShipmentReadToken(discoveryUrl: URL, deadlineMs?: number): Promise<string> {
     const cached = this.shipmentReadToken;
 
     if (cached && Date.now() < cached.renewAtMs) {
@@ -1101,7 +1107,8 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       this.getTenantId(discoveryUrl),
       clientId,
       clientSecret,
-      AbortSignal.timeout(SHIPMENT_REQUEST_TIMEOUT_MS)
+      AbortSignal.timeout(SHIPMENT_REQUEST_TIMEOUT_MS),
+      deadlineMs
     );
 
     // Without a lifetime the token is used for this call only.
@@ -1118,9 +1125,14 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
 
   private async getShipmentJson(
     url: string,
-    accessToken: string
+    accessToken: string,
+    deadlineMs?: number
   ): Promise<{ value?: BCSalesShipmentRaw[]; "@odata.nextLink"?: unknown; "@odata.count"?: unknown }> {
     let response: Response;
+
+    if (deadlineMs !== undefined && Date.now() >= deadlineMs) {
+      throw new ShipmentReadDeadlineError();
+    }
 
     try {
       response = await fetch(url, {
@@ -1171,13 +1183,14 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   private async getAllShipmentPages(
     firstUrl: URL,
     discoveryUrl: URL,
-    accessToken: string
+    accessToken: string,
+    deadlineMs?: number
   ): Promise<BCSalesShipmentRaw[]> {
     const rows: BCSalesShipmentRaw[] = [];
     let nextUrl: string | null = firstUrl.toString();
 
     while (nextUrl !== null) {
-      const body = await this.getShipmentJson(nextUrl, accessToken);
+      const body = await this.getShipmentJson(nextUrl, accessToken, deadlineMs);
       rows.push(...(body.value ?? []));
       nextUrl = this.resolveShipmentNextLink(body["@odata.nextLink"], discoveryUrl);
     }
@@ -1209,16 +1222,16 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return url.toString();
   }
 
-  async countShipments(window: BCShipmentWindow): Promise<number> {
+  async countShipments(window: BCShipmentWindow, deadlineMs?: number): Promise<number> {
     const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl);
+    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
     const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
     url.searchParams.set("$filter", buildShipmentWindowFilter(window));
     url.searchParams.set("$count", "true");
     url.searchParams.set("$top", "1");
     url.searchParams.set("$select", "id");
 
-    const count = (await this.getShipmentJson(url.toString(), accessToken))["@odata.count"];
+    const count = (await this.getShipmentJson(url.toString(), accessToken, deadlineMs))["@odata.count"];
 
     if (typeof count !== "number" || !Number.isInteger(count)) {
       throw new MedusaError(
@@ -1230,20 +1243,20 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return count;
   }
 
-  async listShipmentHeaders(window: BCShipmentWindow): Promise<BCShipmentHeader[]> {
+  async listShipmentHeaders(window: BCShipmentWindow, deadlineMs?: number): Promise<BCShipmentHeader[]> {
     const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl);
+    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
     const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
     url.searchParams.set("$filter", buildShipmentWindowFilter(window));
     url.searchParams.set("$orderby", "lastModifiedDateTime asc");
     url.searchParams.set("$select", SHIPMENT_HEADER_FIELDS);
 
-    const rows = await this.getAllShipmentPages(url, discoveryUrl, accessToken);
+    const rows = await this.getAllShipmentPages(url, discoveryUrl, accessToken, deadlineMs);
 
     return rows.map(mapShipmentHeader);
   }
 
-  async getShipmentsByNumbers(numbers: readonly string[]): Promise<BCShipment[]> {
+  async getShipmentsByNumbers(numbers: readonly string[], deadlineMs?: number): Promise<BCShipment[]> {
     const chunks = chunkShipmentNumbers(numbers);
 
     if (chunks.length === 0) {
@@ -1251,7 +1264,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl);
+    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
     const shipments: BCShipment[] = [];
 
     // One request at a time keeps the polling run's load on BC predictable.
@@ -1261,7 +1274,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       url.searchParams.set("$select", SHIPMENT_DETAIL_FIELDS);
       url.searchParams.set("$expand", `salesShipmentLines($select=${SHIPMENT_LINE_FIELDS})`);
 
-      const rows = await this.getAllShipmentPages(url, discoveryUrl, accessToken);
+      const rows = await this.getAllShipmentPages(url, discoveryUrl, accessToken, deadlineMs);
       shipments.push(...rows.map(mapShipment));
     }
 

@@ -2,7 +2,10 @@ import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import type { MedusaContainer } from "@medusajs/framework/types";
 import { BUSINESS_CENTRAL_MODULE } from "../../../modules/business-central";
-import { BusinessCentralThrottledError } from "../../../modules/business-central/shipment-reads";
+import {
+  BusinessCentralThrottledError,
+  ShipmentReadDeadlineError,
+} from "../../../modules/business-central/shipment-reads";
 import type {
   BCShipmentHeader,
   IBusinessCentralModuleService,
@@ -157,7 +160,7 @@ export const scanShipmentWindowsStep = createStep(
           if (pastDeadline()) {
             return new StepResponse(result);
           }
-          count = await bc.countShipments({ after, until });
+          count = await bc.countShipments({ after, until }, deadline);
           const half =
             count > SHIPMENT_WINDOW_HEADER_BUDGET && halveShipmentWindow({ after, until });
           if (!half) {
@@ -170,7 +173,7 @@ export const scanShipmentWindowsStep = createStep(
           if (pastDeadline()) {
             return new StepResponse(result);
           }
-          const headers = await bc.listShipmentHeaders({ after, until });
+          const headers = await bc.listShipmentHeaders({ after, until }, deadline);
           const candidates = await loadOrderCandidates(container, orderIngestion, headers);
           const discoveries = shipmentTrackingForHeaders(headers, candidates, goLiveAt);
           result.headers += headers.length;
@@ -186,6 +189,9 @@ export const scanShipmentWindowsStep = createStep(
         result.cursor_at = after.toISOString();
       }
     } catch (error) {
+      if (error instanceof ShipmentReadDeadlineError) {
+        return new StepResponse(result);
+      }
       if (!(error instanceof BusinessCentralThrottledError)) {
         throw error;
       }

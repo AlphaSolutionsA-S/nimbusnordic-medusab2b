@@ -78,6 +78,80 @@ describe("BusinessCentralModuleService shipment reads", () => {
   });
 
   describe("countShipments", () => {
+    it.each(["count", "headers", "numbers"])("starts no token request for an expired %s read", async (read) => {
+      jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 0, value: [] }));
+      const service = new BusinessCentralModuleService();
+      const operation = read === "count"
+        ? service.countShipments({ after: AFTER, until: UNTIL }, 1000)
+        : read === "headers"
+          ? service.listShipmentHeaders({ after: AFTER, until: UNTIL }, 1000)
+          : service.getShipmentsByNumbers(["S-1"], 1000);
+
+      await expect(operation).rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("does not dispatch data when token renewal crosses the deadline", async () => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 0, value: [] }));
+      const service = new BusinessCentralModuleService();
+      await service.countShipments({ after: AFTER, until: UNTIL });
+      now.mockReturnValue(4_000_000);
+      fetchMock.mockImplementationOnce(async () => {
+        now.mockReturnValue(4_000_100);
+        return tokenResponse();
+      });
+
+      await expect(service.countShipments({ after: AFTER, until: UNTIL }, 4_000_100))
+        .rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
+      expect(tokenRequestCount(fetchMock)).toBe(2);
+      expect(shipmentRequests(fetchMock)).toHaveLength(1);
+    });
+
+    it.each(["headers", "numbers"])("discards incomplete %s paging at the deadline", async (read) => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      let page = 0;
+      const fetchMock = mockBc(() => {
+        now.mockReturnValue(1100);
+        page += 1;
+        return jsonResponse({ value: [headerRow("S-1")], ...(page === 1 ? { "@odata.nextLink": `${DISCOVERY_URL}/salesShipments?$skiptoken=page2` } : {}) });
+      });
+      const service = new BusinessCentralModuleService();
+      const operation = read === "headers"
+        ? service.listShipmentHeaders({ after: AFTER, until: UNTIL }, 1100)
+        : service.getShipmentsByNumbers(["S-1"], 1100);
+
+      await expect(operation).rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
+      expect(shipmentRequests(fetchMock)).toHaveLength(1);
+    });
+
+    it("does not start another by-number chunk after the deadline", async () => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(() => {
+        now.mockReturnValue(1100);
+        return jsonResponse({ value: [] });
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentsByNumbers(Array.from({ length: 21 }, (_, i) => `S-${i}`), 1100))
+        .rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
+      expect(shipmentRequests(fetchMock)).toHaveLength(1);
+    });
+
+    it("returns a complete final page whose request finishes after the deadline", async () => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(() => {
+        now.mockReturnValue(1101);
+        return jsonResponse({ value: [headerRow("S-1")] });
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.listShipmentHeaders({ after: AFTER, until: UNTIL }, 1100))
+        .resolves.toEqual([expect.objectContaining({ number: "S-1" })]);
+      expect(shipmentRequests(fetchMock)).toHaveLength(1);
+    });
+
     it("counts headers modified in (after, until] with a server-side $count", async () => {
       const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 412, value: [headerRow("S-1")] }));
       const service = new BusinessCentralModuleService();

@@ -14,6 +14,13 @@ export const SHIPMENT_NUMBERS_PER_REQUEST = 20;
 // The shared token is renewed this long before BC says it expires.
 export const SHIPMENT_TOKEN_RENEW_BEFORE_MS = 5 * 60 * 1000;
 
+export class ShipmentReadDeadlineError extends Error {
+  constructor() {
+    super("Shipment read deadline reached");
+    this.name = "ShipmentReadDeadlineError";
+  }
+}
+
 export const SHIPMENT_HEADER_FIELDS =
   "id,number,orderNumber,externalDocumentNumber,customerNumber,postingDate,lastModifiedDateTime";
 // Only what a shipment notice carries: no prices, salesperson, phone or e-mail.
