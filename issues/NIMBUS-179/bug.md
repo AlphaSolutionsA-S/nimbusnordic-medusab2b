@@ -65,12 +65,31 @@ same instance, and every instance fires every scheduled-job tick.
 
 ## Decisions
 1. Decided 2026-10-15 by Klaus Petersen: register `@medusajs/medusa/locking-postgres` as the default
-   lock provider (not a move to a Medusa Cloud plan with Redis).
+   lock provider (not a move to a Medusa Cloud plan with Redis). Superseded by the risk acceptance
+   below on 2026-10-20; no provider registration or migration was implemented.
 
-## Open decisions (human)
+## Intake decisions not pursued
 2. Does production stay on the Develop plan?
 3. Scope boundary: locking only, or also the in-memory workflow engine and event bus (scheduled-job
    fan-out, long-running workflow state)?
 
+These questions are not prerequisites for further work in this case: the user accepted the risk
+without implementation or validation. No production-plan change or runtime provider verification
+is implied by that acceptance.
+
 ## Analysis
-*(Empty. The scoper / pipeline fills this in.)*
+No reproduction or runtime validation was performed under this issue.
+
+## Risk acceptance — 2026-10-20
+
+The user explicitly instructed "do that - risk accepted" and requested the Jira status update.
+
+- Accept in-memory locking and no validation for local and Medusa Cloud Develop environments.
+  If production also uses the Develop plan without shared infrastructure, the same multi-instance
+  risk is accepted there: duplicate processing and concurrent changes remain possible.
+- Supersede the earlier PostgreSQL-locking implementation decision. No locking-provider,
+  workflow-engine, event-bus or migration changes are required under NIMBUS-179.
+- Rely on Cloud-managed Redis only where the Cloud plan supports it. This issue does not establish
+  that Redis is active in the current deployment or that production locking has been validated.
+- Close by risk acceptance with resolution "Won't Do"; this is not a technical fix or a verified
+  guarantee of single processing across instances.
