@@ -76,6 +76,16 @@ describe("POST /api/translations/missing", () => {
     )
   })
 
+  it("accepts a newly published language and still sanitizes its path", async () => {
+    const response = await POST(
+      request({ reports: [{ ...report, locale: "nl", page_path: "/nl/account/orders/details/order_01HXYZABCDEF" }] })
+    )
+    expect(response.status).toBe(202)
+    expect(mockBackendFetch.mock.calls[0][1].body.reports).toEqual([
+      { ...report, locale: "nl", page_path: "/nl/account/orders/details/[id]" },
+    ])
+  })
+
   it("TC-3: deduplicates repeated reports", async () => {
     await POST(request({ reports: [report, report] }))
     const second = await POST(request({ reports: [report] }))
@@ -87,7 +97,9 @@ describe("POST /api/translations/missing", () => {
     ["a forged origin", request({ reports: [report] }, { origin: "https://evil.example" }), 403],
     ["a cross-site fetch", request({ reports: [report] }, { "sec-fetch-site": "cross-site" }), 403],
     ["a non-JSON content type", request({ reports: [report] }, { "content-type": "text/plain" }), 415],
-    ["an unsupported locale", request({ reports: [{ ...report, locale: "xx" }] }), 400],
+    ["a malformed locale", request({ reports: [{ ...report, locale: "en_GB" }] }), 400],
+    ["a non-canonical locale", request({ reports: [{ ...report, locale: "DA" }] }), 400],
+    ["an over-long locale", request({ reports: [{ ...report, locale: `en-x-${Array(12).fill("abcdefgh").join("-")}` }] }), 400],
     ["an excess batch", request({ reports: Array.from({ length: 51 }, (_, i) => ({ ...report, key: `K.k${i}` })) }), 400],
     ["interpolation values", request({ reports: [{ ...report, values: { name: "Jane" } }] }), 400],
     ["malformed JSON", request("{"), 400],

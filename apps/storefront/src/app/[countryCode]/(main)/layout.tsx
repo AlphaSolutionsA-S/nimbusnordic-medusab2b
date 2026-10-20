@@ -1,4 +1,5 @@
 import { retrieveCart } from "@/lib/data/cart"
+import { getCountryLanguageSnapshot } from "@/lib/data/country-languages"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listCartFreeShippingPrices } from "@/lib/data/fulfillment"
 import { getBaseURL } from "@/lib/util/env"
@@ -20,6 +21,8 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   const t = await getTranslations("Layout.promoBanner")
   const customer = await retrieveCustomer().catch(() => null)
   const cart = await retrieveCart()
+  // The request's snapshot, shared with the request config and the country layout.
+  const countryLanguages = await getCountryLanguageSnapshot()
   let freeShippingPrices: StoreFreeShippingPrice[] = []
 
   if (cart) {
@@ -28,7 +31,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
 
   return (
     <>
-      <NavigationHeader />
+      <NavigationHeader countryLanguages={countryLanguages} />
 
       {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />
@@ -36,7 +39,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
 
       {props.children}
 
-      <Footer />
+      <Footer countryLanguages={countryLanguages} />
 
       {cart && freeShippingPrices && (
         <FreeShippingPriceNudge
