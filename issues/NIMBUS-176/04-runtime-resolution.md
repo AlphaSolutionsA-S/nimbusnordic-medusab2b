@@ -1,0 +1,14 @@
+# 04: Resolve runtime language from one cached publication
+**App:** Storefront · **Layer:** S0–S4, middleware · **Depends on:** 02
+
+**Goal:** Use one validated request publication for all language consumers, preserving message behavior and bounded freshness/outage recovery without an eight-language gate.
+**Files / areas:** apps/storefront/src/lib/data/country-languages.ts (new); lib/i18n/{country-language-map,missing-key-validation}.ts; middleware.ts; i18n/request.ts; app/[countryCode]/layout.tsx; lib/data/ui-translations-refresh.ts; modules/layout/{components/region-switcher,templates/nav,templates/footer}; relevant types/tests.
+**Seam contracts:** Consume 02 public DTO. Export server-only getCountryLanguageSnapshot and getCountryLanguageForCountry using React request memoization; snapshot includes countries/default plus availability available|stale|legacy. Pure lookup accepts snapshot/country; no component imports SDK or loader beyond allowed S2. Middleware removes client locale/country headers and writes URL country/path context; request config uses that country snapshot, never client locale input. Fresh success max age 240s, read timeout3s, failed-refresh backoff<=10s; no successful empty failure entry. No snapshot → approved legacy lookup only.
+**Test intent:**
+- Jest loader: invalid/oversize/duplicate responses, timeout, stale last good, cold fallback, restart/no memory, overlapping reads, boundary TTL and failed-refresh recovery within five minutes; no per-page backend request while fresh.
+- Jest middleware/request/layout: forged locale context overwritten/deleted; country selects same ninth-language verdict for server config/provider; missing country paths safely default; dynamic canonical tags preserve bounded reports and sanitation.
+- Jest refresh action: only valid published country codes select cache tags, bounded invalidation/dedup retained; unknown or attacker locale cannot grow maps/tags.
+- RTL switcher: labels supplied from publication props and navigation/refresh uses selected country without changing region selection or URL shape.
+**Done when:** Static runtime allowlist removed from changed consumers; same request/provider locale verified; database message source/cache unchanged. Reload storefront/data-layer skills and their connection/design references before UI changes.
+**Verify after deploy:** After Admin maps a configured test country to active nl, fresh country page shows nl provider/document language within five minutes; outage test records stale/legacy behavior and restart limitation.
+**Also update:** Existing __tests__/middleware.test.ts, i18n/request.test.ts, lib/i18n/{country-language-map,missing-key-client,missing-key-server}.test.ts, lib/data/ui-translations-refresh.test.ts, app/api/translations/missing.test.ts, modules/layout/components/region-switcher/index.test.tsx; ui-translations loader tests only if assertions actually change.

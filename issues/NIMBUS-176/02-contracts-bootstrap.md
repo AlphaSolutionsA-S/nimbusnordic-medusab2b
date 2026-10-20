@@ -1,0 +1,15 @@
+# 02: Publish validated country-language contracts and bootstrap
+**App:** Backend · **Layer:** L3–L4, L6; operator script · **Depends on:** 01
+
+**Goal:** Expose Admin and public contracts through thin routes/workflows, validate Region membership, and provide safe idempotent rollout bootstrap.
+**Files / areas:** apps/backend/src/api/{admin/country-languages,store/country-languages,admin/ui-translations}/; respective middleware aggregation; src/workflows/storefront-translation/{workflows,steps,utils}; src/scripts/; integration-tests/http/{translations,security}.
+**Seam contracts:** GET /admin/country-languages → {version, default_locale:'en', countries:[{country_code,locale,source:'explicit'|'default',configured:boolean}], active_locales:string[]}; includes retained entries. POST /admin/country-languages/:country_code body {locale,expected_version} → same management document. GET /store/country-languages → {default_locale:'en',countries:[{country_code,locale,source}]}, configured only, Cache-Control:no-store. Missing/uninitialized/broken-invariant publication → 503. Invalid input 400, stale configuration/inactive target/in-use deactivation 409, no authenticated user session 401. Existing activation body/response stays stable; in-use errors list countries in message. Admin routes use explicit session-only user auth; mutations require application/json and <=1 KiB. Operator bootstrap defaults dry-run, reports prerequisites and requires explicit apply.
+**Test intent:**
+- HTTP translations spec: assert every listed field type, uniqueness, active locale beyond eight, English defaults, retained/current distinctions, configured-country validation and no currency/Region mutation.
+- HTTP: malformed/oversize/extra-field input, inactive/missing locale, stale version, unknown country and uninitialized publication fail without writes; repeat bootstrap preserves edits.
+- HTTP security-boundaries.spec.ts against actual auth library: anonymous/customer/API-key/bearer-only rejection, spoofed actor ignored, missing session denied, logged-out/expired cookie denied and no leaked session content.
+- HTTP/browser contract: JSON only, foreign-origin preflight lacks authorization; form/text/plain cannot mutate. Preserve MFA requirements and prove current user sessions work.
+- Real-data Region Query projection gate must already be recorded in PLAN.md before dispatch; endpoint fixtures then assert exact countries.iso_2 shape rather than an invented mock.
+**Done when:** Routes stay within L6 limits and call workflows/Query only; contracts and auth negatives pass; bootstrap dry-run/readback is reviewable on test data.
+**Verify after deploy:** GET /store/country-languages shows dk with the bootstrapped language, then reflects a saved test-country reassignment; Admin authenticated read returns its version and source.
+**Also update:** Existing translations.spec.ts and security-boundaries.spec.ts; touched activation route's workflow wiring; middleware validation contracts. Paths are separate from :locale to avoid reserved-name collisions.

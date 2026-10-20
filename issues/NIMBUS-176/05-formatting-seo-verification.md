@@ -1,0 +1,14 @@
+# 05: Preserve formatting and SEO with rollout verification
+**App:** Storefront / documentation · **Layer:** S1, S3; integration verification · **Depends on:** 03, 04
+
+**Goal:** Complete dynamic-language formatting and collision-free alternate links, prove the ninth-language journey and document rollout/failure limits.
+**Files / areas:** apps/storefront/src/lib/{i18n/formatting-locale.ts,seo/locale-alternates.ts}; app/[countryCode]/(main)/{products,collections,categories}/ metadata; src/__tests__/app/page-metadata-locale.test.ts and helper tests; e2e/visual/{region-switcher,locale-links}.functional.spec.ts; docs/architecture/country-languages.md (new); src/lib/i18n/README.md; relevant ai/architecture and skill project.md entries.
+**Seam contracts:** buildLocaleAlternates accepts 04 snapshot plus path, configured countries only; key canonical language/script with URL country region, preserve variants, omit extensions, never overwrite same-language countries. getFormattingLocale(string) retains current eight outputs, handles valid new tags including script/region forms, and safely falls back for malformed input; currency remains supplied by Region/commercial data.
+**Test intent:**
+- Jest: preserve eight formatting tags, nl/pt-BR/zh-Hant accepted, malformed tags safe, no double region or extension-bearing hreflang; two English countries retain both URLs and removed countries disappear.
+- Metadata specs: products/collections/categories take same request publication as layout; assert locale and every alternate URL/key at caller depth.
+- Playwright functional/integration: bootstrap fixture, create/activate ninth language, Admin assigns a configured country, fresh page language/text/formatting/switcher/metadata agree, same-language country links survive; capture response/rendered artifacts.
+- Browser security case: logged-in session cannot mutate mapping from foreign-origin form or fetch; test actual cookies/preflight and unchanged stored assignment, not only mocked requests.
+**Done when:** Appropriate changed tests plus final integration/browser checks pass or only independently recorded baselines remain; current docs describe every changed rule and ordered rollout. Reload storefront SEO and design references before changes; no cosmetic storefront redesign.
+**Verify after deploy:** Record singleton assignments/version, GET /store/country-languages country/locale/source and rendered language/hreflang on the same configured nl test-country page, after a real Admin save; tests alone do not prove rollout.
+**Also update:** __tests__/lib/{seo/locale-alternates,i18n/formatting-locale}.test.ts; named metadata/browser specs; lib/i18n/README.md adding-language and formatting sections; ai/architecture/{decisions,data-ownership}.md ownership now maintained by01, remaining current rule wording and relevant storefront skill project.md; run ai:check for ai edits. Existing docs/architecture has no locale document to amend.
