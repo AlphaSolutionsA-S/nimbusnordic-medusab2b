@@ -370,3 +370,20 @@
 - **Outcome:** Re-reviewed M1 commit `a25c893` and its adapter/workflow boundaries after independent review. M1 is resolved: token/data/page/chunk dispatches honor the absolute deadline, incomplete discovery preserves its cursor, unread checks retain state, and complete requests begun before expiry may commit afterward. Recorded affected checks passed (adapter 27/27, module 48/48, fresh HTTP 31/31); fresh typecheck remains exactly the recorded 22 diagnostics, production backend/Admin build passed, lint has zero errors/13 warnings, and ai:check passed. Earlier full-suite results retain their documented baseline limits; no fresh baseline compiler/full-suite run is claimed. The overnight incomplete HTTP stall remains unexplained; the fresh original-timeout rerun passed. D2 is resolved by unchanged-content LF normalization. D1 is the sole new human design question; previously approved baseline policy and go-live owners/checkpoints remain in force. All after-deploy checklist text is preserved unchanged.
 - **Handover to:** dispatcher, then human implementation gate.
 - **Handover prompt:** Present D1 with the recommendation for independent tracked checks and a failure-aware summary; keep current behavior until the human decides. Retain all live Azure/BC/Admin/poll/alert checkpoints and evidence limits in the report. No source changes, test/build/lint runs, commit, tracker update, push or deployment by this reviewer; unrelated NIMBUS-179 and scratch evidence preserved.
+
+## 2026-10-20 — Branch pushed and Jira status synchronized
+
+- **Updated by:** primary agent, following the user's commit/push and Jira-update instructions.
+- **Outcome:** All implementation work was already committed. After explicit authorization for the
+  destination, pushed `feature/NIMBUS-130` to the project's GitHub origin and verified its remote
+  commit against local HEAD. NIMBUS-130, its stories NIMBUS-150/151/152/178 and folded-in bug
+  NIMBUS-192 are now in Internal review, with implementation and verification comments. All twelve
+  implementation sub-tasks remain Done. No source behavior changed and no deployment occurred.
+  D1 discovery-error coupling remains documented; the user requested publication of the current
+  branch without requesting the recommended independent-check redesign. Unrelated NIMBUS-179
+  and scratch evidence were preserved outside the commits.
+- **Handover to:** human reviewer and deployment owners.
+- **Handover prompt:** Review the pushed branch and recorded D1 choice. Before customer go-live,
+  complete the existing Azure, BC shipment/undo, Admin retry, polling and alert checks in
+  `deviation-report.md`. Do not treat the review status or completed implementation tasks as
+  proof of deployed behavior.
