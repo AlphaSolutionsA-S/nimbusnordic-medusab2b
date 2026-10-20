@@ -363,3 +363,10 @@
   no deployed behavior or customer delivery is verified. No commits, tracker updates, pushes or
   deployments by this worker. Unrelated NIMBUS-179, root AGENTS.md normalization and scratch
   evidence were preserved.
+
+## 2026-10-20 — Cross-task integration re-review approved
+
+- **Updated by:** integration reviewer.
+- **Outcome:** Re-reviewed M1 commit `a25c893` and its adapter/workflow boundaries after independent review. M1 is resolved: token/data/page/chunk dispatches honor the absolute deadline, incomplete discovery preserves its cursor, unread checks retain state, and complete requests begun before expiry may commit afterward. Recorded affected checks passed (adapter 27/27, module 48/48, fresh HTTP 31/31); fresh typecheck remains exactly the recorded 22 diagnostics, production backend/Admin build passed, lint has zero errors/13 warnings, and ai:check passed. Earlier full-suite results retain their documented baseline limits; no fresh baseline compiler/full-suite run is claimed. The overnight incomplete HTTP stall remains unexplained; the fresh original-timeout rerun passed. D2 is resolved by unchanged-content LF normalization. D1 is the sole new human design question; previously approved baseline policy and go-live owners/checkpoints remain in force. All after-deploy checklist text is preserved unchanged.
+- **Handover to:** dispatcher, then human implementation gate.
+- **Handover prompt:** Present D1 with the recommendation for independent tracked checks and a failure-aware summary; keep current behavior until the human decides. Retain all live Azure/BC/Admin/poll/alert checkpoints and evidence limits in the report. No source changes, test/build/lint runs, commit, tracker update, push or deployment by this reviewer; unrelated NIMBUS-179 and scratch evidence preserved.
