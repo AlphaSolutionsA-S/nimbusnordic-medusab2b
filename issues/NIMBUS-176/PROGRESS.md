@@ -75,3 +75,11 @@
 - **Local data left by the browser runs:** configuration initialized (version 9), `nl` inactive language, explicit `en` entries for `es` and `nl`, temporary Admin user e2e-nimbus176@example.test (remove in Admin).
 - **Next owner:** Klaus Petersen — push and PR on explicit go-ahead; resolve Q5/Q6 before deploy.
 - **Handover prompt:** Review the branch and the PR description (saved in the dispatcher's run scratchpad), then say whether to push feature/NIMBUS-176 and open the PR against develop.
+
+## 2026-10-21 — Quick fix: bootstrap runs as a deploy data migration script
+
+- **Updated by:** quick-fix
+- **Outcome:** Medusa Cloud cannot run `medusa exec`, so the country-language bootstrap now also runs as the data migration script `apps/backend/src/migration-scripts/seed-country-languages.ts` (once per environment on deploy). Countries whose legacy language is missing or inactive are skipped to English and logged (rule decided by Klaus Petersen); an existing configuration is never overwritten; English unavailable fails the script, which reruns on the next deploy. Record: `change-report.md`.
+- **Verification:** unit 13/13, HTTP translations 46/46, lint 0 errors, backend tsc 22 = baseline, local `db:migrate --skip-links` ran the script (already initialized, no change). Not verified until deploy: change-report.md "Verify after deploy"; whether a failing script blocks a Cloud deploy is unverified.
+- **Next owner:** Klaus Petersen — push and PR on explicit go-ahead (origin/develop already has the earlier NIMBUS-176 merge 390e03f; nothing pushed or merged here).
+- **Handover prompt:** Review the quick-fix commit and the updated PR description Release steps, then decide how to get this change onto develop.

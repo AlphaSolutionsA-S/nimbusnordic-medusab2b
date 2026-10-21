@@ -9,13 +9,21 @@ import { bootstrapCountryLanguagesStep } from "../steps/bootstrap-country-langua
 import { listConfiguredCountryCodesStep } from "../steps/list-configured-country-codes";
 import { previewCountryLanguageBootstrapStep } from "../steps/preview-country-language-bootstrap";
 import { publishCountryLanguagesStep } from "../steps/publish-country-languages";
-import { bootstrapAssignments } from "../utils/country-language-scope";
+import {
+  bootstrapAssignments,
+  skipUnavailableAssignments,
+} from "../utils/country-language-scope";
 
 export interface BootstrapCountryLanguagesWorkflowInput {
   /** Country languages in use before the configuration existed. */
   legacy: CountryLanguageAssignments;
   /** False reports prerequisites only; true also initializes when absent and reads back. */
   apply: boolean;
+  /**
+   * True leaves out countries whose language is missing or inactive (they use English) instead of
+   * refusing; the deploy migration script sets it, the operator script does not.
+   */
+  skip_unavailable_languages?: boolean;
 }
 
 /**
@@ -30,12 +38,18 @@ export const bootstrapCountryLanguagesWorkflow = createWorkflow(
       bootstrapAssignments(input.legacy, configured)
     );
     const report = previewCountryLanguageBootstrapStep(assignments);
+    const scoped = transform({ input, assignments, report }, ({ input, assignments, report }) =>
+      skipUnavailableAssignments(
+        assignments,
+        input.skip_unavailable_languages ? report.unavailable_locales : []
+      )
+    );
     const applied = when(
       "apply-country-language-bootstrap",
       { input },
       ({ input }) => input.apply
     ).then(() => {
-      const bootstrap = bootstrapCountryLanguagesStep(assignments);
+      const bootstrap = bootstrapCountryLanguagesStep(scoped.assignments);
       const publication = publishCountryLanguagesStep(configured);
       return { bootstrap, publication };
     });
@@ -43,6 +57,7 @@ export const bootstrapCountryLanguagesWorkflow = createWorkflow(
       configured_country_codes: configured,
       assignments,
       report,
+      skipped: scoped.skipped,
       applied,
     });
   }

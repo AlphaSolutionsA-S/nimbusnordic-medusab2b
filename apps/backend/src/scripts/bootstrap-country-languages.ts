@@ -1,23 +1,7 @@
 import type { ExecArgs } from "@medusajs/framework/types";
 import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils";
-import type { CountryLanguageAssignments } from "../types/storefront-translation";
+import { LEGACY_COUNTRY_LANGUAGES } from "../workflows/storefront-translation/utils/legacy-country-languages";
 import { bootstrapCountryLanguagesWorkflow } from "../workflows/storefront-translation/workflows/bootstrap-country-languages";
-
-/**
- * Country languages the storefront used before the configuration existed (its legacy
- * country-to-locale map). Copied rather than imported: the apps share no source. Countries
- * without an entry (and outside Region membership) fall back to the English default.
- */
-const LEGACY_COUNTRY_LANGUAGES: CountryLanguageAssignments = {
-  dk: "da",
-  gb: "en",
-  se: "sv",
-  no: "no",
-  pl: "pl",
-  it: "it",
-  fr: "fr",
-  de: "de",
-};
 
 const USAGE = "Usage: medusa exec ./src/scripts/bootstrap-country-languages.ts [apply]";
 
