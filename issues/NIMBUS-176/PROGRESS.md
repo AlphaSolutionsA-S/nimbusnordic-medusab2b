@@ -58,3 +58,11 @@
 - **Readiness:** Updated PLAN.md evidence and manifest.md to Ready for Dispatch true. No business decisions changed; the already approved plan and five Jira tasks remain the agreed work.
 - **Next owner:** User for separate dispatcher handoff authorization, then task-dispatcher.
 - **Handover prompt:** Planning evidence gate is closed. On explicit authorization, hand issues/NIMBUS-176/manifest.md to task-dispatcher. Do not treat the verification output as implementation authorization.
+
+## 2026-10-21 — Tasks implemented; whole-branch review at the human gate
+
+- **Updated by:** task-dispatcher (took over on 2026-10-20 at Klaus Petersen's instruction from a stopped dispatcher session; resumed task 02 from its uncommitted partial work)
+- **Outcome:** All five tasks reviewed and committed locally on feature/NIMBUS-176: c006f03 (NIMBUS-194), 71b8e50 (NIMBUS-195), eef094e (NIMBUS-196), 57adbf2 (NIMBUS-197), 0079b98 (NIMBUS-198), plus consolidation 6bc31f9. Sub-tasks NIMBUS-194–198 have closing comments and are Done; parent NIMBUS-176 stays in Estimation (no direct In Progress transition). Integration review approved with no mechanical fixes; deviation-report.md lists deviations and eight open questions.
+- **Verification:** Finalization at or below baseline: backend unit 542/542, Admin 50/50, modules 478/480 (baseline BC spec), HTTP 239/248 (baseline quote specs plus a pre-existing develop shipment-tracking failure), storefront 520/523 (pre-existing), typecheck backend 22 / storefront 8 = baseline, lint clean, both builds pass (backend with the untracked planner probe set aside; storefront with a local backend). Playwright journey and browser CSRF specs written, not run. Nothing pushed or deployed.
+- **Next owner:** Klaus Petersen, to answer deviation-report.md open questions; then task-dispatcher resumes at "After the gate".
+- **Handover prompt:** Read issues/NIMBUS-176/deviation-report.md and answer Open questions 1–8. Re-invoke task-dispatcher with the answers to resume at "After the gate" (record answers, fixes, documentation, PR description, cleanup). Do not push without an explicit instruction.
