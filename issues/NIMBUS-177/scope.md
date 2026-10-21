@@ -1,7 +1,7 @@
 # Protect company-linked carts from access by cart ID alone
 
 **Date:** 2026-10-20
-**Status:** Scoped — approved by Klaus Petersen on 2026-10-20
+**Status:** Implemented on `feature/NIMBUS-177` (2026-10-21); scope approved by Klaus Petersen on 2026-10-20
 **Type:** Story
 **Priority:** Medium
 **Issue:** [NIMBUS-177](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-177)

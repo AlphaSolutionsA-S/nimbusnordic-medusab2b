@@ -96,3 +96,21 @@
 - **Not pushed.** No PR exists.
 - **Next owner:** Klaus Petersen, to answer the deviation report's open questions 1–5.
 - **Handover prompt:** Answer the open questions in `issues/NIMBUS-177/deviation-report.md`, then re-invoke task-dispatcher on `issues/NIMBUS-177` to resume at "After the gate". The answers are not a push instruction.
+
+## 2026-10-21 — After the gate: branch ready for review
+
+- **Updated by:** task-dispatcher.
+- **Outcome:** Klaus's gate answers are recorded in `deviation-report.md`.
+- **Gate fixes:** each was written test-first, reviewed and committed.
+  - D1 fde3bd2: the approval card links to checkout with `cartId`.
+  - D2 2bda61f: the transfer check treats draft orders as unknown.
+- **Documentation:** `docs/architecture/store-access.md` (ae3c475). The scope status is set to Implemented. Cleanup of the pipeline's working files follows this entry.
+- **Results:**
+  - storefront: 557 of 561 pass; only the 3 baseline suites fail.
+  - backend unit: 728 of 728.
+  - security HTTP spec: 84 of 84.
+  - typecheck: backend 22 and storefront 8, at the baseline.
+  - `node ai/tools/ai-check.mjs`: passes. `ai/` was not edited after 4de1d4a.
+- **Not pushed.** No PR is open. The PR description is in the dispatcher's run folder.
+- **Next owner:** Klaus Petersen, for the push go-ahead and the PR.
+- **Handover prompt:** When Klaus explicitly says to push, push `feature/NIMBUS-177` and open the PR to develop with the prepared description. Then run the after-deploy checks in `deviation-report.md` and `docs/security-remediation.md`, including the translation-key import before the storefront release.
