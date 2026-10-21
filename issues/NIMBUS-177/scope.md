@@ -140,3 +140,10 @@ Light code awareness only; no implementation design or live security probe was p
 - `apps/backend/src/workflows/approval/steps/create-approvals.ts`, `validate-company-approval.ts` and `src/api/store/approvals/middlewares.ts`: existing source-cart ownership and administrator/company checks to preserve.
 - `apps/backend/integration-tests/http/security/security-boundaries.spec.ts`, storefront cart/customer/approval tests and `docs/security-remediation.md`: existing regression coverage and recorded metadata trust gap.
 - Official [cart update documentation](https://docs.medusajs.com/resources/storefront-development/cart/update) describes authenticated customer transfer; [Store API reference](https://docs.medusajs.com/api/store) describes ID-based cart access. Installed source and real route tests remain necessary evidence for security guarantees.
+
+## Documentation
+
+- [docs/architecture/store-access.md](../../docs/architecture/store-access.md) — Store cart and order access: rules, route guards, approvals, storefront cart lifecycle (created)
+- [docs/security-remediation.md](../../docs/security-remediation.md) — access rule tables and rollout (updated earlier on the branch)
+
+AI base files updated: none
