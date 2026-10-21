@@ -56,6 +56,8 @@
 - Cart, approval-list, shipping-option, free-shipping and order fetches use `cache: "no-store"` (no `next` tags).
 - New translation keys must be imported in every environment before release (for 05's rollout note).
 - Running storefront jest needs `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` set (any value) in the env, else the required-env check aborts the run before any test.
+- Fix 04 (not-owned cookie cart): `lib/util/active-cart.ts` `activeCartLookup(lookup, customerId)` is the one place that decides whether a found cookie cart is the customer's (`cart.customer_id === customer.id`; not owned → `unavailable`, no customer → `error`). Login and `getOrSetCart` use it; `lookupCart` stays ownership-blind so explicit-id reads (approval card, checkout `?cart_id`) still work.
+- `cart.test.ts` resets `sdk.client.fetch`, `cart.create` and `createLineItem` in `beforeEach`: `jest.clearAllMocks` keeps queued `mock*Once` values, which leaked between tests.
 - Storefront full suite on this branch: 3 failing suites, all on baseline: `app/main-layout.test.tsx` (asserts a promo banner the layout never renders), `lib/util/money.test.ts`, `modules/products/components/product-tabs/index.test.tsx`.
 
 ## 05 Documentation

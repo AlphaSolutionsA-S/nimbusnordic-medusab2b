@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@/lib/config"
+import { activeCartLookup } from "@/lib/util/active-cart"
 import medusaError from "@/lib/util/medusa-error"
 import { B2BCustomer } from "@/types/global"
 import { HttpTypes } from "@medusajs/types"
@@ -183,11 +184,14 @@ export async function login(_currentState: unknown, formData: FormData) {
         revalidateTag(customerCacheTag)
 
         // The cookie cart is read with the new account's token. A cart this
-        // account may not use (another account's, or no longer verified) is
-        // dropped; it is never transferred or rewritten (NIMBUS-177).
-        const cart = await lookupCart()
+        // account may not use (another account's, no longer verified, or
+        // only readable and not owned) is dropped; it is never transferred
+        // or rewritten (NIMBUS-177).
+        const lookup = await lookupCart()
+        const customer =
+          lookup.status === "found" ? await retrieveCustomer() : null
 
-        if (cart.status === "unavailable") {
+        if (activeCartLookup(lookup, customer?.id).status === "unavailable") {
           await removeCartId()
         }
 

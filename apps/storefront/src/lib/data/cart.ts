@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@/lib/config"
+import { activeCartLookup } from "@/lib/util/active-cart"
 import {
   CART_NOT_FOUND_ERROR,
   CART_UNAVAILABLE_ERROR,
@@ -100,7 +101,8 @@ export async function getOrSetCart(countryCode: string) {
     throw new Error(SIGN_IN_REQUIRED_ERROR)
   }
 
-  const lookup = await lookupCart()
+  const customer = await retrieveCustomer()
+  const lookup = activeCartLookup(await lookupCart(), customer?.id)
 
   if (lookup.status === "error") {
     throw new Error(CART_NOT_FOUND_ERROR)
@@ -108,13 +110,12 @@ export async function getOrSetCart(countryCode: string) {
 
   let cart = lookup.status === "found" ? lookup.cart : null
   const region = await getRegion(countryCode)
-  const customer = await retrieveCustomer()
 
   if (!region) {
     throw new Error(`Region not found for country code: ${countryCode}`)
   }
 
-  // A missing or refused cookie cart is replaced by a new cart.
+  // A missing, refused or not-owned cookie cart is replaced by a new cart.
   if (!cart) {
     const body = {
       region_id: region.id,

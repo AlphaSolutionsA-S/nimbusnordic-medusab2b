@@ -90,6 +90,27 @@ beforeEach(() => {
   mockFetch.mockResolvedValue({ status: "updated" })
 })
 
+type FoundCart = Extract<
+  Awaited<ReturnType<typeof lookupCart>>,
+  { status: "found" }
+>
+
+function foundCart(id: string, customerId: string): FoundCart {
+  return {
+    status: "found",
+    cart: { id, customer_id: customerId } as FoundCart["cart"],
+  }
+}
+
+function signedInAs(customerId: string) {
+  mockFetch.mockImplementation(async (path) => {
+    if (path === "/store/customers/me") {
+      return { customer: { id: customerId } }
+    }
+    return { status: "updated" }
+  })
+}
+
 function loginForm() {
   const formData = new FormData()
   formData.set("email", "customer@example.com")
@@ -110,22 +131,47 @@ describe("login cart lifecycle", () => {
     expect(updateCart).not.toHaveBeenCalled()
   })
 
-  it("keeps an accessible cookie cart without transferring or updating it", async () => {
+  it("keeps a cookie cart the signed-in customer owns without transferring or updating it", async () => {
     mockLogin.mockResolvedValue("token")
     mockGetCartId.mockResolvedValue("cart_own")
-    mockLookupCart.mockResolvedValue({
-      status: "found",
-      cart: { id: "cart_own" } as Extract<
-        Awaited<ReturnType<typeof lookupCart>>,
-        { status: "found" }
-      >["cart"],
-    })
+    signedInAs("cus_admin")
+    mockLookupCart.mockResolvedValue(foundCart("cart_own", "cus_admin"))
 
     await login(undefined, loginForm())
 
     expect(removeCartId).not.toHaveBeenCalled()
     expect(mockTransferCart).not.toHaveBeenCalled()
     expect(updateCart).not.toHaveBeenCalled()
+  })
+
+  it("clears a colleague's cart the administrator can read but does not own, without transferring or updating it", async () => {
+    mockLogin.mockResolvedValue("token")
+    mockGetCartId.mockResolvedValue("cart_colleague")
+    signedInAs("cus_admin")
+    // Readable because it has an admin approval; every mutation is owner-only.
+    mockLookupCart.mockResolvedValue(foundCart("cart_colleague", "cus_colleague"))
+
+    await login(undefined, loginForm())
+
+    expect(removeCartId).toHaveBeenCalledTimes(1)
+    expect(mockTransferCart).not.toHaveBeenCalled()
+    expect(updateCart).not.toHaveBeenCalled()
+  })
+
+  it("keeps the cookie when the signed-in customer cannot be read", async () => {
+    mockLogin.mockResolvedValue("token")
+    mockGetCartId.mockResolvedValue("cart_own")
+    mockLookupCart.mockResolvedValue(foundCart("cart_own", "cus_admin"))
+    mockFetch.mockImplementation(async (path) => {
+      if (path === "/store/customers/me") {
+        throw new Error("request failed")
+      }
+      return { status: "updated" }
+    })
+
+    await login(undefined, loginForm())
+
+    expect(removeCartId).not.toHaveBeenCalled()
   })
 
   it("keeps the cookie when the cart lookup fails for another reason", async () => {

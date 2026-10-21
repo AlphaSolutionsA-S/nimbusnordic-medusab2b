@@ -49,6 +49,7 @@ import {
   lookupCart,
 } from "@/lib/data/cart"
 import { getAuthHeaders, getCartId, setCartId } from "@/lib/data/cookies"
+import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
 import {
   CART_UNAVAILABLE_ERROR,
@@ -60,6 +61,7 @@ const mockCreate = jest.mocked(sdk.store.cart.create)
 const mockGetAuthHeaders = jest.mocked(getAuthHeaders)
 const mockGetCartId = jest.mocked(getCartId)
 const mockGetRegion = jest.mocked(getRegion)
+const mockRetrieveCustomer = jest.mocked(retrieveCustomer)
 
 // Shape of the SDK's FetchError (`@medusajs/js-sdk` client.js): message plus
 // numeric `status`.
@@ -68,11 +70,20 @@ function fetchError(status: number, message: string) {
 }
 
 const signedIn = { authorization: "Bearer token" }
+const admin = { id: "cus_admin" } as Awaited<
+  ReturnType<typeof retrieveCustomer>
+>
 
 beforeEach(() => {
   jest.clearAllMocks()
+  // clearAllMocks keeps queued *Once values; a test that fails early must
+  // not hand its leftovers to the next test.
+  mockFetch.mockReset()
+  mockCreate.mockReset()
+  jest.mocked(sdk.store.cart.createLineItem).mockReset()
   mockGetAuthHeaders.mockResolvedValue({})
   mockGetCartId.mockResolvedValue(undefined)
+  mockRetrieveCustomer.mockResolvedValue(null)
 })
 
 describe("cart data errors", () => {
@@ -174,13 +185,82 @@ describe("add to cart", () => {
     )
   })
 
-  it("maps a refused cart mutation to the cart-unavailable code", async () => {
+  it("starts a new cart when the cookie cart is readable but owned by a colleague", async () => {
     mockGetAuthHeaders.mockResolvedValue(signedIn)
-    mockGetCartId.mockResolvedValue("cart_1")
+    mockGetCartId.mockResolvedValue("cart_colleague")
+    mockRetrieveCustomer.mockResolvedValue(admin)
     mockGetRegion.mockResolvedValue({ id: "reg_1" } as Awaited<
       ReturnType<typeof getRegion>
     >)
-    mockFetch.mockResolvedValueOnce({ cart: { id: "cart_1", region_id: "reg_1" } })
+    // An administrator can read a colleague's cart under admin approval.
+    mockFetch
+      .mockResolvedValueOnce({
+        cart: {
+          id: "cart_colleague",
+          customer_id: "cus_colleague",
+          region_id: "reg_1",
+        },
+      })
+      .mockResolvedValueOnce({
+        cart: { id: "cart_new", customer_id: "cus_admin", region_id: "reg_1" },
+      })
+    mockCreate.mockResolvedValueOnce({
+      cart: { id: "cart_new" },
+    } as Awaited<ReturnType<typeof sdk.store.cart.create>>)
+    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
+      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
+    )
+
+    await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
+
+    expect(mockCreate).toHaveBeenCalledTimes(1)
+    expect(setCartId).toHaveBeenCalledWith("cart_new")
+    expect(sdk.store.cart.createLineItem).toHaveBeenCalledTimes(1)
+    expect(sdk.store.cart.createLineItem).toHaveBeenCalledWith(
+      "cart_new",
+      { variant_id: "variant_1", quantity: 1 },
+      {},
+      signedIn
+    )
+    expect(sdk.store.cart.update).not.toHaveBeenCalled()
+  })
+
+  it("reuses a cookie cart the signed-in customer owns", async () => {
+    mockGetAuthHeaders.mockResolvedValue(signedIn)
+    mockGetCartId.mockResolvedValue("cart_own")
+    mockRetrieveCustomer.mockResolvedValue(admin)
+    mockGetRegion.mockResolvedValue({ id: "reg_1" } as Awaited<
+      ReturnType<typeof getRegion>
+    >)
+    mockFetch.mockResolvedValueOnce({
+      cart: { id: "cart_own", customer_id: "cus_admin", region_id: "reg_1" },
+    })
+    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
+      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
+    )
+
+    await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
+
+    expect(mockCreate).not.toHaveBeenCalled()
+    expect(setCartId).not.toHaveBeenCalled()
+    expect(sdk.store.cart.createLineItem).toHaveBeenCalledWith(
+      "cart_own",
+      { variant_id: "variant_1", quantity: 1 },
+      {},
+      signedIn
+    )
+  })
+
+  it("maps a refused cart mutation to the cart-unavailable code", async () => {
+    mockGetAuthHeaders.mockResolvedValue(signedIn)
+    mockGetCartId.mockResolvedValue("cart_1")
+    mockRetrieveCustomer.mockResolvedValue(admin)
+    mockGetRegion.mockResolvedValue({ id: "reg_1" } as Awaited<
+      ReturnType<typeof getRegion>
+    >)
+    mockFetch.mockResolvedValueOnce({
+      cart: { id: "cart_1", customer_id: "cus_admin", region_id: "reg_1" },
+    })
     jest
       .mocked(sdk.store.cart.createLineItem)
       .mockRejectedValueOnce(fetchError(404, "Cart not found"))

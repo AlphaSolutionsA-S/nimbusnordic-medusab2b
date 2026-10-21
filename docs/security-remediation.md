@@ -136,6 +136,12 @@ No data migration runs; the rules are evaluated on each request.
   storefront shows "This cart is no longer available" on the cart page and in
   checkout, and drops such a cart from its cookie at the next login; the next
   add to cart creates a new cart.
+- The storefront's cart cookie only ever points at a cart the signed-in
+  customer owns. A cookie cart the customer can read but does not own (an
+  administrator's view of a colleague's cart under admin approval) is dropped
+  at login, and add to cart starts a new cart instead of using it. Approval
+  pages and checkout of an approved colleague cart open that cart by its ID, not
+  through the cookie.
 - Existing orders need no migration either.
 - Signed-out visitors can no longer create carts; the storefront asks them to
   sign in instead. Deploy the backend and storefront together: the earlier
