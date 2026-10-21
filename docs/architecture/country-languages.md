@@ -21,7 +21,8 @@ Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/sto
 | `modules/storefront-translation/country-languages.ts`, `service.ts` | Assignment rules, the deactivation guard, bootstrap and the published verdict |
 | `workflows/storefront-translation/workflows/` | Management read, assignment, publication and bootstrap workflows; region membership from a narrow Region query |
 | `api/admin/country-languages/`, `api/store/country-languages/` | Admin list and save; public publication |
-| `scripts/bootstrap-country-languages.ts` | Operator bootstrap from the legacy map (dry run by default) |
+| `migration-scripts/seed-country-languages.ts` | Deploy bootstrap from the legacy map, run once per environment as a Medusa data migration script; skips countries whose legacy language is missing or inactive |
+| `scripts/bootstrap-country-languages.ts` | Local operator bootstrap from the same legacy map (`workflows/storefront-translation/utils/legacy-country-languages.ts`; dry run by default, strict apply) |
 | `admin/routes/translations/components/CountryLanguages.tsx` | Admin list, edit drawer, conflict and deactivation feedback |
 | `lib/data/country-languages.ts` (storefront, `server-only`) | Loads, validates and caches the publication; one snapshot per request |
 | `lib/i18n/country-language-map.ts` | Parses the publication and looks a country up; holds the cold-outage legacy map |
@@ -40,7 +41,10 @@ Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/sto
   and nothing is written. Saves, bootstrap and language activation are serialized on a database
   transaction lock, so they are consistent across backend instances.
 - Without a configuration document the publication fails closed (503) instead of quietly sending every
-  country to English; the bootstrap is the explicit step that creates it.
+  country to English; the bootstrap creates it, run by the deploy as a data migration script.
+- The deploy bootstrap leaves out a country whose legacy language is missing or inactive (it uses
+  English) and logs it; English itself unavailable fails the bootstrap. It never overwrites an
+  existing configuration.
 
 ## HTTP contract
 
@@ -91,18 +95,27 @@ session cookie; bearer tokens and secret API keys get 401. All three responses a
 
 In order, per environment:
 
-1. Deploy the backend (migration `country_language_configuration`).
-2. Run the bootstrap dry run, then apply it:
-   `pnpm --filter @b2b-starter/backend exec medusa exec ./src/scripts/bootstrap-country-languages.ts`
-   and the same with the bare argument `apply` (not `--apply`: `medusa exec` rejects unknown options).
-   Apply refuses when a legacy language is missing or inactive (activate it first) and never
-   overwrites an existing configuration.
-3. Read back `GET /admin/country-languages` and `GET /store/country-languages`: 200, every configured
-   country with the expected language.
-4. Deploy the storefront. Until step 2 has run the publication is 503 and storefront workers stay on
-   the legacy map, so the order matters for new countries, not for the original eight.
-5. For a new language: add and translate it on the Translations page, activate it, then assign it to
+1. Deploy the backend. `medusa db:migrate` runs the module migration (`country_language_configuration`)
+   and then the bootstrap as a data migration script (`seed-country-languages.ts`), once per
+   environment (recorded in `script_migrations`). Countries whose legacy language is missing or
+   inactive are skipped to English and logged; an existing configuration is never overwritten. English
+   unavailable fails the script, which runs again on the next deploy (on a fresh database, import and
+   activate English first). Whether a failing migration script blocks a Medusa Cloud deploy is
+   UNVERIFIED; check the deploy log for the bootstrap summary.
+2. Read back `GET /admin/country-languages` and `GET /store/country-languages`: 200, every configured
+   country with the expected language. Assign a skipped country on the Translations page once its
+   language is active.
+3. Deploy the storefront. Until step 1 has created the configuration the publication is 503 and
+   storefront workers stay on the legacy map, so the order matters for new countries, not for the
+   original eight.
+4. For a new language: add and translate it on the Translations page, activate it, then assign it to
    countries. Add `messages/<locale>.json` only as developer material.
+
+A dry run, locally only (Medusa Cloud cannot run `medusa exec`):
+`pnpm --filter @b2b-starter/backend exec medusa exec ./src/scripts/bootstrap-country-languages.ts`
+lists the proposed assignments and unavailable languages without writing. The bare argument `apply`
+(not `--apply`: `medusa exec` rejects unknown options) initializes strictly: it refuses while any
+legacy language is missing or inactive.
 
 ## Verify after deploy
 

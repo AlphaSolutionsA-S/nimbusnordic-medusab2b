@@ -2,13 +2,14 @@ import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import type { IRegionModuleService, MedusaContainer } from "@medusajs/framework/types";
-import { Modules } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 import { createRegionsWorkflow, updateRegionsWorkflow } from "@medusajs/medusa/core-flows";
 import { createAdminSession, createAdminUser, createStoreUser } from "../../utils/admin";
 import { generatePublishableKey, generateStoreHeaders } from "../../utils/store";
 import { STOREFRONT_TRANSLATION_MODULE } from "../../../src/modules/storefront-translation";
 import type StorefrontTranslationModuleService from "../../../src/modules/storefront-translation/service";
 import bootstrapCountryLanguages from "../../../src/scripts/bootstrap-country-languages";
+import seedCountryLanguages from "../../../src/migration-scripts/seed-country-languages";
 
 jest.setTimeout(120_000);
 
@@ -521,6 +522,7 @@ medusaIntegrationTestRunner({
           configured_country_codes: ["dk", "gb", "nl", "se"],
           assignments: { dk: "da", gb: "en", se: "sv" },
           report: { initialized: false, unavailable_locales: ["sv"] },
+          skipped: {},
         });
         expect(await configuration()).toBeNull();
         await expect(runBootstrap("apply")).rejects.toMatchObject({
@@ -539,6 +541,7 @@ medusaIntegrationTestRunner({
           configured_country_codes: ["dk", "gb", "nl", "se"],
           assignments: { dk: "da", gb: "en", se: "sv" },
           report: { initialized: false, unavailable_locales: [] },
+          skipped: {},
           applied: {
             bootstrap: {
               created: true,
@@ -598,6 +601,57 @@ medusaIntegrationTestRunner({
           .listRegions({ id: nordics.id }, { relations: ["countries"] });
         expect(region.currency_code).toBe("dkk");
         expect(region.countries.map((country) => country.iso_2).sort()).toEqual(["dk", "gb", "nl", "se"]);
+      });
+
+      describe("deploy migration script", () => {
+        const runSeed = () => seedCountryLanguages({ container });
+
+        it("skips a country whose legacy language is inactive, logs it and never overwrites on a rerun", async () => {
+          await createRegion(["dk", "se", "gb", "nl"]);
+          await activeLanguages("en", "da");
+          expect((await importLocale("sv")).status).toBe(201);
+          const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
+          const warn = jest.spyOn(logger, "warn");
+
+          try {
+            const result = await runSeed();
+            expect(result.skipped).toEqual({ se: "sv" });
+            expect(result.applied?.bootstrap).toEqual({
+              created: true,
+              configuration: { assignments: { dk: "da", gb: "en" }, version: 1 },
+            });
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining("se→sv"));
+          } finally {
+            warn.mockRestore();
+          }
+
+          expect((await publicRead()).data).toEqual({
+            default_locale: "en",
+            countries: [
+              { country_code: "dk", locale: "da", source: "explicit" },
+              { country_code: "gb", locale: "en", source: "explicit" },
+              { country_code: "nl", locale: "en", source: "default" },
+              { country_code: "se", locale: "en", source: "default" },
+            ],
+          });
+
+          expect((await save("dk", assignBody("en"))).status).toBe(200);
+          const edited = { assignments: { dk: "en", gb: "en" }, version: 2 };
+          const repeated = await runSeed();
+          expect(repeated.applied?.bootstrap).toEqual({ created: false, configuration: edited });
+          expect(await configuration()).toEqual(edited);
+        });
+
+        it("rejects and writes nothing when English is unavailable", async () => {
+          await createRegion(["dk", "gb"]);
+          expect((await importLocale("en")).status).toBe(201);
+
+          await expect(runSeed()).rejects.toMatchObject({
+            message: expect.stringContaining("before initializing country languages: en."),
+          });
+          expect(await configuration()).toBeNull();
+          expect((await publicRead()).status).toBe(503);
+        });
       });
 
       const json = (value: unknown) => JSON.stringify(value);

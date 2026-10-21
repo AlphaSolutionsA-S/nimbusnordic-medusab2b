@@ -1,4 +1,8 @@
-import { bootstrapAssignments, configuredCountryCodes } from "../country-language-scope";
+import {
+  bootstrapAssignments,
+  configuredCountryCodes,
+  skipUnavailableAssignments,
+} from "../country-language-scope";
 
 describe("configuredCountryCodes", () => {
   it("returns every region's country once, sorted", () => {
@@ -30,5 +34,25 @@ describe("bootstrapAssignments", () => {
 
   it("assigns nothing when no legacy country is configured", () => {
     expect(bootstrapAssignments(legacy, ["nl", "us"])).toEqual({});
+  });
+});
+
+describe("skipUnavailableAssignments", () => {
+  const assignments = { dk: "da", gb: "en", se: "sv", no: "no", fi: "sv" };
+
+  it("skips exactly the countries whose language is unavailable and reports them", () => {
+    expect(skipUnavailableAssignments(assignments, ["sv", "no"])).toEqual({
+      assignments: { dk: "da", gb: "en" },
+      skipped: { se: "sv", no: "no", fi: "sv" },
+    });
+  });
+
+  it("keeps every assignment when no language is unavailable", () => {
+    expect(skipUnavailableAssignments(assignments, [])).toEqual({ assignments, skipped: {} });
+  });
+
+  it("never drops a country on an available language when another language is unavailable", () => {
+    const result = skipUnavailableAssignments(assignments, ["pl"]);
+    expect(result).toEqual({ assignments, skipped: {} });
   });
 });
