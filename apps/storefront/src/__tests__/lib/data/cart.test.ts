@@ -48,10 +48,16 @@ import {
   emptyCart,
   lookupCart,
 } from "@/lib/data/cart"
-import { getAuthHeaders, getCartId, setCartId } from "@/lib/data/cookies"
+import {
+  getAuthHeaders,
+  getCartId,
+  removeCartId,
+  setCartId,
+} from "@/lib/data/cookies"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { getRegion } from "@/lib/data/regions"
 import {
+  CART_NOT_FOUND_ERROR,
   CART_UNAVAILABLE_ERROR,
   SIGN_IN_REQUIRED_ERROR,
 } from "@/lib/util/customer-error"
@@ -137,6 +143,18 @@ describe("lookupCart", () => {
       "/store/carts/cart_1",
       expect.objectContaining({ cache: "no-store", headers: signedIn })
     )
+  })
+
+  it("requests the cart's customer_id column, which the ownership check compares", async () => {
+    mockGetAuthHeaders.mockResolvedValue(signedIn)
+    mockGetCartId.mockResolvedValue("cart_1")
+    mockFetch.mockResolvedValueOnce({ cart: { id: "cart_1" } })
+
+    await lookupCart()
+
+    const options = mockFetch.mock.calls[0][1] as { query: { fields: string } }
+    const fields = options.query.fields.split(",").map((field) => field.trim())
+    expect(fields).toContain("+customer_id")
   })
 })
 
@@ -249,6 +267,27 @@ describe("add to cart", () => {
       {},
       signedIn
     )
+  })
+
+  it("refuses with the cart-not-found code and keeps the cookie when the signed-in customer cannot be read", async () => {
+    mockGetAuthHeaders.mockResolvedValue(signedIn)
+    mockGetCartId.mockResolvedValue("cart_own")
+    mockRetrieveCustomer.mockResolvedValue(null)
+    mockGetRegion.mockResolvedValue({ id: "reg_1" } as Awaited<
+      ReturnType<typeof getRegion>
+    >)
+    mockFetch.mockResolvedValueOnce({
+      cart: { id: "cart_own", customer_id: "cus_admin", region_id: "reg_1" },
+    })
+
+    await expect(
+      addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
+    ).rejects.toThrow(CART_NOT_FOUND_ERROR)
+
+    expect(mockCreate).not.toHaveBeenCalled()
+    expect(sdk.store.cart.createLineItem).not.toHaveBeenCalled()
+    expect(setCartId).not.toHaveBeenCalled()
+    expect(removeCartId).not.toHaveBeenCalled()
   })
 
   it("maps a refused cart mutation to the cart-unavailable code", async () => {
