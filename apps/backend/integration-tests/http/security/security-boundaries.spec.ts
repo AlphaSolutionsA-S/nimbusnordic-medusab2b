@@ -1,11 +1,21 @@
 import { inspect } from 'node:util';
 import jwt from 'jsonwebtoken';
 import { medusaIntegrationTestRunner } from '@medusajs/test-utils';
-import { createCartWorkflow } from '@medusajs/core-flows';
+import {
+  createCartWorkflow,
+  createOrderFulfillmentWorkflow,
+  createProductsWorkflow,
+  createShippingOptionsWorkflow,
+  createStockLocationsWorkflow,
+  linkSalesChannelsToStockLocationWorkflow,
+} from '@medusajs/core-flows';
 import { ApiKeyType, ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils';
 import type {
   IApiKeyModuleService,
   ICartModuleService,
+  ICustomerModuleService,
+  IFulfillmentModuleService,
+  IOrderModuleService,
   IPaymentModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
@@ -466,10 +476,10 @@ medusaIntegrationTestRunner({
         return { headers: { ...publicHeaders.headers, authorization: `Bearer ${token}` } };
       }
 
-      async function addColleague(email: string): Promise<Member> {
+      async function addColleague(email: string, isAdmin = false): Promise<Member> {
         const response = await api.post(`/store/companies/${companyId}/employees`, {
           email, password: 'password', first_name: 'Col', last_name: 'League', spending_limit: 0,
-          is_admin: false,
+          is_admin: isAdmin,
         }, headers);
         const memberHeaders = await login(email);
         const me = await api.get('/store/customers/me', memberHeaders);
@@ -699,6 +709,261 @@ medusaIntegrationTestRunner({
             expect(await approvalState(seeded)).toEqual(before);
           },
         );
+      });
+
+      // NIMBUS-177: an order is read, or returned, by its owner, or by an administrator of the
+      // source cart's company once that cart's admin approval is approved and while the owner is
+      // still a member. The order–company link grants nothing.
+      describe('order access guard', () => {
+        type As = { headers: Record<string, string> };
+        type OrderRoute = readonly ['read' | 'return', string, (orderId: string) => string, ((orderId: string) => object)?];
+
+        const ORDER_NOT_FOUND = { type: 'not_found', message: 'Order not found' };
+        const TRANSFER_REFUSED = { type: 'invalid_data', message: 'Order cannot be transferred' };
+        const ORDER_ROUTES: OrderRoute[] = [
+          ['read', 'GET', (id) => `/store/orders/${id}`],
+          ['return', 'POST', () => '/store/returns', (id) => ({
+            order_id: id, items: [{ id: 'ordli_missing', quantity: 1 }],
+            return_shipping: { option_id: 'so_missing' },
+          })],
+        ];
+        const ADDRESS = {
+          first_name: 'Col', last_name: 'League', address_1: 'Testvej 1', city: 'Aarhus',
+          postal_code: '8000', country_code: 'dk',
+        };
+        const orders = () => container.resolve<IOrderModuleService>(Modules.ORDER);
+        const returnCount = async (orderId: string) => (await container.resolve(ContainerRegistrationKeys.QUERY)
+          .graph({ entity: 'return', fields: ['id'], filters: { order_id: orderId } })).data.length;
+        const changeCount = async (orderId: string) =>
+          (await orders().listOrderChanges({ order_id: orderId })).length;
+
+        let ownerCart: Target;
+        let orderId: string;
+
+        const sendOrder = (route: OrderRoute, id: string, as: As) => api.request({
+          method: route[1], url: route[2](id), data: route[3]?.(id), ...as, validateStatus: () => true,
+        });
+        const transfer = (action: 'request' | 'cancel', id: string, as: As) =>
+          api.post(`/store/orders/${id}/transfer/${action}`, {}, { ...as, validateStatus: () => true });
+
+        async function seedOrder(ownerId: string | null, sourceCart?: Target): Promise<string> {
+          const order = await orders().createOrders({
+            currency_code: 'dkk', customer_id: ownerId ?? undefined, email: 'order@example.test',
+            region_id: regionId, items: [{ title: 'Custom test item', quantity: 1, unit_price: 100 }],
+          });
+          if (sourceCart) {
+            await container.resolve(ContainerRegistrationKeys.LINK).create({
+              [Modules.ORDER]: { order_id: order.id }, [Modules.CART]: { cart_id: sourceCart.cartId },
+            });
+          }
+          return order.id;
+        }
+
+        async function expectOrderRefused(id: string, as: As) {
+          for (const route of ORDER_ROUTES) {
+            const missing = await sendOrder(route, 'order_missing', as);
+            expect({ route: route[0], body: missing.data }).toEqual({ route: route[0], body: ORDER_NOT_FOUND });
+            const refused = await sendOrder(route, id, as);
+            expect({
+              route: route[0], status: refused.status, body: refused.data,
+              cache: refused.headers['cache-control'],
+            }).toEqual({ route: route[0], status: 404, body: missing.data, cache: 'private, no-store' });
+          }
+          expect(await returnCount(id)).toBe(0);
+        }
+
+        // The product seeder creates draft products, so the checkout fixture is built here: a
+        // published product in the guard channel, a shipping option served from a stock location in
+        // that channel, and the system payment provider enabled in the region.
+        async function seedCheckout() {
+          const link = container.resolve(ContainerRegistrationKeys.LINK);
+          await link.create({
+            [Modules.REGION]: { region_id: regionId }, [Modules.PAYMENT]: { payment_provider_id: 'pp_system_default' },
+          });
+          const { result: [location] } = await createStockLocationsWorkflow(container).run({
+            input: { locations: [{ name: 'Guard warehouse', address: { address_1: 'Lagervej 1', city: 'Aarhus', country_code: 'dk' } }] },
+          });
+          await linkSalesChannelsToStockLocationWorkflow(container).run({ input: { id: location.id, add: [channelId] } });
+          const fulfillment = container.resolve<IFulfillmentModuleService>(Modules.FULFILLMENT);
+          const set = await fulfillment.createFulfillmentSets({
+            name: 'Guard shipping', type: 'shipping',
+            service_zones: [{ name: 'Denmark', geo_zones: [{ type: 'country', country_code: 'dk' }] }],
+          });
+          await link.create([
+            { [Modules.STOCK_LOCATION]: { stock_location_id: location.id }, [Modules.FULFILLMENT]: { fulfillment_provider_id: 'manual_manual' } },
+            { [Modules.STOCK_LOCATION]: { stock_location_id: location.id }, [Modules.FULFILLMENT]: { fulfillment_set_id: set.id } },
+          ]);
+          const profile = await fulfillment.createShippingProfiles({ name: 'Guard profile', type: 'default' });
+          const { result: [option] } = await createShippingOptionsWorkflow(container).run({
+            input: [{
+              name: 'Guard delivery', service_zone_id: set.service_zones[0].id, shipping_profile_id: profile.id,
+              provider_id: 'manual_manual', price_type: 'flat',
+              type: { label: 'Standard', description: 'Standard', code: 'standard' },
+              prices: [{ currency_code: 'dkk', amount: 10 }],
+            }],
+          });
+          const { result: [product] } = await createProductsWorkflow(container).run({
+            input: {
+              products: [{
+                title: 'Guard product', status: 'published', shipping_profile_id: profile.id,
+                options: [{ title: 'Size', values: ['One'] }],
+                variants: [{
+                  title: 'One', sku: 'guard-one', manage_inventory: false, options: { Size: 'One' },
+                  prices: [{ currency_code: 'dkk', amount: 100 }],
+                }],
+                sales_channels: [{ id: channelId }],
+              }],
+            },
+          });
+          return { optionId: option.id, variantId: product.variants[0].id };
+        }
+
+        beforeEach(async () => {
+          ownerCart = await seedCart(colleague.customerId, companyId);
+          orderId = await seedOrder(colleague.customerId, ownerCart);
+        });
+
+        it('answers a signed-out caller with 401 on order read, returns and transfer routes', async () => {
+          for (const route of ORDER_ROUTES) {
+            const response = await sendOrder(route, orderId, publicHeaders);
+            expect({ route: route[0], status: response.status }).toEqual({ route: route[0], status: 401 });
+          }
+          for (const action of ['request', 'cancel'] as const) {
+            const response = await transfer(action, orderId, publicHeaders);
+            expect({ action, status: response.status }).toEqual({ action, status: 401 });
+          }
+          expect(await returnCount(orderId)).toBe(0);
+          expect(await changeCount(orderId)).toBe(0);
+        });
+
+        it.each([
+          ['a same-company colleague', async () => (await addColleague('bystander@example.test')).headers],
+          ['an administrator of another company', async () => foreignAdmin],
+          ['a customer of no company', async () => {
+            const outsider = await createStoreUser({ api, storeHeaders: publicHeaders, email: 'outsider@example.test' });
+            return { headers: { ...publicHeaders.headers, authorization: `Bearer ${outsider.token}` } };
+          }],
+          ['an administrator when the source cart has no admin approval', async () => headers],
+          ['an administrator with a pending admin approval', async () => {
+            await attachAdminApproval(ownerCart.cartId, ApprovalStatusType.PENDING, colleague.customerId);
+            return headers;
+          }],
+          ['an administrator with a rejected admin approval', async () => {
+            await attachAdminApproval(ownerCart.cartId, ApprovalStatusType.REJECTED, colleague.customerId);
+            return headers;
+          }],
+          ['an administrator after the owner left the company', async () => {
+            await attachAdminApproval(ownerCart.cartId, ApprovalStatusType.APPROVED, colleague.customerId);
+            expect((await api.delete(`/store/companies/${companyId}/employees/${colleague.employeeId}`, headers)).status)
+              .toBe(200);
+            return headers;
+          }],
+        ])('refuses %s on order read and returns like a missing order', async (_label, as) => {
+          await expectOrderRefused(orderId, await as());
+        });
+
+        it('lets the owner read the order, privately', async () => {
+          const read = await api.get(`/store/orders/${orderId}?fields=%2Bcustomer_id`, colleague.headers);
+          expect({
+            status: read.status, id: read.data.order.id, customer_id: read.data.order.customer_id,
+            cache: read.headers['cache-control'],
+          }).toEqual({ status: 200, id: orderId, customer_id: colleague.customerId, cache: 'private, no-store' });
+        });
+
+        it("grants nothing through an order–company link to the caller's company", async () => {
+          const foreignOwner = (await api.get('/store/customers/me', foreignAdmin)).data.customer.id;
+          const forged = await seedOrder(foreignOwner);
+          await container.resolve(ContainerRegistrationKeys.LINK).create({
+            [Modules.ORDER]: { order_id: forged }, company: { company_id: companyId },
+          });
+          await expectOrderRefused(forged, headers);
+          await expectOrderRefused(forged, colleague.headers);
+        });
+
+        it("refuses a transfer of another account's order and of the caller's own with one body", async () => {
+          const own = await seedOrder(customerId);
+          for (const id of [orderId, own]) {
+            const response = await transfer('request', id, headers);
+            expect({ status: response.status, body: response.data }).toEqual({ status: 400, body: TRANSFER_REFUSED });
+            expect(await changeCount(id)).toBe(0);
+          }
+        });
+
+        it.each(['no customer', 'a guest customer'])(
+          'lets a signed-in customer request and cancel a transfer of an order with %s, returning no order',
+          async (kind) => {
+            const guestId = kind === 'no customer' ? null : (await container
+              .resolve<ICustomerModuleService>(Modules.CUSTOMER)
+              .createCustomers({ email: 'guest@example.test', has_account: false })).id;
+            const id = await seedOrder(guestId);
+            const requested = await transfer('request', id, headers);
+            expect({ status: requested.status, body: requested.data }).toEqual({ status: 200, body: { success: true } });
+            expect(await changeCount(id)).toBe(1);
+            const cancelled = await transfer('cancel', id, headers);
+            expect({ status: cancelled.status, body: cancelled.data }).toEqual({ status: 200, body: { success: true } });
+          },
+        );
+
+        it('answers a transfer request for an unknown order with 404', async () => {
+          const response = await transfer('request', 'order_missing', headers);
+          expect(response.status).toBe(404);
+        });
+
+        it("lets the company's administrators read, and return, a colleague's order one of them paid", async () => {
+          const { optionId, variantId } = await seedCheckout();
+          const approvals = container.resolve<ApprovalModuleService>('approval');
+          const company = await api.get(`/store/companies/${companyId}`, headers);
+          await approvals.updateApprovalSettings({
+            id: company.data.company.approval_settings.id, requires_admin_approval: true,
+            requires_sales_manager_approval: false,
+          });
+
+          const cartId = (await api.post('/store/carts', { region_id: regionId, sales_channel_id: channelId },
+            colleague.headers)).data.cart.id;
+          await api.post(`/store/carts/${cartId}/line-items`, { variant_id: variantId, quantity: 2 }, colleague.headers);
+          await api.post(`/store/carts/${cartId}`, { shipping_address: ADDRESS, billing_address: ADDRESS }, colleague.headers);
+          await api.post(`/store/carts/${cartId}/shipping-methods`, { option_id: optionId }, colleague.headers);
+          await api.post(`/store/carts/${cartId}/approvals`, {}, colleague.headers);
+          const [approval] = await approvals.listApprovals({ cart_id: cartId });
+          await api.post(`/store/approvals/${approval.id}`, { status: 'approved' }, headers);
+
+          const collection = (await api.post('/store/payment-collections', { cart_id: cartId }, headers))
+            .data.payment_collection;
+          await api.post(`/store/payment-collections/${collection.id}/payment-sessions`,
+            { provider_id: 'pp_system_default' }, headers);
+          const completed = await api.post(`/store/carts/${cartId}/complete`, {}, headers);
+          expect(completed.data.type).toBe('order');
+          const order = completed.data.order;
+
+          const adminB = await addColleague('admin-b@example.test', true);
+          for (const as of [headers, adminB.headers]) {
+            const read = await api.get(`/store/orders/${order.id}?fields=%2Bcustomer_id`, as);
+            expect(read.status).toBe(200);
+            expect(read.data.order.id).toBe(order.id);
+            expect(read.data.order.customer_id).toBe(colleague.customerId);
+            expect(Array.isArray(read.data.order.items)).toBe(true);
+            expect(typeof read.data.order.items[0].id).toBe('string');
+            expect(typeof read.data.order.items[0].quantity).toBe('number');
+          }
+          const bystander = await addColleague('bystander@example.test');
+          const refused = await api.get(`/store/orders/${order.id}`, { ...bystander.headers, validateStatus: () => true });
+          expect({ status: refused.status, body: refused.data }).toEqual({ status: 404, body: ORDER_NOT_FOUND });
+
+          const itemId = order.items[0].id;
+          await createOrderFulfillmentWorkflow(container).run({
+            input: { order_id: order.id, items: [{ id: itemId, quantity: 2 }] },
+          });
+          const returnBody = { order_id: order.id, items: [{ id: itemId, quantity: 1 }], return_shipping: { option_id: optionId } };
+          const byAdmin = await api.post('/store/returns', returnBody, { ...headers, validateStatus: () => true });
+          expect({ status: byAdmin.status, order: byAdmin.data.return?.order_id }).toEqual({ status: 200, order: order.id });
+          expect(await returnCount(order.id)).toBe(1);
+          const byBystander = await api.post('/store/returns', returnBody, { ...bystander.headers, validateStatus: () => true });
+          expect({ status: byBystander.status, body: byBystander.data }).toEqual({ status: 404, body: ORDER_NOT_FOUND });
+          expect(await returnCount(order.id)).toBe(1);
+          const byOwner = await api.post('/store/returns', returnBody, { ...colleague.headers, validateStatus: () => true });
+          expect(byOwner.status).toBe(200);
+          expect(await returnCount(order.id)).toBe(2);
+        });
       });
     });
 

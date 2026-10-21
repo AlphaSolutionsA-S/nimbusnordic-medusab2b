@@ -37,3 +37,13 @@
 - `AuthenticatedMedusaRequest<unknown, Q>` types `req.validatedQuery` (second generic); the first is the body.
 - Query filters on an enum column (`approval_status.status`) reject a plain `string`; the step narrows once in `approvalStatusFilter`.
 - Security spec `describe('approval list and decisions')` (inside `cart access guard`) seeds a verified, a former-owner and a mismatched cart; `seedCart` takes an optional email. Full security spec: 66 tests, about 75 s.
+
+## 06 Order access guard
+- `workflows/order/utils/order-access.ts`: `canAccessOrder(facts)`, types `OrderOperation`, `OrderAccessFacts`; `utils/order-transfer.ts`: `canRequestOrderTransfer(owner | null)`. Both have registry rows.
+- `workflows/order/workflows/authorize-order-access.ts`: `authorizeOrderAccessWorkflow`, input `OrderAccessInput` (`steps/validate-order-access.ts`); refusal and absence throw NOT_FOUND `Order not found`. `api/middlewares/ensure-order-access.ts`: `ensureOrderAccess(operation, "path" | "body")`, same shape as the cart guard.
+- Registered in new `api/store/orders/middlewares.ts` (GET `/store/orders/:id`) and `api/store/returns/middlewares.ts` (POST `/store/returns`), spread in `store/middlewares.ts`. Project route files `api/store/orders/[id]/transfer/{request,cancel}/route.ts` replace core's handlers and answer `{ success: true }`; core's authentication and validators still run (verified by the 401 and 200 cases).
+- Query paths verified at runtime: `order_cart` by `order_id` → `cart_id`; `customer.has_account`; `return` by `order_id` (the order module's `listReturns` filter type has no `order_id`, use Query).
+- Core's store order read does not return `customer_id` by default; request `?fields=+customer_id` to assert it.
+- Real checkout fixture (`seedCheckout` in `describe('order access guard')`): region ↔ `pp_system_default` link, stock location in the guard channel with `manual_manual` and a fulfillment set (service zone DK), default shipping profile, flat shipping option (dkk), published product via `createProductsWorkflow` in the channel; carts created with `region_id` and `sales_channel_id` (no publishable-key channel link needed). Returns need fulfilled items: `createOrderFulfillmentWorkflow` first, then `return_shipping.option_id` = the shipping option.
+- Storefront `lib/data/orders.ts` reads `/store/orders/:id`; it now needs the caller's token (401 signed out, 404 for others), for task 04.
+- Full security spec: 81 tests, about 90 s.

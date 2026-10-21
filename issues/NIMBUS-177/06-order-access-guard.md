@@ -53,3 +53,62 @@ as a foreign customer (404); approving admin reaches the confirmation page after
 approved cart; transfer request response body for a test order is `{ "success": true }`.
 **Also update:** `ai/architecture/decisions.md` (order access row; order transfer row); `docs/security-remediation.md`
 (task 05); none found among existing tests (no storefront caller of the transfer routes).
+
+## Deviations
+- `canAccessOrder(facts)` takes no operation: `read` and `return` share one rule, so the verdict
+  cannot differ; `authorizeOrderAccessWorkflow` still takes `operation` as the seam states.
+- The administrator path also requires the source cart's `customer_id` to equal the order's owner
+  (always true for a completed cart), and "owner still a member" is judged on the order owner's
+  current employee company through `hasVerifiedCartAssociation`; a mismatched source cart grants
+  nothing.
+- The guard reads the order with `is_draft_order: false`, like core's read, so a draft order gets
+  the guard's 404.
+- Transfer request on an unknown order answers 404 `Order not found` from the new check step
+  (core's own message named the ID); a test for it was added (it also passes on core).
+- The cancel route passes `actor_type: "customer"` instead of `req.auth_context.actor_type`: the
+  field is typed `string` but the workflow takes `"customer" | "user"`, and core's customer-only
+  authentication on that route makes the value always `"customer"`.
+- The new transfer workflow is `requestTransferableOrderTransferWorkflow`
+  (`workflows/order/workflows/request-order-transfer.ts`, step `validate-order-transferable`); the
+  seam named no workflow.
+- HTTP matrix orders are seeded through the order module with a core `order_cart` link to a seeded
+  cart; only the end-to-end test completes a real cart. Order reads that assert `customer_id` request
+  `?fields=+customer_id`, which is not among core's default store order fields.
+- Security spec helper `addColleague` gained an `isAdmin` argument (second administrator B).
+- `docs/security-remediation.md` not changed: the "Also update" line assigns it to task 05.
+- `pnpm ai:check --fix` regenerated the tier0 blocks in `AGENTS.md` and
+  `.github/copilot-instructions.md` after the registry edit (it still fails on the pre-existing
+  `AGENTS.md` size).
+
+## Done-when evidence
+- Unit tests (order decision, read and return): `src/workflows/order/__tests__/order-access.unit.spec.ts`
+  (owner, owner after leaving, admin approved, pending/rejected/none refused, sales-manager approval,
+  owner left or moved, no source cart, unlinked cart, cart of another owner, admin of another
+  company, colleague, foreign customer, order without customer); 18 tests pass.
+- Unit tests (transfer decision): `src/workflows/order/__tests__/order-transfer.unit.spec.ts`
+  (account-owned refused, guest and no customer allowed); 3 tests pass.
+- HTTP matrix: `security-boundaries.spec.ts` › `cart access guard` › `order access guard`:
+  "answers a signed-out caller with 401 on order read, returns and transfer routes"; "refuses %s on
+  order read and returns like a missing order" (colleague, admin of another company, customer of no
+  company, admin with no / pending / rejected approval, admin after the owner left; body equal to a
+  missing order's, `Cache-Control: private, no-store`, no return row); "lets the owner read the
+  order, privately".
+- Transfer: "refuses a transfer of another account's order and of the caller's own with one body"
+  (400, no order change); "lets a signed-in customer request and cancel a transfer of an order with
+  %s, returning no order" (no customer, guest; body exactly `{ success: true }`); "answers a transfer
+  request for an unknown order with 404".
+- Forged link: "grants nothing through an order–company link to the caller's company".
+- End-to-end administrator path and returns: "lets the company's administrators read, and return, a
+  colleague's order one of them paid" (real completion, admins A and B read with `id`, `customer_id`,
+  `items` types; non-admin 404; admin A's and the owner's returns succeed; non-admin return 404 with
+  no new return row). Pending, rejected, no-approval, owner-left, other-company and colleague return
+  refusals are in the matrix above.
+- Red run: with the guard and route files removed 14 of the 15 new HTTP tests fail (the unknown-order
+  404 passes on core). Full security spec with the change: 81 passed.
+- Lint: `pnpm --filter @b2b-starter/backend lint` 0 errors, no warnings in the new files.
+- Typecheck: 22 errors, baseline 22 (same files).
+- Also update `ai/architecture/decisions.md`: order access row and order transfer row added after
+  the cart access row.
+- Also update `docs/security-remediation.md`: left to task 05, as the line says.
+- Also update existing tests: none found (no test or storefront caller of the transfer routes or
+  `/store/returns`; `S/lib/data/orders.ts` reads `/store/orders/:id` with the caller's token, task 04).

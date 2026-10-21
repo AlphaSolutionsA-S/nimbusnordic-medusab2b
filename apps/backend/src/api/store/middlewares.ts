@@ -7,8 +7,10 @@ import { storeCartsMiddlewares } from "./carts/middlewares";
 import { storeCompaniesMiddlewares } from "./companies/middlewares";
 import { storeCustomersMiddlewares } from "./customers/middlewares";
 import { storeFreeShippingMiddlewares } from "./free-shipping/middlewares";
+import { storeOrdersMiddlewares } from "./orders/middlewares";
 import { storePaymentCollectionsMiddlewares } from "./payment-collections/middlewares";
 import { storeQuotesMiddlewares } from "./quotes/middlewares";
+import { storeReturnsMiddlewares } from "./returns/middlewares";
 import { storeShippingOptionsMiddlewares } from "./shipping-options/middlewares";
 
 export const storeMiddlewares: MiddlewareRoute[] = [
@@ -23,4 +25,6 @@ export const storeMiddlewares: MiddlewareRoute[] = [
   ...storeApprovalsMiddlewares,
   ...storePaymentCollectionsMiddlewares,
   ...storeShippingOptionsMiddlewares,
+  ...storeOrdersMiddlewares,
+  ...storeReturnsMiddlewares,
 ];
