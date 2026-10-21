@@ -9,6 +9,7 @@ import type {
 import { revalidateStorefrontTranslations } from "../../../utils/translations/revalidate-storefront";
 import { localeSchema } from "../../../utils/translations/validation";
 import { mutateTranslationWorkflow } from "../../../workflows/storefront-translation/workflows/mutate-translation";
+import { respondToConflict } from "../../utils/workflow-error-response";
 import { MissingIdSchema } from "./validators";
 
 export function translationService(req: MedusaRequest): StorefrontTranslationModuleService {
@@ -40,7 +41,22 @@ export async function respondWithMutation(
   input: MutationInput,
   status = 200
 ): Promise<void> {
-  const { result } = await mutateTranslationWorkflow(req.scope).run({ input });
+  const result = await mutateTranslationWorkflow(req.scope)
+    .run({ input })
+    .then(
+      (outcome) => outcome.result,
+      (error: unknown) => {
+        // Keep the domain's conflict message (for example which countries still use a language);
+        // the framework handler would replace it with a generic retry text.
+        if (respondToConflict(res, error)) {
+          return null;
+        }
+        throw error;
+      }
+    );
+  if (!result) {
+    return;
+  }
   // The mutation is committed at this point; a failed callback never rolls it back.
   const affectsStorefront = result.translation.is_active || input.operation === "activate";
   const refresh = affectsStorefront

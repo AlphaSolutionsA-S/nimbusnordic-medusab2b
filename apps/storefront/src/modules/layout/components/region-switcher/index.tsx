@@ -5,12 +5,13 @@ import { useParams } from "next/navigation"
 import { ChangeEvent } from "react"
 
 import { refreshUiTranslationsForCountry } from "@/lib/data/ui-translations-refresh"
-import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
 import NativeSelect from "@/modules/common/components/native-select"
 
 export type RegionSwitcherOption = {
   countryCode: string
   countryName: string
+  /** The country's published language, shown next to its name. */
+  locale: string
 }
 
 type RegionSwitcherProps = {
@@ -44,7 +45,7 @@ export function RegionSwitcher({ options }: RegionSwitcherProps) {
     >
       {options.map((option) => (
         <option key={option.countryCode} value={option.countryCode}>
-          {option.countryName} ({getLocaleForCountry(option.countryCode)})
+          {option.countryName} ({option.locale})
         </option>
       ))}
     </NativeSelect>

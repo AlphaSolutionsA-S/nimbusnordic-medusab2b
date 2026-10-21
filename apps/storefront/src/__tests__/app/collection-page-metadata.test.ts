@@ -20,6 +20,20 @@ jest.mock("@/lib/data/collections", () => ({
   listCollections: jest.fn(async () => ({ collections: [] })),
 }))
 
+// Generated metadata reads the request's country-language publication; the legacy snapshot
+// stands in for it here.
+jest.mock("@/lib/data/country-languages", () => {
+  const map = jest.requireActual("@/lib/i18n/country-language-map")
+  const snapshot = map.legacyCountryLanguageSnapshot()
+  return {
+    getCountryLanguageSnapshot: jest.fn(async () => snapshot),
+    getCountryLanguageForCountry: jest.fn(async (code: string) => ({
+      locale: map.localeForCountry(snapshot, code),
+      availability: snapshot.availability,
+    })),
+  }
+})
+
 jest.mock("@/lib/data/regions", () => ({
   listRegions: jest.fn(async () => []),
 }))
@@ -55,7 +69,7 @@ describe("Collection page generateMetadata", () => {
     expect(metadata.title).toBe("Test Collection | Nimbus Nordic")
   })
 
-  it("includes hreflang alternates for all 8 locales (TC-2, Task 01)", async () => {
+  it("includes an hreflang alternate for each of the 8 legacy countries", async () => {
     const metadata = await generateMetadata({
       params: Promise.resolve({ countryCode: "dk", handle: "test-collection" }),
       searchParams: Promise.resolve({}),
@@ -66,6 +80,6 @@ describe("Collection page generateMetadata", () => {
       string
     >
     expect(Object.keys(languages)).toHaveLength(8)
-    expect(languages.da).toContain("/dk/collections/test-collection")
+    expect(languages["da-DK"]).toContain("/dk/collections/test-collection")
   })
 })

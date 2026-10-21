@@ -35,3 +35,15 @@
 - **Next owner:** `scoper`, on the human's implementation go-ahead.
 - **Handover prompt:** Scope the existing NIMBUS-179 intake and resolve the remaining production
   hosting and scope-breadth decisions before planning implementation.
+
+## 2026-10-20 — Risk accepted; close without implementation
+
+- **Outcome:** The user accepted in-memory locking and no validation for local/Develop environments,
+  including the multi-instance production risk if production remains on Develop without shared
+  infrastructure. This supersedes the earlier PostgreSQL-provider decision. Recorded the accepted
+  risk and verification limits in `bug.md`; no application code, migration, test or deployment change
+  is part of this closure. Jira closure uses "Won't Do" to distinguish acceptance from a fix.
+- **Next owner:** human owner; no scoping or implementation handover remains for this case.
+- **Handover prompt:** Retain the accepted-risk record. Any future requirement to validate shared
+  processing or change infrastructure needs a fresh decision; do not treat this closure as proof
+  that Cloud Redis is active or that multi-instance processing is safe.

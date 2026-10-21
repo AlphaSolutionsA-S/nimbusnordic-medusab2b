@@ -30,7 +30,7 @@ L5 names a business rule, never a mocking seam.
 |---|---|---|---|
 | S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` because the Edge runtime cannot load the SDK | map, validate, decide |
 | S1 | Mapper | `lib/util/*.ts` (pure helpers; no dedicated mapper files yet, UNVERIFIED as a layer) | fetch |
-| S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions; `cms.ts` and `ui-translations.ts` are `server-only` loaders | hold a domain rule |
+| S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions; `cms.ts`, `ui-translations.ts` and `country-languages.ts` are `server-only` loaders | hold a domain rule |
 | S3 | Route / server component | `app/[countryCode]/**`, `app/api/**`, `i18n/request.ts` | fetch vendor APIs directly |
 | S4 | Feature component | `modules/<feature>/{components,templates}/**` | fetch, or import `lib/` beyond S1 helpers and S2 actions |
 

@@ -13,17 +13,17 @@ import { refreshUiTranslationsForCountry } from "@/lib/data/ui-translations-refr
 import CountrySelect from "@/modules/checkout/components/country-select"
 import { RegionSwitcher, RegionSwitcherOption } from "@/modules/layout/components/region-switcher"
 
-// The 8 regions targeted by NIMBUS-166/scope.md, with the languages
-// `getLocaleForCountry` (NIMBUS-164) resolves them to.
+// The 8 regions targeted by NIMBUS-166/scope.md, with the languages the country-language
+// publication supplies for them (NIMBUS-176).
 const options: RegionSwitcherOption[] = [
-  { countryCode: "dk", countryName: "Denmark" },
-  { countryCode: "gb", countryName: "United Kingdom" },
-  { countryCode: "se", countryName: "Sweden" },
-  { countryCode: "no", countryName: "Norway" },
-  { countryCode: "pl", countryName: "Poland" },
-  { countryCode: "it", countryName: "Italy" },
-  { countryCode: "fr", countryName: "France" },
-  { countryCode: "de", countryName: "Germany" },
+  { countryCode: "dk", countryName: "Denmark", locale: "da" },
+  { countryCode: "gb", countryName: "United Kingdom", locale: "en" },
+  { countryCode: "se", countryName: "Sweden", locale: "sv" },
+  { countryCode: "no", countryName: "Norway", locale: "no" },
+  { countryCode: "pl", countryName: "Poland", locale: "pl" },
+  { countryCode: "it", countryName: "Italy", locale: "it" },
+  { countryCode: "fr", countryName: "France", locale: "fr" },
+  { countryCode: "de", countryName: "Germany", locale: "de" },
 ]
 
 describe("RegionSwitcher", () => {
@@ -75,6 +75,33 @@ describe("RegionSwitcher", () => {
     expect(
       screen.getByRole("option", { name: "Germany (de)" })
     ).toBeInTheDocument()
+  })
+
+  it("shows the language supplied in its props, including a ninth language and a changed one", () => {
+    render(
+      <RegionSwitcher
+        options={[
+          ...options.filter((option) => option.countryCode !== "dk"),
+          { countryCode: "dk", countryName: "Denmark", locale: "en" },
+          { countryCode: "nl", countryName: "Netherlands", locale: "nl" },
+        ]}
+      />
+    )
+
+    expect(screen.getByRole("option", { name: "Netherlands (nl)" })).toBeInTheDocument()
+    expect(screen.getByRole("option", { name: "Denmark (en)" })).toBeInTheDocument()
+    expect(screen.queryByRole("option", { name: "Denmark (da)" })).toBeNull()
+  })
+
+  it("navigates to a ninth-language country by its code, refreshing that country's texts", async () => {
+    render(
+      <RegionSwitcher options={[...options, { countryCode: "nl", countryName: "Netherlands", locale: "nl" }]} />
+    )
+
+    fireEvent.change(screen.getByRole("combobox"), { target: { value: "nl" } })
+
+    expect(refreshUiTranslationsForCountry).toHaveBeenCalledWith("nl")
+    await waitFor(() => expect(window.location.href).toBe("/nl"))
   })
 
   it("TC-2: selecting a different region redirects to that region's homepage", async () => {

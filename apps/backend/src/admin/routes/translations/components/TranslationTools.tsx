@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button, Checkbox, FocusModal, Label, Select, Text, usePrompt } from "@medusajs/ui";
 import { useActivateTranslation, useTranslation } from "../../../hooks/api/ui-translations";
-import { REFERENCE_LOCALE, safeErrorMessage } from "../../../lib/translations";
+import { conflictAwareErrorMessage, REFERENCE_LOCALE } from "../../../lib/translations";
 import type { LocaleSummary, TranslationDocument } from "../../../../types/storefront-translation";
 import { CreateLanguageModal } from "./CreateLanguageModal";
 import { LanguageComparison } from "./LanguageComparison";
@@ -83,7 +83,7 @@ export function TranslationTools({
       title: activating ? `Activate ${document.locale}?` : `Deactivate ${document.locale}?`,
       description: activating
         ? "The storefront will serve these texts to customers whose country is mapped to this language."
-        : "Customers whose country is mapped to this language will see raw text keys until it is activated again.",
+        : "The storefront stops serving this language. A language still assigned to a country cannot be deactivated; reassign those countries first.",
       confirmText: activating ? "Activate" : "Deactivate",
       cancelText: "Cancel",
     });
@@ -95,7 +95,7 @@ export function TranslationTools({
       { expected_version: document.version, is_active: activating },
       {
         onSuccess: (result) => void adoptSafely(result.translation),
-        onError: (activationError) => setError(safeErrorMessage(activationError)),
+        onError: (activationError) => setError(conflictAwareErrorMessage(activationError)),
       }
     );
   };

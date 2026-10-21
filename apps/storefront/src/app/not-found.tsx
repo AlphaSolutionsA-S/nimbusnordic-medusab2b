@@ -5,8 +5,8 @@ import { getTranslations } from "next-intl/server"
 import Link from "next/link"
 
 // Outside the [countryCode] segment there is no NextIntlClientProvider, so
-// only server-side getTranslations is used here. Without a locale header
-// src/i18n/request.ts resolves DEFAULT_LOCALE ("en").
+// only server-side getTranslations is used here. Without a URL country
+// src/i18n/request.ts resolves the published default language ("en").
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("Common.notFound")
 

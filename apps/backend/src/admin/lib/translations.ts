@@ -26,3 +26,14 @@ export function safeErrorMessage(error: unknown): string {
   }
   return "Something went wrong. Your input is still here; please try again.";
 }
+
+/**
+ * Country-language saves and language activation return a 409 whose message names the domain reason
+ * (stale version, inactive language, countries still assigned), so it is shown as sent.
+ */
+export function conflictAwareErrorMessage(error: unknown): string {
+  if (errorStatus(error) === 409 && error instanceof Error && error.message) {
+    return error.message;
+  }
+  return safeErrorMessage(error);
+}

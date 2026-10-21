@@ -6,6 +6,11 @@ jest.mock("@/lib/data/cart", () => ({
 jest.mock("@/lib/data/customer", () => ({
   retrieveCustomer: jest.fn(() => Promise.resolve(null)),
 }))
+jest.mock("@/lib/data/country-languages", () => ({
+  getCountryLanguageSnapshot: jest.fn(() =>
+    Promise.resolve({ default_locale: "en", countries: [], availability: "available" })
+  ),
+}))
 jest.mock("@/lib/data/fulfillment", () => ({
   listCartFreeShippingPrices: jest.fn(() => Promise.resolve([])),
 }))

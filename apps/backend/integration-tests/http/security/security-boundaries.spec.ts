@@ -1,3 +1,5 @@
+import { inspect } from 'node:util';
+import jwt from 'jsonwebtoken';
 import { medusaIntegrationTestRunner } from '@medusajs/test-utils';
 import { ApiKeyType, ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils';
 import type {
@@ -13,7 +15,9 @@ import ApprovalModuleService from '../../../src/modules/approval/service';
 import { singleLineCanonicalOrder } from
   '../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures';
 import { ApprovalStatusType, ApprovalType, type IApprovalModuleService } from '../../../src/types';
-import { createStoreUser } from '../../utils/admin';
+import { STOREFRONT_TRANSLATION_MODULE } from '../../../src/modules/storefront-translation';
+import type StorefrontTranslationModuleService from '../../../src/modules/storefront-translation/service';
+import { createAdminSession, createAdminUser, createStoreUser } from '../../utils/admin';
 import { generatePublishableKey, generateStoreHeaders } from '../../utils/store';
 import {
   createApiCustomerCompany,
@@ -332,6 +336,145 @@ medusaIntegrationTestRunner({
       expect(approvals).toHaveLength(1);
       expect(approvals[0]).toMatchObject({ status: 'pending', type: 'admin' });
       expect(approvals[0].id).not.toBe(approval.id);
+    });
+
+    // NIMBUS-176: country-language management and language activation accept only the Admin
+    // dashboard's session cookie. Bearer tokens and API keys are refused even for an admin user,
+    // so logging out of the dashboard ends write access.
+    describe('country-language Admin routes', () => {
+      type RequestHeaders = Record<string, string>;
+      let adminBearer: { headers: RequestHeaders };
+      let adminSession: { headers: RequestHeaders };
+      let adminUserId: string;
+      const translations = () =>
+        container.resolve<StorefrontTranslationModuleService>(STOREFRONT_TRANSLATION_MODULE);
+      const routes = [
+        ['GET', '/admin/country-languages', undefined, 200],
+        ['POST', '/admin/country-languages/dk', { locale: 'en', expected_version: 1 }, 200],
+        // English can never be deactivated: reaching that rule proves authentication passed.
+        ['POST', '/admin/ui-translations/en/activation', { expected_version: 2, is_active: false }, 409],
+      ] as const;
+
+      async function state() {
+        const [english] = await translations().listStorefrontTranslations({ locale: 'en' });
+        return {
+          configuration: await translations().getCountryLanguageConfiguration(),
+          english: { is_active: english.is_active, version: english.version },
+        };
+      }
+
+      beforeEach(async () => {
+        adminBearer = { headers: {} };
+        adminUserId = (await createAdminUser(adminBearer, container)).user.id;
+        adminSession = await createAdminSession(api);
+        await translations().mutateDocument({
+          operation: 'import',
+          input: { locale: 'en', expected_version: null, mode: 'replace', messages: { A: { b: 'B' } }, confirm_removed: false },
+        });
+        await translations().mutateDocument({ operation: 'activate', locale: 'en', expected_version: 1, is_active: true });
+        await translations().bootstrapCountryLanguages({});
+        await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+          name: 'Nordics', currency_code: 'dkk', countries: ['dk'],
+        });
+      });
+
+      const credentials: Array<[string, () => Promise<RequestHeaders>]> = [
+        ['no credentials', async () => ({})],
+        ['a publishable key', async () => publicHeaders.headers],
+        ['a customer token', async () => headers.headers],
+        ['a customer session', async () => {
+          const response = await api.post('/auth/session', {}, { headers: { authorization: headers.headers.authorization } });
+          return { cookie: response.headers['set-cookie'][0].split(';')[0] };
+        }],
+        ['a secret API key', async () => {
+          const key = await container.resolve<IApiKeyModuleService>(Modules.API_KEY)
+            .createApiKeys({ title: 'admin key', type: ApiKeyType.SECRET, created_by: 'test' });
+          return { authorization: `Basic ${key.token}` };
+        }],
+        ['a valid admin bearer token without a session', async () => adminBearer.headers],
+        ['a bearer token spoofing the admin actor', async () => ({
+          authorization: `Bearer ${jwt.sign({ actor_id: adminUserId, actor_type: 'user', auth_identity_id: 'x' }, 'not-the-secret')}`,
+        })],
+        ['a forged session cookie', async () => ({ cookie: 'connect.sid=s%3Aforged-session.c2lnbmF0dXJl' })],
+        ['a logged-out session cookie', async () => {
+          const ended = await createAdminSession(api);
+          expect((await api.delete('/auth/session', ended)).status).toBe(200);
+          return ended.headers;
+        }],
+      ];
+
+      it.each(credentials)('rejects %s without a write or leaked session data', async (_label, credential) => {
+        const requestHeaders = await credential();
+        const before = await state();
+        for (const [method, url, data] of routes) {
+          const response = await api.request({ method, url, data, headers: requestHeaders, validateStatus: () => true });
+          expect({ url, status: response.status, body: response.data }).toEqual({
+            url, status: 401, body: { message: 'Unauthorized' },
+          });
+          expect(response.headers['set-cookie']).toBeUndefined();
+        }
+        expect(await state()).toEqual(before);
+      });
+
+      it('accepts a current Admin dashboard session', async () => {
+        for (const [method, url, data, status] of routes) {
+          const response = await api.request({ method, url, data, ...adminSession, validateStatus: () => true });
+          expect({ url, status: response.status }).toEqual({ url, status });
+        }
+        expect((await state()).configuration).toEqual({ assignments: { dk: 'en' }, version: 2 });
+      });
+
+      it.each([
+        ['text/plain', JSON.stringify({ locale: 'en', expected_version: 1 })],
+        ['application/x-www-form-urlencoded', 'locale=en&expected_version=1'],
+        ['multipart/form-data; boundary=x', '--x\r\nContent-Disposition: form-data; name="locale"\r\n\r\nen\r\n--x--'],
+      ])('refuses a %s body that a foreign page could submit, even with a session', async (contentType, body) => {
+        const before = await state();
+        for (const url of ['/admin/country-languages/dk', '/admin/ui-translations/en/activation']) {
+          const response = await api.post(url, body, {
+            headers: { ...adminSession.headers, 'content-type': contentType }, validateStatus: () => true,
+          });
+          expect({ url, status: response.status }).toEqual({ url, status: 415 });
+        }
+        expect(await state()).toEqual(before);
+      });
+
+      it('grants no foreign origin a credentialed preflight', async () => {
+        const preflight = (origin: string) => api.request({
+          method: 'OPTIONS', url: '/admin/country-languages/dk', validateStatus: () => true,
+          headers: { origin, 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' },
+        });
+        expect((await preflight('https://attacker.example')).headers['access-control-allow-origin']).toBeUndefined();
+        const dashboard = (process.env.ADMIN_CORS ?? '').split(',')[0];
+        expect(dashboard).not.toBe('');
+        expect((await preflight(dashboard)).headers['access-control-allow-origin']).toBe(dashboard);
+      });
+
+      it('keeps payload and session content out of error responses and logs', async () => {
+        const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
+        const spies = (['info', 'warn', 'error', 'debug', 'log'] as const)
+          .filter((method) => typeof logger[method] === 'function')
+          .map((method) => jest.spyOn(logger, method));
+        const marker = 'x_leak_marker_7f3a';
+        const sessionValue = adminSession.headers.cookie.split('=')[1];
+        try {
+          const responses = [
+            await api.post('/admin/country-languages/dk', { locale: marker, expected_version: 1 },
+              { ...adminSession, validateStatus: () => true }),
+            await api.post('/admin/country-languages/dk', { locale: 'en', expected_version: 1 },
+              { headers: { cookie: `connect.sid=${marker}` }, validateStatus: () => true }),
+          ];
+          expect(responses.map((response) => response.status)).toEqual([400, 401]);
+          const output = [
+            ...responses.map((response) => JSON.stringify(response.data)),
+            ...spies.flatMap((spy) => spy.mock.calls.map((call) => inspect(call, { depth: 5 }))),
+          ].join('\n');
+          expect(output).not.toContain(marker);
+          expect(output).not.toContain(sessionValue);
+        } finally {
+          spies.forEach((spy) => spy.mockRestore());
+        }
+      });
     });
   },
 });

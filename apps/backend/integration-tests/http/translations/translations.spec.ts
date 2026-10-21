@@ -1,11 +1,15 @@
 import { createServer, type Server } from "node:http";
 import type { AddressInfo } from "node:net";
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
-import type { MedusaContainer } from "@medusajs/framework/types";
-import { createAdminUser, createStoreUser } from "../../utils/admin";
+import type { IRegionModuleService, MedusaContainer } from "@medusajs/framework/types";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
+import { createRegionsWorkflow, updateRegionsWorkflow } from "@medusajs/medusa/core-flows";
+import { createAdminSession, createAdminUser, createStoreUser } from "../../utils/admin";
 import { generatePublishableKey, generateStoreHeaders } from "../../utils/store";
 import { STOREFRONT_TRANSLATION_MODULE } from "../../../src/modules/storefront-translation";
 import type StorefrontTranslationModuleService from "../../../src/modules/storefront-translation/service";
+import bootstrapCountryLanguages from "../../../src/scripts/bootstrap-country-languages";
+import seedCountryLanguages from "../../../src/migration-scripts/seed-country-languages";
 
 jest.setTimeout(120_000);
 
@@ -26,6 +30,7 @@ medusaIntegrationTestRunner({
   testSuite: ({ api, getContainer }) => {
     let container: MedusaContainer;
     let admin: Headers;
+    let adminSession: Headers;
     let store: Headers;
     let customer: Headers;
     const reporter = { headers: { authorization: `Bearer ${REPORT_SECRET}` } };
@@ -34,7 +39,8 @@ medusaIntegrationTestRunner({
       container = getContainer();
       admin = { headers: {} };
       await createAdminUser(admin, container);
-      store = generateStoreHeaders({ publishableKey: await generatePublishableKey(container) });
+      adminSession = await createAdminSession(api);
+      store =  generateStoreHeaders({ publishableKey: await generatePublishableKey(container) });
       const user = await createStoreUser({ api, storeHeaders: store });
       customer = { headers: { ...store.headers, authorization: `Bearer ${user.token}` } };
     });
@@ -50,7 +56,7 @@ medusaIntegrationTestRunner({
       api.post(
         `/admin/ui-translations/${locale}/activation`,
         { expected_version: version, is_active },
-        { ...admin, ...noThrow }
+        { ...adminSession, ...noThrow }
       );
 
     const service = () =>
@@ -73,7 +79,15 @@ medusaIntegrationTestRunner({
             const response = await api.request({ method, url, data, ...headers, ...noThrow });
             expect({ url, status: response.status }).toEqual({ url, status: 401 });
           }
-          const allowed = await api.request({ method, url, data, ...admin, ...noThrow });
+          // Language activation guards country assignments, so it accepts the dashboard session only.
+          const sessionOnly = url.endsWith("/activation");
+          if (sessionOnly) {
+            const bearer = await api.request({ method, url, data, ...admin, ...noThrow });
+            expect({ url, status: bearer.status }).toEqual({ url, status: 401 });
+          }
+          const allowed = await api.request({
+            method, url, data, ...(sessionOnly ? adminSession : admin), ...noThrow,
+          });
           expect({ url, ok: allowed.status < 300 }).toEqual({ url, ok: true });
         }
       });
@@ -457,6 +471,272 @@ medusaIntegrationTestRunner({
         await importLocale("de", exported.data);
         const reloaded = await api.get("/admin/ui-translations/de", admin);
         expect(reloaded.data.translation.messages).toEqual(english);
+      });
+    });
+
+    describe("country languages", () => {
+      const assignBody = (locale: string, expected_version = 1) => ({ locale, expected_version });
+      const save = (country: string, body: unknown, extraHeaders: Record<string, string> = {}) =>
+        api.post(`/admin/country-languages/${country}`, body, {
+          headers: { ...adminSession.headers, ...extraHeaders },
+          ...noThrow,
+        });
+      const managementRead = () => api.get("/admin/country-languages", { ...adminSession, ...noThrow });
+      const publicRead = () => api.get("/store/country-languages", { ...store, ...noThrow });
+      const runBootstrap = (...args: string[]) => bootstrapCountryLanguages({ container, args });
+      const configuration = () => service().getCountryLanguageConfiguration();
+
+      async function createRegion(countries: string[]) {
+        const { result } = await createRegionsWorkflow(container).run({
+          input: { regions: [{ name: "Nordics", currency_code: "dkk", countries }] },
+        });
+        return result[0];
+      }
+
+      async function setRegionCountries(id: string, countries: string[]) {
+        await updateRegionsWorkflow(container).run({ input: { selector: { id }, update: { countries } } });
+      }
+
+      async function activeLanguages(...locales: string[]) {
+        for (const locale of locales) {
+          expect((await importLocale(locale)).status).toBe(201);
+          expect((await activate(locale, 1)).status).toBe(200);
+        }
+      }
+
+      it("fails closed before bootstrap, and a dry run reports prerequisites without writing", async () => {
+        await createRegion(["dk", "se", "gb", "nl"]);
+        await activeLanguages("en", "da");
+
+        const unavailable = await publicRead();
+        expect(unavailable.status).toBe(503);
+        expect(unavailable.headers["cache-control"]).toBe("no-store");
+        expect(unavailable.data).toEqual({ type: "unavailable", message: "Country languages are not available" });
+        expect((await managementRead()).status).toBe(503);
+        const early = await save("dk", assignBody("da"));
+        expect(early.status).toBe(409);
+        expect(early.data.message).toContain("not initialized");
+
+        expect(await runBootstrap()).toEqual({
+          mode: "dry-run",
+          configured_country_codes: ["dk", "gb", "nl", "se"],
+          assignments: { dk: "da", gb: "en", se: "sv" },
+          report: { initialized: false, unavailable_locales: ["sv"] },
+          skipped: {},
+        });
+        expect(await configuration()).toBeNull();
+        await expect(runBootstrap("apply")).rejects.toMatchObject({
+          message: expect.stringContaining("before initializing country languages: sv."),
+        });
+        expect(await configuration()).toBeNull();
+        expect((await publicRead()).status).toBe(503);
+      });
+
+      it("bootstraps legacy languages with English defaults and keeps Admin edits on a repeat", async () => {
+        const nordics = await createRegion(["dk", "se", "gb", "nl"]);
+        await activeLanguages("en", "da", "sv", "nl");
+
+        expect(await runBootstrap("apply")).toEqual({
+          mode: "apply",
+          configured_country_codes: ["dk", "gb", "nl", "se"],
+          assignments: { dk: "da", gb: "en", se: "sv" },
+          report: { initialized: false, unavailable_locales: [] },
+          skipped: {},
+          applied: {
+            bootstrap: {
+              created: true,
+              configuration: { assignments: { dk: "da", gb: "en", se: "sv" }, version: 1 },
+            },
+            publication: expect.objectContaining({ default_locale: "en" }),
+          },
+        });
+
+        // Exact equality: nothing beyond country, locale and source is public, and no version.
+        const published = await publicRead();
+        expect(published.status).toBe(200);
+        expect(published.headers["cache-control"]).toBe("no-store");
+        expect(published.data).toEqual({
+          default_locale: "en",
+          countries: [
+            { country_code: "dk", locale: "da", source: "explicit" },
+            { country_code: "gb", locale: "en", source: "explicit" },
+            { country_code: "nl", locale: "en", source: "default" },
+            { country_code: "se", locale: "sv", source: "explicit" },
+          ],
+        });
+        expect((await api.get("/store/country-languages", noThrow)).status).toBeGreaterThanOrEqual(400);
+
+        const management = await managementRead();
+        expect(management.status).toBe(200);
+        expect(management.data).toEqual({
+          version: 1,
+          default_locale: "en",
+          countries: [
+            { country_code: "dk", locale: "da", source: "explicit", configured: true },
+            { country_code: "gb", locale: "en", source: "explicit", configured: true },
+            { country_code: "nl", locale: "en", source: "default", configured: true },
+            { country_code: "se", locale: "sv", source: "explicit", configured: true },
+          ],
+          active_locales: ["da", "en", "nl", "sv"],
+        });
+
+        // nl is a language beyond the original eight.
+        const saved = await save("nl", assignBody("nl"));
+        expect(saved.status).toBe(200);
+        expect(saved.data.version).toBe(2);
+        expect(saved.data.countries).toContainEqual({
+          country_code: "nl", locale: "nl", source: "explicit", configured: true,
+        });
+        expect((await publicRead()).data.countries).toContainEqual({
+          country_code: "nl", locale: "nl", source: "explicit",
+        });
+
+        const repeated = await runBootstrap("apply");
+        const edited = { assignments: { dk: "da", gb: "en", nl: "nl", se: "sv" }, version: 2 };
+        expect(repeated.applied?.bootstrap).toEqual({ created: false, configuration: edited });
+        expect(await configuration()).toEqual(edited);
+
+        const [region] = await container
+          .resolve<IRegionModuleService>(Modules.REGION)
+          .listRegions({ id: nordics.id }, { relations: ["countries"] });
+        expect(region.currency_code).toBe("dkk");
+        expect(region.countries.map((country) => country.iso_2).sort()).toEqual(["dk", "gb", "nl", "se"]);
+      });
+
+      describe("deploy migration script", () => {
+        const runSeed = () => seedCountryLanguages({ container });
+
+        it("skips a country whose legacy language is inactive, logs it and never overwrites on a rerun", async () => {
+          await createRegion(["dk", "se", "gb", "nl"]);
+          await activeLanguages("en", "da");
+          expect((await importLocale("sv")).status).toBe(201);
+          const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
+          const warn = jest.spyOn(logger, "warn");
+
+          try {
+            const result = await runSeed();
+            expect(result.skipped).toEqual({ se: "sv" });
+            expect(result.applied?.bootstrap).toEqual({
+              created: true,
+              configuration: { assignments: { dk: "da", gb: "en" }, version: 1 },
+            });
+            expect(warn).toHaveBeenCalledWith(expect.stringContaining("se→sv"));
+          } finally {
+            warn.mockRestore();
+          }
+
+          expect((await publicRead()).data).toEqual({
+            default_locale: "en",
+            countries: [
+              { country_code: "dk", locale: "da", source: "explicit" },
+              { country_code: "gb", locale: "en", source: "explicit" },
+              { country_code: "nl", locale: "en", source: "default" },
+              { country_code: "se", locale: "en", source: "default" },
+            ],
+          });
+
+          expect((await save("dk", assignBody("en"))).status).toBe(200);
+          const edited = { assignments: { dk: "en", gb: "en" }, version: 2 };
+          const repeated = await runSeed();
+          expect(repeated.applied?.bootstrap).toEqual({ created: false, configuration: edited });
+          expect(await configuration()).toEqual(edited);
+        });
+
+        it("rejects and writes nothing when English is unavailable", async () => {
+          await createRegion(["dk", "gb"]);
+          expect((await importLocale("en")).status).toBe(201);
+
+          await expect(runSeed()).rejects.toMatchObject({
+            message: expect.stringContaining("before initializing country languages: en."),
+          });
+          expect(await configuration()).toBeNull();
+          expect((await publicRead()).status).toBe(503);
+        });
+      });
+
+      const json = (value: unknown) => JSON.stringify(value);
+      it.each([
+        ["malformed JSON", "dk", '{"locale":', "application/json", 400],
+        ["an extra field", "dk", json({ ...assignBody("da"), actor_id: "user_spoofed" }), "application/json", 400],
+        ["an invalid locale", "dk", json(assignBody("da_DK!")), "application/json", 400],
+        ["a non-integer version", "dk", json({ locale: "da", expected_version: "1" }), "application/json", 400],
+        ["a malformed country", "DNK", json(assignBody("da")), "application/json", 400],
+        ["an unconfigured country", "us", json(assignBody("da")), "application/json", 400],
+        ["a missing language", "dk", json(assignBody("fi")), "application/json", 409],
+        ["an inactive language", "dk", json(assignBody("fr")), "application/json", 409],
+        ["a stale version", "dk", json(assignBody("en", 7)), "application/json", 409],
+        ["an oversized body", "dk", json({ ...assignBody("da"), pad: "x".repeat(1100) }), "application/json", 413],
+        ["a text/plain body", "dk", json(assignBody("en")), "text/plain", 415],
+        ["a form body", "dk", "locale=en&expected_version=1", "application/x-www-form-urlencoded", 415],
+      ])("rejects %s without writing", async (_name, country, body, contentType, status) => {
+        await createRegion(["dk", "gb"]);
+        await activeLanguages("en", "da");
+        expect((await importLocale("fr")).status).toBe(201);
+        await runBootstrap("apply");
+        const before = await configuration();
+        expect(before).toEqual({ assignments: { dk: "da", gb: "en" }, version: 1 });
+
+        const response = await save(country, body, { "content-type": contentType });
+        expect(response.status).toBe(status);
+        expect(await configuration()).toEqual(before);
+      });
+
+      it("explains stale and inactive-language conflicts instead of a generic retry message", async () => {
+        await createRegion(["dk"]);
+        await activeLanguages("en", "da");
+        expect((await importLocale("fr")).status).toBe(201);
+        await runBootstrap("apply");
+        expect((await save("dk", assignBody("en", 7))).data.message).toContain("changed by someone else");
+        expect((await save("dk", assignBody("fr"))).data.message).toContain('"fr" is not an active language');
+      });
+
+      it("keeps a removed country's entry for reassignment and blocks deactivating its language until then", async () => {
+        const nordics = await createRegion(["dk", "se"]);
+        await activeLanguages("en", "da", "sv");
+        await runBootstrap("apply");
+        await setRegionCountries(nordics.id, ["dk"]);
+
+        expect((await publicRead()).data.countries).toEqual([
+          { country_code: "dk", locale: "da", source: "explicit" },
+        ]);
+        expect((await managementRead()).data.countries).toEqual([
+          { country_code: "dk", locale: "da", source: "explicit", configured: true },
+          { country_code: "se", locale: "sv", source: "explicit", configured: false },
+        ]);
+
+        const blocked = await activate("sv", 2, false);
+        expect(blocked.status).toBe(409);
+        expect(blocked.data.message).toContain("assigned to countries: se.");
+
+        expect((await save("no", assignBody("da"))).status).toBe(400);
+        const reassigned = await save("se", assignBody("en"));
+        expect(reassigned.status).toBe(200);
+        expect(reassigned.data.countries).toContainEqual({
+          country_code: "se", locale: "en", source: "explicit", configured: false,
+        });
+
+        const deactivated = await activate("sv", 2, false);
+        expect(deactivated.status).toBe(200);
+        expect(Object.keys(deactivated.data).sort()).toEqual(["refresh", "translation", "warnings"]);
+        expect(deactivated.data.translation).toMatchObject({ locale: "sv", is_active: false, version: 3 });
+
+        await setRegionCountries(nordics.id, ["dk", "se"]);
+        expect((await publicRead()).data.countries).toEqual([
+          { country_code: "dk", locale: "da", source: "explicit" },
+          { country_code: "se", locale: "en", source: "explicit" },
+        ]);
+      });
+
+      it("stops publishing when a published language is no longer active", async () => {
+        await createRegion(["dk"]);
+        await activeLanguages("en", "da");
+        await runBootstrap("apply");
+        const [da] = await service().listStorefrontTranslations({ locale: "da" });
+        await service().updateStorefrontTranslations({ id: da.id, is_active: false });
+
+        const response = await publicRead();
+        expect(response.status).toBe(503);
+        expect(response.data).toEqual({ type: "unavailable", message: "Country languages are not available" });
       });
     });
   },

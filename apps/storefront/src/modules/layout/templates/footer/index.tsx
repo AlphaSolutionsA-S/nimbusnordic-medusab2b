@@ -1,16 +1,25 @@
 import { listRegions } from "@/lib/data/regions"
+import {
+  type CountryLanguagePublication,
+  localeForCountry,
+} from "@/lib/i18n/country-language-map"
 import { Text } from "@medusajs/ui"
 import { getTranslations } from "next-intl/server"
 
 import { RegionSwitcher } from "@/modules/layout/components/region-switcher"
 
-export default async function Footer() {
+export default async function Footer({
+  countryLanguages,
+}: {
+  countryLanguages: CountryLanguagePublication
+}) {
   const t = await getTranslations("Layout.footer")
   const regions = await listRegions()
   const regionOptions = regions.flatMap((region) =>
     (region.countries ?? []).map((country) => ({
       countryCode: country.iso_2 ?? "",
       countryName: country.display_name ?? country.iso_2 ?? "",
+      locale: localeForCountry(countryLanguages, country.iso_2),
     }))
   )
 

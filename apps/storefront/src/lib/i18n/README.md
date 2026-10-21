@@ -1,7 +1,11 @@
 # Translation Consumption Pattern
 
-Locale is resolved from the URL's country segment (`/{countryCode}/...`) via
-`getLocaleForCountry`, not from a separate locale URL segment. Components consume translations via:
+Locale is resolved from the URL's country segment (`/{countryCode}/...`), not from a separate
+locale URL segment: the backend publishes which language each country uses
+(`GET /store/country-languages`, set on the Admin **Translations** page) and
+`src/lib/data/country-languages.ts` loads that publication once per request
+(`getCountryLanguageForCountry`, `getCountryLanguageSnapshot`). Design, cache and outage behaviour:
+`docs/architecture/country-languages.md`. Components consume translations via:
 
 - **Server Components:** `getTranslations('Namespace')` from `next-intl/server`.
 - **Client Components:** `useTranslations('Namespace')` from `next-intl`.
@@ -62,12 +66,17 @@ through it, memoized per request.
 
 ## Adding a language
 
+No code change or deployment is needed (NIMBUS-176):
+
 1. Admin: **Translations → Add language**, as a copy of an existing language or from a file. It
    starts inactive. Translate it, then activate it — in every environment.
-2. Developer: add the locale to `SUPPORTED_LOCALES` and map its countries in
-   `country-language-map.ts`, add a formatting locale in `formatting-locale.ts` if needed, add a
-   `messages/<locale>.json` developer file, and deploy. Mapping a country to a language that is
-   missing or inactive in an environment makes customers there see raw keys.
+2. Admin: in **Country languages** on the same page, set the language for each country that should
+   use it. Only active languages and countries in a region can be chosen; countries without a choice
+   use English. Storefront workers pick the change up within five minutes.
+3. Developer (optional): add a `messages/<locale>.json` file as developer and import material.
+
+A language stays active while any country uses it: reassign those countries before deactivating it.
+English cannot be deactivated.
 
 ## Example (Server Component)
 
@@ -97,5 +106,17 @@ export function ExampleClientComponent() {
 Never hardcode a formatting locale. Get the active next-intl locale (`useLocale()` in
 non-async components, `await getLocale()` in async Server Components) and pass it to
 `convertToLocale({ ..., locale })`, or to `Intl.*` / `toLocale*String` via
-`getFormattingLocale(locale)` from `src/lib/i18n/formatting-locale.ts` (e.g. `da` → `da-DK`,
-`en` → `en-GB`).
+`getFormattingLocale(locale)` from `src/lib/i18n/formatting-locale.ts`:
+
+- The original eight languages keep their tags: `da` → `da-DK`, `en` → `en-GB`, `sv` → `sv-SE`,
+  `no` → `nb-NO`, `pl` → `pl-PL`, `it` → `it-IT`, `fr` → `fr-FR`, `de` → `de-DE`.
+- Any other valid tag is used as is (`nl`, `pt-BR`, `zh-Hant`); a host without that locale's data
+  uses Intl's own fallback. A malformed tag gets `en-GB`.
+- The currency always comes from the region, never from the language.
+
+## Alternate links (hreflang)
+
+`buildLocaleAlternates(snapshot, path)` from `src/lib/seo/locale-alternates.ts` gives one alternate
+per published country, keyed by its language plus the URL country (`da-DK`, `en-GB`, `en-IE`,
+`nl-NL`), so countries sharing a language keep their own links. Pass it the request snapshot from
+`getCountryLanguageSnapshot()` in `generateMetadata`.

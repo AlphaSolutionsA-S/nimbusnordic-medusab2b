@@ -75,6 +75,45 @@ export interface MissingKeyRecord {
   last_page_path: string;
   dismissed: boolean;
 }
+/** Lowercase ISO 3166-1 alpha-2 country code → canonical locale; absent keys mean the default. */
+export type CountryLanguageAssignments = Record<string, string>;
+export interface CountryLanguageConfiguration {
+  assignments: CountryLanguageAssignments;
+  version: number;
+}
+export interface CountryLanguageAssignmentInput {
+  country_code: string;
+  locale: string;
+  expected_version: number;
+  /** Current Region country codes; a new key is only created for one of these. */
+  configured_country_codes: string[];
+}
+export interface CountryLanguageBootstrapResult {
+  created: boolean;
+  configuration: CountryLanguageConfiguration;
+}
+export interface CountryLanguageBootstrapReport {
+  initialized: boolean;
+  unavailable_locales: string[];
+}
+export interface CountryLanguageEntry {
+  country_code: string;
+  locale: string;
+  source: "explicit" | "default";
+}
+export interface CountryLanguageManagementEntry extends CountryLanguageEntry {
+  configured: boolean;
+}
+export interface CountryLanguageManagement {
+  version: number;
+  default_locale: string;
+  countries: CountryLanguageManagementEntry[];
+  active_locales: string[];
+}
+export interface CountryLanguagePublication {
+  default_locale: string;
+  countries: CountryLanguageEntry[];
+}
 export interface RefreshInput {
   locale: string;
   version: number;
