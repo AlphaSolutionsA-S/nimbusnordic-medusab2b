@@ -1,5 +1,7 @@
 # Manage country-to-language mapping from Medusa Admin
 
+> Record of NIMBUS-176, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-20
 **Status:** Implemented — scope approved by Klaus Petersen on 2026-10-20; branch feature/NIMBUS-176 ready for review 2026-10-21
 **Type:** Story

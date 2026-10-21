@@ -1,5 +1,7 @@
 # Deviation report: NIMBUS-176 Manage country languages from Admin
 
+> Record of NIMBUS-176, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-176`, merge-base `9f4a0cf`, commits c006f03 (NIMBUS-194), 71b8e50 (NIMBUS-195),
 eef094e (NIMBUS-196), 57adbf2 (NIMBUS-197), 0079b98 (NIMBUS-198), 6bc31f9 (consolidation).
 Reviewed against PLAN.md, SCOPE.md, branch-notes.md and task files 01–05 on 2026-10-21.

@@ -1,5 +1,7 @@
 # NIMBUS-176: Manage country languages from Admin
 
+> Record of NIMBUS-176, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Status:** Approved by Klaus Petersen on 2026-10-20; Region Query evidence verified; ready for dispatch handoff · **Base:** develop · **Scope:** approved SCOPE.md
 
 ## Summary [High]
