@@ -11,26 +11,19 @@ import {
   localeForCountry,
   parseCountryLanguagePublication,
 } from "@/lib/i18n/country-language-map"
+import { errorStatus } from "@/lib/util/error-status"
 
 // Freshness and outage bounds (NIMBUS-176): a healthy change reaches every worker within five
 // minutes. A success is reused for at most 240 s; then the next request waits for one bounded read.
-export const COUNTRY_LANGUAGES_MAX_AGE_MS = 240_000
-export const COUNTRY_LANGUAGES_READ_TIMEOUT_MS = 3_000
-export const COUNTRY_LANGUAGES_RETRY_MS = 10_000
+const COUNTRY_LANGUAGES_MAX_AGE_MS = 240_000
+const COUNTRY_LANGUAGES_READ_TIMEOUT_MS = 3_000
+const COUNTRY_LANGUAGES_RETRY_MS = 10_000
 
 // Process-local on purpose, without the Next data cache: a restarted worker always reads the
 // backend again, and a failure is never stored as a result. Not shared between workers.
 let lastGood: { publication: CountryLanguagePublication; at: number } | null = null
 let retryAt = 0
 let inFlight: Promise<CountryLanguagePublication> | null = null
-
-function errorStatus(error: unknown): number | null {
-  if (typeof error === "object" && error !== null && "status" in error) {
-    const status = (error as { status: unknown }).status
-    return typeof status === "number" ? status : null
-  }
-  return null
-}
 
 async function readPublication(): Promise<CountryLanguagePublication> {
   const response = await sdk.client.fetch<unknown>("/store/country-languages", {
@@ -73,7 +66,7 @@ export const getCountryLanguageSnapshot = cache(async (): Promise<CountryLanguag
     retryAt = Date.now() + COUNTRY_LANGUAGES_RETRY_MS
     // Structured and secret-free: no URL, headers or response body.
     console.warn("[country-languages] load failed", {
-      status: errorStatus(error),
+      status: errorStatus(error) ?? null,
       fallback: lastGood ? "stale" : "legacy",
     })
     return fallback()

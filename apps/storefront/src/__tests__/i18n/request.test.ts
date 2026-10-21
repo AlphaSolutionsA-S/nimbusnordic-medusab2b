@@ -72,7 +72,7 @@ describe("i18n/request", () => {
     requestHeaders({ "x-storefront-pathname": "/dk/cart", "x-storefront-country": "dk" })
   })
 
-  it("resolves the URL country's published language and its database messages (TC-2)", async () => {
+  it("resolves the URL country's published language and its database messages", async () => {
     const result = await resolve()
 
     expect(result.locale).toBe("da")
@@ -100,7 +100,7 @@ describe("i18n/request", () => {
     ["no country context", { "x-storefront-pathname": "/" }],
     ["an unpublished country", { "x-storefront-country": "us" }],
     ["a malformed country", { "x-storefront-country": "dk/../se" }],
-  ])("falls back to the published default for %s (TC-3)", async (_name, values) => {
+  ])("falls back to the published default for %s", async (_name, values) => {
     requestHeaders(values)
 
     const result = await resolve("da")

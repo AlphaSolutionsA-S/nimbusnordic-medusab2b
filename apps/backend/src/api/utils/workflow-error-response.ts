@@ -31,7 +31,7 @@ export function respondToConflict(res: MedusaResponse, error: unknown): boolean 
  * configuration with a generic 503. Returns false for anything else, which the caller rethrows
  * so the framework error handler keeps its normal behaviour.
  */
-export function respondToWorkflowError(res: MedusaResponse, error: unknown): boolean {
+function respondToWorkflowError(res: MedusaResponse, error: unknown): boolean {
   if (respondToConflict(res, error)) {
     return true;
   }

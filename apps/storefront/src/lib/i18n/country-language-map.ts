@@ -21,7 +21,7 @@ export const DEFAULT_LOCALE = "en"
 
 // Mirrors the backend bounds: 676 possible two-letter codes, locale tags of at most 64 characters.
 // Together with the exact entry shape they bound the size of an accepted publication.
-export const MAX_PUBLISHED_COUNTRIES = 26 * 26
+const MAX_PUBLISHED_COUNTRIES = 26 * 26
 export const MAX_LOCALE_LENGTH = 64
 
 const COUNTRY_CODE = /^[a-z]{2}$/

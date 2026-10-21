@@ -69,7 +69,7 @@ describe("Collection page generateMetadata", () => {
     expect(metadata.title).toBe("Test Collection | Nimbus Nordic")
   })
 
-  it("includes an hreflang alternate for each of the 8 legacy countries (TC-2, Task 01)", async () => {
+  it("includes an hreflang alternate for each of the 8 legacy countries", async () => {
     const metadata = await generateMetadata({
       params: Promise.resolve({ countryCode: "dk", handle: "test-collection" }),
       searchParams: Promise.resolve({}),

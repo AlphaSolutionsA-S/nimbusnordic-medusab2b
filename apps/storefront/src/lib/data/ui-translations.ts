@@ -4,6 +4,7 @@ import { cache } from "react"
 import { unstable_cache } from "next/cache"
 
 import { sdk } from "@/lib/config"
+import { errorStatus } from "@/lib/util/error-status"
 import type {
   MessageDocument,
   RuntimeMessages,
@@ -89,14 +90,6 @@ function isActiveDocument(value: unknown, locale: string): value is TranslationD
     candidate.version > 0 &&
     isMessageDocument(candidate.messages)
   )
-}
-
-function errorStatus(error: unknown): number | undefined {
-  if (typeof error === "object" && error !== null && "status" in error) {
-    const status = (error as { status: unknown }).status
-    return typeof status === "number" ? status : undefined
-  }
-  return undefined
 }
 
 function errorMessage(error: unknown): string | undefined {

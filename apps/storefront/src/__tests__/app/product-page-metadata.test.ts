@@ -84,7 +84,7 @@ describe("Product page generateMetadata", () => {
     expect(dkMetadata.description).toBe(frMetadata.description)
   })
 
-  it("includes an hreflang alternate for each of the 8 legacy countries (TC-2, Task 01)", async () => {
+  it("includes an hreflang alternate for each of the 8 legacy countries", async () => {
     const metadata = await generateMetadata({
       params: { countryCode: "dk", handle: "test-product" },
     })

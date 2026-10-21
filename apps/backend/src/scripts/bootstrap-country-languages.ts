@@ -8,7 +8,7 @@ import { bootstrapCountryLanguagesWorkflow } from "../workflows/storefront-trans
  * country-to-locale map). Copied rather than imported: the apps share no source. Countries
  * without an entry (and outside Region membership) fall back to the English default.
  */
-export const LEGACY_COUNTRY_LANGUAGES: CountryLanguageAssignments = {
+const LEGACY_COUNTRY_LANGUAGES: CountryLanguageAssignments = {
   dk: "da",
   gb: "en",
   se: "sv",

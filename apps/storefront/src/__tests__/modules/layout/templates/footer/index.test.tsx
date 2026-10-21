@@ -49,7 +49,7 @@ describe("Footer", () => {
     ).toBeInTheDocument()
   })
 
-  it("TC-3: renders the region switcher with the published language of each country", async () => {
+  it("renders the region switcher with the published language of each country", async () => {
     const element = await Footer({ countryLanguages })
     render(element)
 

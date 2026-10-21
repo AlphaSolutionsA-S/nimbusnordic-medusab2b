@@ -7,7 +7,7 @@ import { canonicalizeLocale } from "../../utils/translations/validation";
 /** Language of every configured country without an explicit assignment (NIMBUS-176). */
 export const DEFAULT_COUNTRY_LOCALE = "en";
 /** Every possible two-letter code. */
-export const MAX_COUNTRY_ASSIGNMENTS = 26 * 26;
+const MAX_COUNTRY_ASSIGNMENTS = 26 * 26;
 export const MAX_CONFIGURATION_BYTES = 64 * 1024;
 
 const COUNTRY_CODE = /^[a-z]{2}$/;
@@ -22,7 +22,7 @@ export function isCanonicalLocale(value: unknown): value is string {
 }
 
 /** Sorted-key copy; the stored JSON is canonical so its size bound is deterministic. */
-export function sortAssignments(assignments: CountryLanguageAssignments): CountryLanguageAssignments {
+function sortAssignments(assignments: CountryLanguageAssignments): CountryLanguageAssignments {
   return Object.fromEntries(
     Object.keys(assignments)
       .sort()
