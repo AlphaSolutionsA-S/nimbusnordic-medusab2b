@@ -8,7 +8,7 @@
                 "kind": "Http",
                 "inputs": {
                     "method": "GET",
-                    "relativePath": "shipment-notices/{token}"
+                    "relativePath": "shipmentnotices/{token}"
                 }
             }
         },

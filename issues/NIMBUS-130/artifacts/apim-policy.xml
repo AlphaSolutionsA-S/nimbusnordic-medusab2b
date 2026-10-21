@@ -27,7 +27,7 @@
           sets customerNumber itself from the token. The SAS query parameters are then re-added.
         -->
         <set-backend-service base-url="{{nimbus-shipment-logicapp-base-url}}" />
-        <rewrite-uri template="/shipment-notices/{token}" copy-unmatched-params="false" />
+        <rewrite-uri template="/shipmentnotices/{token}" copy-unmatched-params="false" />
         <choose>
             <when condition="@(context.Request.OriginalUrl.Query.ContainsKey("after"))">
                 <set-query-parameter name="after" exists-action="override">
