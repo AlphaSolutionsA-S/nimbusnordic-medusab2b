@@ -1,11 +1,7 @@
 "use server"
 
 import { sdk } from "@/lib/config"
-import {
-  getAuthHeaders,
-  getCacheOptions,
-  getCacheTag,
-} from "@/lib/data/cookies"
+import { getAuthHeaders, getCacheTag } from "@/lib/data/cookies"
 import { getCartApprovalStatus } from "@/lib/util/get-cart-approval-status"
 import { FilterType } from "@/types"
 import {
@@ -36,10 +32,6 @@ export const listApprovals = async ({
     ...(await getAuthHeaders()),
   }
 
-  const next = {
-    ...(await getCacheOptions("approvals")),
-  }
-
   const result = await sdk.client.fetch<StoreApprovalsResponse>(
     `/store/approvals`,
     {
@@ -52,7 +44,8 @@ export const listApprovals = async ({
       },
       method: "GET",
       headers,
-      next,
+      // Per-caller response: never reuse it for another account.
+      cache: "no-store",
       credentials: "include",
     }
   )

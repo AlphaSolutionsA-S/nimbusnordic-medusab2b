@@ -1,9 +1,9 @@
-import { retrieveCart } from "@/lib/data/cart"
+import { lookupCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
+import CartUnavailableNotice from "@/modules/cart/components/cart-unavailable-notice"
 import Wrapper from "@/modules/checkout/components/payment-wrapper"
 import CheckoutForm from "@/modules/checkout/templates/checkout-form"
 import CheckoutSummary from "@/modules/checkout/templates/checkout-summary"
-import { B2BCart } from "@/types/global"
 import { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
 import { notFound } from "next/navigation"
@@ -22,12 +22,21 @@ export default async function Checkout({
   searchParams?: { [key: string]: string | string[] | undefined }
 }) {
   const cartId = searchParams?.cartId as string
-  const cart = (await retrieveCart(cartId)) as B2BCart
+  const lookup = await lookupCart(cartId)
 
-  if (!cart) {
+  if (lookup.status === "unavailable") {
+    return (
+      <div className="content-container py-24">
+        <CartUnavailableNotice />
+      </div>
+    )
+  }
+
+  if (lookup.status !== "found") {
     return notFound()
   }
 
+  const cart = lookup.cart
   const customer = await retrieveCustomer()
 
   return (

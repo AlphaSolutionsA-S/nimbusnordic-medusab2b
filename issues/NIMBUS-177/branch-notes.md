@@ -47,3 +47,13 @@
 - Real checkout fixture (`seedCheckout` in `describe('order access guard')`): region ↔ `pp_system_default` link, stock location in the guard channel with `manual_manual` and a fulfillment set (service zone DK), default shipping profile, flat shipping option (dkk), published product via `createProductsWorkflow` in the channel; carts created with `region_id` and `sales_channel_id` (no publishable-key channel link needed). Returns need fulfilled items: `createOrderFulfillmentWorkflow` first, then `return_shipping.option_id` = the shipping option.
 - Storefront `lib/data/orders.ts` reads `/store/orders/:id`; it now needs the caller's token (401 signed out, 404 for others), for task 04.
 - Full security spec: 81 tests, about 90 s.
+
+## 04 Storefront cart lifecycle
+- `apps/storefront/src/lib/data/cart.ts`: `lookupCart(id?)` returns `CartLookup` (`none | unavailable | error | found`; 404 → unavailable, 401 or no token → none, other → error). `retrieveCart` wraps it (cart or null). Use `lookupCart` wherever "refused" must look different from "no cart".
+- `lib/util/customer-error.ts`: new codes `SIGN_IN_REQUIRED_ERROR`, `CART_UNAVAILABLE_ERROR` → `Common.errors.signInRequired` / `cartUnavailable`. `addToCart(Bulk)` return `{ error: SIGN_IN_REQUIRED }` (never thrown: Next strips thrown server-action messages in production).
+- `modules/cart/components/cart-unavailable-notice` (keys `Cart.unavailableNotice.*`) renders on the cart page and in checkout for `unavailable`.
+- Login drops the cart cookie only on `unavailable`; transfer and the login metadata update are gone (`transferCart` deleted), and the mismatch banner is removed. Cart creation still sends `metadata.company_id` (order-created reads it).
+- Cart, approval-list, shipping-option, free-shipping and order fetches use `cache: "no-store"` (no `next` tags).
+- New translation keys must be imported in every environment before release (for 05's rollout note).
+- Running storefront jest needs `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` set (any value) in the env, else the required-env check aborts the run before any test.
+- Storefront full suite on this branch: 3 failing suites, all on baseline: `app/main-layout.test.tsx` (asserts a promo banner the layout never renders), `lib/util/money.test.ts`, `modules/products/components/product-tabs/index.test.tsx`.

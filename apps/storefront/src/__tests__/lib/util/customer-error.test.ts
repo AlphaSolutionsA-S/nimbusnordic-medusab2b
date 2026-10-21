@@ -1,10 +1,21 @@
 import {
   CART_NOT_FOUND_ERROR,
+  CART_UNAVAILABLE_ERROR,
+  SIGN_IN_REQUIRED_ERROR,
   getCustomerErrorKey,
   logCustomerError,
 } from "@/lib/util/customer-error"
 
 describe("getCustomerErrorKey", () => {
+  it.each([
+    [SIGN_IN_REQUIRED_ERROR, "signInRequired"],
+    [new Error(SIGN_IN_REQUIRED_ERROR), "signInRequired"],
+    [CART_UNAVAILABLE_ERROR, "cartUnavailable"],
+    [new Error(`Error: ${CART_UNAVAILABLE_ERROR}`), "cartUnavailable"],
+  ])("maps %p to %s", (error, key) => {
+    expect(getCustomerErrorKey(error)).toBe(key)
+  })
+
   it.each([
     new Error(CART_NOT_FOUND_ERROR),
     new Error(`Error: ${CART_NOT_FOUND_ERROR}`),

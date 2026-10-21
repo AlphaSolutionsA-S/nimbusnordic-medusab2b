@@ -7,6 +7,7 @@ import {
   updateLineItem,
 } from "@/lib/data/cart"
 import { addToCartEventBus } from "@/lib/data/cart-event-bus"
+import { getCustomerErrorKey } from "@/lib/util/customer-error"
 import { ApprovalStatusType } from "@/types/approval"
 import { B2BCart } from "@/types/global"
 import type {
@@ -62,6 +63,7 @@ export function CartProvider({
 }>) {
   const { countryCode } = useParams()
   const t = useTranslations("Cart.cartContext")
+  const tErrors = useTranslations("Common.errors")
 
   const [optimisticCart, setOptimisticCart] = useOptimistic<B2BCart | null>(
     cart
@@ -169,14 +171,22 @@ export function CartProvider({
             quantity: lineItem.quantity,
           })),
           countryCode: countryCode as string,
-        }).catch((e) => {
-          if (e.message === "Cart is pending approval") {
-            toast.error(t("lockedForApprovalToast"))
-          } else {
-            toast.error(t("addToCartFailedToast"))
-          }
-          setOptimisticCart(prevCart)
         })
+          .then((result) => {
+            if (result?.error) {
+              toast.error(tErrors(getCustomerErrorKey(result.error)))
+              setOptimisticCart(prevCart)
+              setIsUpdatingCart(false)
+            }
+          })
+          .catch((e) => {
+            if (e.message === "Cart is pending approval") {
+              toast.error(t("lockedForApprovalToast"))
+            } else {
+              toast.error(t("addToCartFailedToast"))
+            }
+            setOptimisticCart(prevCart)
+          })
       })
     },
     [setOptimisticCart]

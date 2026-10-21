@@ -17,7 +17,7 @@ jest.mock("@/lib/config", () => ({
 }))
 
 jest.mock("@/lib/data/cart", () => ({
-  retrieveCart: jest.fn(),
+  lookupCart: jest.fn(),
   updateCart: jest.fn(),
 }))
 
@@ -54,39 +54,92 @@ import {
   syncCompanyFromBusinessCentral,
 } from "@/lib/data/customer"
 import { sdk } from "@/lib/config"
-import { retrieveCart } from "@/lib/data/cart"
+import { lookupCart, updateCart } from "@/lib/data/cart"
 import { createCompany, createEmployee } from "@/lib/data/companies"
 import {
   getAuthHeaders,
   getCacheOptions,
   getCacheTag,
   getCartId,
+  removeCartId,
   setAuthToken,
 } from "@/lib/data/cookies"
 import { revalidateTag } from "next/cache"
 
 const mockFetch = jest.mocked(sdk.client.fetch)
 const mockLogin = jest.mocked(sdk.auth.login)
+const mockTransferCart = jest.mocked(sdk.store.cart.transferCart)
 const mockGetAuthHeaders = jest.mocked(getAuthHeaders)
 const mockGetCacheOptions = jest.mocked(getCacheOptions)
 const mockGetCacheTag = jest.mocked(getCacheTag)
 const mockGetCartId = jest.mocked(getCartId)
 const mockSetAuthToken = jest.mocked(setAuthToken)
-const mockRetrieveCart = jest.mocked(retrieveCart)
+const mockLookupCart = jest.mocked(lookupCart)
 const mockRevalidateTag = jest.mocked(revalidateTag)
 
-describe("syncCompanyFromBusinessCentral", () => {
-  beforeEach(() => {
-    mockGetAuthHeaders.mockResolvedValue({
-      authorization: "test-authorization",
-    })
-    mockGetCacheOptions.mockResolvedValue({})
-    mockGetCacheTag.mockImplementation(async (key) => key)
-    mockGetCartId.mockResolvedValue(undefined)
-    mockRetrieveCart.mockResolvedValue(null)
-    mockSetAuthToken.mockResolvedValue(undefined)
-    mockFetch.mockResolvedValue({ status: "updated" })
+beforeEach(() => {
+  jest.clearAllMocks()
+  mockGetAuthHeaders.mockResolvedValue({
+    authorization: "test-authorization",
   })
+  mockGetCacheOptions.mockResolvedValue({})
+  mockGetCacheTag.mockImplementation(async (key) => key)
+  mockGetCartId.mockResolvedValue(undefined)
+  mockLookupCart.mockResolvedValue({ status: "none" })
+  mockSetAuthToken.mockResolvedValue(undefined)
+  mockFetch.mockResolvedValue({ status: "updated" })
+})
+
+function loginForm() {
+  const formData = new FormData()
+  formData.set("email", "customer@example.com")
+  formData.set("password", "password")
+  return formData
+}
+
+describe("login cart lifecycle", () => {
+  it("clears an inaccessible cookie cart and never transfers or updates it", async () => {
+    mockLogin.mockResolvedValue("token")
+    mockGetCartId.mockResolvedValue("cart_other_account")
+    mockLookupCart.mockResolvedValue({ status: "unavailable" })
+
+    await login(undefined, loginForm())
+
+    expect(removeCartId).toHaveBeenCalledTimes(1)
+    expect(mockTransferCart).not.toHaveBeenCalled()
+    expect(updateCart).not.toHaveBeenCalled()
+  })
+
+  it("keeps an accessible cookie cart without transferring or updating it", async () => {
+    mockLogin.mockResolvedValue("token")
+    mockGetCartId.mockResolvedValue("cart_own")
+    mockLookupCart.mockResolvedValue({
+      status: "found",
+      cart: { id: "cart_own" } as Extract<
+        Awaited<ReturnType<typeof lookupCart>>,
+        { status: "found" }
+      >["cart"],
+    })
+
+    await login(undefined, loginForm())
+
+    expect(removeCartId).not.toHaveBeenCalled()
+    expect(mockTransferCart).not.toHaveBeenCalled()
+    expect(updateCart).not.toHaveBeenCalled()
+  })
+
+  it("keeps the cookie when the cart lookup fails for another reason", async () => {
+    mockLogin.mockResolvedValue("token")
+    mockGetCartId.mockResolvedValue("cart_own")
+    mockLookupCart.mockResolvedValue({ status: "error" })
+
+    await login(undefined, loginForm())
+
+    expect(removeCartId).not.toHaveBeenCalled()
+  })
+})
+
+describe("syncCompanyFromBusinessCentral", () => {
 
   it("posts once and revalidates the customer cache", async () => {
     await syncCompanyFromBusinessCentral()
@@ -141,17 +194,17 @@ describe("syncCompanyFromBusinessCentral", () => {
         return { status: "updated" }
       }
 
-      events.push("customer-retrieved")
-      return { customer: null }
+      events.push("other-request")
+      return {}
+    })
+    mockLookupCart.mockImplementationOnce(async () => {
+      events.push("cart-looked-up")
+      return { status: "none" }
     })
 
     await login(undefined, formData)
 
-    expect(events).toEqual([
-      "token-stored",
-      "company-synced",
-      "customer-retrieved",
-    ])
+    expect(events).toEqual(["token-stored", "company-synced", "cart-looked-up"])
     expect(
       mockFetch.mock.calls.filter(
         ([path]) =>
@@ -182,10 +235,13 @@ describe("syncCompanyFromBusinessCentral", () => {
       return { id: "company-new", employees: [employee] } as Awaited<ReturnType<typeof createCompany>>
     })
 
+    mockGetCartId.mockResolvedValue("cart_from_before_signup")
+
     const result = await signup(undefined, formData)
 
     expect(events).toEqual(["token-stored", "company-created"])
     expect(createEmployee).not.toHaveBeenCalled()
     expect(result).toMatchObject({ employee })
+    expect(mockTransferCart).not.toHaveBeenCalled()
   })
 })

@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Noget gik galt. Prøv igen.",
-      "cartNotFound": "Vi kunne ikke finde din kurv. Genindlæs siden, og prøv igen."
+      "cartNotFound": "Vi kunne ikke finde din kurv. Genindlæs siden, og prøv igen.",
+      "signInRequired": "Log ind for at lægge produkter i kurven.",
+      "cartUnavailable": "Denne kurv er ikke længere tilgængelig. Læg et produkt i kurven for at starte en ny."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Kurv",
       "message": "Din kurv er tom. Lad os ændre det - brug linket nedenfor for at begynde at gennemse vores produkter.",
+      "exploreProductsLabel": "Udforsk produkter"
+    },
+    "unavailableNotice": {
+      "heading": "Denne kurv er ikke længere tilgængelig",
+      "message": "Denne kurv kan ikke længere bruges med din konto. Læg et produkt i kurven for at starte en ny.",
       "exploreProductsLabel": "Udforsk produkter"
     },
     "itemFull": {

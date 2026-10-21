@@ -1,17 +1,16 @@
 "use server"
 
 import { sdk } from "@/lib/config"
-import { getAuthHeaders, getCacheOptions } from "@/lib/data/cookies"
+import { getAuthHeaders } from "@/lib/data/cookies"
 import medusaError from "@/lib/util/medusa-error"
 import { HttpTypes } from "@medusajs/types"
 
+// Order reads are per caller (the backend answers 404 for an order the caller
+// may not read), so they use no-store: a cached response must never reach
+// another account.
 export const retrieveOrder = async (id: string) => {
   const headers = {
     ...(await getAuthHeaders()),
-  }
-
-  const next = {
-    ...(await getCacheOptions("orders")),
   }
 
   return sdk.client
@@ -22,7 +21,7 @@ export const retrieveOrder = async (id: string) => {
           "*payment_collections.payments,*items,+items.metadata,*items.variant,*items.product",
       },
       headers,
-      next,
+      cache: "no-store",
     })
     .then(({ order }) => order)
     .catch((err) => medusaError(err))
@@ -37,10 +36,6 @@ export const listOrders = async (
     ...(await getAuthHeaders()),
   }
 
-  const next = {
-    ...(await getCacheOptions("orders")),
-  }
-
   return sdk.client
     .fetch<HttpTypes.StoreOrderListResponse>(`/store/orders`, {
       method: "GET",
@@ -53,7 +48,7 @@ export const listOrders = async (
         ...filters,
       },
       headers,
-      next,
+      cache: "no-store",
     })
     .then(({ orders }) => orders)
     .catch((err) => medusaError(err))

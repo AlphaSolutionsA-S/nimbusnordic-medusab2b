@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Something went wrong. Please try again.",
-      "cartNotFound": "We couldn't find your cart. Please refresh the page and try again."
+      "cartNotFound": "We couldn't find your cart. Please refresh the page and try again.",
+      "signInRequired": "Sign in to add products to your cart.",
+      "cartUnavailable": "This cart is no longer available. Add a product to start a new cart."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Cart",
       "message": "You don't have anything in your cart. Let's change that, use the link below to start browsing our products.",
+      "exploreProductsLabel": "Explore products"
+    },
+    "unavailableNotice": {
+      "heading": "This cart is no longer available",
+      "message": "This cart can no longer be used with your account. Add a product to start a new cart.",
       "exploreProductsLabel": "Explore products"
     },
     "itemFull": {
