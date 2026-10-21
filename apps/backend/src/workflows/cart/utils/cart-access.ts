@@ -7,15 +7,29 @@ export interface CartAccessCart {
   company_id: string | null;
 }
 
+export interface AccessCaller {
+  id: string;
+  employee: { company_id: string; is_admin: boolean } | null;
+}
+
+export type CartWithApprovals = CartAccessCart & { approvals: { type: string; status: string }[] };
+
 export interface CartAccessFacts {
-  caller: { id: string; employee: { company_id: string; is_admin: boolean } | null };
-  cart: CartAccessCart & { approvals: { type: string; status: string }[] };
+  caller: AccessCaller;
+  cart: CartWithApprovals;
   /** The owner's current employee company; null when the owner has no employee record. */
   owner_company_id: string | null;
 }
 
 const ADMIN_APPROVAL: `${ApprovalType.ADMIN}` = "admin";
 const APPROVED: `${ApprovalStatusType.APPROVED}` = "approved";
+
+/** An administrator's payment, and their access to the resulting order, need this. */
+export function hasApprovedAdminApproval(cart: CartWithApprovals): boolean {
+  return cart.approvals.some(
+    (approval) => approval.type === ADMIN_APPROVAL && approval.status === APPROVED,
+  );
+}
 
 /**
  * The cart has an owner and its company link equals the owner's current company, or it has no link
@@ -46,8 +60,7 @@ export function canAccessCart(operation: CartOperation, facts: CartAccessFacts):
     employee.company_id !== cart.company_id) {
     return false;
   }
-  const adminApprovals = cart.approvals.filter((approval) => approval.type === ADMIN_APPROVAL);
   return operation === "read"
-    ? adminApprovals.length > 0
-    : adminApprovals.some((approval) => approval.status === APPROVED);
+    ? cart.approvals.some((approval) => approval.type === ADMIN_APPROVAL)
+    : hasApprovedAdminApproval(cart);
 }

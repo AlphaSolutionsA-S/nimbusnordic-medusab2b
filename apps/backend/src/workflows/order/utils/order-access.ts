@@ -1,20 +1,21 @@
-import type { ApprovalStatusType, ApprovalType } from "../../../types/approval";
-import { hasVerifiedCartAssociation, type CartAccessCart } from "../../cart/utils/cart-access";
+import {
+  hasApprovedAdminApproval,
+  hasVerifiedCartAssociation,
+  type AccessCaller,
+  type CartWithApprovals,
+} from "../../cart/utils/cart-access";
 
 /** Reading an order and creating a return for it follow the same rule (NIMBUS-177). */
 export type OrderOperation = "read" | "return";
 
 export interface OrderAccessFacts {
-  caller: { id: string; employee: { company_id: string; is_admin: boolean } | null };
+  caller: AccessCaller;
   order: { customer_id: string | null };
   /** The cart the order was completed from (core order–cart link); null when there is none. */
-  source_cart: (CartAccessCart & { approvals: { type: string; status: string }[] }) | null;
+  source_cart: CartWithApprovals | null;
   /** The order owner's current employee company; null when the owner has no employee record. */
   owner_company_id: string | null;
 }
-
-const ADMIN_APPROVAL: `${ApprovalType.ADMIN}` = "admin";
-const APPROVED: `${ApprovalStatusType.APPROVED}` = "approved";
 
 /**
  * The owner always (also after leaving the company). An administrator only through the source
@@ -37,7 +38,5 @@ export function canAccessOrder(facts: OrderAccessFacts): boolean {
     cart.company_id !== employee.company_id) {
     return false;
   }
-  return cart.approvals.some(
-    (approval) => approval.type === ADMIN_APPROVAL && approval.status === APPROVED,
-  );
+  return hasApprovedAdminApproval(cart);
 }
