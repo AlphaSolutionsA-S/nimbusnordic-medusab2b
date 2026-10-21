@@ -1,0 +1,43 @@
+Excerpt (result section, ANSI colour codes removed) of the run of
+apps/backend/integration-tests/http/admin/shipment-tracking.spec.ts on develop at e4f7351,
+2026-10-21 20:18-20:19 local time, by the NIMBUS-177 task-dispatcher (throwaway Postgres container).
+The full 738-line log was in the session scratchpad as baseline-shipment-tracking.txt; lines 1-700
+are Medusa migrations, link sync and the spec's own expected info logs.
+
+{"level":"warn","message":"Shipment notice: check of shipment SS-RETRY-10 (BC order SO-RETRY) failed: not_returned","timestamp":"2026-10-21 20:19:01"}
+FAIL integration-tests/http/admin/shipment-tracking.spec.ts (30.646 s)
+    √ lists only gave-up rows newest first with safe typed fields and paging (1489 ms)
+    √ reopens once, records the authenticated actor, and preserves revision (2024 ms)
+    √ refuses window-ended, open and unknown rows (1028 ms)
+    √ rejects unknown query/body keys, invalid paging and invalid ids (979 ms)
+    √ accepts the default secret API key authentication and records its actor id (1130 ms)
+    × checks a retried row next run and gives up only three days after reopening (823 ms)
+
+  ●  › checks a retried row next run and gives up only three days after reopening
+
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      ["SS-RETRY-10"],
+    + 1792606801408,
+
+    Number of calls: 1
+
+      134 |       const { result } = await checkShipmentsWorkflow(getContainer()).run({ input: { deadline: new Date(Date.now() + 60_000) } });
+      135 |       expect(result.checked).toBe(1);
+    > 136 |       expect(read).toHaveBeenCalledWith([row.shipment_number]);
+          |                    ^
+      137 |       const [after] = await service.listShipmentTrackings({ id: row.id });
+      138 |       expect(after).toMatchObject({ state: "open", attempts: 1 });
+      139 |       await service.updateShipmentTrackings({ id: row.id, next_check_at: new Date(), reopened_at: new Date(Date.now() - 3 * DAY - 1000) });
+
+      at Object.toHaveBeenCalledWith (integration-tests/http/admin/shipment-tracking.spec.ts:136:20)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 5 passed, 6 total
+Snapshots:   0 total
+Time:        30.74 s
+Ran all test suites matching /integration-tests\\http\\admin\\shipment-tracking.spec.ts/i.
+Force exiting Jest: Have you considered using `--detectOpenHandles` to detect async operations that kept running after all tests finished?
