@@ -263,6 +263,9 @@ Checks with no finding:
 4. **Activation is now session-only.** `POST /admin/ui-translations/:locale/activation` now refuses
    bearer tokens and secret API keys. Does any integration, script or Logic App call it with a token?
    Confirm "no" or name the caller.
+   **Answer (Klaus Petersen, 2026-10-21):** No integration, script or Logic App calls
+   `POST /admin/ui-translations/:locale/activation` with a bearer token or secret key; session-only
+   is fine. All in-repo callers were verified to use a session. No change needed.
 5. **Session cookie settings in each environment.** Medusa sets `SameSite=Lax; Secure` only when
    the backend's `NODE_ENV` is `production` or `staging`. Confirm the Medusa Cloud environments
    (including preview and staging) run with one of those values. Otherwise the foreign-form defence
