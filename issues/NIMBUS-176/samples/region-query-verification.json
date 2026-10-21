@@ -1,0 +1,20 @@
+{
+  "evidenceDate": "2026-10-20",
+  "source": "User-supplied output from running the prepared medusa exec probe; not independently rerun by the agent",
+  "command": "pnpm --filter @b2b-starter/backend exec medusa exec ./scripts/verify-region-query.ts",
+  "output": {
+    "check": "NIMBUS-176 region Query projection",
+    "result": "PASS",
+    "regionCount": 1,
+    "countryCount": 9,
+    "regions": [
+      {
+        "id": "reg_01KX0GWYGJWGD6CRDRJ36F0600",
+        "countries": ["de", "dk", "es", "fr", "gb", "it", "no", "pl", "se"]
+      }
+    ],
+    "missingRegion": [],
+    "mutations": 0,
+    "notExercised": ["country removal/re-addition lifecycle"]
+  }
+}

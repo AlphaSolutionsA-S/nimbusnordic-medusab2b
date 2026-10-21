@@ -12,7 +12,12 @@ jest.mock("next/server", () => ({
   }),
 }))
 
-import { sanitizeTranslationPagePath } from "@/lib/i18n/missing-key-validation"
+import {
+  markFirstSeen,
+  REPORT_DEDUP_MAX,
+  reportDedupKey,
+  sanitizeTranslationPagePath,
+} from "@/lib/i18n/missing-key-validation"
 
 type ServerModule = typeof import("@/lib/i18n/missing-key-server")
 
@@ -72,10 +77,32 @@ describe("server missing-key reporting", () => {
     ])
   })
 
-  it("drops invalid keys and unsupported locales", async () => {
-    server.reportMissingTranslation({ kind: "key", locale: "da", key: "__proto__.x", page_path: "/" })
-    server.reportMissingTranslation({ kind: "key", locale: "xx", key: "Cart.title", page_path: "/" })
-    expect(mockAfter).toHaveLength(0)
+  it.each(["en_GB", "DA", "en-", "../da", `en-x-${Array(12).fill("abcdefgh").join("-")}`])(
+    "drops invalid keys and the malformed locale %s",
+    async (locale) => {
+      server.reportMissingTranslation({ kind: "key", locale: "da", key: "__proto__.x", page_path: "/" })
+      server.reportMissingTranslation({ kind: "key", locale, key: "Cart.title", page_path: "/" })
+      expect(mockAfter).toHaveLength(0)
+    }
+  )
+
+  it("accepts a newly published canonical language without a code change", async () => {
+    server.reportMissingTranslation({ kind: "key", locale: "nl", key: "Cart.title", page_path: "/nl/cart" })
+    server.reportMissingTranslation({ kind: "locale_unavailable", locale: "pt-BR", page_path: "/br" })
+    await runAfter()
+    expect(mockBackendFetch.mock.calls[0][1].body.reports).toEqual([
+      { kind: "key", locale: "nl", key: "Cart.title", page_path: "/nl/cart" },
+      { kind: "locale_unavailable", locale: "pt-BR", page_path: "/br" },
+    ])
+  })
+
+  it("keeps the dedup map bounded when every report names a different valid locale", () => {
+    const seen = new Map<string, number>()
+    for (let i = 0; i < 1500; i++) {
+      const locale = `en-x-${i.toString(36).padStart(4, "0")}`
+      markFirstSeen(seen, reportDedupKey({ kind: "key", locale, key: "Cart.title", page_path: "/" }), 1_000)
+    }
+    expect(seen.size).toBeLessThanOrEqual(REPORT_DEDUP_MAX)
   })
 
   it("TC-5: a reporting outage is logged by status only and never re-reported", async () => {

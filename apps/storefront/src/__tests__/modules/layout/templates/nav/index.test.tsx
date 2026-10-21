@@ -64,7 +64,9 @@ describe("NavigationHeader", () => {
   })
 
   it("TC-1: renders extracted strings unchanged for the en locale", async () => {
-    const element = await NavigationHeader()
+    const element = await NavigationHeader({
+      countryLanguages: { default_locale: "en", countries: [] },
+    })
     render(element)
 
     expect(screen.getByAltText("Nimbus")).toBeInTheDocument()

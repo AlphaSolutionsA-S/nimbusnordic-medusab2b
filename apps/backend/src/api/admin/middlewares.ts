@@ -3,6 +3,7 @@ import { adminCompaniesMiddlewares } from "./companies/middlewares";
 import { adminQuotesMiddlewares } from "./quotes/middlewares";
 import { adminApprovalsMiddlewares } from "./approvals/middlewares";
 import { adminUiTranslationsMiddlewares } from "./ui-translations/middlewares";
+import { adminCountryLanguagesMiddlewares } from "./country-languages/middlewares";
 import { adminBcIntegrationMiddlewares } from "./orders/[id]/bc-integration/middlewares";
 import { adminShipmentTrackingMiddlewares } from "./shipment-tracking/middlewares";
 
@@ -11,6 +12,7 @@ export const adminMiddlewares: MiddlewareRoute[] = [
   ...adminQuotesMiddlewares,
   ...adminApprovalsMiddlewares,
   ...adminUiTranslationsMiddlewares,
+  ...adminCountryLanguagesMiddlewares,
   ...adminBcIntegrationMiddlewares,
   ...adminShipmentTrackingMiddlewares,
 ];

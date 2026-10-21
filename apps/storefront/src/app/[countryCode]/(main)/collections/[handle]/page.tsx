@@ -1,6 +1,9 @@
 import { getCollectionByHandle, listCollections } from "@/lib/data/collections"
 import { listRegions } from "@/lib/data/regions"
-import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
+import {
+  getCountryLanguageForCountry,
+  getCountryLanguageSnapshot,
+} from "@/lib/data/country-languages"
 import { buildLocaleAlternates } from "@/lib/seo/locale-alternates"
 import CollectionTemplate from "@/modules/collections/templates"
 import { SortOptions } from "@/modules/store/components/refinement-list/sort-products"
@@ -63,14 +66,20 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
     notFound()
   }
 
-  const locale = getLocaleForCountry(params.countryCode)
+  const [{ locale }, countryLanguages] = await Promise.all([
+    getCountryLanguageForCountry(params.countryCode),
+    getCountryLanguageSnapshot(),
+  ])
   const t = await getTranslations({ locale, namespace: "MetaDescription" })
 
   const metadata = {
     title: `${collection.title} ${t("storeSuffix")}`,
     description: `${collection.title} collection`,
     alternates: {
-      languages: buildLocaleAlternates(`/collections/${params.handle}`),
+      languages: buildLocaleAlternates(
+        countryLanguages,
+        `/collections/${params.handle}`
+      ),
     },
   } as Metadata
 

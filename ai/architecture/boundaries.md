@@ -22,7 +22,7 @@ No import-boundary lint runs yet: every row is enforced by review. `@medusajs/es
 | `bound-trigger-thin` | `B/{subscribers,jobs}/**` | `B/modules/*/service.ts` (value), `B/**/steps/**` | forbidden |
 | `bound-app-isolation` | any app (`apps/backend`, `apps/storefront`, `apps/cms`) | another app's source | forbidden |
 | `bound-sf-transport-private` | `S/**` outside `S/lib/config.ts`, `S/lib/data/**`, `S/middleware.ts` | `@medusajs/js-sdk`, `S/lib/config.ts` | forbidden |
-| `bound-sf-server-only` | `S/lib/data/cms.ts`, `S/lib/data/ui-translations.ts` | `server-only` | required |
+| `bound-sf-server-only` | `S/lib/data/cms.ts`, `S/lib/data/ui-translations.ts`, `S/lib/data/country-languages.ts` | `server-only` | required |
 
 Baseline: `bound-route-no-service` in `B/api/store/bc-orders/[id]/returns/route.ts`,
 `B/api/store/ui-translations/[locale]/route.ts` and `B/api/admin/ui-translations/*`;

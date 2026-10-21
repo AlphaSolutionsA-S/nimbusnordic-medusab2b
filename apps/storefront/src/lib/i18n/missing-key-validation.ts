@@ -1,6 +1,6 @@
 import { z } from "zod"
 
-import { SUPPORTED_LOCALES } from "@/lib/i18n/country-language-map"
+import { isCanonicalLocale } from "@/lib/i18n/country-language-map"
 import type { MissingReport } from "@/types/ui-translations"
 
 // Browser/server-neutral bounds for missing-text reports (NIMBUS-175 CONTRACTS.md).
@@ -32,7 +32,9 @@ export function isValidMessageKey(key: string): boolean {
   )
 }
 
-const localeSchema = z.enum(SUPPORTED_LOCALES)
+// Any canonical tag, since Admin can publish new languages; the dedup map, batch and rate bounds
+// keep an attacker-chosen tag from growing anything.
+const localeSchema = z.string().refine(isCanonicalLocale, "Invalid locale")
 const pagePathSchema = z.string().min(1).max(MAX_REPORT_PATH_LENGTH).startsWith("/")
 
 export const missingReportSchema = z.discriminatedUnion("kind", [

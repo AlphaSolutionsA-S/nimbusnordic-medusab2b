@@ -1,6 +1,10 @@
 import { retrieveCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
 import { listRegions } from "@/lib/data/regions"
+import {
+  type CountryLanguagePublication,
+  localeForCountry,
+} from "@/lib/i18n/country-language-map"
 import AccountButton from "@/modules/account/components/account-button"
 import CartButton from "@/modules/cart/components/cart-button"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
@@ -16,7 +20,11 @@ import { getTranslations } from "next-intl/server"
 import Image from "next/image"
 import { Suspense } from "react"
 
-export async function NavigationHeader() {
+export async function NavigationHeader({
+  countryLanguages,
+}: {
+  countryLanguages: CountryLanguagePublication
+}) {
   const t = await getTranslations("Layout.nav")
   const customer = await retrieveCustomer().catch(() => null)
   const cart = await retrieveCart()
@@ -25,6 +33,7 @@ export async function NavigationHeader() {
     (region.countries ?? []).map((country) => ({
       countryCode: country.iso_2 ?? "",
       countryName: country.display_name ?? country.iso_2 ?? "",
+      locale: localeForCountry(countryLanguages, country.iso_2),
     }))
   )
 

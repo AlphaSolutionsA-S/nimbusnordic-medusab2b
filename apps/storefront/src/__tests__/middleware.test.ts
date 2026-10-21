@@ -67,18 +67,59 @@ describe("middleware request headers (NIMBUS-175)", () => {
     const response = await middleware(request)
 
     expect(response.headers.get("x-middleware-request-x-storefront-pathname")).toBe("/dk/cart")
-    expect(response.headers.get("x-middleware-request-x-next-intl-locale")).toBe("da")
   })
 
-  it("overwrites a forged pathname header on the static-asset branch too", async () => {
+  it("forwards the URL country and deletes a forged locale and country context", async () => {
+    const { middleware } = await import("@/middleware")
+    const request = new NextRequest("https://example.com/dk/cart", {
+      headers: {
+        cookie: "_medusa_cache_id=abc",
+        "x-next-intl-locale": "de",
+        "x-storefront-country": "de",
+      },
+    })
+
+    const response = await middleware(request)
+
+    expect(response.headers.get("x-middleware-next")).toBe("1")
+    expect(response.headers.get("x-middleware-request-x-storefront-country")).toBe("dk")
+    // Overridden request headers are listed here; a deleted one is absent from the list.
+    const overridden = response.headers.get("x-middleware-override-headers")?.split(",") ?? []
+    expect(overridden).toContain("x-storefront-pathname")
+    expect(overridden).not.toContain("x-next-intl-locale")
+    expect(response.headers.get("x-middleware-request-x-next-intl-locale")).toBeNull()
+  })
+
+  it("forwards no country for a segment that only contains a country code", async () => {
+    const { middleware } = await import("@/middleware")
+    const request = new NextRequest("https://example.com/dkx/cart", {
+      headers: { cookie: "_medusa_cache_id=abc", "x-storefront-country": "dk" },
+    })
+
+    const response = await middleware(request)
+
+    expect(response.headers.get("x-middleware-next")).toBe("1")
+    expect(response.headers.get("x-middleware-request-x-storefront-country")).toBeNull()
+  })
+
+  it("overwrites a forged pathname header and drops forged locale context on the static-asset branch too", async () => {
     const { middleware } = await import("@/middleware")
     const request = new NextRequest("https://example.com/robots.txt", {
-      headers: { cookie: "_medusa_cache_id=abc", "x-storefront-pathname": "/forged" },
+      headers: {
+        cookie: "_medusa_cache_id=abc",
+        "x-storefront-pathname": "/forged",
+        "x-next-intl-locale": "de",
+        "x-storefront-country": "de",
+      },
     })
 
     const response = await middleware(request)
 
     expect(response.headers.get("x-middleware-next")).toBe("1")
     expect(response.headers.get("x-middleware-request-x-storefront-pathname")).toBe("/robots.txt")
+    const overridden = response.headers.get("x-middleware-override-headers")?.split(",") ?? []
+    expect(overridden).toContain("x-storefront-pathname")
+    expect(overridden).not.toContain("x-next-intl-locale")
+    expect(overridden).not.toContain("x-storefront-country")
   })
 })

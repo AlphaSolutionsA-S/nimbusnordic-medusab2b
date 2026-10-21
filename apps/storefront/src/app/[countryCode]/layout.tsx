@@ -1,7 +1,7 @@
 import { setRequestLocale } from "next-intl/server"
 
+import { getCountryLanguageForCountry } from "@/lib/data/country-languages"
 import { getRuntimeMessages } from "@/lib/data/ui-translations"
-import { getLocaleForCountry } from "@/lib/i18n/country-language-map"
 import HtmlLangSync from "@/modules/common/components/html-lang-sync"
 import TranslationProvider from "@/modules/common/components/translation-provider"
 
@@ -13,12 +13,10 @@ export default async function CountryLocaleLayout({
   params: Promise<{ countryCode: string }>
 }) {
   const { countryCode } = await params
-  const locale = getLocaleForCountry(countryCode)
+  // Same request-memoized snapshot as src/i18n/request.ts, so the server config and the client
+  // provider always carry the same language for this country.
+  const { locale } = await getCountryLanguageForCountry(countryCode)
 
-  // Defensive: the value actually used to load messages is the
-  // `X-NEXT-INTL-LOCALE` header set by middleware.ts (see src/i18n/request.ts
-  // for why) — this call is kept in case some request path reaches this
-  // layout without going through the middleware.
   setRequestLocale(locale)
 
   // Same React-memoized loader as src/i18n/request.ts, so this adds no second backend request.

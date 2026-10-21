@@ -54,6 +54,29 @@ export const createAdminUser = async (adminHeaders, appContainer) => {
   return { user, authIdentity };
 };
 
+/**
+ * Logs the user from createAdminUser in through the real auth routes and returns the Admin
+ * dashboard's credential: the signed session cookie only, no bearer header.
+ */
+export const createAdminSession = async (api) => {
+  const { token } = (
+    await api.post("/auth/user/emailpass", {
+      email: "admin@medusa.js",
+      password: "somepassword",
+    })
+  ).data;
+  const session = await api.post("/auth/session", {}, {
+    headers: { authorization: `Bearer ${token}` },
+  });
+  const cookie = (session.headers["set-cookie"] ?? [])
+    .map((value: string) => value.split(";")[0])
+    .find((value: string) => value.startsWith("connect.sid="));
+  if (!cookie) {
+    throw new Error("Login did not set a session cookie");
+  }
+  return { headers: { cookie } as Record<string, string> };
+};
+
 export const createStoreUser = async ({ api, storeHeaders }) => {
   const registerToken = (
     await api.post("/auth/customer/emailpass/register", {

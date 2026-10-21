@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { sdk } from "../../lib/client";
 import { queryKeysFactory } from "../../lib/query-key-factory";
 import type {
+  CountryLanguageManagement,
   CreateInput,
   LocaleSummary,
   MessageDocument,
@@ -93,11 +94,51 @@ export function useCreateTranslation() {
 }
 
 export function useActivateTranslation(locale: string) {
+  const client = useQueryClient();
   const adopt = useAdoptMutation();
   return useMutation({
     mutationFn: (body: { expected_version: number; is_active: boolean }) =>
       sdk.client.fetch<MutationResponse>(`${localePath(locale)}/activation`, { method: "POST", body }),
-    onSuccess: adopt,
+    onSuccess: async (result) => {
+      // Activation changes which languages a country can be assigned.
+      await Promise.all([
+        adopt(result),
+        client.invalidateQueries({ queryKey: countryLanguageQueryKey.all }),
+      ]);
+    },
+  });
+}
+
+export const countryLanguageQueryKey = queryKeysFactory<"country-languages">("country-languages");
+
+export function useCountryLanguages() {
+  return useQuery({
+    queryKey: countryLanguageQueryKey.list(),
+    queryFn: () => sdk.client.fetch<CountryLanguageManagement>("/admin/country-languages"),
+  });
+}
+
+export type AssignCountryLanguageInput = {
+  country_code: string;
+  locale: string;
+  expected_version: number;
+};
+
+export function useAssignCountryLanguage() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ country_code, ...body }: AssignCountryLanguageInput) =>
+      sdk.client.fetch<CountryLanguageManagement>(
+        `/admin/country-languages/${encodeURIComponent(country_code)}`,
+        { method: "POST", body }
+      ),
+    onSuccess: async (result) => {
+      client.setQueryData(countryLanguageQueryKey.list(), result);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: countryLanguageQueryKey.all }),
+        client.invalidateQueries({ queryKey: translationQueryKey.all }),
+      ]);
+    },
   });
 }
 
