@@ -44,23 +44,17 @@ Architecture check: none (no boundary lint yet; `medusa lint` covers Medusa's ow
 - `atlassian` MCP: Jira. `medusa` MCP: Medusa docs and API signatures (token in the
   `MEDUSA_MCP_TOKEN` user environment variable, never in a file). `mcloud` CLI: Medusa Cloud.
 
-Skills hold this repo's patterns; check a signature a skill shows against the vendor documentation
-server before relying on it.
+Check a signature a skill shows against the vendor documentation server before relying on it.
 
-Read and search with the file-read and search tools (Read, Grep and Glob in Claude Code), not
-`grep`, `cat`, `head` or `sed` in the shell: they behave the same in every shell and are much faster
-(a measured shell search took about 5 s against 0.2 s for the tool). The shell may be Bash or
-PowerShell; PowerShell has no `grep`, `head`, `tail` or `wc`, and Windows PowerShell 5.1 has no `&&`,
-so run commands from the repo root in the form the Commands table (or a manifest) gives, not by
-chaining `cd` with `&&`. Write files with the file-write tool, not shell heredocs, which mangle
-backslashes on Windows. Each agent's own constraints say what else it may use the shell for.
+Read, search and write files with the file tools, not shell `grep`/`cat`/heredocs (25x slower;
+heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): run
+commands from the repo root as the Commands table gives them.
 
 ### Starting work
 
-Start every piece of work with the `triage` agent: "let's start working on <key>" for an existing issue,
-or paste the request (an email, a message, a screenshot) for a new one. Triage registers new work and
-routes it: `quick-fix` for a bug or a small change, the full pipeline (`scoper` → `implementation-planner`
-→ `task-dispatcher`) for epics and larger stories, `analyse` when the request is too unclear to route.
+Start every piece of work with the `triage` agent ("let's start working on <key>", or paste a new
+request). Triage registers new work and routes it: `quick-fix`, the full pipeline (`scoper` →
+`implementation-planner` → `task-dispatcher`), or `analyse` when it is too unclear to route.
 
 Choosing a flow (triage proposes, the first flow step confirms; `quick-fix` escalates up, `scoper` hands down):
 
@@ -83,10 +77,9 @@ Quick-fix confirmation: always
 ### Pipeline runs
 
 During a pipeline or quick-fix run, agents act without asking. What needs a human goes into the
-task's `## Deviations`, a review finding, or the deviation report's open questions (in quick-fix: its
-report). Nothing is pushed without the human's go-ahead. An agent that invokes subagents runs each in
-the foreground and waits for its result; a dispatcher that backgrounded one once handed back early
-with tasks half-run.
+task's `## Deviations`, a review finding, or the deviation report's open questions (quick-fix: its
+report). Nothing is pushed without the human's go-ahead. An agent runs each subagent in the
+foreground and waits for it; a dispatcher that backgrounded one handed back with tasks half-run.
 
 ### Results
 
@@ -95,78 +88,62 @@ Report what tests verified and what is not yet verified after deploy separately.
 
 ### Tracker
 
-Work items live in Jira (NIMBUS), the source of truth for what is agreed and how it changed. The
-`tracker-workflow` skill holds the procedure (issue hygiene, commit references, closing comments, the
-pipeline change history) and `jira-workflow-dev` says how each step is done in Jira (NIMBUS). Its
-`ai/skills/jira-workflow-dev/project.md` holds this project's Jira rules (component
-`Customer Portal` on every issue and search); read it with the skill. Integration branch: `develop`;
-work branches `feature/NIMBUS-<number>`.
+Work items live in Jira (NIMBUS), the source of truth for what is agreed and how it changed.
+`tracker-workflow` holds the procedure, `jira-workflow-dev` how each step is done in Jira, and its
+`project.md` this project's rules (component `Customer Portal` on every issue and search).
+Integration branch: `develop`; work branches `feature/NIMBUS-<number>`.
 
 ### Case folders
 
-Each tracked piece of work has one folder, `issues/<key>/`, named with the tracker key as the tracker
-shows it (`NIMBUS-150`); work with no tracker issue yet uses a short kebab-case slug, renamed to the key
-once the issue exists. One folder per case, committed with the work:
+Each tracked piece of work has one folder, `issues/<key>/` (`NIMBUS-150`; a kebab-case slug until
+the issue exists, then renamed), committed with the work:
 
 | File | Written by | Kept |
 |---|---|---|
-| `feature.md` or `bug.md` | `feature-requests` / `bug-reporting` when the work is registered | yes |
-| `scope.md` | `scoper` | yes |
-| `plan.md` | `implementation-planner` | yes |
+| `feature.md` / `bug.md` | `feature-requests` / `bug-reporting` | yes |
+| `scope.md`, `plan.md` | `scoper`, `implementation-planner` | yes |
 | `deviation-report.md` | `integration-reviewer`, with the human's answers | yes |
-| `change-report.md` | `quick-fix`, after the fix: what changed, in the plan's format | yes |
-| `analysis.md` | `quick-fix` in bug mode (reproduction, root cause), or anyone investigating | yes |
-| `PROGRESS.md` | every agent or skill that finishes a workflow stage (below) | yes |
-| `notes.md`, `samples/`, `logs/`, `mockups/` | anyone, as needed | yes |
-| `manifest.md`, task files `NN-<slug>.md`, fix briefs, `branch-notes.md` | the pipeline, while it runs | no: `cleanup` deletes them |
-| `task.md` | `quick-fix`: its short plan and task file | no: the change report replaces it |
+| `change-report.md`, `analysis.md` | `quick-fix` (`analysis.md` also anyone investigating) | yes |
+| `PROGRESS.md` | every agent or skill that finishes a workflow stage | yes |
+| `notes.md`, `samples/`, `logs/`, `mockups/` | anyone | yes |
+| `manifest.md`, `NN-<slug>.md`, fix briefs, `branch-notes.md` | the pipeline | no: `cleanup` deletes them |
+| `task.md` | `quick-fix` | no: the change report replaces it |
 
-`PROGRESS.md` (project rule): check it before acting when it exists and treat its latest entry as the
-current workflow state and handover target. Before finishing a workflow stage, append a dated entry
-with the outcome, the next owner and any handover prompt; create the file when your workflow first
-records a handover; never replace earlier entries.
+`PROGRESS.md`: read it first when it exists; its latest entry is the current state and handover.
+Before finishing a stage, append a dated entry (outcome, next owner, handover prompt), creating the
+file if needed; never replace earlier entries. Folders up to NIMBUS-176 keep v1 upper-case names.
 
-Case folders up to NIMBUS-176 use v1 upper-case names (`SCOPE.md`, `PLAN.md`); they stay as they are.
+One folder per unit of work that goes through a flow, not per tracker issue: an epic run as one
+scope has one folder; its plan tasks become sub-tasks without folders.
 
-The folder follows the unit of work that goes through a flow, not the tracker hierarchy: an epic run
-through the pipeline as one scope has one folder (its plan tasks become tracker sub-tasks with no
-folders of their own); stories of an epic run separately each get their own. A quick-fix case holds
-its intake file, `analysis.md` (bugs) and `change-report.md`.
-
-Once the work ships, a case folder is a frozen record: read it for why something was built as it was,
-never update it in later work, and never treat it as current behaviour. New work on the same area gets
-its own case. The code and `docs/architecture/` describe the system as it is; read the architecture
-doc for the area you change. What must stay current belongs in `docs/architecture/`, the tracker,
-commit messages or the PR description, never in a case folder or a code comment.
+A shipped case folder is a frozen record of why: never update it later or treat it as current
+behaviour. The code and `docs/architecture/` describe the system (read the doc for the area you
+change); what must stay current goes there, in the tracker, commits or the PR, never in a case
+folder or a code comment.
 
 ### Shared skill catalog
 
-Skills here can come from, and go back to, the Alpha Solutions catalog (`harness_repo` in
-`ai/harness.json`, private). Before writing a new skill, and when `harness_released` is more than a
-month old, suggest checking the catalog first; after creating a skill or making a larger change to
-one, ask whether to contribute it. Both procedures are in `ai/CONTRIBUTING.md`.
+Before writing a new skill, suggest checking the Alpha Solutions catalog; after creating or largely
+changing one, ask whether to contribute it (`ai/CONTRIBUTING.md`).
 
 ### Code comments
 
-Comment only the why: invariants, vendor quirks, deviations from the obvious implementation. Never
-cite task, test-case or scope ids from pipeline plans (task numbers are reused every epic); cite
-the issue key or a `docs/architecture/` section. Back any security claim made in a comment with a
-test.
+Comment only the why: invariants, vendor quirks, deviations from the obvious. Never cite plan task,
+test-case or scope ids (reused every epic); cite the issue key or a `docs/architecture/` section.
+Back any security claim in a comment with a test.
 
 ### Do not read
 
-- `README.md` (root): upstream starter boilerplate with wrong versions; use this file instead.
-- `docs/security-review-handover.md`: source-solution findings, context only; status is in
-  `docs/security-remediation.md`.
+- `README.md` (root): upstream boilerplate with wrong versions.
+- `docs/security-review-handover.md`: context only; status is in `docs/security-remediation.md`.
 - `apps/storefront/messages/*.json` as runtime UI text (import material only).
 
 Known gaps (no skill yet): Payload CMS, Business Central API, Stripe and PayPal clients.
 
 ## Skills
 
-Load the matching skill before planning or implementing in its domain. Layer skills hold the Tier 0
-rules for one layer; load the technology skill alongside for API detail. Where a skill folder has a
-`project.md`, read it too; it wins where the two differ.
+Load the matching skill before planning or implementing in its domain (a layer skill with its
+technology skill). A skill's `project.md` is read with it and wins where they differ.
 
 | Skill | When to use |
 |-------|-------------|
@@ -396,6 +373,9 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 |------|-------------|---------------------|-----------|--------|
 | Spending limit (per order only, finding 7) | `B/utils/check-spending-limit.ts` | checkout error (`B/workflows/hooks/validate-cart-completion.ts`) | storefront cart, checkout | duplicate: `S/lib/util/check-spending-limit.ts` |
 | Cart approval status | `B/utils/get-cart-approval-status.ts`, `validate-cart-approvals.ts` | cart approvals | storefront cart, checkout, approvals | divergent duplicate: `S/lib/util/get-cart-approval-status.ts` (approved = all vs any) |
+| Cart access, verified cart–company association | `B/workflows/cart/utils/cart-access.ts` | 404 (`authorizeCartAccessWorkflow`) | cart guard; approvals list and decision | ok |
+| Store order read and return: owner, or company admin of the approved source cart (NIMBUS-177) | `B/workflows/order/utils/order-access.ts` | 404 (`B/api/middlewares/ensure-order-access.ts`) | `GET /store/orders/:id`, `POST /store/returns` | ok |
+| Order transfer only without an account owner (NIMBUS-177) | `B/workflows/order/utils/order-transfer.ts` | 400 | `POST /store/orders/:id/transfer/request` | ok |
 | BC-managed company fields are read-only | `B/admin/routes/companies/bc-managed-fields.ts` | admin form; BC sync | storefront company card | ok |
 | Sent or recorded BC orders require duplicate protection and a force warning | `B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`) | pure verdict | Admin widget; submission guard | ok |
 | BC submission skips existing orders unless force is explicit | `B/workflows/business-central-order/utils/admin-bc-integration.ts` (`shouldSkipBcSubmission`) | preparation outcome | automatic and Admin workflows | ok |
@@ -471,7 +451,7 @@ error: never suppress it or weaken the rule to pass a task.
 | `type-no-any` | high | review; baseline: 16 storefront files, `workflows/order/steps/update-order.ts` |
 | `no-plan-id-comments` (comments citing task, test-case or scope ids) | high | review |
 | One home per business rule | high | `decisions.md`; review |
-| `trust-no-client-company`: never authorize from client `metadata.company_id` | high, blocker | review; baseline: `workflows/hooks/{cart,order}-created.ts` |
+| `trust-no-client-company`: never authorize from client `metadata.company_id` | high, blocker | review; baseline: `workflows/hooks/order-created.ts` |
 | `ui-text-translated`: storefront UI text is a translation key | medium | `react/jsx-no-literals` (warn) |
 
 Open security findings 7 (spending limit per order only), 8 (client company id) and 10 (claims live

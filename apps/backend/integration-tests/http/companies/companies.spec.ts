@@ -726,9 +726,12 @@ medusaIntegrationTestRunner({
 
       it("TC-5: a company cart exposes only the company fields checkout needs", async () => {
         const container = getContainer();
+        // Carts are personal (NIMBUS-177): the employee reads their own company cart.
+        const owner = (await api.get("/store/customers/me", employeeHeaders)).data
+          .customer.id;
         const cart = await container
           .resolve(Modules.CART)
-          .createCarts({ currency_code: "dkk" });
+          .createCarts({ currency_code: "dkk", customer_id: owner });
         await container.resolve(ContainerRegistrationKeys.LINK).create({
           [COMPANY_MODULE]: { company_id: companyId },
           [Modules.CART]: { cart_id: cart.id },

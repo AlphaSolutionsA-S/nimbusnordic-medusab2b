@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Något gick fel. Försök igen.",
-      "cartNotFound": "Vi kunde inte hitta din varukorg. Ladda om sidan och försök igen."
+      "cartNotFound": "Vi kunde inte hitta din varukorg. Ladda om sidan och försök igen.",
+      "signInRequired": "Logga in för att lägga produkter i varukorgen.",
+      "cartUnavailable": "Den här varukorgen är inte längre tillgänglig. Lägg till en produkt för att starta en ny varukorg."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Varukorg",
       "message": "Din varukorg är tom. Låt oss ändra på det, använd länken nedan för att börja bläddra bland våra produkter.",
+      "exploreProductsLabel": "Utforska produkter"
+    },
+    "unavailableNotice": {
+      "heading": "Den här varukorgen är inte längre tillgänglig",
+      "message": "Den här varukorgen kan inte längre användas med ditt konto. Lägg till en produkt för att starta en ny varukorg.",
       "exploreProductsLabel": "Utforska produkter"
     },
     "itemFull": {

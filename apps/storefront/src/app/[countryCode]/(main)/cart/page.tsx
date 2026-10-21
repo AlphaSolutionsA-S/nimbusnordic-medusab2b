@@ -1,6 +1,7 @@
 import { CartProvider } from "@/lib/context/cart-context"
-import { retrieveCart } from "@/lib/data/cart"
+import { lookupCart } from "@/lib/data/cart"
 import { retrieveCustomer } from "@/lib/data/customer"
+import CartUnavailableNotice from "@/modules/cart/components/cart-unavailable-notice"
 import CartTemplate from "@/modules/cart/templates"
 import { Metadata } from "next"
 import { getTranslations } from "next-intl/server"
@@ -15,7 +16,19 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Cart() {
-  const cart = await retrieveCart().catch(() => null)
+  const lookup = await lookupCart()
+
+  if (lookup.status === "unavailable") {
+    return (
+      <div className="small:py-12 py-6 bg-neutral-100">
+        <div className="content-container">
+          <CartUnavailableNotice />
+        </div>
+      </div>
+    )
+  }
+
+  const cart = lookup.status === "found" ? lookup.cart : null
   const customer = await retrieveCustomer()
 
   return (

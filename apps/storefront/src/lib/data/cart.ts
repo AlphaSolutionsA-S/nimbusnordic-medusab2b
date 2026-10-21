@@ -1,7 +1,12 @@
 "use server"
 
 import { sdk } from "@/lib/config"
-import { CART_NOT_FOUND_ERROR } from "@/lib/util/customer-error"
+import { activeCartLookup } from "@/lib/util/active-cart"
+import {
+  CART_NOT_FOUND_ERROR,
+  CART_UNAVAILABLE_ERROR,
+  SIGN_IN_REQUIRED_ERROR,
+} from "@/lib/util/customer-error"
 import medusaError from "@/lib/util/medusa-error"
 import { StoreApprovalResponse } from "@/types/approval"
 import { B2BCart } from "@/types/global"
@@ -11,7 +16,6 @@ import { revalidateTag } from "next/cache"
 import { redirect } from "next/navigation"
 import {
   getAuthHeaders,
-  getCacheOptions,
   getCacheTag,
   getCartId,
   removeCartId,
@@ -20,19 +24,44 @@ import {
 import { retrieveCustomer } from "./customer"
 import { getRegion } from "./regions"
 
-export async function retrieveCart(id?: string) {
+// "unavailable": the backend refused the cart (404, also for a cart another
+// account owns); "error": any other failure, so callers never drop a cart
+// pointer on a transient fault.
+export type CartLookup =
+  | { status: "none" }
+  | { status: "unavailable" }
+  | { status: "error" }
+  | { status: "found"; cart: B2BCart }
+
+type AddToCartResult = { error: typeof SIGN_IN_REQUIRED_ERROR } | undefined
+
+function hasToken(headers: object): boolean {
+  return "authorization" in headers
+}
+
+// The SDK rejects with a FetchError carrying the HTTP `status`.
+function responseStatus(error: unknown): number | undefined {
+  if (typeof error === "object" && error !== null && "status" in error) {
+    return typeof error.status === "number" ? error.status : undefined
+  }
+  return undefined
+}
+
+function cartRequestError(error: unknown): never {
+  if (responseStatus(error) === 404) {
+    throw new Error(CART_UNAVAILABLE_ERROR)
+  }
+  return medusaError(error)
+}
+
+export async function lookupCart(id?: string): Promise<CartLookup> {
   const cartId = id || (await getCartId())
+  const headers = await getAuthHeaders()
 
-  if (!cartId) {
-    return null
-  }
-
-  const headers = {
-    ...(await getAuthHeaders()),
-  }
-
-  const next = {
-    ...(await getCacheOptions("carts")),
+  // Every store cart route requires a customer token, so a signed-out
+  // visitor has no usable cart and the backend is not asked.
+  if (!cartId || !hasToken(headers)) {
+    return { status: "none" }
   }
 
   return await sdk.client
@@ -41,32 +70,52 @@ export async function retrieveCart(id?: string) {
       method: "GET",
       query: {
         fields:
-          "*items, *region, *items.product, *items.variant, +items.thumbnail, +items.metadata, *promotions, +company.id, +company.name, *company.approval_settings, *customer, *approvals, +completed_at, *approval_status",
+          "*items, *region, *items.product, *items.variant, +items.thumbnail, +items.metadata, *promotions, +company.id, +company.name, *company.approval_settings, +customer_id, *customer, *approvals, +completed_at, *approval_status",
       },
       headers,
-      next,
+      // Per-caller response: never reuse it for another account.
+      cache: "no-store",
     })
-    .then(({ cart }) => {
-      return cart as B2BCart
-    })
-    .catch(() => {
-      return null
+    .then(({ cart }): CartLookup => ({ status: "found", cart: cart as B2BCart }))
+    .catch((error): CartLookup => {
+      const status = responseStatus(error)
+      if (status === 404) {
+        return { status: "unavailable" }
+      }
+      return status === 401 ? { status: "none" } : { status: "error" }
     })
 }
 
+export async function retrieveCart(id?: string) {
+  const lookup = await lookupCart(id)
+
+  return lookup.status === "found" ? lookup.cart : null
+}
+
 export async function getOrSetCart(countryCode: string) {
-  let cart = await retrieveCart()
-  const region = await getRegion(countryCode)
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  if (!hasToken(headers)) {
+    throw new Error(SIGN_IN_REQUIRED_ERROR)
+  }
+
   const customer = await retrieveCustomer()
+  const lookup = activeCartLookup(await lookupCart(), customer?.id)
+
+  if (lookup.status === "error") {
+    throw new Error(CART_NOT_FOUND_ERROR)
+  }
+
+  let cart = lookup.status === "found" ? lookup.cart : null
+  const region = await getRegion(countryCode)
 
   if (!region) {
     throw new Error(`Region not found for country code: ${countryCode}`)
   }
 
-  const headers = {
-    ...(await getAuthHeaders()),
-  }
-
+  // A missing, refused or not-owned cookie cart is replaced by a new cart.
   if (!cart) {
     const body = {
       region_id: region.id,
@@ -77,12 +126,12 @@ export async function getOrSetCart(countryCode: string) {
 
     const cartResp = await sdk.store.cart.create(body, {}, headers)
 
-    setCartId(cartResp.cart.id)
+    await setCartId(cartResp.cart.id)
 
     const cartCacheTag = await getCacheTag("carts")
     revalidateTag(cartCacheTag)
 
-    cart = await retrieveCart()
+    cart = await retrieveCart(cartResp.cart.id)
   }
 
   if (cart && cart?.region_id !== region.id) {
@@ -114,9 +163,11 @@ export async function updateCart(data: HttpTypes.StoreUpdateCart) {
       revalidateTag(cartCacheTag)
       return cart
     })
-    .catch(medusaError)
+    .catch(cartRequestError)
 }
 
+// Returns the sign-in code instead of throwing: Next.js hides thrown
+// server-action messages from the client in production.
 export async function addToCart({
   variantId,
   quantity,
@@ -125,18 +176,22 @@ export async function addToCart({
   variantId: string
   quantity: number
   countryCode: string
-}) {
+}): Promise<AddToCartResult> {
   if (!variantId) {
     throw new Error("Missing variant ID when adding to cart")
+  }
+
+  const headers = {
+    ...(await getAuthHeaders()),
+  }
+
+  if (!hasToken(headers)) {
+    return { error: SIGN_IN_REQUIRED_ERROR }
   }
 
   const cart = await getOrSetCart(countryCode)
   if (!cart) {
     throw new Error(CART_NOT_FOUND_ERROR)
-  }
-
-  const headers = {
-    ...(await getAuthHeaders()),
   }
 
   await sdk.store.cart
@@ -155,7 +210,7 @@ export async function addToCart({
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
     })
-    .catch(medusaError)
+    .catch(cartRequestError)
 }
 
 export async function addToCartBulk({
@@ -164,7 +219,13 @@ export async function addToCartBulk({
 }: {
   lineItems: HttpTypes.StoreAddCartLineItem[]
   countryCode: string
-}) {
+}): Promise<AddToCartResult> {
+  const authHeaders = await getAuthHeaders()
+
+  if (!hasToken(authHeaders)) {
+    return { error: SIGN_IN_REQUIRED_ERROR }
+  }
+
   const cart = await getOrSetCart(countryCode)
 
   if (!cart) {
@@ -173,7 +234,7 @@ export async function addToCartBulk({
 
   const headers = {
     "Content-Type": "application/json",
-    ...(await getAuthHeaders()),
+    ...authHeaders,
   } as Record<string, any>
 
   if (process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY) {
@@ -227,7 +288,7 @@ export async function updateLineItem({
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
     })
-    .catch(medusaError)
+    .catch(cartRequestError)
 }
 
 export async function deleteLineItem(lineId: string) {
@@ -252,7 +313,7 @@ export async function deleteLineItem(lineId: string) {
       const cartCacheTag = await getCacheTag("carts")
       revalidateTag(cartCacheTag)
     })
-    .catch(medusaError)
+    .catch(cartRequestError)
 }
 
 export async function emptyCart() {
