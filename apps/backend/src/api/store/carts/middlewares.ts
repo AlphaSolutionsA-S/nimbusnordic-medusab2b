@@ -12,6 +12,12 @@ import {
 } from "./validators";
 
 export const storeCartsMiddlewares: MiddlewareRoute[] = [
+  // Carts are personal (NIMBUS-177): only a signed-in customer may create one.
+  {
+    method: ["POST"],
+    matcher: "/store/carts",
+    middlewares: [authenticate("customer", ["bearer", "session"])],
+  },
   ...[
     "/store/carts/:id",
     "/store/carts/:id/customer",

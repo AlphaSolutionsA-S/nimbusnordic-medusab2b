@@ -25,7 +25,7 @@
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
 | 01 | Cart access decision and authorization workflow | `01-cart-access-decision.md` | backend | F1, F4, F6 (read vs edit), business rules (owner, colleague, admin, membership loss, ambiguous) | None | NIMBUS-199 | DONE |
-| 02 | Trusted company link at cart creation | `02-trusted-cart-company-link.md` | backend | F2 (creation), F4, F7 (sign-in to create), finding 8 for carts | None | NIMBUS-200 | TODO |
+| 02 | Trusted company link at cart creation | `02-trusted-cart-company-link.md` | backend | F2 (creation), F4, F7 (sign-in to create), finding 8 for carts | None | NIMBUS-200 | DONE |
 | 03 | Guard on every direct and indirect cart route | `03-cart-route-guard.md` | backend | F1, F2, F3, F5 (no claim by ID), F6, NFR fail closed, cross-instance, no shared caching | 01, 02 | NIMBUS-201 | TODO |
 | 06 | Order access decision and guard; transfer request and cancel return no order; account-owned orders not transferable | `06-order-access-guard.md` | backend | F3 extended to store order-by-ID routes (decisions 3–7), NFR fail closed | 01, 03 | NIMBUS-204 | TODO |
 | 07 | Approval list and decisions respect the verified association | `07-approval-routes-association.md` | backend | F3 (approval IDs), F6, business rule "ambiguous carts refused" | 01 | NIMBUS-205 | TODO |

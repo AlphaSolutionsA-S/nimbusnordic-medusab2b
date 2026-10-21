@@ -1,6 +1,7 @@
 import { inspect } from 'node:util';
 import jwt from 'jsonwebtoken';
 import { medusaIntegrationTestRunner } from '@medusajs/test-utils';
+import { createCartWorkflow } from '@medusajs/core-flows';
 import { ApiKeyType, ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils';
 import type {
   IApiKeyModuleService,
@@ -336,6 +337,65 @@ medusaIntegrationTestRunner({
       expect(approvals).toHaveLength(1);
       expect(approvals[0]).toMatchObject({ status: 'pending', type: 'admin' });
       expect(approvals[0].id).not.toBe(approval.id);
+    });
+
+    // NIMBUS-177: carts are personal. Creation needs a signed-in customer, and the company link
+    // comes from the owner's employee record, never from client metadata.
+    describe('POST /store/carts', () => {
+      let regionId: string;
+      const carts = () => container.resolve<ICartModuleService>(Modules.CART);
+
+      async function cartCompany(cartId: string) {
+        const { data: [cart] } = await container.resolve(ContainerRegistrationKeys.QUERY).graph({
+          entity: 'cart', fields: ['id', 'customer_id', 'company.id'], filters: { id: cartId },
+        });
+        return { customer_id: cart.customer_id, company_id: cart.company?.id ?? null };
+      }
+
+      beforeEach(async () => {
+        regionId = (await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+          name: 'Cart region', currency_code: 'dkk', countries: ['dk'],
+        })).id;
+      });
+
+      // Without a publishable key the store routes already answer 400; the key alone is anonymous.
+      it('answers an anonymous caller with 401 and creates no cart', async () => {
+        const response = await api.post('/store/carts', {
+          region_id: regionId, metadata: { company_id: companyId },
+        }, { ...publicHeaders, validateStatus: () => true });
+        expect(response.status).toBe(401);
+        expect(await carts().listCarts({})).toHaveLength(0);
+      });
+
+      it("links an employee's cart to their own company, ignoring a forged metadata.company_id", async () => {
+        const response = await api.post('/store/carts', {
+          region_id: regionId, metadata: { company_id: foreignCompanyId },
+        }, headers);
+        expect(response.status).toBe(200);
+        const link = await cartCompany(response.data.cart.id);
+        expect(typeof link.customer_id).toBe('string');
+        expect(typeof link.company_id).toBe('string');
+        expect(link).toEqual({ customer_id: customerId, company_id: companyId });
+      });
+
+      it('creates a cart with no company link for a customer who is not an employee', async () => {
+        const outsider = await createStoreUser({
+          api, storeHeaders: publicHeaders, email: 'outsider@example.test',
+        });
+        const response = await api.post('/store/carts', {
+          region_id: regionId, metadata: { company_id: companyId },
+        }, { headers: { ...publicHeaders.headers, authorization: `Bearer ${outsider.token}` } });
+        expect(response.status).toBe(200);
+        expect(await cartCompany(response.data.cart.id))
+          .toEqual({ customer_id: outsider.customer.id, company_id: null });
+      });
+
+      it('fails cart creation without a customer and leaves no cart behind', async () => {
+        await expect(createCartWorkflow(container).run({
+          input: { region_id: regionId, metadata: { company_id: companyId } },
+        })).rejects.toMatchObject({ message: 'A signed-in customer is required to create a cart' });
+        expect(await carts().listCarts({})).toHaveLength(0);
+      });
     });
 
     // NIMBUS-176: country-language management and language activation accept only the Admin
