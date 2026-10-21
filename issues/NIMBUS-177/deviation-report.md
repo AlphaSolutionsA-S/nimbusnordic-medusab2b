@@ -1,5 +1,7 @@
 # Deviation report: Protect company-linked carts from access by cart ID alone
 
+> Record of NIMBUS-177, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-177`, merge-base `e4f7351`, HEAD `5476a92`. Reviewed: the full diff, the plan,
 the branch notes, every task file, the fix brief for task 04 (`fix-04-cookie-cart-not-owned.md`) and
 the consolidation commit. Installed Medusa 2.21.0 store routes were listed to check guard coverage.

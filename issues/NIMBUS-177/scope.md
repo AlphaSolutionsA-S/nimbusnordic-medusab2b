@@ -1,5 +1,7 @@
 # Protect company-linked carts from access by cart ID alone
 
+> Record of NIMBUS-177, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-20
 **Status:** Implemented on `feature/NIMBUS-177` (2026-10-21); scope approved by Klaus Petersen on 2026-10-20
 **Type:** Story
