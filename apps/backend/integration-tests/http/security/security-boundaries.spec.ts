@@ -6,6 +6,7 @@ import { ApiKeyType, ContainerRegistrationKeys, Modules } from '@medusajs/framew
 import type {
   IApiKeyModuleService,
   ICartModuleService,
+  IPaymentModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
   MedusaContainer,
@@ -71,21 +72,28 @@ medusaIntegrationTestRunner({
       },
     );
 
+    async function attachAdminApproval(cartId: string, status: ApprovalStatusType, createdBy: string) {
+      const service = container.resolve<ApprovalModuleService>('approval');
+      const approval = await service.createApprovals({
+        cart_id: cartId, type: ApprovalType.ADMIN, status, created_by: createdBy,
+      });
+      const [approvalStatus] = await container.resolve<IApprovalModuleService>('approval')
+        .createApprovalStatuses([{ cart_id: cartId, status }]);
+      await container.resolve(ContainerRegistrationKeys.LINK).create([
+        { [Modules.CART]: { cart_id: cartId }, approval: { approval_id: approval.id } },
+        { [Modules.CART]: { cart_id: cartId }, approval: { approval_status_id: approvalStatus.id } },
+      ]);
+      return { approval, service };
+    }
+
     async function createApproval(status: ApprovalStatusType, targetCompany = companyId) {
       const cart = await container.resolve<ICartModuleService>(Modules.CART).createCarts({
         currency_code: 'dkk', customer_id: customerId,
       });
-      const service = container.resolve<ApprovalModuleService>('approval');
-      const approval = await service.createApprovals({
-        cart_id: cart.id, type: ApprovalType.ADMIN, status, created_by: customerId,
-      });
-      const [approvalStatus] = await container.resolve<IApprovalModuleService>('approval')
-        .createApprovalStatuses([{ cart_id: cart.id, status }]);
-      await container.resolve(ContainerRegistrationKeys.LINK).create([
+      await container.resolve(ContainerRegistrationKeys.LINK).create(
         { company: { company_id: targetCompany }, [Modules.CART]: { cart_id: cart.id } },
-        { [Modules.CART]: { cart_id: cart.id }, approval: { approval_id: approval.id } },
-        { [Modules.CART]: { cart_id: cart.id }, approval: { approval_status_id: approvalStatus.id } },
-      ]);
+      );
+      const { approval, service } = await attachAdminApproval(cart.id, status, customerId);
       return { cart, approval, service };
     }
 
@@ -273,6 +281,12 @@ medusaIntegrationTestRunner({
         const cart = hasRejectedApproval
           ? (await createApproval(ApprovalStatusType.REJECTED)).cart
           : await carts.createCarts({ currency_code: 'dkk', customer_id: customerId });
+        if (!hasRejectedApproval) {
+          // An employee's unlinked cart is ambiguous and refused (NIMBUS-177).
+          await container.resolve(ContainerRegistrationKeys.LINK).create(
+            { company: { company_id: companyId }, [Modules.CART]: { cart_id: cart.id } },
+          );
+        }
         await carts.updateCarts(cart.id, { region_id: region.id, sales_channel_id: channel.id });
         const [item] = await carts.addLineItems([{
           cart_id: cart.id, title: 'Custom test item', quantity: 1, unit_price: 100,
@@ -395,6 +409,228 @@ medusaIntegrationTestRunner({
           input: { region_id: regionId, metadata: { company_id: companyId } },
         })).rejects.toMatchObject({ message: 'A signed-in customer is required to create a cart' });
         expect(await carts().listCarts({})).toHaveLength(0);
+      });
+    });
+
+    // NIMBUS-177: every route that reads or changes a cart, directly or through a cart_id or a
+    // payment collection, needs a signed-in customer, and answers a caller who is not entitled to
+    // the cart exactly as it answers a cart that does not exist.
+    describe('cart access guard', () => {
+      type Target = { cartId: string; collectionId: string; lineId: string };
+      type Operation = 'read' | 'owner' | 'pay';
+      type GuardedRoute = readonly [Operation, string, (t: Target) => string, ((t: Target) => object)?];
+      type Member = { customerId: string; employeeId: string; headers: { headers: Record<string, string> } };
+
+      const NOT_FOUND = { type: 'not_found', message: 'Cart not found' };
+      const MISSING: Target = { cartId: 'cart_missing', collectionId: 'pay_col_missing', lineId: 'line_missing' };
+      const ROUTES: GuardedRoute[] = [
+        ['read', 'GET', (t) => `/store/carts/${t.cartId}`],
+        ['read', 'GET', (t) => `/store/shipping-options?cart_id=${t.cartId}`],
+        ['read', 'POST', () => '/store/shipping-options/so_unknown/calculate', (t) => ({ cart_id: t.cartId })],
+        ['read', 'GET', (t) => `/store/free-shipping/prices?cart_id=${t.cartId}`],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}`, () => ({ email: 'taken@example.test' })],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/customer`, () => ({})],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/line-items`, () => ({ variant_id: 'variant', quantity: 1 })],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/line-items/${t.lineId}`, () => ({ quantity: 2 })],
+        ['owner', 'DELETE', (t) => `/store/carts/${t.cartId}/line-items/${t.lineId}`],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/line-items/bulk`,
+          () => ({ line_items: [{ variant_id: 'variant', quantity: 1 }] })],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/promotions`, () => ({ promo_codes: ['discount'] })],
+        ['owner', 'DELETE', (t) => `/store/carts/${t.cartId}/promotions`, () => ({ promo_codes: ['discount'] })],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/shipping-methods`, () => ({ option_id: 'so_unknown' })],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/taxes`, () => ({})],
+        ['owner', 'POST', (t) => `/store/carts/${t.cartId}/approvals`, () => ({})],
+        ['owner', 'POST', () => '/store/quotes?fields=id', (t) => ({ cart_id: t.cartId })],
+        ['pay', 'POST', () => '/store/payment-collections', (t) => ({ cart_id: t.cartId })],
+        ['pay', 'POST', (t) => `/store/payment-collections/${t.collectionId}/payment-sessions`,
+          () => ({ provider_id: 'pp_system_default' })],
+        ['pay', 'POST', (t) => `/store/carts/${t.cartId}/complete`],
+      ];
+      const routesOf = (...operations: Operation[]) =>
+        ROUTES.filter(([operation]) => operations.includes(operation));
+      const label = ([, method, url]: GuardedRoute) => `${method} ${url(MISSING)}`;
+
+      let regionId: string;
+      let channelId: string;
+      let colleague: Member;
+      let foreignAdmin: { headers: Record<string, string> };
+
+      const send = (route: GuardedRoute, target: Target, as: { headers: Record<string, string> }) =>
+        api.request({
+          method: route[1], url: route[2](target), data: route[3]?.(target), ...as,
+          validateStatus: () => true,
+        });
+
+      async function login(email: string) {
+        const { token } = (await api.post('/auth/customer/emailpass', { email, password: 'password' })).data;
+        return { headers: { ...publicHeaders.headers, authorization: `Bearer ${token}` } };
+      }
+
+      async function addColleague(email: string): Promise<Member> {
+        const response = await api.post(`/store/companies/${companyId}/employees`, {
+          email, password: 'password', first_name: 'Col', last_name: 'League', spending_limit: 0,
+          is_admin: false,
+        }, headers);
+        const memberHeaders = await login(email);
+        const me = await api.get('/store/customers/me', memberHeaders);
+        return { customerId: me.data.customer.id, employeeId: response.data.employee.id, headers: memberHeaders };
+      }
+
+      async function seedCart(ownerId: string, linkedCompany: string | null): Promise<Target> {
+        const cartModule = container.resolve<ICartModuleService>(Modules.CART);
+        const cart = await cartModule.createCarts({
+          currency_code: 'dkk', customer_id: ownerId, email: 'owner@example.test',
+          region_id: regionId, sales_channel_id: channelId,
+        });
+        const [item] = await cartModule.addLineItems([{
+          cart_id: cart.id, title: 'Custom test item', quantity: 1, unit_price: 100,
+        }]);
+        const collection = await container.resolve<IPaymentModuleService>(Modules.PAYMENT)
+          .createPaymentCollections({ currency_code: 'dkk', amount: 100 });
+        await container.resolve(ContainerRegistrationKeys.LINK).create([
+          { [Modules.CART]: { cart_id: cart.id }, [Modules.PAYMENT]: { payment_collection_id: collection.id } },
+          ...(linkedCompany
+            ? [{ company: { company_id: linkedCompany }, [Modules.CART]: { cart_id: cart.id } }]
+            : []),
+        ]);
+        return { cartId: cart.id, collectionId: collection.id, lineId: item.id };
+      }
+
+      async function cartState(target: Target) {
+        const { data: [cart] } = await container.resolve(ContainerRegistrationKeys.QUERY).graph({
+          entity: 'cart',
+          fields: [
+            'customer_id', 'email', 'completed_at', 'company.id', 'items.id', 'items.quantity',
+            'shipping_methods.id', 'approvals.id', 'approvals.status',
+          ],
+          filters: { id: target.cartId },
+        });
+        const sessions = await container.resolve<IPaymentModuleService>(Modules.PAYMENT)
+          .listPaymentSessions({ payment_collection_id: target.collectionId });
+        const quotes = await container.resolve<QuoteModuleService>('quote').listQuotes({ cart_id: target.cartId });
+        return { cart, sessions: sessions.length, quotes: quotes.length };
+      }
+
+      async function expectRefused(
+        routes: GuardedRoute[], target: Target, as: { headers: Record<string, string> },
+      ) {
+        for (const route of routes) {
+          const missing = await send(route, MISSING, as);
+          expect({ route: label(route), body: missing.data }).toEqual({ route: label(route), body: NOT_FOUND });
+          const refused = await send(route, target, as);
+          expect({
+            route: label(route), status: refused.status, body: refused.data,
+            cache: refused.headers['cache-control'],
+          }).toEqual({ route: label(route), status: 404, body: missing.data, cache: 'private, no-store' });
+        }
+      }
+
+      async function expectReachesRoute(
+        routes: GuardedRoute[], target: Target, as: { headers: Record<string, string> },
+      ) {
+        for (const route of routes) {
+          const response = await send(route, target, as);
+          expect({ route: label(route), status: response.status, body: response.data })
+            .not.toMatchObject({ status: 404, body: NOT_FOUND });
+          expect({ route: label(route), status: response.status }).not.toEqual({ route: label(route), status: 401 });
+        }
+      }
+
+      beforeEach(async () => {
+        regionId = (await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+          name: 'Guard region', currency_code: 'dkk', countries: ['dk'],
+        })).id;
+        channelId = (await container.resolve<ISalesChannelModuleService>(Modules.SALES_CHANNEL)
+          .createSalesChannels({ name: 'Guard channel' })).id;
+        colleague = await addColleague('colleague@example.test');
+        const outsider = await createStoreUser({ api, storeHeaders: publicHeaders, email: 'foreign-admin@example.test' });
+        foreignAdmin = { headers: { ...publicHeaders.headers, authorization: `Bearer ${outsider.token}` } };
+        await api.post('/store/companies', {
+          name: 'Other company', email: 'other@example.test', currency_code: 'dkk',
+        }, foreignAdmin);
+      });
+
+      it('answers an anonymous caller with 401 on every guarded route and changes nothing', async () => {
+        const target = await seedCart(customerId, companyId);
+        const before = await cartState(target);
+        for (const route of ROUTES) {
+          const response = await send(route, target, publicHeaders);
+          expect({ route: label(route), status: response.status }).toEqual({ route: label(route), status: 401 });
+        }
+        expect(await cartState(target)).toEqual(before);
+      });
+
+      it.each([
+        ['an administrator of another company', async () => ({ target: await seedCart(customerId, companyId), as: foreignAdmin })],
+        ['a same-company colleague', async () => ({ target: await seedCart(customerId, companyId), as: colleague.headers })],
+        ['the owner after leaving the company', async () => {
+          const target = await seedCart(colleague.customerId, companyId);
+          expect((await api.delete(`/store/companies/${companyId}/employees/${colleague.employeeId}`, headers)).status)
+            .toBe(200);
+          return { target, as: colleague.headers };
+        }],
+        ["the owner of an employee's cart with no company link", async () => ({
+          target: await seedCart(customerId, null), as: headers,
+        })],
+        ['the owner of a cart linked to another company', async () => ({
+          target: await seedCart(customerId, foreignCompanyId), as: headers,
+        })],
+        ['an administrator when the cart has no admin approval', async () => ({
+          target: await seedCart(colleague.customerId, companyId), as: headers,
+        })],
+      ])('refuses %s on every guarded route like a missing cart and changes nothing', async (_label, setup) => {
+        const { target, as } = await setup();
+        const before = await cartState(target);
+        await expectRefused(ROUTES, target, as);
+        expect(await cartState(target)).toEqual(before);
+      });
+
+      it('refuses a stranger before the frozen-cart check on a cart under approval', async () => {
+        const target = await seedCart(customerId, companyId);
+        await attachAdminApproval(target.cartId, ApprovalStatusType.PENDING, customerId);
+        const before = await cartState(target);
+        await expectRefused(routesOf('owner'), target, colleague.headers);
+        expect(await cartState(target)).toEqual(before);
+      });
+
+      it('never lets a non-owner take a cart over through the customer route', async () => {
+        const target = await seedCart(customerId, companyId);
+        const response = await api.post(`/store/carts/${target.cartId}/customer`, {},
+          { ...colleague.headers, validateStatus: () => true });
+        expect(response.status).toBe(404);
+        expect((await cartState(target)).cart.customer_id).toBe(customerId);
+      });
+
+      it('lets the owner read and edit an editable cart', async () => {
+        const target = await seedCart(customerId, companyId);
+        const read = await api.get(`/store/carts/${target.cartId}`, headers);
+        expect({ status: read.status, id: read.data.cart.id, cache: read.headers['cache-control'] })
+          .toEqual({ status: 200, id: target.cartId, cache: 'private, no-store' });
+        const edited = await api.post(`/store/carts/${target.cartId}`, { email: 'edited@example.test' }, headers);
+        expect(edited.data.cart.email).toBe('edited@example.test');
+        const kept = await api.post(`/store/carts/${target.cartId}/customer`, {}, headers);
+        expect(kept.data.cart.customer_id).toBe(customerId);
+        await expectReachesRoute(ROUTES, target, headers);
+      });
+
+      it('lets an administrator read but not pay or edit a cart under pending approval', async () => {
+        const target = await seedCart(colleague.customerId, companyId);
+        await attachAdminApproval(target.cartId, ApprovalStatusType.PENDING, colleague.customerId);
+        const before = await cartState(target);
+        const read = await api.get(`/store/carts/${target.cartId}`, headers);
+        expect({ status: read.status, id: read.data.cart.id }).toEqual({ status: 200, id: target.cartId });
+        await expectReachesRoute(routesOf('read'), target, headers);
+        await expectRefused(routesOf('owner', 'pay'), target, headers);
+        expect(await cartState(target)).toEqual(before);
+      });
+
+      it('lets an administrator pay but never edit an approved cart', async () => {
+        const target = await seedCart(colleague.customerId, companyId);
+        await attachAdminApproval(target.cartId, ApprovalStatusType.APPROVED, colleague.customerId);
+        const before = await cartState(target);
+        await expectRefused(routesOf('owner'), target, headers);
+        expect(await cartState(target)).toEqual(before);
+        await expectReachesRoute(routesOf('read', 'pay'), target, headers);
       });
     });
 
