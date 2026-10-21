@@ -90,3 +90,14 @@
   published); the journey's country can lag in the storefront by up to 240 s.
 - Security case: the form status is a soft assertion (production-like: 401; otherwise 401 or 415)
   attached as `foreign-form-status.txt`, so the unchanged-document checks always run.
+
+## Fix 04: probe moved, Next control-flow errors rethrown
+
+- The planner's Region Query probe now lives at `issues/NIMBUS-176/samples/verify-region-query.ts`
+  (kept as evidence, not compiled); `apps/backend/scripts/` is gone and `medusa build` passes with
+  nothing moved aside. The samples JSON still names the old path: it records what was run.
+- `getCountryLanguageSnapshot` calls `unstable_rethrow(error)` (`next/navigation`, verified in the
+  installed next 15.5.18 `unstable-rethrow.server.js`: rethrows DynamicServerError, redirect/notFound,
+  postpone, bailout-to-CSR and hanging-promise errors, also via `error.cause`) before any fallback,
+  so a control-flow error sets no `retryAt` and logs nothing. Tests build a real
+  `DynamicServerError` from `next/dist/client/components/hooks-server-context`.

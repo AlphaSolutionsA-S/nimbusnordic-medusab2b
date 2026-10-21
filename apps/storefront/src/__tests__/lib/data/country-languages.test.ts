@@ -184,6 +184,19 @@ describe("getCountryLanguageSnapshot", () => {
     expect(snapshot.countries.some((entry) => entry.country_code === "nl")).toBe(false)
   })
 
+  it("rethrows Next's dynamic-usage error instead of falling back, logging or backing off", async () => {
+    const { DynamicServerError } = require("next/dist/client/components/hooks-server-context")
+    const dynamicUsage = new DynamicServerError("no-store fetch /store/country-languages")
+    fetchMock.mockRejectedValueOnce(dynamicUsage)
+
+    await expect(loader.getCountryLanguageSnapshot()).rejects.toBe(dynamicUsage)
+    expect(console.warn).not.toHaveBeenCalled()
+
+    fetchMock.mockResolvedValueOnce(publication)
+    expect(await loader.getCountryLanguageSnapshot()).toEqual({ ...publication, availability: "available" })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it.each([
     ["a non-object body", "nope"],
     ["a missing default", { countries: publication.countries }],

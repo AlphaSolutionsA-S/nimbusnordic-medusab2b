@@ -1,5 +1,6 @@
 import "server-only"
 
+import { unstable_rethrow } from "next/navigation"
 import { cache } from "react"
 
 import { sdk } from "@/lib/config"
@@ -63,6 +64,9 @@ export const getCountryLanguageSnapshot = cache(async (): Promise<CountryLanguag
     lastGood = { publication, at: Date.now() }
     return { ...publication, availability: "available" }
   } catch (error) {
+    // Next signals control flow by throwing (the no-store read during static generation throws
+    // DynamicServerError); it must reach Next, not become a legacy fallback.
+    unstable_rethrow(error)
     retryAt = Date.now() + COUNTRY_LANGUAGES_RETRY_MS
     // Structured and secret-free: no URL, headers or response body.
     console.warn("[country-languages] load failed", {
