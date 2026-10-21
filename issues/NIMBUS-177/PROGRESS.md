@@ -75,3 +75,24 @@
 - **Tracker:** "agreed rule or decision changed" comment on NIMBUS-177 (review findings 2–4, decision 7 option A, NIMBUS-205); comment on NIMBUS-204 with the changed goal. No status transitions.
 - **Next owner:** Klaus Petersen for a separate go-ahead to dispatch; then task-dispatcher.
 - **Handover prompt:** When Klaus explicitly says to start implementation, run task-dispatcher on `issues/NIMBUS-177/manifest.md` (branch `feature/NIMBUS-177` from develop; task order 01, 02, 03, 07, 06, 04, 05). Plan approval is not that go-ahead.
+
+## 2026-10-21 — Implementation done, at the implementation gate
+
+- **Updated by:** task-dispatcher.
+- **Outcome:** All seven tasks are done, reviewed and committed locally on `feature/NIMBUS-177` (from develop e4f7351):
+  - 01 aa91186, 02 578fd82, 03 4e292aa, 07 e99a94b, 06 dbdfee3, 04 5a3b7ce, 05 805f3ff;
+  - fix for a cookie cart the customer can read but not own (Klaus's decision) 79d96c1;
+  - consolidation 7e3985f;
+  - integration fixes M1–M3 5476a92.
+- **Whole-branch pass:**
+  - Finalization: only baseline failures remain. This includes `admin/shipment-tracking.spec.ts`, which also fails on develop but is not in the recorded baseline.
+  - Typecheck is at the baseline (backend 22, storefront 8), with lint at 0 errors and the backend build passing.
+  - The storefront build compiles but needs a reachable backend to collect page data.
+  - `pnpm ai:check` fails on the `AGENTS.md` size, as it did before this branch.
+  - `deviation-report.md` is written; the integration re-review approved it.
+- **Tracker:**
+  - NIMBUS-177: Klaus approved the estimate; it is now In Progress.
+  - NIMBUS-199 to NIMBUS-205: Done, with closing comments.
+- **Not pushed.** No PR exists.
+- **Next owner:** Klaus Petersen, to answer the deviation report's open questions 1–5.
+- **Handover prompt:** Answer the open questions in `issues/NIMBUS-177/deviation-report.md`, then re-invoke task-dispatcher on `issues/NIMBUS-177` to resume at "After the gate". The answers are not a push instruction.
