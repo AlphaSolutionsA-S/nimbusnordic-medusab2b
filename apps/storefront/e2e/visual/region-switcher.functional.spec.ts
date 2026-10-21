@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 
-import { readPublication } from './country-language-fixture';
+import { ensureCountryLanguagesInitialized, readPublication } from './country-language-fixture';
+import { PROJECT_COUNTRY_CODES } from './project-locales';
 
 const OTHER_REGION_BY_STARTING_COUNTRY: Record<string, string> = {
   dk: 'gb',
@@ -32,9 +33,11 @@ test('region switcher navigates to the selected region homepage', async ({ page 
 });
 
 // Labels come from the backend's country-language publication (NIMBUS-176), not a storefront list.
-test('region switcher labels each published country with its published language', async ({ page, request }, testInfo) => {
+test('region switcher labels each project country with its published language', async ({ page, request }, testInfo) => {
   test.skip(!process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY, 'needs NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY');
   const countryCode = testInfo.project.name.split('-')[0];
+  // Independent of test order: this may run before the journey that otherwise initializes the backend.
+  await ensureCountryLanguagesInitialized(request, testInfo);
   const publication = await readPublication(request);
   const published = publication.countries.find((entry) => entry.country_code === countryCode);
 
@@ -43,7 +46,12 @@ test('region switcher labels each published country with its published language'
   await expect(page.locator('html')).toHaveAttribute('lang', published?.locale ?? publication.default_locale);
   // The header's switcher: the footer renders a second one with the same test id.
   const switcher = page.locator('header').getByTestId('region-switcher');
-  for (const entry of publication.countries) {
-    await expect(switcher.locator(`option[value="${entry.country_code}"]`)).toContainText(`(${entry.locale})`);
+  // Only the project countries: the journey in locale-links changes another country's language in
+  // parallel, and the storefront's snapshot of that change can be up to 240 s older than the
+  // publication read here. The journey never changes a project country.
+  for (const projectCountry of PROJECT_COUNTRY_CODES) {
+    const entry = publication.countries.find((candidate) => candidate.country_code === projectCountry);
+    expect(entry, `published entry for ${projectCountry}`).toBeDefined();
+    await expect(switcher.locator(`option[value="${projectCountry}"]`)).toContainText(`(${entry?.locale})`);
   }
 });

@@ -245,6 +245,35 @@ Checks with no finding:
    - (b) push and run them on a disposable or staging environment before the storefront rollout
      step;
    - (c) accept the HTTP-level coverage and record the gap.
+
+   **Answer (Klaus Petersen, 2026-10-21):** (a) run them now against a local backend and storefront,
+   local database only. **Outcome:** run against the local dev database (`localhost/nimbus-medusa-dev`,
+   backend NODE_ENV development), project gb-desktop. The fourth run passed 5/5: the ninth-language
+   journey (4.1 min: Admin save, Admin and public read-backs, `html lang`, marked texts, decimal format,
+   switcher, one distinct hreflang per published country), the project-country switcher label check,
+   the foreign-origin case (credentialed JSON fetch blocked by the CORS preflight; text/plain form
+   refused; version and assignments unchanged), plus the two existing locale/switcher navigation tests.
+   The first three runs found branch defects, fixed with review before the fourth run (fix briefs 01–03):
+   - The operator apply switch never reached the bootstrap script: `medusa exec` runs yargs in strict
+     mode and rejects `--apply` (the HTTP spec called the script function directly, so it never saw
+     this). The script now takes the bare positional `apply` and refuses other arguments; docs updated.
+   - The journey added a country to a region mid-run, which storefront middleware cannot see for an
+     hour (pre-existing module-level region cache); it now uses a country already in a region.
+   - Fixture cleanup left a re-activated language active after a retry; the label test raced the
+     journey; the journey's retry could not choose a country. Fixed (cleanup keyed on activation,
+     label test limited to project countries, journey retries 0).
+   - The cross-site form got **401** on the development backend: Chromium withheld the session cookie
+     although Medusa sets no SameSite attribute there, not the expected 415 (the Deviations entry
+     above, "expects 415 against a development backend", is superseded). The spec now accepts 401 or
+     415 locally (exactly 401 on production-like backends) and always checks nothing was stored.
+
+   **Local data left by the runs (cleanup state):** the fixture's restore ran in the passing run (`nl`
+   language deactivated, the journey country put back on `en`, regions untouched; regions and users
+   identical before and after the fourth run). Left behind on purpose or because the API cannot undo it:
+   the country-language configuration is initialized (bootstrap `apply`, version 9); `nl` exists as an
+   inactive language; `es` and `nl` carry explicit `en` entries (`nl` is a retained entry from the second
+   run, when the old fixture added it to a region); the temporary Admin user
+   `e2e-nimbus176@example.test` remains (a user cannot delete itself; remove it in Admin).
 2. **Untracked `apps/backend/scripts/verify-region-query.ts`** (the planner's Region Query probe,
    referenced by PLAN.md and `samples/region-query-verification.json`). It has 3 strictNullChecks
    errors and breaks a local `medusa build` while present. Options:
@@ -252,6 +281,9 @@ Checks with no finding:
    - (b) delete it and keep the JSON sample as the record (PLAN.md's reference then points to a
      missing file, but the case folder is frozen after ship);
    - (c) move it into `issues/NIMBUS-176/samples/` as non-compiled evidence.
+
+   **Answer (Klaus Petersen, 2026-10-21):** (c) move it into `samples/` as evidence, out of the
+   backend build, and commit the move.
 3. **Rethrow Next's control-flow error in the loader.** Should `apps/storefront/src/lib/data/country-languages.ts`
    call `unstable_rethrow(error)` at the top of its `catch` (Findings 1)? Options:
    - (a) add it now as a fix commit (one line plus a test that a Next dynamic-usage error is not
@@ -260,6 +292,8 @@ Checks with no finding:
      `docs/architecture/country-languages.md` that `[countryCode]` routes must not adopt ISR
      `revalidate`;
    - (c) defer to a follow-up issue.
+
+   **Answer (Klaus Petersen, 2026-10-21):** (a) add `unstable_rethrow` to the loader now, with a test.
 4. **Activation is now session-only.** `POST /admin/ui-translations/:locale/activation` now refuses
    bearer tokens and secret API keys. Does any integration, script or Logic App call it with a token?
    Confirm "no" or name the caller.
@@ -270,12 +304,19 @@ Checks with no finding:
    the backend's `NODE_ENV` is `production` or `staging`. Confirm the Medusa Cloud environments
    (including preview and staging) run with one of those values. Otherwise the foreign-form defence
    rests only on the strict-JSON check.
+
+   **Answer (2026-10-21):** not answered at the gate. Recorded as a pre-deploy item owned by Klaus
+   Petersen: confirm `NODE_ENV` for every Medusa Cloud environment before deploying. Does not block
+   finishing the branch.
 6. **Jira parent status.** NIMBUS-176 is in "Estimation". Its workflow has no direct transition to
    In Progress (only "Estimate approved" → To Do), so the dispatcher did not move it. Options:
    - (a) the human moves it through "Estimate approved", then In Progress;
    - (b) leave it in Estimation until review;
    - (c) the committer moves it as part of the PR step after the human confirms the estimate is
      approved.
+
+   **Answer (2026-10-21):** not answered at the gate. Recorded as a pre-deploy item owned by Klaus
+   Petersen: decide who moves NIMBUS-176 out of Estimation and when. Does not block the branch.
 7. **Leftovers from consolidation.** Choose for each: fix now, or leave for a follow-up.
    - The duplicated `^[a-z]{2}$` check (route validator vs module `isCountryCode`).
    - The test-only `getCountryLanguageConfiguration()`.
@@ -283,10 +324,16 @@ Checks with no finding:
    - Older test names with plan ids (`TC-1`, `TC-2`, `TC-3`).
    - The stale `e2e/visual/README.md` `webServer` line.
    - The duplicated nav/footer region-option loop (pre-existing).
+
+   **Answer (Klaus Petersen, 2026-10-21):** defer all of them to a follow-up chore; no change on this
+   branch. The PR description lists them.
 8. **`pnpm ai:check` fails on `AGENTS.md` size.** It is 33,861 bytes against 32,768; the overrun is
    pre-existing and grew with the Tier 0 rows this branch added. Options:
    - (a) accept for this branch and open a harness issue to trim `AGENTS.md`;
    - (b) shorten the new `decisions.md` rows now.
+
+   **Answer (Klaus Petersen, 2026-10-21):** (a) accept the overrun on this branch; the size check is
+   fixed separately (follow-up).
 
 ## Verify after deploy
 

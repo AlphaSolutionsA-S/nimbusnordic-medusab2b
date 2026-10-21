@@ -6,7 +6,6 @@ import {
   FixtureState,
   loginAdmin,
   missingFixtureEnvironment,
-  NINTH_COUNTRY,
   NINTH_LOCALE,
   NINTH_TEXT_MARKER,
   prepareFixture,
@@ -29,9 +28,10 @@ test('internal links preserve the active locale', async ({ page }, testInfo) => 
 });
 
 // One end-to-end run against a real backend (NIMBUS-176): it changes backend data, so it runs in a
-// single project and serially.
+// single project and serially, and never retries (a retry starts from the data the first attempt
+// left behind, not from the original state).
 test.describe('a ninth language assigned in Admin', () => {
-  test.describe.configure({ mode: 'serial' });
+  test.describe.configure({ mode: 'serial', retries: 0 });
 
   let fixture: FixtureState | null = null;
 
@@ -56,25 +56,26 @@ test.describe('a ninth language assigned in Admin', () => {
     test.setTimeout(8 * 60_000);
     await loginAdmin(context.request);
     fixture = await prepareFixture(context.request, testInfo);
+    const { countryCode } = fixture;
 
     // The real Admin journey: Translations → edit the country → pick the language → save.
     await page.goto(`${BACKEND_URL}/app/translations`);
-    await page.getByRole('button', { name: `Edit language for ${NINTH_COUNTRY}` }).click();
+    await page.getByRole('button', { name: `Edit language for ${countryCode}` }).click();
     await page.getByRole('combobox', { name: 'Storefront language' }).click();
     await page.getByRole('option', { name: NINTH_LOCALE, exact: true }).click();
     await page.getByRole('button', { name: 'Save language' }).click();
-    await expect(page.getByLabel(`${NINTH_COUNTRY}: ${NINTH_LOCALE} (set explicitly)`)).toBeVisible();
+    await expect(page.getByLabel(`${countryCode}: ${NINTH_LOCALE} (set explicitly)`)).toBeVisible();
 
     const management = await readManagement(context.request);
     expect(management.countries).toContainEqual({
-      country_code: NINTH_COUNTRY,
+      country_code: countryCode,
       locale: NINTH_LOCALE,
       source: 'explicit',
       configured: true,
     });
     const publication = await readPublication(context.request);
     expect(publication.countries).toContainEqual({
-      country_code: NINTH_COUNTRY,
+      country_code: countryCode,
       locale: NINTH_LOCALE,
       source: 'explicit',
     });
@@ -89,7 +90,7 @@ test.describe('a ninth language assigned in Admin', () => {
 
     const shopper = await context.newPage();
     await expect(async () => {
-      await shopper.goto(`/${NINTH_COUNTRY}/store`);
+      await shopper.goto(`/${countryCode}/store`);
       await expect(shopper.locator('html')).toHaveAttribute('lang', NINTH_LOCALE);
     }).toPass({ timeout: 6 * 60_000, intervals: [10_000] });
 
@@ -104,14 +105,14 @@ test.describe('a ninth language assigned in Admin', () => {
     // The switcher labels every published country with its published language. The header's
     // switcher: the footer renders a second one with the same test id.
     const switcher = shopper.locator('header').getByTestId('region-switcher');
-    await expect(switcher).toHaveValue(NINTH_COUNTRY);
+    await expect(switcher).toHaveValue(countryCode);
     for (const entry of publication.countries) {
       await expect(switcher.locator(`option[value="${entry.country_code}"]`)).toContainText(`(${entry.locale})`);
     }
 
     await shopper.locator('a[href*="/products/"]').first().click();
-    await expect(shopper).toHaveURL(new RegExp(`/${NINTH_COUNTRY}/products/`));
-    const productPath = new URL(shopper.url()).pathname.replace(`/${NINTH_COUNTRY}`, '');
+    await expect(shopper).toHaveURL(new RegExp(`/${countryCode}/products/`));
+    const productPath = new URL(shopper.url()).pathname.replace(`/${countryCode}`, '');
     const alternates = await shopper
       .locator('head link[rel="alternate"][hreflang]')
       .evaluateAll((links) =>
@@ -134,21 +135,21 @@ test.describe('a ninth language assigned in Admin', () => {
       );
     }
     expect(alternates).toContainEqual({
-      hreflang: `${NINTH_LOCALE}-${NINTH_COUNTRY.toUpperCase()}`,
-      href: expect.stringMatching(new RegExp(`/${NINTH_COUNTRY}${productPath}$`)),
+      hreflang: `${NINTH_LOCALE}-${countryCode.toUpperCase()}`,
+      href: expect.stringMatching(new RegExp(`/${countryCode}${productPath}$`)),
     });
   });
 
   // What this proves depends on the backend's NODE_ENV (E2E_BACKEND_NODE_ENV, see the fixture):
   // - production or staging: the session cookie is sent as `SameSite=Lax; Secure`, so the browser
   //   withholds it from the foreign form POST and the route answers 401.
-  // - anything else (a local development backend): Medusa sets no SameSite attribute. Chromium then
-  //   treats the cookie as Lax by default but still sends a cookie younger than two minutes on a
-  //   top-level cross-site POST, so the form arrives authenticated and only the strict-JSON check
-  //   refuses it (415). Locally this proves the preflight and strict-JSON defences, not that the
-  //   cookie is withheld.
+  // - anything else (a local development backend): Medusa sets no SameSite attribute and Chromium
+  //   treats the cookie as Lax by default. Observed in this suite's Chromium: the cookie, set by an
+  //   API-context login, was withheld from the form POST (401). A browser that still sends a cookie
+  //   younger than two minutes on a top-level cross-site POST delivers it, and the strict-JSON check
+  //   refuses the text/plain body (415). Either is accepted; the report attaches which one happened.
   // In both, the credentialed JSON fetch is blocked by the CORS preflight and nothing is stored.
-  test('a foreign page cannot change the assignment with the Admin session', async ({ page, context }) => {
+  test('a foreign page cannot change the assignment with the Admin session', async ({ page, context }, testInfo) => {
     const setCookie = await loginAdmin(context.request);
     expect(setCookie, 'Set-Cookie of the session cookie').toBeDefined();
     if (BACKEND_IS_PRODUCTION_LIKE) {
@@ -159,10 +160,11 @@ test.describe('a ninth language assigned in Admin', () => {
     }
 
     const before = await readManagement(context.request);
-    const current = before.countries.find((entry) => entry.country_code === NINTH_COUNTRY)?.locale;
-    const otherLocale = before.active_locales.find((locale) => locale !== current);
+    const target = before.countries.find((entry) => entry.configured);
+    expect(target, 'a country in a region to try to reassign').toBeDefined();
+    const otherLocale = before.active_locales.find((locale) => locale !== target?.locale);
     expect(otherLocale, 'a second active language to try to assign').toBeDefined();
-    const endpoint = `${BACKEND_URL}/admin/country-languages/${NINTH_COUNTRY}`;
+    const endpoint = `${BACKEND_URL}/admin/country-languages/${target?.country_code}`;
 
     // A page on another site, served by the browser itself.
     await page.route('http://attacker.example/**', (route) =>
@@ -197,7 +199,21 @@ test.describe('a ninth language assigned in Admin', () => {
     const formResponse = page.waitForResponse((response) => response.url() === endpoint);
     await page.locator('form').evaluate((form: HTMLFormElement) => form.submit());
     // 401: the session cookie was withheld; 415: it was sent and the text/plain body was refused.
-    expect((await formResponse).status()).toBe(BACKEND_IS_PRODUCTION_LIKE ? 401 : 415);
+    const formStatus = (await formResponse).status();
+    const formOutcome = new Map([
+      [401, 'session cookie withheld'],
+      [415, 'session cookie sent, non-JSON body refused'],
+    ]).get(formStatus);
+    await testInfo.attach('foreign-form-status.txt', {
+      body: `${formStatus}: ${formOutcome ?? 'unexpected'}`,
+      contentType: 'text/plain',
+    });
+    // Soft, so the unchanged-document checks below always run.
+    if (BACKEND_IS_PRODUCTION_LIKE) {
+      expect.soft(formStatus, 'foreign form status').toBe(401);
+    } else {
+      expect.soft([401, 415], 'foreign form status').toContain(formStatus);
+    }
 
     const after = await readManagement(context.request);
     expect(after.version).toBe(before.version);

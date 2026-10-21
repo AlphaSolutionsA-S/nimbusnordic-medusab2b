@@ -3,14 +3,15 @@ import path from 'node:path';
 
 import { APIRequestContext, expect, TestInfo } from '@playwright/test';
 
+import { PROJECT_COUNTRY_CODES } from './project-locales';
+
 /**
  * Real-backend fixture for the country-language journeys (NIMBUS-176). It needs a running Medusa
  * backend with seeded regions, an Admin user and the storefront's publishable key; it changes that
- * backend's data (a ninth language, a region country, one assignment) and restores what it can.
- * Never point it at a shared or production backend.
+ * backend's data (a ninth language, one assignment) and restores what it can. Never point it at a
+ * shared or production backend.
  */
 export const BACKEND_URL = process.env.E2E_BACKEND_URL ?? 'http://localhost:9000';
-export const NINTH_COUNTRY = process.env.E2E_NINTH_COUNTRY ?? 'nl';
 export const NINTH_LOCALE = process.env.E2E_NINTH_LOCALE ?? 'nl';
 // Prefixed to every copied English text, so a rendered page shows which language's texts it uses.
 export const NINTH_TEXT_MARKER = `[${NINTH_LOCALE}] `;
@@ -76,12 +77,47 @@ export async function readManagement(request: APIRequestContext): Promise<Countr
   return (await response.json()) as CountryLanguageManagement;
 }
 
-export async function readPublication(request: APIRequestContext): Promise<CountryLanguagePublication> {
-  const response = await request.get(`${BACKEND_URL}/store/country-languages`, {
+function getPublication(request: APIRequestContext) {
+  return request.get(`${BACKEND_URL}/store/country-languages`, {
     headers: { 'x-publishable-api-key': process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY ?? '' },
   });
+}
+
+export async function readPublication(request: APIRequestContext): Promise<CountryLanguagePublication> {
+  const response = await getPublication(request);
   expect(response.status(), 'GET /store/country-languages').toBe(200);
   return (await response.json()) as CountryLanguagePublication;
+}
+
+/**
+ * Runs the operator bootstrap (which never overwrites) when the backend's country languages are not
+ * initialized yet (the publication answers 503). Needs only the publishable key: the bootstrap runs
+ * through the backend CLI against the backend's own database, not over HTTP.
+ */
+export async function ensureCountryLanguagesInitialized(
+  request: APIRequestContext,
+  testInfo: TestInfo
+): Promise<void> {
+  if ((await getPublication(request)).status() !== 503) return;
+  // The CLI boots the whole backend; that alone can exceed the default test timeout.
+  testInfo.setTimeout(testInfo.timeout + 3 * 60_000);
+  try {
+    const output = execFileSync(
+      'pnpm',
+      ['--filter', '@b2b-starter/backend', 'exec', 'medusa', 'exec', './src/scripts/bootstrap-country-languages.ts', 'apply'],
+      { cwd: path.resolve(__dirname, '../../../..'), encoding: 'utf8', shell: process.platform === 'win32' }
+    );
+    await testInfo.attach('bootstrap-output.txt', { body: output, contentType: 'text/plain' });
+  } catch (error) {
+    // Parallel workers can bootstrap at once: the loser fails fast on the configuration lock while
+    // the winner commits, so a failure counts only if the publication never becomes available.
+    await expect
+      .poll(async () => (await getPublication(request)).status(), {
+        message: `country-language bootstrap failed: ${String(error)}`,
+        timeout: 60_000,
+      })
+      .toBe(200);
+  }
 }
 
 export async function assignCountryLanguage(
@@ -97,46 +133,67 @@ export async function assignCountryLanguage(
   return (await response.json()) as CountryLanguageManagement;
 }
 
-/** What the fixture changed, so `restoreFixture` can put it back. */
+/** The journey's country and what the fixture changed, so `restoreFixture` can put it back. */
 export type FixtureState = {
-  createdLocale: boolean;
-  addedToRegion: { id: string; countries: string[] } | null;
+  countryCode: string;
+  activatedLocale: boolean;
   previousLocale: string | null;
 };
 
 /**
+ * The journey's country: `E2E_NINTH_COUNTRY` when set, otherwise the first country in a region that
+ * is on the default language, whether by default or by an explicit entry (an earlier run's restore
+ * leaves one). Never a country added to a region during the run: storefront middleware caches the
+ * region map for an hour, so it would route that country to the default one. Never a Playwright
+ * project country: changing its language would change the texts under the parallel project tests.
+ */
+function chooseJourneyCountry(management: CountryLanguageManagement): CountryLanguageManagement['countries'][number] {
+  const requested = process.env.E2E_NINTH_COUNTRY;
+  if (requested) {
+    if (PROJECT_COUNTRY_CODES.includes(requested)) {
+      throw new Error(
+        `E2E_NINTH_COUNTRY "${requested}" is a Playwright project country (${PROJECT_COUNTRY_CODES.join(', ')}). ` +
+          'Choose a country in a region that no project runs in.'
+      );
+    }
+    const entry = management.countries.find((candidate) => candidate.country_code === requested);
+    if (!entry?.configured) {
+      throw new Error(
+        `E2E_NINTH_COUNTRY "${requested}" is not in any region. Add it to a region before starting the storefront.`
+      );
+    }
+    return entry;
+  }
+  const entry = management.countries.find(
+    (candidate) =>
+      candidate.configured &&
+      candidate.locale === management.default_locale &&
+      !PROJECT_COUNTRY_CODES.includes(candidate.country_code)
+  );
+  if (!entry) {
+    throw new Error(
+      'No country in a region outside the Playwright project countries is on the default language. Set ' +
+        'E2E_NINTH_COUNTRY to such a country, or add one to a region before starting the storefront.'
+    );
+  }
+  return entry;
+}
+
+/**
  * Brings the backend to the journey's starting point: country languages initialized (the operator
- * bootstrap, which never overwrites), the ninth country in a region, and the ninth language active
- * with marked copies of the English texts.
+ * bootstrap, which never overwrites), a country chosen from those already in a region, and the
+ * ninth language active with marked copies of the English texts.
  */
 export async function prepareFixture(request: APIRequestContext, testInfo: TestInfo): Promise<FixtureState> {
-  if ((await request.get(`${BACKEND_URL}/admin/country-languages`)).status() === 503) {
-    const repoRoot = path.resolve(__dirname, '../../../..');
-    const output = execFileSync(
-      'pnpm',
-      ['--filter', '@b2b-starter/backend', 'exec', 'medusa', 'exec', './src/scripts/bootstrap-country-languages.ts', '--apply'],
-      { cwd: repoRoot, encoding: 'utf8', shell: process.platform === 'win32' }
-    );
-    await testInfo.attach('bootstrap-output.txt', { body: output, contentType: 'text/plain' });
-  }
-
-  const state: FixtureState = { createdLocale: false, addedToRegion: null, previousLocale: null };
+  await ensureCountryLanguagesInitialized(request, testInfo);
 
   const before = await readManagement(request);
-  const ninth = before.countries.find((entry) => entry.country_code === NINTH_COUNTRY);
-  if (!ninth?.configured) {
-    const regions = await request.get(`${BACKEND_URL}/admin/regions?fields=id,countries.iso_2&limit=1`);
-    expect(regions.ok(), 'list regions').toBeTruthy();
-    const [region] = ((await regions.json()) as { regions: { id: string; countries: { iso_2: string }[] }[] })
-      .regions;
-    const countries = region.countries.map((country) => country.iso_2);
-    const update = await request.post(`${BACKEND_URL}/admin/regions/${region.id}`, {
-      data: { countries: [...countries, NINTH_COUNTRY] },
-    });
-    expect(update.ok(), `add ${NINTH_COUNTRY} to region ${region.id}`).toBeTruthy();
-    state.addedToRegion = { id: region.id, countries };
-  }
-  state.previousLocale = ninth?.source === 'explicit' ? ninth.locale : null;
+  const country = chooseJourneyCountry(before);
+  const state: FixtureState = {
+    countryCode: country.country_code,
+    activatedLocale: false,
+    previousLocale: country.source === 'explicit' ? country.locale : null,
+  };
 
   if (!before.active_locales.includes(NINTH_LOCALE)) {
     const locales = (await (await request.get(`${BACKEND_URL}/admin/ui-translations`)).json()) as {
@@ -153,37 +210,34 @@ export async function prepareFixture(request: APIRequestContext, testInfo: TestI
       expect(created.status(), `create ${NINTH_LOCALE}`).toBe(201);
       target = ((await created.json()) as { translation: { locale: string; version: number; is_active: boolean } })
         .translation;
-      state.createdLocale = true;
     }
     const activation = await request.post(`${BACKEND_URL}/admin/ui-translations/${NINTH_LOCALE}/activation`, {
       data: { expected_version: target.version, is_active: true },
     });
     expect(activation.ok(), `activate ${NINTH_LOCALE}`).toBeTruthy();
+    state.activatedLocale = true;
   }
   return state;
 }
 
-/** Undoes the assignment, region change and language activation the fixture made. */
+/** Undoes the assignment and language activation the fixture made. */
 export async function restoreFixture(request: APIRequestContext, state: FixtureState): Promise<void> {
+  // Reassign first: the backend refuses to deactivate a language that is still assigned.
   const current = await readManagement(request);
-  const ninth = current.countries.find((entry) => entry.country_code === NINTH_COUNTRY);
-  if (ninth && ninth.locale !== (state.previousLocale ?? current.default_locale)) {
-    await assignCountryLanguage(request, NINTH_COUNTRY, state.previousLocale ?? current.default_locale);
+  const entry = current.countries.find((candidate) => candidate.country_code === state.countryCode);
+  if (entry && entry.locale !== (state.previousLocale ?? current.default_locale)) {
+    await assignCountryLanguage(request, state.countryCode, state.previousLocale ?? current.default_locale);
   }
-  if (state.createdLocale) {
+  if (state.activatedLocale) {
     const locales = (await (await request.get(`${BACKEND_URL}/admin/ui-translations`)).json()) as {
       locales: { locale: string; version: number }[];
     };
-    const target = locales.locales.find((entry) => entry.locale === NINTH_LOCALE);
+    const target = locales.locales.find((candidate) => candidate.locale === NINTH_LOCALE);
     if (target) {
-      await request.post(`${BACKEND_URL}/admin/ui-translations/${NINTH_LOCALE}/activation`, {
+      const deactivation = await request.post(`${BACKEND_URL}/admin/ui-translations/${NINTH_LOCALE}/activation`, {
         data: { expected_version: target.version, is_active: false },
       });
+      expect(deactivation.ok(), `deactivate ${NINTH_LOCALE}`).toBeTruthy();
     }
-  }
-  if (state.addedToRegion) {
-    await request.post(`${BACKEND_URL}/admin/regions/${state.addedToRegion.id}`, {
-      data: { countries: state.addedToRegion.countries },
-    });
   }
 }

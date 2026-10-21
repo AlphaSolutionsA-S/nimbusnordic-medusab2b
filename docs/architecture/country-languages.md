@@ -89,8 +89,9 @@ In order, per environment:
 1. Deploy the backend (migration `country_language_configuration`).
 2. Run the bootstrap dry run, then apply it:
    `pnpm --filter @b2b-starter/backend exec medusa exec ./src/scripts/bootstrap-country-languages.ts`
-   and the same with `--apply`. Apply refuses when a legacy language is missing or inactive (activate
-   it first) and never overwrites an existing configuration.
+   and the same with the bare argument `apply` (not `--apply`: `medusa exec` rejects unknown options).
+   Apply refuses when a legacy language is missing or inactive (activate it first) and never
+   overwrites an existing configuration.
 3. Read back `GET /admin/country-languages` and `GET /store/country-languages`: 200, every configured
    country with the expected language.
 4. Deploy the storefront. Until step 2 has run the publication is 503 and storefront workers stay on
@@ -100,8 +101,9 @@ In order, per environment:
 
 ## Verify after deploy
 
-Tests do not prove the rollout. After a real Admin save on a test country (for example `nl` set to
-`nl`), record: the stored assignments and version (`GET /admin/country-languages`), the public entry
+Tests do not prove the rollout. After a real Admin save on a test country that was already in a
+region when the storefront started (for example `nl` set to `nl`; storefront middleware caches the
+region map for an hour, so a country just added to a region is not routed as that country), record: the stored assignments and version (`GET /admin/country-languages`), the public entry
 (`GET /store/country-languages`: country, locale, source), and on that country's product page the
 `<html lang>`, a translated text, a formatted price and the `hreflang` alternates, within five minutes
 of the save.

@@ -22,7 +22,7 @@
 - 200, 409 and 503 responses from these three routes carry `Cache-Control: no-store` (`sendWorkflowResult` in `src/api/utils/workflow-error-response.ts`); middleware 400/401/413/415 responses do not.
 - Errors: 400 framework `{type:"invalid_data", message}` (bad body, malformed or unconfigured country); 401 `{message:"Unauthorized"}`; 409 `{type:"conflict", code:"invalid_state_error", message}` with the domain message kept (stale: "changed by someone else"; inactive: `"fr" is not an active language`; not initialized; deactivation: `…assigned to countries: se.`); 413 body over 1 KiB; 415 `{type:"unsupported_media_type"}` for non-JSON; 503 `{type:"unavailable", message:"Country languages are not available"}` for uninitialized or broken publication (both GETs).
 - Auth: both Admin routes and `POST /admin/ui-translations/:locale/activation` accept only the dashboard session cookie (`requireAdminSession` in `src/api/middlewares/require-admin-session.ts`); bearer tokens and secret API keys get 401. The Admin SDK (`src/admin/lib/client.ts`, `auth: {type:"session"}`) already works; use `sdk.client.fetch` with a plain object body so it is sent as `application/json`. Activation now also needs JSON and ≤1 KiB; its body and response are unchanged, but its 409s now carry the domain message instead of the framework's generic retry text.
-- Operator bootstrap: `pnpm --filter @b2b-starter/backend exec medusa exec ./src/scripts/bootstrap-country-languages.ts` is a dry run (no writes) logging `{mode, configured_country_codes, assignments, report:{initialized, unavailable_locales}}`; add `--apply` to initialize (`applied.bootstrap` and `applied.publication` readback). Apply fails listing unavailable languages and never overwrites an existing configuration. Legacy map: `LEGACY_COUNTRY_LANGUAGES` in the script.
+- Operator bootstrap: `pnpm --filter @b2b-starter/backend exec medusa exec ./src/scripts/bootstrap-country-languages.ts` is a dry run (no writes) logging `{mode, configured_country_codes, assignments, report:{initialized, unavailable_locales}}`; add the bare positional `apply` to initialize (`applied.bootstrap` and `applied.publication` readback). Apply fails listing unavailable languages and never overwrites an existing configuration. Legacy map: `LEGACY_COUNTRY_LANGUAGES` in the script.
 - Workflows (`src/workflows/storefront-translation/workflows/`): `getCountryLanguageManagementWorkflow`, `assignCountryLanguageWorkflow`, `publishCountryLanguagesWorkflow`, `bootstrapCountryLanguagesWorkflow`; Region membership via `listConfiguredCountryCodesStep` (`region` → `countries.iso_2`).
 - Test pitfalls: HTTP specs need `JWT_SECRET=supersecret` in the shell when the local `apps/backend/.env` sets another value (in-app runner reads `.env` first; every bearer admin call then gets 401). `createAdminSession(api)` in `integration-tests/utils/admin.ts` logs in through the real routes and returns `{headers:{cookie}}`.
 
@@ -53,8 +53,40 @@
 - `getFormattingLocale` keeps the eight legacy tags in a `Map` (no prototype lookups); any other `Intl.getCanonicalLocales`-valid tag is returned canonical; malformed → `en-GB`. Verified on Node 22.17: `Intl.NumberFormat("xx")` resolves to the host default (here `en-DK`).
 - Deleted `SUPPORTED_LOCALES`, `Locale`, `getLocaleForCountry`; nothing in `apps/storefront` references them.
 - Playwright journey and security case are NOT run yet: they need a running backend plus `E2E_ADMIN_EMAIL`, `E2E_ADMIN_PASSWORD`, `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` (see `e2e/visual/README.md`) and they change backend data. Run only against a local or disposable backend: `pnpm --filter @b2b-starter/storefront test:visual -- locale-links region-switcher --project gb-desktop`.
-- Medusa sets the session cookie's `SameSite=Lax; Secure` only when the backend's NODE_ENV is production or staging, and no SameSite otherwise (`@medusajs/framework/dist/http/express-loader.js`, `resolveSessionCookieSecurity`); Playwright's `context.cookies()` may report a missing attribute as `Lax`, so read the raw `Set-Cookie` (`loginAdmin` now returns it). Admin route order is `requireAdminSession` then `requireJsonBody`: 401 means the cookie was withheld, 415 that it was sent.
+- Medusa sets the session cookie's `SameSite=Lax; Secure` only when the backend's NODE_ENV is production or staging, and no SameSite otherwise (`@medusajs/framework/dist/http/express-loader.js`, `resolveSessionCookieSecurity`); Playwright's `context.cookies()` may report a missing attribute as `Lax`, so read the raw `Set-Cookie` (`loginAdmin` now returns it). Admin route order is `requireAdminSession` then `requireJsonBody`: 401 means the cookie was withheld, 415 that it was sent. Observed against a development backend (fix 03): 401, Chromium withheld the API-context login's cookie from the cross-site form POST; 415 remains possible in a browser that sends it.
 - The main layout renders `data-testid="region-switcher"` twice (header and footer); scope to `locator('header')`.
 - Full storefront Jest: 2 failing suites, both outside this branch's changes: `main-layout.test.tsx` (known) and `product-tabs/index.test.tsx` ("A React Element from an older version of React", react-markdown resolving a second React).
 - `pnpm ai:check` still fails only on `AGENTS.md` size (33,861 bytes after this task's Tier 0 edits).
 - New architecture page `docs/architecture/country-languages.md` holds the rollout order and the after-deploy checklist.
+
+## Fix 01: bootstrap apply argument and journey ordering
+
+- `medusa exec` (CLI `exec [file] [args..]`, yargs `.strict()`, `@medusajs/cli/dist/create-cli.js` ~601/~700) rejects any `--option` it does not declare and prints help before the script loads. Positionals arrive as strings in `ExecArgs.args`: probed `apply` → `["apply"]`, none → `[]`.
+- The script's `bootstrapMode(args)` returns `"dry-run"` for `[]`, `"apply"` for `["apply"]`, and throws a usage error for anything else (so `--apply` passed some other way never silently dry-runs).
+- e2e: `ensureCountryLanguagesInitialized(request, testInfo)` in `country-language-fixture.ts` checks the public publication (publishable key only, no Admin login) and runs the apply bootstrap on 503; it extends the test timeout by 3 min while doing so and, if the CLI fails, polls up to 60 s for a parallel worker's bootstrap to land. `prepareFixture` and the region-switcher label test both call it.
+
+## Fix 02: journey country and fixture cleanup
+
+- Storefront middleware (`src/middleware.ts`, `regionMapCache`) keeps the region map in module memory
+  for an hour: a country added to a region while the storefront runs is routed to the default country
+  (not-found page, no `lang`). The e2e fixture therefore never changes regions.
+- `prepareFixture` returns `FixtureState = { countryCode, activatedLocale, previousLocale }`; the
+  journey uses `fixture.countryCode`. Country: `E2E_NINTH_COUNTRY` (must be configured) or the first
+  configured country with `source: 'default'`.
+- Restore reassigns first, then deactivates when `activatedLocale` (asserted). No API removes an
+  explicit entry, so the chosen country stays explicit on the default language after a run; repeat
+  runs need `E2E_NINTH_COUNTRY` once no default-source country is left (superseded by fix 03).
+
+## Fix 03: journey retry, label-test race and cross-site form status
+
+- `e2e/visual/project-locales.ts` exports `PROJECT_LOCALES` (used by `playwright.config.ts` for the
+  16 projects) and `PROJECT_COUNTRY_CODES` (`dk gb se no pl it fr de`).
+- The journey describe runs with `retries: 0` (the config's global `retries: 1` no longer applies to
+  it): it changes data, so a retry starts from attempt 1's leftovers and hides its real failure.
+- `chooseJourneyCountry` takes the first configured country whose `locale === default_locale`
+  (explicit or default source) and never a project country; `E2E_NINTH_COUNTRY` naming a project
+  country throws. Repeat runs therefore reuse the previous run's country without the variable.
+- The region-switcher label test asserts only the project countries' labels (each must be
+  published); the journey's country can lag in the storefront by up to 240 s.
+- Security case: the form status is a soft assertion (production-like: 401; otherwise 401 or 415)
+  attached as `foreign-form-status.txt`, so the unchanged-document checks always run.

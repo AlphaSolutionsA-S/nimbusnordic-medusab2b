@@ -1,15 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const LOCALES = [
-  { countryCode: 'dk', locale: 'da-DK' },
-  { countryCode: 'gb', locale: 'en-GB' },
-  { countryCode: 'se', locale: 'sv-SE' },
-  { countryCode: 'no', locale: 'nb-NO' },
-  { countryCode: 'pl', locale: 'pl-PL' },
-  { countryCode: 'it', locale: 'it-IT' },
-  { countryCode: 'fr', locale: 'fr-FR' },
-  { countryCode: 'de', locale: 'de-DE' },
-];
+import { PROJECT_LOCALES } from './e2e/visual/project-locales';
 
 const VIEWPORTS = {
   desktop: devices['Desktop Chrome'],
@@ -57,7 +48,7 @@ export default defineConfig({
   // 8 locales x 2 viewports = 16 projects. `countryCode` is not passed through
   // `use` (Playwright's `use` type doesn't support arbitrary custom keys) —
   // specs derive it from `testInfo.project.name` instead (e.g. "dk-desktop" -> "dk").
-  projects: LOCALES.flatMap(({ countryCode, locale }) =>
+  projects: PROJECT_LOCALES.flatMap(({ countryCode, locale }) =>
     Object.entries(VIEWPORTS).map(([viewportName, device]) => ({
       name: `${countryCode}-${viewportName}`,
       use: {

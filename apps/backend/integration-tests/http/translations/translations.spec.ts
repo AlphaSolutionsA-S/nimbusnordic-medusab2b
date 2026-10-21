@@ -523,7 +523,7 @@ medusaIntegrationTestRunner({
           report: { initialized: false, unavailable_locales: ["sv"] },
         });
         expect(await configuration()).toBeNull();
-        await expect(runBootstrap("--apply")).rejects.toMatchObject({
+        await expect(runBootstrap("apply")).rejects.toMatchObject({
           message: expect.stringContaining("before initializing country languages: sv."),
         });
         expect(await configuration()).toBeNull();
@@ -534,7 +534,7 @@ medusaIntegrationTestRunner({
         const nordics = await createRegion(["dk", "se", "gb", "nl"]);
         await activeLanguages("en", "da", "sv", "nl");
 
-        expect(await runBootstrap("--apply")).toEqual({
+        expect(await runBootstrap("apply")).toEqual({
           mode: "apply",
           configured_country_codes: ["dk", "gb", "nl", "se"],
           assignments: { dk: "da", gb: "en", se: "sv" },
@@ -588,7 +588,7 @@ medusaIntegrationTestRunner({
           country_code: "nl", locale: "nl", source: "explicit",
         });
 
-        const repeated = await runBootstrap("--apply");
+        const repeated = await runBootstrap("apply");
         const edited = { assignments: { dk: "da", gb: "en", nl: "nl", se: "sv" }, version: 2 };
         expect(repeated.applied?.bootstrap).toEqual({ created: false, configuration: edited });
         expect(await configuration()).toEqual(edited);
@@ -618,7 +618,7 @@ medusaIntegrationTestRunner({
         await createRegion(["dk", "gb"]);
         await activeLanguages("en", "da");
         expect((await importLocale("fr")).status).toBe(201);
-        await runBootstrap("--apply");
+        await runBootstrap("apply");
         const before = await configuration();
         expect(before).toEqual({ assignments: { dk: "da", gb: "en" }, version: 1 });
 
@@ -631,7 +631,7 @@ medusaIntegrationTestRunner({
         await createRegion(["dk"]);
         await activeLanguages("en", "da");
         expect((await importLocale("fr")).status).toBe(201);
-        await runBootstrap("--apply");
+        await runBootstrap("apply");
         expect((await save("dk", assignBody("en", 7))).data.message).toContain("changed by someone else");
         expect((await save("dk", assignBody("fr"))).data.message).toContain('"fr" is not an active language');
       });
@@ -639,7 +639,7 @@ medusaIntegrationTestRunner({
       it("keeps a removed country's entry for reassignment and blocks deactivating its language until then", async () => {
         const nordics = await createRegion(["dk", "se"]);
         await activeLanguages("en", "da", "sv");
-        await runBootstrap("--apply");
+        await runBootstrap("apply");
         await setRegionCountries(nordics.id, ["dk"]);
 
         expect((await publicRead()).data.countries).toEqual([
@@ -676,7 +676,7 @@ medusaIntegrationTestRunner({
       it("stops publishing when a published language is no longer active", async () => {
         await createRegion(["dk"]);
         await activeLanguages("en", "da");
-        await runBootstrap("--apply");
+        await runBootstrap("apply");
         const [da] = await service().listStorefrontTranslations({ locale: "da" });
         await service().updateStorefrontTranslations({ id: da.id, is_active: false });
 
