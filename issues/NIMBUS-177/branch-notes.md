@@ -57,3 +57,8 @@
 - New translation keys must be imported in every environment before release (for 05's rollout note).
 - Running storefront jest needs `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` set (any value) in the env, else the required-env check aborts the run before any test.
 - Storefront full suite on this branch: 3 failing suites, all on baseline: `app/main-layout.test.tsx` (asserts a promo banner the layout never renders), `lib/util/money.test.ts`, `modules/products/components/product-tabs/index.test.tsx`.
+
+## 05 Documentation
+- `docs/security-remediation.md` now has "Cart access (NIMBUS-177)" and "Order access (NIMBUS-177)" under "API behavior", a "Cart and order access rollout (NIMBUS-177)" section (before "CMS deployment") with an after-deploy check list, and a NIMBUS-177 paragraph in "Regression coverage"; the intro and closing line mark finding 8 fixed for carts, open for orders.
+- Storefront orders get the client company only in order metadata (core `completeCartWorkflow` copies cart metadata and never runs `createOrderWorkflow`, so `hooks/order-created.ts` writes no order–company link for them; plan section 5 is wrong there). Business Central submission reads metadata `company_id` only after finding `canonical_order` (ingestion-only); the doc states this.
+- No test counts were written into the doc's "Validation results" table: that table is dated 2026-09-20 and no NIMBUS-177 finalization run exists yet.

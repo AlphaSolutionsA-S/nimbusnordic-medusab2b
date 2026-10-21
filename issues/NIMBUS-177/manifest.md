@@ -30,7 +30,7 @@
 | 06 | Order access decision and guard; transfer request and cancel return no order; account-owned orders not transferable | `06-order-access-guard.md` | backend | F3 extended to store order-by-ID routes (decisions 3–7), NFR fail closed | 01, 03 | NIMBUS-204 | DONE |
 | 07 | Approval list and decisions respect the verified association | `07-approval-routes-association.md` | backend | F3 (approval IDs), F6, business rule "ambiguous carts refused" | 01 | NIMBUS-205 | DONE |
 | 04 | Storefront sign-in, cart lifecycle and messages | `04-storefront-cart-lifecycle.md` | storefront | F5, F7, F8 (old cookies), NFR logout/account switch and caching (carts and orders) | 02, 03 | NIMBUS-202 | DONE |
-| 05 | Document cart access rules and rollout | `05-document-cart-access.md` | docs | F8 (rollout procedure), NFR documentation (carts and orders) | 02, 03, 04, 06, 07 | NIMBUS-203 | TODO |
+| 05 | Document cart access rules and rollout | `05-document-cart-access.md` | docs | F8 (rollout procedure), NFR documentation (carts and orders) | 02, 03, 04, 06, 07 | NIMBUS-203 | DONE |
 
 ## Scope items with no task
 | Scope item | Reason (already done / external / not needed) |
