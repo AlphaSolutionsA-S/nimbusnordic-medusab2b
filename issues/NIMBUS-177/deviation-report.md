@@ -274,6 +274,23 @@ this branch; the coordinator handles it separately.
    - (a) Add it to `decisions.md`. That also grows `AGENTS.md`.
    - (b) Leave it, since the rule has one home and a comment.
 
+### Answers (Klaus Petersen, 2026-10-21)
+
+1. D1: **(a)**, fix on this branch, test-first. An administrator who follows the link from an
+   approved colleague cart reaches checkout with that colleague's cart, and is not caught in a
+   redirect loop.
+2. D2: **(a)**, add `is_draft_order: false` to the transfer check's order read, with a test, on this
+   branch.
+3. `admin/shipment-tracking.spec.ts`: **(b)**. It is not added to the `verification.md` baseline, and
+   Klaus registers a separate bug. The same test also fails on develop e4f7351 (one test, same
+   assertion).
+4. `Layout.cartMismatchBanner`: keep the keys in every environment. Nothing to do beyond recording it
+   in the rollout doc where the keys are mentioned.
+5. D5: **(b)**, no `decisions.md` row for the active-cart rule.
+
+Since 4de1d4a, `ai:check` passes again after the coordinator trimmed `AGENTS.md`. There are 69 bytes of
+headroom left in the Windows checkout, so this branch adds no text to `ai/`.
+
 ## Verify after deploy
 
 - **02 Trusted company link at cart creation:** company–cart link row (`links/company-carts.ts`) for

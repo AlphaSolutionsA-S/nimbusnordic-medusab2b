@@ -140,8 +140,9 @@ No data migration runs; the rules are evaluated on each request.
   login and before add to cart. A cookie cart the customer can read but does
   not own (an administrator's view of a colleague's cart under admin approval)
   is dropped at login, and add to cart starts a new cart instead of using it.
-  Approval pages and the redirect after approving open a colleague's cart
-  through the explicit `cartId` query, not through the cookie.
+  Approval pages, the approval card's "Place order" link and the redirect
+  after approving open a colleague's cart through the explicit `cartId` query,
+  not through the cookie.
 - Existing orders need no migration either.
 - Signed-out visitors can no longer create carts; the storefront asks them to
   sign in instead. Deploy the backend and storefront together: the earlier
@@ -153,7 +154,8 @@ No data migration runs; the rules are evaluated on each request.
   `apps/storefront/messages/*.json`: `Common.errors.signInRequired`,
   `Common.errors.cartUnavailable` and `Cart.unavailableNotice.heading`,
   `.message` and `.exploreProductsLabel`. Without them customers see raw keys.
-  `Layout.cartMismatchBanner` is no longer used and can be retired.
+  `Layout.cartMismatchBanner` is no longer used; its keys stay in every
+  environment's translation database (harmless).
 - Known limit, unchanged: a bearer token stays valid until it expires (one day
   by default) after logout; logout only removes it from the browser.
 
