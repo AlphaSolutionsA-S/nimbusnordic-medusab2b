@@ -79,6 +79,8 @@ approved cart; transfer request response body for a test order is `{ "success": 
 - `pnpm ai:check --fix` regenerated the tier0 blocks in `AGENTS.md` and
   `.github/copilot-instructions.md` after the registry edit (it still fails on the pre-existing
   `AGENTS.md` size).
+- Gate fix D2: the transfer check (`validate-order-transferable`) also reads with
+  `is_draft_order: false`, so a draft order answers the unknown order's 404 there too.
 
 ## Done-when evidence
 - Unit tests (order decision, read and return): `src/workflows/order/__tests__/order-access.unit.spec.ts`
@@ -112,3 +114,6 @@ approved cart; transfer request response body for a test order is `{ "success": 
 - Also update `docs/security-remediation.md`: left to task 05, as the line says.
 - Also update existing tests: none found (no test or storefront caller of the transfer routes or
   `/store/returns`; `S/lib/data/orders.ts` reads `/store/orders/:id` with the caller's token, task 04).
+- Gate fix D2: "answers a transfer request for a draft order of %s like an unknown order" (another
+  account, guest, no customer; 404 with the unknown order's body, no order change) failed first
+  (400, 200, 200), then passed; full security spec 84 passed.

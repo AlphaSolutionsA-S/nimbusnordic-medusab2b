@@ -12,7 +12,7 @@ export const validateOrderTransferableStep = createStep(
     const { data: [order] } = await query.graph({
       entity: "order",
       fields: ["id", "customer_id"],
-      filters: { id: input.order_id },
+      filters: { id: input.order_id, is_draft_order: false },
     });
     if (!order) {
       throw new MedusaError(MedusaError.Types.NOT_FOUND, "Order not found");

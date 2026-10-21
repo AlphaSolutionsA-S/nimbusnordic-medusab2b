@@ -69,3 +69,7 @@
 - Approval card "Place order" (link and `router.push`) now targets `/checkout?cartId=<id>&step=payment`, the same query as `lib/data/approvals.ts`; nothing in the storefront sends `cart_id` to checkout any more.
 - `middleware.ts` reads only `cart_id`: with `cart_id` and no cookie cart it returns its initial redirect to `request.nextUrl.href` (the loop); with `cart_id` and no `step` it copies the id into `_medusa_cart_id`. `cartId` reaches neither branch (pinned in `middleware.test.ts`). The `cart_id` path itself is unchanged.
 - Component test for the card: `src/__tests__/modules/account/components/approval-card-actions.test.tsx` mocks `next/navigation`, `@/lib/data/approvals` and `usePrompt` only.
+
+## Gate fix D2 (draft orders in the transfer check)
+- `steps/validate-order-transferable.ts` filters `is_draft_order: false`, like the order guard; a draft answers 404 `Order not found`.
+- `CreateOrderDTO` (types 2.21.0) has no `is_draft_order`; `UpdateOrderDTO` does. Specs seed a draft with `createOrders` then `updateOrders(id, { is_draft_order: true })` (no cast). Full security spec: 84 tests.

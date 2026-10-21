@@ -909,6 +909,25 @@ medusaIntegrationTestRunner({
           expect(response.status).toBe(404);
         });
 
+        it.each(['another account', 'a guest customer', 'no customer'])(
+          'answers a transfer request for a draft order of %s like an unknown order',
+          async (kind) => {
+            const ownerId = kind === 'another account' ? colleague.customerId
+              : kind === 'no customer' ? null
+                : (await container.resolve<ICustomerModuleService>(Modules.CUSTOMER)
+                  .createCustomers({ email: 'draft-guest@example.test', has_account: false })).id;
+            // CreateOrderDTO does not declare is_draft_order; UpdateOrderDTO does.
+            const draft = await seedOrder(ownerId);
+            await orders().updateOrders(draft, { is_draft_order: true });
+            const missing = await transfer('request', 'order_missing', headers);
+            const response = await transfer('request', draft, headers);
+            expect({ status: response.status, body: response.data })
+              .toEqual({ status: 404, body: missing.data });
+            expect(response.data).toEqual(ORDER_NOT_FOUND);
+            expect(await changeCount(draft)).toBe(0);
+          },
+        );
+
         it("lets the company's administrators read, and return, a colleague's order one of them paid", async () => {
           const { optionId, variantId } = await seedCheckout();
           const approvals = container.resolve<ApprovalModuleService>('approval');
