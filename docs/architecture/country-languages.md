@@ -67,6 +67,11 @@ session cookie; bearer tokens and secret API keys get 401. All three responses a
   after at most 10 seconds. A worker that never loaded one uses the legacy map (`legacy`): the eight
   original countries and languages. Failures are never cached as results, nothing is shared between
   workers and nothing survives a restart.
+- Next's own control-flow errors are not failures: the loader passes them on with
+  `unstable_rethrow` before its fallback. During `next build` the `no-store` read throws Next's
+  dynamic-usage error, so `[countryCode]` routes render per request and no build-time (legacy)
+  snapshot is baked into a page. Keep it that way: a `[countryCode]` route must not export an ISR
+  `revalidate`, which would store whatever snapshot a regeneration saw.
 - UI texts still come from `/store/ui-translations/:locale` with their own 300-second cache
   (`lib/i18n/README.md`); a newly assigned language therefore needs its texts active first.
 
@@ -103,10 +108,16 @@ In order, per environment:
 
 Tests do not prove the rollout. After a real Admin save on a test country that was already in a
 region when the storefront started (for example `nl` set to `nl`; storefront middleware caches the
-region map for an hour, so a country just added to a region is not routed as that country), record: the stored assignments and version (`GET /admin/country-languages`), the public entry
+region map for an hour, so a country just added to a region is not routed as that country), record:
+the stored assignments and version (`GET /admin/country-languages`), the public entry
 (`GET /store/country-languages`: country, locale, source), and on that country's product page the
 `<html lang>`, a translated text, a formatted price and the `hreflang` alternates, within five minutes
-of the save.
+of the save. `<html lang>` is set on the client (`HtmlLangSync`), so read it in a browser after
+hydration; in the server HTML check the text and `hreflang` instead.
+
+Before deploying, confirm each Medusa Cloud backend runs with `NODE_ENV` `production` or `staging`:
+only then does Medusa set `SameSite=Lax; Secure` on the Admin session cookie. Otherwise the defence
+against a foreign form posting to the session-only routes rests on the strict-JSON check (415) alone.
 
 ## Limits
 
@@ -116,4 +127,6 @@ of the save.
 - Raw keys show where a country is assigned a language whose texts are missing in that environment.
 - Browser checks: `apps/storefront/e2e/visual/locale-links.functional.spec.ts` (ninth-language
   journey and the foreign-origin mutation case) and `region-switcher.functional.spec.ts` need a running
-  backend and the environment listed in `e2e/visual/README.md`.
+  backend and the environment listed in `e2e/visual/README.md`. Against a development backend the
+  foreign-origin form gets 401 (cookie withheld) or 415 (non-JSON body); only a production-like
+  backend proves the cookie is withheld.

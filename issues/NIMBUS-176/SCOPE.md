@@ -125,3 +125,11 @@ No unresolved business questions remain from scope review. Priority remains Low;
 - Current region-country catalogue and the existing storefront translation cache/reporting integration.
 - Business rules and draft data model approved by the user on 2026-10-20. Scope-approved Jira comment 254657 recorded and the Scope approved transition completed; readback confirmed Estimation.
 - Separate explicit instruction before handing off to implementation-planner.
+
+## Documentation
+
+- [docs/architecture/country-languages.md](../../docs/architecture/country-languages.md) — Country languages: assignments, publication, storefront resolution, rollout (created on the branch; updated for the control-flow rethrow, the no-ISR constraint, the `NODE_ENV` pre-deploy check and the browser-check results)
+- [apps/storefront/src/lib/i18n/README.md](../../apps/storefront/src/lib/i18n/README.md) — Locale from the country publication; adding a language (updated on the branch)
+- [apps/storefront/e2e/visual/README.md](../../apps/storefront/e2e/visual/README.md) — Country-language browser journeys and their environment (updated on the branch)
+
+AI base files updated: `ai/architecture/layers.md`, `boundaries.md`, `decisions.md`, `data-ownership.md`, `ai/skills/medusa-storefront/project.md`, `ai/skills/nextjs-data-layer/project.md` (loaders rethrow Next control-flow errors)
