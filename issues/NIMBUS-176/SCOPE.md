@@ -1,7 +1,7 @@
 # Manage country-to-language mapping from Medusa Admin
 
 **Date:** 2026-10-20
-**Status:** Scoped — approved by Klaus Petersen on 2026-10-20
+**Status:** Implemented — scope approved by Klaus Petersen on 2026-10-20; branch feature/NIMBUS-176 ready for review 2026-10-21
 **Type:** Story
 **Priority:** Low (Jira)
 **Issue:** [NIMBUS-176](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-176)
