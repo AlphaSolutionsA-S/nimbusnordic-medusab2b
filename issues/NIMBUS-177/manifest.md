@@ -28,7 +28,7 @@
 | 02 | Trusted company link at cart creation | `02-trusted-cart-company-link.md` | backend | F2 (creation), F4, F7 (sign-in to create), finding 8 for carts | None | NIMBUS-200 | DONE |
 | 03 | Guard on every direct and indirect cart route | `03-cart-route-guard.md` | backend | F1, F2, F3, F5 (no claim by ID), F6, NFR fail closed, cross-instance, no shared caching | 01, 02 | NIMBUS-201 | DONE |
 | 06 | Order access decision and guard; transfer request and cancel return no order; account-owned orders not transferable | `06-order-access-guard.md` | backend | F3 extended to store order-by-ID routes (decisions 3–7), NFR fail closed | 01, 03 | NIMBUS-204 | TODO |
-| 07 | Approval list and decisions respect the verified association | `07-approval-routes-association.md` | backend | F3 (approval IDs), F6, business rule "ambiguous carts refused" | 01 | NIMBUS-205 | TODO |
+| 07 | Approval list and decisions respect the verified association | `07-approval-routes-association.md` | backend | F3 (approval IDs), F6, business rule "ambiguous carts refused" | 01 | NIMBUS-205 | DONE |
 | 04 | Storefront sign-in, cart lifecycle and messages | `04-storefront-cart-lifecycle.md` | storefront | F5, F7, F8 (old cookies), NFR logout/account switch and caching (carts and orders) | 02, 03 | NIMBUS-202 | TODO |
 | 05 | Document cart access rules and rollout | `05-document-cart-access.md` | docs | F8 (rollout procedure), NFR documentation (carts and orders) | 02, 03, 04, 06, 07 | NIMBUS-203 | TODO |
 

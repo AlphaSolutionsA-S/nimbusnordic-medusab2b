@@ -28,3 +28,12 @@
 - Security spec helpers in `describe('cart access guard')`: `seedCart(ownerId, companyId | null)` (cart with region, sales channel, one custom line item and a linked payment collection), `cartState`, `expectRefused`, `expectReachesRoute`, and top-level `attachAdminApproval(cartId, status, createdBy)`. Members are added with `POST /store/companies/:id/employees` and log in with `/auth/customer/emailpass`; removal through `DELETE /store/companies/:id/employees/:employeeId` (soft delete) makes the owner "former" for Query.
 - Run script used: scratchpad `run-http.sh <spec> [-t name]` with the 02 container settings; the full security spec takes about 75 s.
 - `integration-tests/http/quotes` and `http/admin/quotes` fail on baseline before any request (`createAdminUser` with unset `JWT_SECRET`).
+
+## 07 Approval routes association
+- `workflows/approval/workflows/list-company-approval-carts.ts`: `listCompanyApprovalCartsWorkflow`, input `{ customer_id, status?, pagination? }` (step file `steps/list-company-approval-carts.ts`), result `{ carts_with_approvals, metadata }`; the route spreads `metadata` (count/skip/take) beside the carts.
+- The owner's current company is read with a second `customer` query (`employee.company_id`) for the carts' `customer_id`s, not by adding `carts.customer.*` to the company graph, which would put owner data in the response.
+- `validate-company-approval.ts` reads `approval.cart.customer.employee.company_id` (depth 4 from `approval`); resolves at runtime (verified by the passing HTTP cases).
+- The Approval service type has no `listApprovalStatuses`; read `approval_status` through Query in tests.
+- `AuthenticatedMedusaRequest<unknown, Q>` types `req.validatedQuery` (second generic); the first is the body.
+- Query filters on an enum column (`approval_status.status`) reject a plain `string`; the step narrows once in `approvalStatusFilter`.
+- Security spec `describe('approval list and decisions')` (inside `cart access guard`) seeds a verified, a former-owner and a mismatched cart; `seedCart` takes an optional email. Full security spec: 66 tests, about 75 s.

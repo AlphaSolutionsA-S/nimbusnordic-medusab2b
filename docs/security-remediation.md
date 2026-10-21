@@ -19,6 +19,10 @@ outside this change.
 - Store approval decisions require an administrator of the cart's company and an
   `admin` approval. The server assigns `handled_by`; only pending requests can be
   approved or rejected. Sales-manager approvals remain merchant operations.
+  The approvals list and decisions cover only carts whose company link equals
+  the owner's current company (NIMBUS-177): a cart whose owner left the company,
+  or that is linked to a company the owner is not in, is not listed, and
+  deciding its approval answers 403 and changes nothing.
 - Checkout requires an approved request for every approval type configured for
   the cart's company or the customer's company. Missing, pending, or rejected
   requests block checkout.

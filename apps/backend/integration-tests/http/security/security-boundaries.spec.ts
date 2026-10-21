@@ -476,10 +476,12 @@ medusaIntegrationTestRunner({
         return { customerId: me.data.customer.id, employeeId: response.data.employee.id, headers: memberHeaders };
       }
 
-      async function seedCart(ownerId: string, linkedCompany: string | null): Promise<Target> {
+      async function seedCart(
+        ownerId: string, linkedCompany: string | null, email = 'owner@example.test',
+      ): Promise<Target> {
         const cartModule = container.resolve<ICartModuleService>(Modules.CART);
         const cart = await cartModule.createCarts({
-          currency_code: 'dkk', customer_id: ownerId, email: 'owner@example.test',
+          currency_code: 'dkk', customer_id: ownerId, email,
           region_id: regionId, sales_channel_id: channelId,
         });
         const [item] = await cartModule.addLineItems([{
@@ -631,6 +633,72 @@ medusaIntegrationTestRunner({
         await expectRefused(routesOf('owner'), target, headers);
         expect(await cartState(target)).toEqual(before);
         await expectReachesRoute(routesOf('read', 'pay'), target, headers);
+      });
+
+      // An administrator neither sees nor decides approvals for a cart whose association is not
+      // verified: the owner left the company, or the link differs from the owner's company.
+      describe('approval list and decisions', () => {
+        type Seeded = { target: Target; approvalId: string; email: string };
+        let listed: Seeded;
+        let omitted: Seeded[];
+
+        async function seedPending(ownerId: string, email: string): Promise<Seeded> {
+          const target = await seedCart(ownerId, companyId, email);
+          const { approval } = await attachAdminApproval(target.cartId, ApprovalStatusType.PENDING, ownerId);
+          return { target, approvalId: approval.id, email };
+        }
+
+        async function approvalState(seeded: Seeded) {
+          const service = container.resolve<ApprovalModuleService>('approval');
+          const { data: statuses } = await container.resolve(ContainerRegistrationKeys.QUERY).graph({
+            entity: 'approval_status', fields: ['status'], filters: { cart_id: seeded.target.cartId },
+          });
+          return {
+            approval: (await service.retrieveApproval(seeded.approvalId)).status,
+            statuses: statuses.map((status) => status.status),
+          };
+        }
+
+        beforeEach(async () => {
+          listed = await seedPending(colleague.customerId, 'listed-cart@example.test');
+          const leaver = await addColleague('leaver@example.test');
+          const left = await seedPending(leaver.customerId, 'leaver-cart@example.test');
+          expect((await api.delete(`/store/companies/${companyId}/employees/${leaver.employeeId}`, headers)).status)
+            .toBe(200);
+          const foreignOwner = (await api.get('/store/customers/me', foreignAdmin)).data.customer.id;
+          const mismatched = await seedPending(foreignOwner, 'mismatched-cart@example.test');
+          omitted = [left, mismatched];
+        });
+
+        it('lists only carts with a verified association and leaks nothing of the others', async () => {
+          const response = await api.get('/store/approvals', headers);
+          expect(response.status).toBe(200);
+          const carts = response.data.carts_with_approvals;
+          expect(carts.map((cart) => cart.id)).toEqual([listed.target.cartId]);
+          expect(typeof carts[0].email).toBe('string');
+          expect(carts[0].approvals.map((approval) => approval.id)).toEqual([listed.approvalId]);
+          expect(response.data.count).toBe(1);
+          const body = JSON.stringify(response.data);
+          for (const { target, approvalId, email } of omitted) {
+            for (const leaked of [target.cartId, target.lineId, approvalId, email]) {
+              expect(body).not.toContain(leaked);
+            }
+          }
+        });
+
+        it.each([['whose owner left the company', 0], ['linked to a company the owner is not in', 1]])(
+          'refuses deciding the approval of a cart %s and leaves it pending', async (_label, index) => {
+            const seeded = omitted[index];
+            const before = await approvalState(seeded);
+            expect(before).toEqual({ approval: 'pending', statuses: ['pending'] });
+            for (const status of ['approved', 'rejected']) {
+              const response = await api.post(`/store/approvals/${seeded.approvalId}`, { status },
+                { ...headers, validateStatus: () => true });
+              expect({ status, code: response.status }).toEqual({ status, code: 403 });
+            }
+            expect(await approvalState(seeded)).toEqual(before);
+          },
+        );
       });
     });
 
