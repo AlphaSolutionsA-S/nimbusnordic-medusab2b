@@ -1,6 +1,6 @@
 # Upgrade the storefront to Next.js 16
 
-- Tracker: Jira (NIMBUS) — Not yet filed
+- Tracker: [NIMBUS-209](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-209)
 - Priority: Must
 - Size: M
 - Area: Storefront (`apps/storefront`): framework, build and deploy
