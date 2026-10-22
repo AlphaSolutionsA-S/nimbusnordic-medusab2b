@@ -1,9 +1,7 @@
 # Upgrade the storefront to Next.js 16
 
-> Record of NIMBUS-209, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
-
 **Date:** 2026-10-22
-**Status:** Implemented
+**Status:** Scoped (awaiting Klaus's approval)
 **Type:** Story
 **Priority:** Critical (no storefront change can deploy until this ships)
 **Issue:** NIMBUS-209
@@ -163,13 +161,3 @@ invalidation behind checkout payments (an always-full-pipeline area) and is abou
   `@payloadcms/live-preview-react` 3.90.0 have compatible peer ranges.
 - Storefront baseline (`ai/architecture/verification.md`): `tsc --noEmit` fails today and
   `typescript.ignoreBuildErrors` stays on; three storefront tests fail today.
-
-## Documentation
-
-- [docs/architecture/store-access.md](../../docs/architecture/store-access.md) — Storefront account
-  slots and the signed-out deep-link redirect to `/<cc>`; immediate cache expiry in server actions
-  (updated)
-- [docs/architecture/country-languages.md](../../docs/architecture/country-languages.md) — Locale tag
-  expiry in the translation refresh route and action (updated)
-
-AI base files updated: none

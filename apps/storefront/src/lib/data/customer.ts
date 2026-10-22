@@ -6,7 +6,7 @@ import medusaError from "@/lib/util/medusa-error"
 import { B2BCustomer } from "@/types/global"
 import { HttpTypes } from "@medusajs/types"
 import { track } from "@vercel/analytics/server"
-import { updateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 import { redirect } from "next/navigation"
 import { lookupCart } from "./cart"
 import { createCompany } from "./companies"
@@ -56,7 +56,7 @@ export const updateCustomer = async (body: HttpTypes.StoreUpdateCustomer) => {
     .catch(medusaError)
 
   const cacheTag = await getCacheTag("customers")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 
   return updateRes
 }
@@ -95,7 +95,7 @@ export const syncCompanyFromBusinessCentral = async (): Promise<void> => {
     )
 
     const customerCacheTag = await getCacheTag("customers")
-    updateTag(customerCacheTag)
+    revalidateTag(customerCacheTag)
   } catch {
     console.warn("Business Central company sync request failed after login")
   }
@@ -149,7 +149,7 @@ export async function signup(_currentState: unknown, formData: FormData) {
     const createdEmployee = createdCompany.employees?.[0]
 
     const cacheTag = await getCacheTag("customers")
-    updateTag(cacheTag)
+    revalidateTag(cacheTag)
 
     return {
       customer: createdCustomer,
@@ -181,7 +181,7 @@ export async function login(_currentState: unknown, formData: FormData) {
             getCacheTag("carts"),
           ])
 
-        updateTag(customerCacheTag)
+        revalidateTag(customerCacheTag)
 
         // The cookie cart is read with the new account's token. A cart this
         // account may not use (another account's, no longer verified, or
@@ -195,8 +195,8 @@ export async function login(_currentState: unknown, formData: FormData) {
           await removeCartId()
         }
 
-        updateTag(productsCacheTag)
-        updateTag(cartsCacheTag)
+        revalidateTag(productsCacheTag)
+        revalidateTag(cartsCacheTag)
       })
   } catch (error: any) {
     return error.toString()
@@ -219,10 +219,10 @@ export async function signout(countryCode: string, customerId: string) {
       getCacheTag("carts"),
     ])
 
-  updateTag(authCacheTag)
-  updateTag(customerCacheTag)
-  updateTag(productsCacheTag)
-  updateTag(cartsCacheTag)
+  revalidateTag(authCacheTag)
+  revalidateTag(customerCacheTag)
+  revalidateTag(productsCacheTag)
+  revalidateTag(cartsCacheTag)
 
   redirect(`/${countryCode}/account`)
 }
@@ -252,7 +252,7 @@ export const addCustomerAddress = async (
     .createAddress(address, {}, headers)
     .then(async () => {
       const cacheTag = await getCacheTag("customers")
-      updateTag(cacheTag)
+      revalidateTag(cacheTag)
       return { success: true, error: null }
     })
     .catch((err) => {
@@ -271,7 +271,7 @@ export const deleteCustomerAddress = async (
     .deleteAddress(addressId, headers)
     .then(async () => {
       const cacheTag = await getCacheTag("customers")
-      updateTag(cacheTag)
+      revalidateTag(cacheTag)
       return { success: true, error: null }
     })
     .catch((err) => {
@@ -306,7 +306,7 @@ export const updateCustomerAddress = async (
     .updateAddress(addressId, address, {}, headers)
     .then(async () => {
       const cacheTag = await getCacheTag("customers")
-      updateTag(cacheTag)
+      revalidateTag(cacheTag)
       return { success: true, error: null }
     })
     .catch((err) => {

@@ -3,15 +3,10 @@ jest.mock("@/lib/config", () => ({
     client: { fetch: jest.fn() },
     store: {
       cart: {
-        addShippingMethod: jest.fn(),
-        complete: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
         createLineItem: jest.fn(),
-        deleteLineItem: jest.fn(),
-        updateLineItem: jest.fn(),
       },
-      payment: { initiatePaymentSession: jest.fn() },
     },
   },
 }))
@@ -19,7 +14,7 @@ jest.mock("@/lib/config", () => ({
 jest.mock("@/lib/data/cookies", () => ({
   getAuthHeaders: jest.fn(async () => ({})),
   getCacheOptions: jest.fn(async () => ({})),
-  getCacheTag: jest.fn(async (tag: string) => tag),
+  getCacheTag: jest.fn(async () => "carts"),
   getCartId: jest.fn(async () => undefined),
   removeCartId: jest.fn(),
   setCartId: jest.fn(),
@@ -39,7 +34,6 @@ jest.mock("@vercel/analytics/server", () => ({
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
-  updateTag: jest.fn(),
 }))
 
 jest.mock("next/navigation", () => ({
@@ -51,15 +45,8 @@ import {
   addToCart,
   addToCartBulk,
   applyPromotions,
-  createCartApproval,
-  deleteLineItem,
   emptyCart,
-  initiatePaymentSession,
   lookupCart,
-  placeOrder,
-  setShippingMethod,
-  updateLineItem,
-  updateRegion,
 } from "@/lib/data/cart"
 import {
   getAuthHeaders,
@@ -74,7 +61,6 @@ import {
   CART_UNAVAILABLE_ERROR,
   SIGN_IN_REQUIRED_ERROR,
 } from "@/lib/util/customer-error"
-import { revalidateTag, updateTag } from "next/cache"
 
 const mockFetch = jest.mocked(sdk.client.fetch)
 const mockCreate = jest.mocked(sdk.store.cart.create)
@@ -321,181 +307,5 @@ describe("add to cart", () => {
     await expect(
       addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
     ).rejects.toThrow(CART_UNAVAILABLE_ERROR)
-  })
-})
-
-// Next.js 16: `updateTag(tag)` expires a tag at once, while `revalidateTag`
-// with a profile such as "max" serves the stale cart once more (NIMBUS-209).
-// `getCacheTag` is mocked to return the tag name.
-describe("cart cache invalidation", () => {
-  function expectExpiredNow(tags: string[]) {
-    expect(jest.mocked(updateTag).mock.calls).toEqual(tags.map((tag) => [tag]))
-    expect(revalidateTag).not.toHaveBeenCalled()
-  }
-
-  function ownCart() {
-    mockGetAuthHeaders.mockResolvedValue(signedIn)
-    mockGetCartId.mockResolvedValue("cart_1")
-    mockRetrieveCustomer.mockResolvedValue(admin)
-    mockGetRegion.mockResolvedValue({ id: "reg_1" } as Awaited<
-      ReturnType<typeof getRegion>
-    >)
-  }
-
-  it("add to an existing cart expires fulfillment and carts", async () => {
-    ownCart()
-    mockFetch.mockResolvedValueOnce({
-      cart: { id: "cart_1", customer_id: "cus_admin", region_id: "reg_1" },
-    })
-    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
-    )
-
-    await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
-
-    expectExpiredNow(["fulfillment", "carts"])
-  })
-
-  it("add to a new cart also expires carts when the cart is created", async () => {
-    ownCart()
-    mockGetCartId.mockResolvedValue(undefined)
-    mockFetch.mockResolvedValueOnce({
-      cart: { id: "cart_new", customer_id: "cus_admin", region_id: "reg_1" },
-    })
-    mockCreate.mockResolvedValueOnce({
-      cart: { id: "cart_new" },
-    } as Awaited<ReturnType<typeof sdk.store.cart.create>>)
-    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
-    )
-
-    await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
-
-    expectExpiredNow(["carts", "fulfillment", "carts"])
-  })
-
-  it("updating a line expires fulfillment and carts", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.updateLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.updateLineItem>>
-    )
-
-    await updateLineItem({ lineId: "li_1", data: { quantity: 2 } })
-
-    expectExpiredNow(["fulfillment", "carts"])
-  })
-
-  it("deleting a line expires fulfillment and carts", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.deleteLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.deleteLineItem>>
-    )
-
-    await deleteLineItem("li_1")
-
-    expectExpiredNow(["fulfillment", "carts"])
-  })
-
-  it("emptying the cart expires each deleted line's tags, then carts", async () => {
-    ownCart()
-    mockFetch.mockResolvedValueOnce({
-      cart: { id: "cart_1", items: [{ id: "li_1" }] },
-    })
-    jest.mocked(sdk.store.cart.deleteLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.deleteLineItem>>
-    )
-
-    await emptyCart()
-
-    expectExpiredNow(["fulfillment", "carts", "carts"])
-  })
-
-  it("setting the shipping method expires carts", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.addShippingMethod).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.addShippingMethod>>
-    )
-
-    await setShippingMethod({ cartId: "cart_1", shippingMethodId: "so_1" })
-
-    expectExpiredNow(["carts"])
-  })
-
-  it("starting a payment session expires carts", async () => {
-    ownCart()
-    jest.mocked(sdk.store.payment.initiatePaymentSession).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.payment.initiatePaymentSession>>
-    )
-
-    await initiatePaymentSession(
-      { id: "cart_1" } as Parameters<typeof initiatePaymentSession>[0],
-      { provider_id: "pp_system_default" }
-    )
-
-    expectExpiredNow(["carts"])
-  })
-
-  it("applying promotions expires the cart update's tags, then carts and fulfillment", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.update).mockResolvedValueOnce({
-      cart: { id: "cart_1" },
-    } as Awaited<ReturnType<typeof sdk.store.cart.update>>)
-
-    await applyPromotions(["SUMMER"])
-
-    expectExpiredNow(["fulfillment", "carts", "carts", "fulfillment"])
-  })
-
-  it("placing an order expires carts, orders and approvals", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.complete).mockResolvedValueOnce({
-      type: "order",
-      order: { id: "order_1", shipping_address: { country_code: "DK" } },
-    } as Awaited<ReturnType<typeof sdk.store.cart.complete>>)
-
-    await placeOrder("cart_1")
-
-    expectExpiredNow(["carts", "orders", "approvals"])
-  })
-
-  it("expires nothing when the cart could not be completed", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.complete).mockResolvedValueOnce({
-      type: "cart",
-      cart: { id: "cart_1" },
-    } as Awaited<ReturnType<typeof sdk.store.cart.complete>>)
-
-    await placeOrder("cart_1")
-
-    expectExpiredNow([])
-  })
-
-  it("changing region with a cart expires the cart update's tags, then carts, regions and products", async () => {
-    ownCart()
-    jest.mocked(sdk.store.cart.update).mockResolvedValueOnce({
-      cart: { id: "cart_1" },
-    } as Awaited<ReturnType<typeof sdk.store.cart.update>>)
-
-    await updateRegion("se", "/store")
-
-    expectExpiredNow(["fulfillment", "carts", "carts", "regions", "products"])
-  })
-
-  it("changing region without a cart expires regions and products", async () => {
-    ownCart()
-    mockGetCartId.mockResolvedValue(undefined)
-
-    await updateRegion("se", "/store")
-
-    expectExpiredNow(["regions", "products"])
-  })
-
-  it("requesting approval expires carts and approvals", async () => {
-    ownCart()
-    mockFetch.mockResolvedValueOnce({ approval: { id: "appr_1" } })
-
-    await createCartApproval("cart_1", "cus_admin")
-
-    expectExpiredNow(["carts", "approvals"])
   })
 })

@@ -16,7 +16,7 @@ Payload CMS. pnpm 9.15 workspace (`apps/*`), Turborepo, Node 22+.
 | App | Path | Stack |
 |-----|------|-------|
 | Backend + Admin (`@b2b-starter/backend`) | `apps/backend` | Medusa 2.21.0, TypeScript (only `strictNullChecks`), PostgreSQL |
-| Storefront (`@b2b-starter/storefront`) | `apps/storefront` | Next.js 16.4, React 19, Medusa JS SDK, next-intl 4, TypeScript strict |
+| Storefront (`@b2b-starter/storefront`) | `apps/storefront` | Next.js 15.5, React 19, Medusa JS SDK, next-intl 4, TypeScript strict |
 | CMS (`@dtc/cms`) | `apps/cms` | Payload 3.90 on Next.js 16, own PostgreSQL |
 
 Integrations: Business Central, an Azure Logic App calling `/orderapi/orders`, Stripe and PayPal.
@@ -463,7 +463,6 @@ Per `docs/security-remediation.md` (2026-09-20; re-measure first): `tsc --noEmit
 and storefront (`next build` hides it); quote HTTP specs, one BC module test, 3 storefront and 1 CMS
 test fail. No CI runs backend or storefront tests. Backend tests abort unless
 `BUSINESS_CENTRAL_DISCOVERY_URL` is an allowed test environment (`integration-tests/global-setup.ts`).
-Storefront lint: `apps/storefront/eslint-suppressions.json`.
 
 ### Whole-branch checks
 

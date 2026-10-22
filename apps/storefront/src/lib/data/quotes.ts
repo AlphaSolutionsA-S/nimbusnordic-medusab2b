@@ -15,7 +15,7 @@ import {
   StoreQuotesResponse,
 } from "@/types"
 import { track } from "@vercel/analytics/server"
-import { updateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 
 export const createQuote = async () => {
   const headers = {
@@ -123,7 +123,7 @@ export const acceptQuote = async (id: string) => {
         getCacheTag(["quote", id].join("-")),
         getCacheTag(["quotePreview", id].join("-")),
       ])
-      tags.forEach((tag) => updateTag(tag))
+      tags.forEach((tag) => revalidateTag(tag))
     })
 }
 
@@ -144,7 +144,7 @@ export const rejectQuote = async (id: string) => {
         getCacheTag(["quote", id].join("-")),
         getCacheTag(["quotePreview", id].join("-")),
       ])
-      tags.forEach((tag) => updateTag(tag))
+      tags.forEach((tag) => revalidateTag(tag))
     })
 }
 
@@ -175,6 +175,6 @@ export const createQuoteMessage = async (
         getCacheTag(["quote", id].join("-")),
         getCacheTag(["quotePreview", id].join("-")),
       ])
-      tags.forEach((tag) => updateTag(tag))
+      tags.forEach((tag) => revalidateTag(tag))
     })
 }

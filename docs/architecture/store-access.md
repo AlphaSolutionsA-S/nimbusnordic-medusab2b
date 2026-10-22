@@ -1,8 +1,7 @@
 # Store cart and order access
 
-**Last updated:** 2026-10-22
-**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204); NIMBUS-209 (Next.js 16:
-account slots, cache invalidation)
+**Last updated:** 2026-10-21
+**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204)
 
 ## Overview
 
@@ -69,9 +68,6 @@ guard, the approval list and the approval decision all call it. The rules are re
 | `modules/cart/components/cart-unavailable-notice` | Full-page notice on the cart and checkout pages for an unavailable cart |
 | `app/[countryCode]/(checkout)/checkout/page.tsx` | Opens the cart from the `cartId` query (an administrator paying a colleague's approved cart) or the cookie |
 | `lib/data/{cart,orders,fulfillment,approvals}.ts` | Per-caller reads use `cache: "no-store"` |
-| `lib/data/{cart,customer,companies,quotes,approvals}.ts` | Server actions expire their cache tags with `updateTag` (Next.js 16), so the next read shows the caller's own write |
-| `app/[countryCode]/(main)/account/layout.tsx` | Renders the `@dashboard` slot for a signed-in customer (or a CMS live-preview request, finding 10) and the `@login` slot otherwise |
-| `app/[countryCode]/(main)/account/@login/{page,default}.tsx` | `page` is the login form on `/<cc>/account`; `default` redirects a signed-out visitor on a deeper account URL to `/<cc>` (country code re-encoded, so it cannot form an off-site `//host` target) |
 
 ## Data Flow
 
@@ -118,16 +114,6 @@ verified.
   `?cartId=` from the approval card or the redirect after approving.
 - Logout clears the auth and cart cookies, so the next account starts without the previous cart.
 
-### Storefront account pages
-
-- Signed in: `/<cc>/account` and every page below it render the `@dashboard` slot.
-- Signed out on `/<cc>/account`: the `@login` slot's page shows the login form.
-- Signed out on a deeper URL (`/<cc>/account/orders`, a bookmarked order): `@login` has no matching
-  page, so its `default.tsx` runs and redirects (307) to `/<cc>`. Before NIMBUS-209 this was a 404;
-  Klaus chose the front page over the login form (2026-10-22). The default never loads the customer,
-  and the layout renders it only when the customer is absent, so a signed-in visitor is never
-  redirected.
-
 ## Key Decisions & Constraints
 
 - **Refusal looks like absence.** A signed-in caller without access gets the same 404 body as for a
@@ -154,9 +140,6 @@ verified.
 - **Storefront ownership is a lifecycle rule, not a second copy of the backend rule.** The backend
   decides access; the storefront only decides which readable cart the cookie may point at
   (`active-cart.ts`), because every cart mutation is owner-only.
-- **Immediate expiry after a caller's own write.** Server actions use `updateTag`, never
-  `revalidateTag(tag, "max")`: the stale-while-revalidate form does not mark the action's own writes
-  as revalidated, so the customer could see the old cart or total at checkout.
 - **Known limit:** a bearer token stays valid until it expires after logout.
 
 ## Extension Points
@@ -176,9 +159,4 @@ verified.
   collection, shipping option, order and return route is guarded or deliberately left to core.
 - **Storefront:** read carts through `lookupCart` (never cached), and return error codes from server
   actions rather than throwing them where the client must show a specific message; Next.js hides
-  thrown messages in production. A new server action that changes cached data calls `updateTag` for
-  each tag it affects; `updateTag` throws in a route handler, which uses
-  `revalidateTag(tag, { expire: 0 })` instead.
-- **A new account page** goes under `@dashboard`. Signed-out visitors reach `@login/default.tsx`
-  automatically; a new `@login` page is only needed if a deep link should show something other than
-  the redirect.
+  thrown messages in production.

@@ -74,8 +74,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Older than a refresh this process already applied; it must not reinstate older state.
     return reply(200, { revalidated: false, reason: "outdated" })
   }
-  // `updateTag` throws in a route handler; `{ expire: 0 }` expires the tag now, a profile such as
-  // "max" would serve the old text once more.
-  revalidateTag(translationCacheTag(locale), { expire: 0 })
+  revalidateTag(translationCacheTag(locale))
   return reply(200, { revalidated: true })
 }

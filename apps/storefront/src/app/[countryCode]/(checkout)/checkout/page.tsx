@@ -19,9 +19,9 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function Checkout({
   searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+  searchParams?: { [key: string]: string | string[] | undefined }
 }) {
-  const cartId = (await searchParams).cartId as string
+  const cartId = searchParams?.cartId as string
   const lookup = await lookupCart(cartId)
 
   if (lookup.status === "unavailable") {

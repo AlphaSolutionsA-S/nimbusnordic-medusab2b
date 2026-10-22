@@ -15,7 +15,7 @@ import {
   StoreUpdateEmployee,
 } from "@/types"
 import { track } from "@vercel/analytics/server"
-import { updateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 
 export const retrieveCompany = async (companyId: string) => {
   const headers = {
@@ -58,7 +58,7 @@ export const createCompany = async (data: StoreCreateCompany) => {
   })
 
   const cacheTag = await getCacheTag("companies")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 
   return company
 }
@@ -84,7 +84,7 @@ export const createEmployee = async (data: StoreCreateEmployee) => {
   })
 
   const cacheTag = await getCacheTag("companies")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 
   return employee
 }
@@ -106,7 +106,7 @@ export const updateEmployee = async (data: StoreUpdateEmployee) => {
   )
 
   const cacheTag = await getCacheTag("companies")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 
   return employee
 }
@@ -132,7 +132,7 @@ export const deleteEmployee = async (
   )
 
   const cacheTag = await getCacheTag("companies")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 }
 
 export const updateApprovalSettings = async (
@@ -154,5 +154,5 @@ export const updateApprovalSettings = async (
   })
 
   const cacheTag = await getCacheTag("companies")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 }

@@ -5,7 +5,7 @@ jest.mock("@/lib/config", () => ({
 jest.mock("@/lib/data/cookies", () => ({
   getAuthHeaders: jest.fn(async () => ({ authorization: "Bearer token" })),
   getCacheOptions: jest.fn(async () => ({ tags: ["approvals-cache"] })),
-  getCacheTag: jest.fn(async (tag: string) => tag),
+  getCacheTag: jest.fn(async () => "approvals"),
 }))
 
 jest.mock("@/lib/data/cart", () => ({
@@ -14,7 +14,6 @@ jest.mock("@/lib/data/cart", () => ({
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
-  updateTag: jest.fn(),
 }))
 
 jest.mock("next/navigation", () => ({
@@ -22,9 +21,7 @@ jest.mock("next/navigation", () => ({
 }))
 
 import { sdk } from "@/lib/config"
-import { listApprovals, updateApproval } from "@/lib/data/approvals"
-import { ApprovalStatusType } from "@/types/approval"
-import { revalidateTag, updateTag } from "next/cache"
+import { listApprovals } from "@/lib/data/approvals"
 
 const mockFetch = jest.mocked(sdk.client.fetch)
 
@@ -39,19 +36,5 @@ describe("listApprovals", () => {
       expect.objectContaining({ cache: "no-store" })
     )
     expect(mockFetch.mock.calls[0][1]).not.toHaveProperty("next")
-  })
-})
-
-describe("updateApproval", () => {
-  it("expires approvals and carts at once after the decision", async () => {
-    mockFetch.mockResolvedValueOnce({ approval: { id: "appr_1" } })
-
-    await updateApproval("appr_1", ApprovalStatusType.APPROVED)
-
-    expect(jest.mocked(updateTag).mock.calls).toEqual([
-      ["approvals"],
-      ["carts"],
-    ])
-    expect(revalidateTag).not.toHaveBeenCalled()
   })
 })

@@ -9,7 +9,7 @@ import {
   StoreApprovalResponse,
   StoreApprovalsResponse,
 } from "@/types/approval"
-import { updateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 import { redirect } from "next/navigation"
 import { retrieveCart } from "./cart"
 
@@ -76,10 +76,10 @@ export const updateApproval = async (
   )
 
   const cacheTag = await getCacheTag("approvals")
-  updateTag(cacheTag)
+  revalidateTag(cacheTag)
 
   const cartTag = await getCacheTag("carts")
-  updateTag(cartTag)
+  revalidateTag(cartTag)
 
   return approval
 }

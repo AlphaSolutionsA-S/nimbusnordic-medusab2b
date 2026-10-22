@@ -36,7 +36,6 @@ Per `docs/security-remediation.md` (2026-09-20; re-measure first): `tsc --noEmit
 and storefront (`next build` hides it); quote HTTP specs, one BC module test, 3 storefront and 1 CMS
 test fail. No CI runs backend or storefront tests. Backend tests abort unless
 `BUSINESS_CENTRAL_DISCOVERY_URL` is an allowed test environment (`integration-tests/global-setup.ts`).
-Storefront lint: `apps/storefront/eslint-suppressions.json`.
 
 ## Whole-branch checks
 

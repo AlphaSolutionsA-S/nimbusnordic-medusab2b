@@ -1,7 +1,7 @@
 /**
  * Unit tests for the runtime translation loader. `next/cache` is replaced by a small in-memory
- * stand-in that, like Next 16 with `{ expire: 0 }`, drops tag-invalidated entries and never
- * stores a thrown failure. Real cache/invalidation/outage behaviour is verified separately against a production build.
+ * stand-in that, like Next 15, drops tag-invalidated entries and never stores a thrown failure.
+ * Real cache/invalidation/outage behaviour is verified separately against a production build.
  *
  * @jest-environment node
  */
@@ -23,7 +23,7 @@ jest.mock("next/cache", () => {
         entries.set(key, { body: JSON.stringify(value), tags: options.tags })
         return value
       },
-    revalidateTag: (tag: string, _profile: { expire: number }) => {
+    revalidateTag: (tag: string) => {
       for (const [key, entry] of entries) {
         if (entry.tags.includes(tag)) {
           entries.delete(key)
@@ -48,7 +48,7 @@ function sdkError(status: number | undefined, message: string) {
 
 let loader: Loader
 let fetchMock: jest.Mock
-let revalidateTag: (tag: string, profile: { expire: number }) => void
+let revalidateTag: (tag: string) => void
 
 beforeEach(() => {
   jest.resetModules()
@@ -81,7 +81,7 @@ describe("getRuntimeMessages", () => {
   it("TC-2: serves the last good copy after invalidation plus outage, then recovers", async () => {
     fetchMock.mockResolvedValueOnce({ translation: doc(1) })
     await loader.getRuntimeMessages("da")
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"))
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ messages: danish, availability: "available" })
 
@@ -93,7 +93,7 @@ describe("getRuntimeMessages", () => {
   it("TC-2: a hung backend read times out and serves the last good copy, then raw keys", async () => {
     fetchMock.mockResolvedValueOnce({ translation: doc(1) })
     await loader.getRuntimeMessages("da")
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
 
     const controllers: AbortController[] = []
     const timeout = jest.spyOn(AbortSignal, "timeout").mockImplementation(() => {
@@ -143,7 +143,7 @@ describe("getRuntimeMessages", () => {
   it("TC-3: a confirmed inactive response clears the snapshot; an absent row keeps it", async () => {
     fetchMock.mockResolvedValueOnce({ translation: doc(1) })
     await loader.getRuntimeMessages("da")
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockRejectedValueOnce(sdkError(404, "translation_not_found"))
     expect((await loader.getRuntimeMessages("da")).messages).toEqual(danish)
 
@@ -151,7 +151,7 @@ describe("getRuntimeMessages", () => {
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ availability: "inactive", messages: {} })
     // The tombstone is a cached result, so the old active copy is not re-read.
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ availability: "inactive" })
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"))
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ availability: "unavailable", messages: {} })
   })
@@ -164,7 +164,7 @@ describe("getRuntimeMessages", () => {
     expect(loader.recordTranslationRefresh({ locale: "da", version: 3, is_active: true })).toBe(false)
     // The cached v2 active entry (not yet invalidated) must not be served over the v3 deactivation.
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ availability: "inactive" })
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"))
     expect((await loader.getRuntimeMessages("da")).availability).toBe("unavailable")
 
@@ -176,7 +176,7 @@ describe("getRuntimeMessages", () => {
   it("TC-3: an older result never replaces a newer snapshot", async () => {
     fetchMock.mockResolvedValueOnce({ translation: doc(5, danishV2) })
     await loader.getRuntimeMessages("da")
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockResolvedValueOnce({ translation: doc(4) })
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 5, messages: danishV2 })
   })
@@ -190,18 +190,18 @@ describe("getRuntimeMessages", () => {
     // Within the TTL the restored lower versions are still blocked.
     now.mockReturnValue(1_000_000 + 599_999)
     expect(loader.recordTranslationRefresh({ locale: "da", version: 2, is_active: true })).toBe(false)
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockResolvedValueOnce({ translation: doc(2) })
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 5, messages: danishV2 })
 
     // After 2 x the revalidate period the restored database wins.
     now.mockReturnValue(1_000_000 + 600_000)
     expect(loader.recordTranslationRefresh({ locale: "da", version: 2, is_active: true })).toBe(true)
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockResolvedValueOnce({ translation: doc(2) })
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 2, messages: danish })
     // The restored copy is now the last good copy for an outage.
-    revalidateTag("ui-translations:da", { expire: 0 })
+    revalidateTag("ui-translations:da")
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"))
     expect(await loader.getRuntimeMessages("da")).toMatchObject({ version: 2, messages: danish })
   })

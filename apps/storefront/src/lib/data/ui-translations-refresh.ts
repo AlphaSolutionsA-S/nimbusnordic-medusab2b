@@ -2,7 +2,7 @@
 
 import "server-only"
 
-import { updateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 
 import { getCountryLanguageSnapshot } from "@/lib/data/country-languages"
 import { translationCacheTag } from "@/lib/data/ui-translations"
@@ -30,5 +30,5 @@ export async function refreshUiTranslationsForCountry(countryCode: string): Prom
     return
   }
   lastRefresh.set(locale, now)
-  updateTag(translationCacheTag(locale))
+  revalidateTag(translationCacheTag(locale))
 }
