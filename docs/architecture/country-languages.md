@@ -1,7 +1,8 @@
 # Country languages
 
-**Last updated:** 2026-10-21
-**Related work:** NIMBUS-176 (builds on NIMBUS-175, database UI translations)
+**Last updated:** 2026-10-22
+**Related work:** NIMBUS-176 (builds on NIMBUS-175, database UI translations); NIMBUS-209 (cache
+invalidation on Next.js 16)
 
 ## Overview
 
@@ -77,7 +78,10 @@ session cookie; bearer tokens and secret API keys get 401. All three responses a
   snapshot is baked into a page. Keep it that way: a `[countryCode]` route must not export an ISR
   `revalidate`, which would store whatever snapshot a regeneration saw.
 - UI texts still come from `/store/ui-translations/:locale` with their own 300-second cache
-  (`lib/i18n/README.md`); a newly assigned language therefore needs its texts active first.
+  (`lib/i18n/README.md`); a newly assigned language therefore needs its texts active first. The
+  backend's refresh callback (`app/api/translations/revalidate/route.ts`) and the text-refresh action
+  expire the locale tag at once: the route with `revalidateTag(tag, { expire: 0 })`, because
+  `updateTag` throws in a route handler, the action with `updateTag` (NIMBUS-209).
 
 ## Formatting and SEO
 
