@@ -2,6 +2,7 @@ jest.mock("@/lib/config", () => ({
   sdk: {
     auth: {
       login: jest.fn(),
+      logout: jest.fn(),
       register: jest.fn(),
     },
     client: {
@@ -42,6 +43,7 @@ jest.mock("@vercel/analytics/server", () => ({
 
 jest.mock("next/cache", () => ({
   revalidateTag: jest.fn(),
+  updateTag: jest.fn(),
 }))
 
 jest.mock("next/navigation", () => ({
@@ -50,6 +52,7 @@ jest.mock("next/navigation", () => ({
 
 import {
   login,
+  signout,
   signup,
   syncCompanyFromBusinessCentral,
 } from "@/lib/data/customer"
@@ -64,7 +67,7 @@ import {
   removeCartId,
   setAuthToken,
 } from "@/lib/data/cookies"
-import { revalidateTag } from "next/cache"
+import { revalidateTag, updateTag } from "next/cache"
 
 const mockFetch = jest.mocked(sdk.client.fetch)
 const mockLogin = jest.mocked(sdk.auth.login)
@@ -75,7 +78,7 @@ const mockGetCacheTag = jest.mocked(getCacheTag)
 const mockGetCartId = jest.mocked(getCartId)
 const mockSetAuthToken = jest.mocked(setAuthToken)
 const mockLookupCart = jest.mocked(lookupCart)
-const mockRevalidateTag = jest.mocked(revalidateTag)
+const mockUpdateTag = jest.mocked(updateTag)
 
 beforeEach(() => {
   jest.clearAllMocks()
@@ -200,7 +203,8 @@ describe("syncCompanyFromBusinessCentral", () => {
         },
       }
     )
-    expect(mockRevalidateTag).toHaveBeenCalledWith("customers")
+    expect(mockUpdateTag.mock.calls).toEqual([["customers"]])
+    expect(revalidateTag).not.toHaveBeenCalled()
   })
 
   it("contains a failed synchronization request", async () => {
@@ -208,7 +212,7 @@ describe("syncCompanyFromBusinessCentral", () => {
     mockFetch.mockRejectedValueOnce(new Error("request failed"))
 
     await expect(syncCompanyFromBusinessCentral()).resolves.toBeUndefined()
-    expect(mockRevalidateTag).not.toHaveBeenCalled()
+    expect(mockUpdateTag).not.toHaveBeenCalled()
     expect(warn).toHaveBeenCalledWith(
       "Business Central company sync request failed after login"
     )
@@ -289,5 +293,35 @@ describe("syncCompanyFromBusinessCentral", () => {
     expect(createEmployee).not.toHaveBeenCalled()
     expect(result).toMatchObject({ employee })
     expect(mockTransferCart).not.toHaveBeenCalled()
+  })
+})
+
+describe("session cache invalidation", () => {
+  it("login expires customers (company sync and login), products and carts at once", async () => {
+    mockLogin.mockResolvedValue("token")
+
+    await login(undefined, loginForm())
+
+    expect(mockUpdateTag.mock.calls).toEqual([
+      ["customers"],
+      ["customers"],
+      ["products"],
+      ["carts"],
+    ])
+    expect(revalidateTag).not.toHaveBeenCalled()
+  })
+
+  it("signout expires auth, customers, products and carts at once", async () => {
+    jest.mocked(sdk.auth.logout).mockResolvedValue(undefined)
+
+    await signout("dk", "cus_1")
+
+    expect(mockUpdateTag.mock.calls).toEqual([
+      ["auth"],
+      ["customers"],
+      ["products"],
+      ["carts"],
+    ])
+    expect(revalidateTag).not.toHaveBeenCalled()
   })
 })

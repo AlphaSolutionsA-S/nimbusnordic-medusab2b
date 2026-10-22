@@ -28,3 +28,17 @@
 - Storefront Jest config has `clearMocks: true`, so `toHaveBeenCalledWith` assertions are per test.
 - Typecheck after task 02 is still 58, identical set to `tsc-after-01.txt` (`tsc-after-02.txt` in
   the run scratchpad).
+
+## Task 03 (cache invalidation)
+
+- Server actions in `lib/data/{cart,customer,companies,quotes,approvals,ui-translations-refresh}.ts`
+  import `updateTag` from `next/cache`; the translation route calls
+  `revalidateTag(tag, { expire: 0 })`. In 16.4.2 `revalidateTag(tag: string, profile)` requires the
+  profile, so a new single-argument call fails typecheck (TS2554).
+- Typecheck after task 03 is 8, the same set as `tsc-baseline.txt` (`tsc-after-03.txt`). Note:
+  PowerShell `Out-File` writes a BOM, so strip it before diffing the first line.
+- Test mocks of `next/cache` must provide `updateTag` for any module importing `lib/data/*`
+  actions. `cart.test.ts` and `approvals.test.ts` now mock `getCacheTag` as identity
+  (`async (tag) => tag`), so assertions read tag names.
+- Changed `.ts` files are LF in the working tree (git warns it will convert to CRLF); no
+  whole-file churn.
