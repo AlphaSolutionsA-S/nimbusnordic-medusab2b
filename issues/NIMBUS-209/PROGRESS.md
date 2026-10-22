@@ -91,3 +91,16 @@
   posted on NIMBUS-209 (new decisions and both answers); `Ready for Dispatch: true` in the manifest.
 - Next owner: `task-dispatcher`.
 - Handover prompt: "Dispatch issues/NIMBUS-209/."
+
+## 2026-10-22 — task-dispatcher (stopped at the implementation gate)
+
+- Outcome: tasks 01–04 done, reviewed and committed locally on `feature/NIMBUS-209` (ed3cf4b,
+  137a02f, a0d9438, 2d8147d; consolidation ba0226c). NIMBUS-211..214 closed with comments;
+  NIMBUS-215 created for clearing the lint suppressions. Finalization: storefront Jest has the same
+  4 pre-existing failures, tsc 8 (= baseline), lint 0 errors, build passes on Next.js 16.4.2
+  (Turbopack) against a stub backend. Visual tests not run. `deviation-report.md` written, no
+  blocking findings, four open questions. Nothing pushed. NIMBUS-209 left in Estimation (no direct
+  transition to in progress).
+- Next owner: Klaus (answer the open questions in `deviation-report.md`).
+- Handover prompt: "NIMBUS-209 gate answers: <answers>. Resume task-dispatcher at 'After the
+  gate' for issues/NIMBUS-209/."
