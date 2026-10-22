@@ -3,9 +3,13 @@
  */
 jest.mock("server-only", () => ({}))
 jest.mock("@/lib/config", () => ({ sdk: { client: { fetch: jest.fn() } } }))
-jest.mock("next/cache", () => ({ unstable_cache: jest.fn(), revalidateTag: jest.fn() }))
+jest.mock("next/cache", () => ({
+  unstable_cache: jest.fn(),
+  revalidateTag: jest.fn(),
+  updateTag: jest.fn(),
+}))
 
-import { revalidateTag } from "next/cache"
+import { revalidateTag, updateTag } from "next/cache"
 
 type Refresh = typeof import("@/lib/data/ui-translations-refresh")
 
@@ -33,6 +37,7 @@ function load(): Refresh {
 describe("refreshUiTranslationsForCountry", () => {
   beforeEach(() => {
     jest.useFakeTimers()
+    ;(updateTag as jest.Mock).mockClear()
     ;(revalidateTag as jest.Mock).mockClear()
   })
 
@@ -43,14 +48,14 @@ describe("refreshUiTranslationsForCountry", () => {
   it("invalidates the cache tag of the country's published language", async () => {
     await load().refreshUiTranslationsForCountry("dk")
 
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
-    expect(revalidateTag).toHaveBeenCalledWith("ui-translations:da")
+    expect((updateTag as jest.Mock).mock.calls).toEqual([["ui-translations:da"]])
+    expect(revalidateTag).not.toHaveBeenCalled()
   })
 
   it("invalidates a ninth published language", async () => {
     await load().refreshUiTranslationsForCountry("nl")
 
-    expect(revalidateTag).toHaveBeenCalledWith("ui-translations:nl")
+    expect(updateTag).toHaveBeenCalledWith("ui-translations:nl")
   })
 
   it.each([["zz"], ["se"], ["zz/../anything"], ["da"], [""], ["ui-translations:en"]])(
@@ -58,7 +63,7 @@ describe("refreshUiTranslationsForCountry", () => {
     async (input) => {
       await load().refreshUiTranslationsForCountry(input)
 
-      expect(revalidateTag).not.toHaveBeenCalled()
+      expect(updateTag).not.toHaveBeenCalled()
     }
   )
 
@@ -67,18 +72,18 @@ describe("refreshUiTranslationsForCountry", () => {
 
     await refreshUiTranslationsForCountry("de")
     await refreshUiTranslationsForCountry("de")
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
+    expect(updateTag).toHaveBeenCalledTimes(1)
 
     await refreshUiTranslationsForCountry("fr")
-    expect(revalidateTag).toHaveBeenCalledTimes(2)
+    expect(updateTag).toHaveBeenCalledTimes(2)
 
     await refreshUiTranslationsForCountry("gb")
     await refreshUiTranslationsForCountry("us")
-    expect(revalidateTag).toHaveBeenCalledTimes(3)
+    expect(updateTag).toHaveBeenCalledTimes(3)
 
     jest.advanceTimersByTime(10_000)
     await refreshUiTranslationsForCountry("de")
-    expect(revalidateTag).toHaveBeenCalledTimes(4)
+    expect(updateTag).toHaveBeenCalledTimes(4)
   })
 
   it("uses the legacy map when no publication has loaded", async () => {
@@ -92,7 +97,7 @@ describe("refreshUiTranslationsForCountry", () => {
     await (mod as Refresh).refreshUiTranslationsForCountry("se")
     await (mod as Refresh).refreshUiTranslationsForCountry("nl")
 
-    expect(revalidateTag).toHaveBeenCalledTimes(1)
-    expect(revalidateTag).toHaveBeenCalledWith("ui-translations:sv")
+    expect(updateTag).toHaveBeenCalledTimes(1)
+    expect(updateTag).toHaveBeenCalledWith("ui-translations:sv")
   })
 })

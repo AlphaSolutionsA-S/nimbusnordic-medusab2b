@@ -4,7 +4,7 @@ import type { HttpTypes } from '@medusajs/types';
 import CompanyCard from '@/modules/account/components/company-card';
 import type { QueryCompany } from '@/types/company/query';
 
-jest.mock('next/cache', () => ({ revalidateTag: jest.fn() }));
+jest.mock('next/cache', () => ({ updateTag: jest.fn() }));
 jest.mock('@vercel/analytics/server', () => ({ track: jest.fn() }));
 jest.mock('@/lib/data/cookies', () => ({
   getAuthHeaders: jest.fn(),
