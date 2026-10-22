@@ -9,7 +9,7 @@ jest.mock("next/cache", () => ({
   unstable_cache: jest.fn(),
 }))
 
-import { revalidateTag, updateTag } from "next/cache"
+import { revalidateTag } from "next/cache"
 import { NextRequest } from "next/server"
 
 type RouteModule = typeof import("@/app/api/translations/revalidate/route")
@@ -42,7 +42,6 @@ function expectNothingInvalidated() {
 beforeEach(() => {
   jest.resetModules()
   jest.mocked(revalidateTag).mockClear()
-  jest.mocked(updateTag).mockClear()
   process.env.REVALIDATE_SECRET = SECRET
   POST = require("@/app/api/translations/revalidate/route").POST
 })
