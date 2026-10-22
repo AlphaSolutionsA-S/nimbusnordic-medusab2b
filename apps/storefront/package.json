@@ -50,6 +50,7 @@
   "devDependencies": {
     "@babel/core": "^7.17.5",
     "@medusajs/ui-preset": "2.21.2",
+    "@opennextjs/cloudflare": "^1.20.12",
     "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^16.0.0",
