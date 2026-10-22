@@ -1,7 +1,7 @@
 # Upgrade the storefront to Next.js 16
 
 **Date:** 2026-10-22
-**Status:** Scoped (awaiting Klaus's approval)
+**Status:** Implemented
 **Type:** Story
 **Priority:** Critical (no storefront change can deploy until this ships)
 **Issue:** NIMBUS-209
