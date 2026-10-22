@@ -20,3 +20,11 @@
   array reformatting) and `next-env.d.ts` (imports `routes.d.ts`, `root-params.d.ts`); committed as
   generated.
 - Product page `Props.params` is now a `Promise`; tests pass `Promise.resolve({...})`.
+
+## Task 02 (checkout search params)
+
+- `Checkout` page (`app/[countryCode]/(checkout)/checkout/page.tsx`) now takes a required
+  `searchParams: Promise<...>` and awaits it; tests call `Checkout({ searchParams: Promise.resolve({...}) })`.
+- Storefront Jest config has `clearMocks: true`, so `toHaveBeenCalledWith` assertions are per test.
+- Typecheck after task 02 is still 58, identical set to `tsc-after-01.txt` (`tsc-after-02.txt` in
+  the run scratchpad).

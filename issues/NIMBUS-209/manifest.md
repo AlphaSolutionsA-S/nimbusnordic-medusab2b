@@ -19,7 +19,7 @@ Storefront only, `<f>` = `pnpm --filter @b2b-starter/storefront`, from the repo 
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
 | 01 | Next.js 16 dependencies and a passing build | `01-nextjs-16-build.md` | storefront | F1, F2, F3 (account slots), N2, N3, N4, R4 (as changed by decision 1), R5 | None | NIMBUS-211 | DONE |
-| 02 | Checkout reads cartId from awaited search params | `02-checkout-search-params.md` | storefront | F3 (checkout approval flow) | 01 | NIMBUS-212 | TODO |
+| 02 | Checkout reads cartId from awaited search params | `02-checkout-search-params.md` | storefront | F3 (checkout approval flow) | 01 | NIMBUS-212 | DONE |
 | 03 | Immediate cache invalidation on the Next.js 16 APIs | `03-cache-invalidation.md` | storefront | F4, F6, R1, R2, R3 | 01 | NIMBUS-213 | TODO |
 | 04 | Lint on the ESLint CLI with a flat config | `04-eslint-flat-config.md` | storefront | F7, R7, N1 (lint) | 01 | NIMBUS-214 | TODO |
 

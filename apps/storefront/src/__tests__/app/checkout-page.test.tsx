@@ -39,7 +39,7 @@ describe("checkout page", () => {
   it("shows the unavailable notice when the cart is refused", async () => {
     jest.mocked(lookupCart).mockResolvedValueOnce({ status: "unavailable" })
 
-    render(await Checkout({ searchParams: { cartId: "cart_colleague" } }))
+    render(await Checkout({ searchParams: Promise.resolve({ cartId: "cart_colleague" }) }))
 
     expect(jest.mocked(lookupCart)).toHaveBeenCalledWith("cart_colleague")
     expect(screen.getByTestId("cart-unavailable-notice")).toBeInTheDocument()
@@ -52,16 +52,34 @@ describe("checkout page", () => {
       cart: { id: "cart_colleague" } as unknown as B2BCart,
     })
 
-    render(await Checkout({ searchParams: { cartId: "cart_colleague", step: "payment" } }))
+    render(
+      await Checkout({
+        searchParams: Promise.resolve({ cartId: "cart_colleague", step: "payment" }),
+      })
+    )
 
     expect(jest.mocked(lookupCart)).toHaveBeenCalledWith("cart_colleague")
     expect(screen.getByTestId("checkout-form-stub")).toHaveAttribute("data-cart-id", "cart_colleague")
     expect(jest.mocked(notFound)).not.toHaveBeenCalled()
   })
 
+  it("falls back to the cookie cart when the search params have no cartId", async () => {
+    jest.mocked(lookupCart).mockResolvedValueOnce({
+      status: "found",
+      cart: { id: "cart_own" } as unknown as B2BCart,
+    })
+
+    render(await Checkout({ searchParams: Promise.resolve({ step: "payment" }) }))
+
+    expect(jest.mocked(lookupCart)).toHaveBeenCalledWith(undefined)
+    expect(screen.getByTestId("checkout-form-stub")).toHaveAttribute("data-cart-id", "cart_own")
+  })
+
   it("keeps not-found when there is no cart", async () => {
     jest.mocked(lookupCart).mockResolvedValueOnce({ status: "none" })
 
-    await expect(Checkout({})).rejects.toThrow("NEXT_NOT_FOUND")
+    await expect(Checkout({ searchParams: Promise.resolve({}) })).rejects.toThrow(
+      "NEXT_NOT_FOUND"
+    )
   })
 })
