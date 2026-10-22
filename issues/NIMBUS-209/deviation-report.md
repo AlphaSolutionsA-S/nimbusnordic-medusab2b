@@ -173,6 +173,16 @@ Finalization results, from the dispatcher (storefront only):
 4. **Visual tests were not run.** Options: (a) accept, and rely on the manual smoke test on the
    preview; (b) run `test:visual` against a seeded backend before merge.
 
+### Answers (Klaus, 2026-10-22)
+
+Klaus accepted the proposed answer to each question ("Alle er fint push og pr"):
+
+1. Transition NIMBUS-209 with "Estimate approved", then on to the status for an open pull request.
+2. (b) The region-switcher warning is added to NIMBUS-215's scope.
+3. (b) On the preview, search the served JS chunks for the real secret values (after-deploy check).
+4. (a) A manual smoke test on the preview is enough; visual tests are not run before merge.
+5. NIMBUS-215, created during the run for clearing the lint suppressions, is kept.
+
 ## Verify after deploy
 
 On the Medusa Cloud preview environment of the pull request, before merge to `develop`:
@@ -193,5 +203,7 @@ On the Medusa Cloud preview environment of the pull request, before merge to `de
 - **Plan section 10 and scope F2.** The Medusa Cloud OpenNext/wrangler build passes with no
   unsupported-version error and no override. The edge `middleware.ts` still redirects `/` to a
   country path.
-- **Open question 3, if chosen.** The served `/_next/static` JS chunks contain no value of
+- **Open question 3 (chosen).** The served `/_next/static` JS chunks contain no value of
   `REVALIDATE_SECRET`, `PAYLOAD_API_KEY` or `TRANSLATION_REPORT_SECRET`.
+- **Open question 4 (chosen).** In place of the visual tests, a manual smoke test of the main pages
+  (front page, product, category, cart, checkout, account) looks as before.
