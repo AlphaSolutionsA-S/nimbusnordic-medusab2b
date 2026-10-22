@@ -324,7 +324,7 @@ importers:
         specifier: ^8.2.3
         version: 8.4.1(@babel/core@7.28.5)(webpack@5.104.0(@swc/core@1.16.1(@swc/helpers@0.5.23)))
       eslint:
-        specifier: ^9.13.0
+        specifier: ^9.24.0
         version: 9.39.4(jiti@1.21.7)
       eslint-config-next:
         specifier: 16.4.2
@@ -7551,6 +7551,7 @@ packages:
   eslint@9.39.4:
     resolution: {integrity: sha512-XoMjdBOwe/esVgEvLmNsD3IRHkm7fbKIUGvrleloJXUZgDHig2IPWNniv+GwjyJXzuNqVjlr5+4yVUZjycJwfQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

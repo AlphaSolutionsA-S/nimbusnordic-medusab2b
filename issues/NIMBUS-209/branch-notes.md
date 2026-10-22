@@ -42,3 +42,15 @@
   (`async (tag) => tag`), so assertions read tag names.
 - Changed `.ts` files are LF in the working tree (git warns it will convert to CRLF); no
   whole-file churn.
+
+## Task 04 (ESLint flat config)
+
+- `apps/storefront/eslint.config.mjs` spreads `eslint-config-next/core-web-vitals` (same shape as
+  `apps/cms/eslint.config.mjs`) plus the `react/jsx-no-literals` block; `.eslintrc.js` is removed.
+- `lint` is `eslint src`; it no longer loads `next.config.js`, so no publishable key is needed.
+- `apps/storefront/eslint-suppressions.json` holds the 23 pre-existing React Compiler errors. Paths
+  in it are relative to `apps/storefront`; run ESLint from there (the `<f>` filter does). Fixing a
+  suppressed finding leaves a stale entry: prune with `eslint src --prune-suppressions`.
+- Lint result: 0 errors, 3 warnings (2 `exhaustive-deps`, 1 `no-location-assign-relative-destination`).
+- `AGENTS.md` is at 32761 bytes, 7 under the Codex limit `ai:check` enforces: any Tier 0 addition
+  needs a matching cut.
