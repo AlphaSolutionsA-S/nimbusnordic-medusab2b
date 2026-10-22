@@ -49,3 +49,45 @@
 - Next owner: `implementation-planner` (Klaus starts it).
 - Handover prompt: "Plan NIMBUS-209 from issues/NIMBUS-209/scope.md; the open questions are answered
   in PROGRESS.md."
+
+## 2026-10-22 — implementation-planner
+
+- Outcome: `plan.md`, `manifest.md` and four task files written (01 build, 02 checkout
+  searchParams, 03 cache invalidation, 04 ESLint flat config). Jira sub-tasks NIMBUS-211..214
+  created under NIMBUS-209 (component Customer Portal). No framework assumption is UNVERIFIED
+  (checked against the next@16.4.2, @opennextjs/aws@4.1.12 and next-intl 4.14.1 sources plus a lint
+  probe). New finding: under Next.js 16 the checkout page's synchronous `searchParams?.cartId` read
+  would send an approving admin to their own cart (task 02). Two decisions wait for Klaus:
+  (1) signed-out deep links to account pages: 404 as today, or the login form; (2) the 23
+  pre-existing React Compiler lint errors: suppression baseline, warnings, or fix.
+  `Ready for Dispatch: false`. The "plan approved" Jira comment is not yet posted.
+- Next owner: Klaus (answer the two decisions in plan.md section 2, approve the plan; then a separate
+  go-ahead for `task-dispatcher`).
+- Handover prompt: "Plan for NIMBUS-209 approved with answers <1>, <2>: record the answers in
+  plan.md, set Ready for Dispatch, post the plan-approved comment on NIMBUS-209."
+
+## 2026-10-22 — implementation-planner (decisions answered)
+
+- Outcome: Klaus answered both Critical decisions, and they are recorded in plan.md section 2.
+  (1) Signed-out deep account links redirect to `/<countryCode>`. This replaces scope rule R4 for
+  deep links and today's 404, as Klaus's decision of 2026-10-22. (2) React Compiler findings go into
+  an `eslint-suppressions.json` baseline with the rules kept at error.
+- I checked next@16.4.2 for a redirect pitfall and found none. A redirect thrown in a slot the
+  layout does not render only becomes a digest, the same mechanism today's built-in `notFound()`
+  default relies on, so signed-in users are not redirected. The front page is outside `account`,
+  so there is no loop.
+- Added: the redirect target is built from the URL-encoded country segment, with an open-redirect
+  negative test.
+- Updated: plan.md (sections 1, 2, 3D, 4, 7, 8, 9, 10), 01 and 04 task files, manifest, and the
+  NIMBUS-211 description. Nothing new blocks dispatch.
+- Plan not yet approved: Ready for Dispatch stays false, and no plan-approved comment is posted.
+- Next owner: Klaus (approve the plan; separate go-ahead for `task-dispatcher`).
+- Handover prompt: "Plan for NIMBUS-209 approved: set Ready for Dispatch, post the plan-approved
+  comment on NIMBUS-209."
+
+## 2026-10-22 — plan approved
+
+- Outcome: Klaus approved the plan and gave the go-ahead for dispatch. "Plan approved" comment
+  posted on NIMBUS-209 (new decisions and both answers); `Ready for Dispatch: true` in the manifest.
+- Next owner: `task-dispatcher`.
+- Handover prompt: "Dispatch issues/NIMBUS-209/."
