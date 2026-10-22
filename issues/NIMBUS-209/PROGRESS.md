@@ -111,8 +111,10 @@
   push and open the PR. Answers recorded in `deviation-report.md` and on NIMBUS-209; the
   region-switcher warning added to NIMBUS-215. NIMBUS-209 moved Estimation → To Do ("Estimate
   approved") → In Progress. `docs/architecture/store-access.md` and `country-languages.md` updated;
-  scope marked Implemented; working files removed by cleanup. PR description written; branch pushed
-  and PR opened against `develop` (not merged); NIMBUS-209 moved to review.
-- Next owner: Klaus (run the after-deploy checklist on the PR's Medusa Cloud preview, then merge).
+  scope marked Implemented; working files removed by cleanup. PR description written; branch pushed.
+  The PR could not be opened: the GitHub CLI (`gh`) is not installed on this machine. NIMBUS-209
+  stays In Progress until the PR exists.
+- Next owner: Klaus (open the PR against `develop` with the prepared title and description, move
+  NIMBUS-209 to review, run the after-deploy checklist on the PR's Medusa Cloud preview, then merge).
 - Handover prompt: "Run the NIMBUS-209 PR preview checklist; on success merge to develop and close
   NIMBUS-209 with a closing comment."
