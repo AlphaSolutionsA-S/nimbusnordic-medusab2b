@@ -104,3 +104,15 @@
 - Next owner: Klaus (answer the open questions in `deviation-report.md`).
 - Handover prompt: "NIMBUS-209 gate answers: <answers>. Resume task-dispatcher at 'After the
   gate' for issues/NIMBUS-209/."
+
+## 2026-10-22 — task-dispatcher (after the gate)
+
+- Outcome: Klaus passed the gate, accepting the proposed answer to each open question, and said to
+  push and open the PR. Answers recorded in `deviation-report.md` and on NIMBUS-209; the
+  region-switcher warning added to NIMBUS-215. NIMBUS-209 moved Estimation → To Do ("Estimate
+  approved") → In Progress. `docs/architecture/store-access.md` and `country-languages.md` updated;
+  scope marked Implemented; working files removed by cleanup. PR description written; branch pushed
+  and PR opened against `develop` (not merged); NIMBUS-209 moved to review.
+- Next owner: Klaus (run the after-deploy checklist on the PR's Medusa Cloud preview, then merge).
+- Handover prompt: "Run the NIMBUS-209 PR preview checklist; on success merge to develop and close
+  NIMBUS-209 with a closing comment."

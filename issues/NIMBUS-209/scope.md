@@ -1,5 +1,7 @@
 # Upgrade the storefront to Next.js 16
 
+> Record of NIMBUS-209, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-22
 **Status:** Implemented
 **Type:** Story

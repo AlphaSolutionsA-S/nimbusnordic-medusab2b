@@ -1,5 +1,7 @@
 # Deviation report: Upgrade the storefront to Next.js 16
 
+> Record of NIMBUS-209, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-209`, merge-base `cf39220`, commits `154c4e1` (plan), `ed3cf4b` (01),
 `137a02f` (02), `a0d9438` (03), `2d8147d` (04), `ba0226c` (consolidation). Working tree clean.
 Storefront only: no backend or CMS file changed, and the lockfile still resolves `next@16.3.3` for

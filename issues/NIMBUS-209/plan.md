@@ -1,5 +1,7 @@
 # Plan: Upgrade the storefront to Next.js 16
 
+> Record of NIMBUS-209, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-209 · **Branch:** `feature/NIMBUS-209` from `develop` · **App:** storefront only
 
 ## 1. Summary [High]
