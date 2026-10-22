@@ -17,8 +17,11 @@ import { act, render, waitFor } from "@testing-library/react"
 import { toast } from "@medusajs/ui"
 import { useEffect } from "react"
 
-import { deleteLineItem } from "@/lib/data/cart"
+import { addToCartBulk, deleteLineItem } from "@/lib/data/cart"
+import { addToCartEventBus } from "@/lib/data/cart-event-bus"
+import type { AddToCartEventPayload } from "@/lib/data/cart-event-bus"
 import { CartProvider, useCart } from "@/lib/context/cart-context"
+import { SIGN_IN_REQUIRED_ERROR } from "@/lib/util/customer-error"
 import type { B2BCart } from "@/types/global"
 
 // jsdom has no structuredClone, which the provider's optimistic updates use.
@@ -53,5 +56,38 @@ describe("CartProvider toasts", () => {
     await waitFor(() =>
       expect(toast.error).toHaveBeenCalledWith("Failed to delete item")
     )
+  })
+
+  it("shows the translated sign-in prompt when adding to cart while signed out", async () => {
+    ;(addToCartBulk as jest.Mock).mockResolvedValueOnce({
+      error: SIGN_IN_REQUIRED_ERROR,
+    })
+
+    await act(async () => {
+      render(<CartProvider cart={null}>{null}</CartProvider>)
+    })
+
+    const handler = jest.mocked(addToCartEventBus.registerCartAddHandler).mock
+      .calls.at(-1)?.[0]
+    const payload = {
+      lineItems: [
+        {
+          productVariant: { id: "variant_1", title: "Variant", product: {} },
+          quantity: 1,
+        },
+      ],
+      regionId: "reg_1",
+    } as unknown as AddToCartEventPayload
+
+    await act(async () => {
+      handler?.(payload)
+    })
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Sign in to add products to your cart."
+      )
+    )
+    expect(toast.error).not.toHaveBeenCalledWith("Failed to add to cart")
   })
 })

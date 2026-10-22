@@ -1,5 +1,7 @@
 # Plan: Protect company-linked carts from access by cart ID alone
 
+> Record of NIMBUS-177, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-177 · **Scope:** `scope.md` (approved 2026-10-20) · **Base branch:** develop
 **Apps:** backend, storefront · **Skills used:** medusa-backend, medusa-api-route,
 medusa-workflow-and-steps, medusa-storefront, nextjs-data-layer, secure-coding-owasp

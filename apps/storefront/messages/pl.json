@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Coś poszło nie tak. Spróbuj ponownie.",
-      "cartNotFound": "Nie udało się znaleźć Twojego koszyka. Odśwież stronę i spróbuj ponownie."
+      "cartNotFound": "Nie udało się znaleźć Twojego koszyka. Odśwież stronę i spróbuj ponownie.",
+      "signInRequired": "Zaloguj się, aby dodać produkty do koszyka.",
+      "cartUnavailable": "Ten koszyk nie jest już dostępny. Dodaj produkt, aby utworzyć nowy koszyk."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Koszyk",
       "message": "Twój koszyk jest pusty. Zmieńmy to — skorzystaj z poniższego linku, aby zacząć przeglądać nasze produkty.",
+      "exploreProductsLabel": "Odkryj produkty"
+    },
+    "unavailableNotice": {
+      "heading": "Ten koszyk nie jest już dostępny",
+      "message": "Tego koszyka nie można już używać z Twoim kontem. Dodaj produkt, aby utworzyć nowy koszyk.",
       "exploreProductsLabel": "Odkryj produkty"
     },
     "itemFull": {

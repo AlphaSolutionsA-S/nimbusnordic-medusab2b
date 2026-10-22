@@ -102,6 +102,26 @@ describe("middleware request headers (NIMBUS-175)", () => {
     expect(response.headers.get("x-middleware-request-x-storefront-country")).toBeNull()
   })
 
+  it.each([
+    ["without a cookie cart", "_medusa_cache_id=abc"],
+    ["with a cookie cart", "_medusa_cache_id=abc; _medusa_cart_id=cart_own"],
+  ])(
+    "passes the approval card's checkout link through %s, without redirecting or setting the cart cookie (NIMBUS-202)",
+    async (_label, cookie) => {
+      const { middleware } = await import("@/middleware")
+      const request = new NextRequest(
+        "https://example.com/dk/checkout?cartId=cart_colleague&step=payment",
+        { headers: { cookie } }
+      )
+
+      const response = await middleware(request)
+
+      expect(response.headers.get("x-middleware-next")).toBe("1")
+      expect(response.headers.get("location")).toBeNull()
+      expect(response.cookies.get("_medusa_cart_id")).toBeUndefined()
+    }
+  )
+
   it("overwrites a forged pathname header and drops forged locale context on the static-asset branch too", async () => {
     const { middleware } = await import("@/middleware")
     const request = new NextRequest("https://example.com/robots.txt", {

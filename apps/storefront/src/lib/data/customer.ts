@@ -1,19 +1,19 @@
 "use server"
 
 import { sdk } from "@/lib/config"
+import { activeCartLookup } from "@/lib/util/active-cart"
 import medusaError from "@/lib/util/medusa-error"
 import { B2BCustomer } from "@/types/global"
 import { HttpTypes } from "@medusajs/types"
 import { track } from "@vercel/analytics/server"
 import { revalidateTag } from "next/cache"
 import { redirect } from "next/navigation"
-import { retrieveCart, updateCart } from "./cart"
+import { lookupCart } from "./cart"
 import { createCompany } from "./companies"
 import {
   getAuthHeaders,
   getCacheOptions,
   getCacheTag,
-  getCartId,
   removeAuthToken,
   removeCartId,
   setAuthToken,
@@ -151,8 +151,6 @@ export async function signup(_currentState: unknown, formData: FormData) {
     const cacheTag = await getCacheTag("customers")
     revalidateTag(cacheTag)
 
-    await transferCart()
-
     return {
       customer: createdCustomer,
       company: createdCompany,
@@ -185,27 +183,21 @@ export async function login(_currentState: unknown, formData: FormData) {
 
         revalidateTag(customerCacheTag)
 
-        const customer = await retrieveCustomer()
-        const cart = await retrieveCart()
+        // The cookie cart is read with the new account's token. A cart this
+        // account may not use (another account's, no longer verified, or
+        // only readable and not owned) is dropped; it is never transferred
+        // or rewritten (NIMBUS-177).
+        const lookup = await lookupCart()
+        const customer =
+          lookup.status === "found" ? await retrieveCustomer() : null
 
-        if (customer?.employee?.company_id) {
-          await updateCart({
-            metadata: {
-              ...cart?.metadata,
-              company_id: customer.employee.company_id,
-            },
-          })
+        if (activeCartLookup(lookup, customer?.id).status === "unavailable") {
+          await removeCartId()
         }
 
         revalidateTag(productsCacheTag)
         revalidateTag(cartsCacheTag)
       })
-  } catch (error: any) {
-    return error.toString()
-  }
-
-  try {
-    await transferCart()
   } catch (error: any) {
     return error.toString()
   }
@@ -233,24 +225,6 @@ export async function signout(countryCode: string, customerId: string) {
   revalidateTag(cartsCacheTag)
 
   redirect(`/${countryCode}/account`)
-}
-
-export async function transferCart() {
-  const cartId = await getCartId()
-
-  if (!cartId) {
-    return
-  }
-
-  const headers = {
-    ...(await getAuthHeaders()),
-  }
-
-  await sdk.store.cart.transferCart(cartId, {}, headers)
-
-  const cartCacheTag = await getCacheTag("carts")
-
-  revalidateTag(cartCacheTag)
 }
 
 export const addCustomerAddress = async (

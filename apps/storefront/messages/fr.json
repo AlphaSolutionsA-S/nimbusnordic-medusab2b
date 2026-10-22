@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Une erreur s'est produite. Veuillez réessayer.",
-      "cartNotFound": "Nous n'avons pas trouvé votre panier. Actualisez la page et réessayez."
+      "cartNotFound": "Nous n'avons pas trouvé votre panier. Actualisez la page et réessayez.",
+      "signInRequired": "Connectez-vous pour ajouter des produits à votre panier.",
+      "cartUnavailable": "Ce panier n'est plus disponible. Ajoutez un produit pour commencer un nouveau panier."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Panier",
       "message": "Votre panier est vide. Changeons cela, utilisez le lien ci-dessous pour commencer à parcourir nos produits.",
+      "exploreProductsLabel": "Découvrir les produits"
+    },
+    "unavailableNotice": {
+      "heading": "Ce panier n'est plus disponible",
+      "message": "Ce panier ne peut plus être utilisé avec votre compte. Ajoutez un produit pour commencer un nouveau panier.",
       "exploreProductsLabel": "Découvrir les produits"
     },
     "itemFull": {

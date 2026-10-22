@@ -4,6 +4,7 @@ import {
   validateAndTransformQuery,
 } from "@medusajs/framework";
 import { MiddlewareRoute } from "@medusajs/medusa";
+import { ensureCartAccess } from "../../middlewares/ensure-cart-access";
 import {
   listQuotesTransformQueryConfig,
   retrieveQuoteTransformQueryConfig,
@@ -38,6 +39,7 @@ export const storeQuotesMiddlewares: MiddlewareRoute[] = [
         GetQuoteParams,
         retrieveQuoteTransformQueryConfig
       ),
+      ...ensureCartAccess("owner", "body"),
     ],
   },
   {

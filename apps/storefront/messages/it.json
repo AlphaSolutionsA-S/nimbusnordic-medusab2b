@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Si è verificato un errore. Riprova.",
-      "cartNotFound": "Non abbiamo trovato il tuo carrello. Ricarica la pagina e riprova."
+      "cartNotFound": "Non abbiamo trovato il tuo carrello. Ricarica la pagina e riprova.",
+      "signInRequired": "Accedi per aggiungere prodotti al carrello.",
+      "cartUnavailable": "Questo carrello non è più disponibile. Aggiungi un prodotto per iniziare un nuovo carrello."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Carrello",
       "message": "Il tuo carrello è vuoto. Cambiamo le cose, usa il link qui sotto per iniziare a sfogliare i nostri prodotti.",
+      "exploreProductsLabel": "Scopri i prodotti"
+    },
+    "unavailableNotice": {
+      "heading": "Questo carrello non è più disponibile",
+      "message": "Questo carrello non può più essere usato con il tuo account. Aggiungi un prodotto per iniziare un nuovo carrello.",
       "exploreProductsLabel": "Scopri i prodotti"
     },
     "itemFull": {

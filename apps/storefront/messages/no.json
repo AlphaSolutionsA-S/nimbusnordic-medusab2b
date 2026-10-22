@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Noe gikk galt. Prøv igjen.",
-      "cartNotFound": "Vi fant ikke handlekurven din. Last inn siden på nytt og prøv igjen."
+      "cartNotFound": "Vi fant ikke handlekurven din. Last inn siden på nytt og prøv igjen.",
+      "signInRequired": "Logg inn for å legge produkter i handlekurven.",
+      "cartUnavailable": "Denne handlekurven er ikke lenger tilgjengelig. Legg til et produkt for å starte en ny handlekurv."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Handlekurv",
       "message": "Du har ikke noe i handlekurven. La oss endre på det, bruk lenken nedenfor for å begynne å utforske produktene våre.",
+      "exploreProductsLabel": "Utforsk produkter"
+    },
+    "unavailableNotice": {
+      "heading": "Denne handlekurven er ikke lenger tilgjengelig",
+      "message": "Denne handlekurven kan ikke lenger brukes med kontoen din. Legg til et produkt for å starte en ny handlekurv.",
       "exploreProductsLabel": "Utforsk produkter"
     },
     "itemFull": {

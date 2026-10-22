@@ -9,7 +9,7 @@ pure helpers in `<domain>/utils/*.ts`; core-flow hooks in `hooks/*.ts`.
 - Steps resolve modules with `container.resolve<IXModuleService>(X_MODULE)`; importing a service
   class for its type only is allowed.
 - Do not copy: `order/steps/update-order.ts` (`any` casts; its compensation calls `updateOrder` with
-  an array); `hooks/cart-created.ts` and `hooks/order-created.ts` (trust `metadata.company_id`,
-  rule `trust-no-client-company`).
+  an array); `hooks/order-created.ts` (trusts `metadata.company_id`, rule
+  `trust-no-client-company`).
 - Spending-limit and approval checks run in `hooks/validate-cart-completion.ts` and the other
   `validate-*` hooks; their rules are in Tier 0 `decisions.md`.

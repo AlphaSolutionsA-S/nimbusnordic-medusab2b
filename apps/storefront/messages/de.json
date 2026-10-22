@@ -28,7 +28,9 @@
     },
     "errors": {
       "generic": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
-      "cartNotFound": "Ihr Warenkorb wurde nicht gefunden. Bitte laden Sie die Seite neu und versuchen Sie es erneut."
+      "cartNotFound": "Ihr Warenkorb wurde nicht gefunden. Bitte laden Sie die Seite neu und versuchen Sie es erneut.",
+      "signInRequired": "Melden Sie sich an, um Produkte in den Warenkorb zu legen.",
+      "cartUnavailable": "Dieser Warenkorb ist nicht mehr verfügbar. Legen Sie ein Produkt in den Warenkorb, um einen neuen zu beginnen."
     }
   },
   "Layout": {
@@ -616,6 +618,11 @@
     "emptyCartMessage": {
       "heading": "Warenkorb",
       "message": "Ihr Warenkorb ist leer. Nutzen Sie den untenstehenden Link, um mit dem Stöbern in unseren Produkten zu beginnen.",
+      "exploreProductsLabel": "Produkte entdecken"
+    },
+    "unavailableNotice": {
+      "heading": "Dieser Warenkorb ist nicht mehr verfügbar",
+      "message": "Dieser Warenkorb kann mit Ihrem Konto nicht mehr verwendet werden. Legen Sie ein Produkt in den Warenkorb, um einen neuen zu beginnen.",
       "exploreProductsLabel": "Produkte entdecken"
     },
     "itemFull": {

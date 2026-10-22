@@ -73,7 +73,7 @@ const ApprovalCardActions = ({
   const handlePlaceOrder = () => {
     setIsRedirecting(true)
     router.push(
-      `/${countryCode}/checkout?cart_id=${cartWithApprovals.id}&step=payment`
+      `/${countryCode}/checkout?cartId=${cartWithApprovals.id}&step=payment`
     )
   }
 
@@ -127,7 +127,7 @@ const ApprovalCardActions = ({
               onClick={handlePlaceOrder}
             >
               <LocalizedClientLink
-                href={`/checkout?cart_id=${cartWithApprovals.id}&step=payment`}
+                href={`/checkout?cartId=${cartWithApprovals.id}&step=payment`}
               >
                 {t("placeOrderLabel")}
                 <ArrowRightMini className="inline-block" />
