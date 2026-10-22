@@ -136,7 +136,7 @@ describe("catalog page metadata uses the request's country-language publication"
 
   it("titles a product page in the country's published ninth language with every alternate", async () => {
     const metadata = await productMetadata({
-      params: { countryCode: "nl", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "nl", handle: "test-product" }),
     })
 
     expect(metadata.title).toBe("Test Product [nl] MetaDescription.storeSuffix")
@@ -179,10 +179,10 @@ describe("catalog page metadata uses the request's country-language publication"
 
   it("keeps both English-country URLs and gives an unpublished country the default language", async () => {
     const ireland = await productMetadata({
-      params: { countryCode: "ie", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "ie", handle: "test-product" }),
     })
     const unpublished = await productMetadata({
-      params: { countryCode: "se", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "se", handle: "test-product" }),
     })
 
     expect(ireland.title).toBe("Test Product [en] MetaDescription.storeSuffix")

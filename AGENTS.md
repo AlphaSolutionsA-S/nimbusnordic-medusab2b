@@ -16,7 +16,7 @@ Payload CMS. pnpm 9.15 workspace (`apps/*`), Turborepo, Node 22+.
 | App | Path | Stack |
 |-----|------|-------|
 | Backend + Admin (`@b2b-starter/backend`) | `apps/backend` | Medusa 2.21.0, TypeScript (only `strictNullChecks`), PostgreSQL |
-| Storefront (`@b2b-starter/storefront`) | `apps/storefront` | Next.js 15.5, React 19, Medusa JS SDK, next-intl 4, TypeScript strict |
+| Storefront (`@b2b-starter/storefront`) | `apps/storefront` | Next.js 16.4, React 19, Medusa JS SDK, next-intl 4, TypeScript strict |
 | CMS (`@dtc/cms`) | `apps/cms` | Payload 3.90 on Next.js 16, own PostgreSQL |
 
 Integrations: Business Central, an Azure Logic App calling `/orderapi/orders`, Stripe and PayPal.

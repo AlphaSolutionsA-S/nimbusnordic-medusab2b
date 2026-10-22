@@ -57,7 +57,7 @@ import { generateMetadata } from "@/app/[countryCode]/(main)/products/[handle]/p
 describe("Product page generateMetadata", () => {
   it("uses the localized suffix for a non-English locale (TC-1, Task 02)", async () => {
     const metadata = await generateMetadata({
-      params: { countryCode: "dk", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "dk", handle: "test-product" }),
     })
 
     expect(metadata.title).toBe("Test Product | Nimbus Nordic")
@@ -65,7 +65,7 @@ describe("Product page generateMetadata", () => {
 
   it("falls back to the default locale suffix for an unmapped country (TC-2, Task 02)", async () => {
     const metadata = await generateMetadata({
-      params: { countryCode: "us", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "us", handle: "test-product" }),
     })
 
     expect(metadata.title).toBe("Test Product | Nimbus Nordic")
@@ -73,10 +73,10 @@ describe("Product page generateMetadata", () => {
 
   it("keeps the product content itself identical across locales (TC-3, Task 02)", async () => {
     const dkMetadata = await generateMetadata({
-      params: { countryCode: "dk", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "dk", handle: "test-product" }),
     })
     const frMetadata = await generateMetadata({
-      params: { countryCode: "fr", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "fr", handle: "test-product" }),
     })
 
     expect(dkMetadata.description).toBe("Test Product")
@@ -86,7 +86,7 @@ describe("Product page generateMetadata", () => {
 
   it("includes an hreflang alternate for each of the 8 legacy countries", async () => {
     const metadata = await generateMetadata({
-      params: { countryCode: "dk", handle: "test-product" },
+      params: Promise.resolve({ countryCode: "dk", handle: "test-product" }),
     })
 
     const languages = metadata.alternates?.languages as Record<

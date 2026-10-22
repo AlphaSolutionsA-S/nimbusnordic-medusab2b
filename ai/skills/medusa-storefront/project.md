@@ -1,6 +1,6 @@
 # Medusa storefront: Nimbus Nordic
 
-App `apps/storefront` (`@b2b-starter/storefront`), Next.js 15.5 App Router, React 19,
+App `apps/storefront` (`@b2b-starter/storefront`), Next.js 16.4 App Router, React 19,
 `@medusajs/js-sdk` 2.21.0, port 8000.
 
 - The single SDK instance is `src/lib/config.ts`; it needs `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY`
