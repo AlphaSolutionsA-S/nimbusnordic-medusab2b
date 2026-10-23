@@ -241,6 +241,7 @@ export interface IBusinessCentralModuleService {
   findItemsForOrderLines(
     lines: BCItemLookupInput[]
   ): Promise<BCItemLookupResult[]>;
+  getItemLookupEvidence(lines: BCItemLookupInput[]): Promise<BCItemLookupEvidence>;
   createSalesOrder(
     params: BCCreateSalesOrderParams
   ): Promise<BCCreatedSalesOrder>;
@@ -319,15 +320,39 @@ export type BCShipment = BCShipmentHeader & {
   lines: BCShipmentLine[];
 };
 
+export type BCItemVariant = {
+  id: string;
+  code: string;
+};
+
 export type BCItem = {
   id: string;
   number: string;
   displayName: string;
   gtin: string;
   baseUnitOfMeasureCode: string;
+  // The item's sizes; empty for an item without sizes.
+  variants: BCItemVariant[];
 };
 
-export type BCItemMatchSource = "eanNo" | "itemNumber" | "custItemNo";
+// An ItemReferenceEntries row. Empty codes are "". "bar_code" is BC's "Bar Code" type; every
+// other type (blank, Customer, Vendor) is "other".
+export type BCItemBarcodeReference = {
+  barcode: string;
+  itemNumber: string;
+  variantCode: string;
+  unitOfMeasureCode: string;
+  referenceType: "bar_code" | "other";
+};
+
+// Raw evidence for an order's lines; which item and size a line resolves to is not decided here.
+export type BCItemLookupEvidence = {
+  itemsByBarcode: BCItem[];
+  barcodeReferences: BCItemBarcodeReference[];
+  itemsByNumber: BCItem[];
+};
+
+export type BCItemMatchSource = "eanNo" | "itemReference" | "itemNumber" | "custItemNo";
 
 export type BCItemLookupFailureReason =
   | "no_identifiers"
@@ -370,6 +395,8 @@ export type BCSalesOrderAddressInput = {
 export type BCCreateSalesOrderLineInput = {
   lineNumber: number;
   itemId: string;
+  // BC itemVariant GUID (the size); sent only when set.
+  itemVariantId?: string;
   quantity: number;
   unitOfMeasureCode?: string;
   shipmentDate?: string;

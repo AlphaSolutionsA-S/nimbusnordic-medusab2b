@@ -28,7 +28,7 @@ All tasks are in `apps/backend` (`<f>` = `pnpm --filter @b2b-starter/backend`), 
 
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | Adapter reads item lookup evidence per order and sends `itemVariantId` | `01-adapter-item-evidence.md` | backend | F1, F2, NF BC load, NF throttling, NF ODataV4 helper, NF logs | None | NIMBUS-232 | TODO |
+| 01 | Adapter reads item lookup evidence per order and sends `itemVariantId` | `01-adapter-item-evidence.md` | backend | F1, F2, NF BC load, NF throttling, NF ODataV4 helper, NF logs | None | NIMBUS-232 | DONE |
 | 02 | Barcode resolution rule and the two new line-failure reasons | `02-barcode-resolution-rule.md` | backend | F1, F3, F4, F5, all business rules | 01 | NIMBUS-233 | TODO |
 | 03 | Submission uses the rule and sends the size | `03-submission-wiring.md` | backend | F2, F4, F6 | 01, 02 | NIMBUS-234 | TODO |
 | 04 | Documentation and schema comment | `04-docs.md` | backend | Proposed structure 4 | 03 | NIMBUS-235 | TODO |

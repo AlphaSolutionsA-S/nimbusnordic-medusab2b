@@ -32,6 +32,7 @@ const ITEM_ONE: BCItem = {
   displayName: "Telluride Jacket, Unisex, Navy - S",
   gtin: "5712094143628",
   baseUnitOfMeasureCode: "PCS",
+  variants: [],
 };
 
 const ITEM_TWO: BCItem = {
@@ -40,6 +41,7 @@ const ITEM_TWO: BCItem = {
   displayName: "Telluride Jacket, Unisex, Navy - M",
   gtin: "5712094143635",
   baseUnitOfMeasureCode: "PCS",
+  variants: [],
 };
 
 const matchedLine = (lineNumber: number, item: BCItem): BCItemLookupResult => ({

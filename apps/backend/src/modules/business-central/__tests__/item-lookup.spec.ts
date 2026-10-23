@@ -46,6 +46,7 @@ const NIMBUS_ITEM = {
   displayName: "Vesper Vest Unisex, Navy - XL",
   gtin: "5712094145752",
   baseUnitOfMeasureCode: "PCS",
+  variants: [],
 };
 
 describe("BusinessCentralModuleService.findItemsForOrderLines", () => {
