@@ -15,6 +15,8 @@ export type BcOrderLineFailureReason =
   | "no_identifiers"
   | "not_found"
   | "ambiguous"
+  | "size_unresolved"
+  | "unit_mismatch"
   | "rejected_by_bc";
 
 export type BcOrderLineFailure = {
@@ -101,6 +103,8 @@ const BC_ORDER_LINE_FAILURE_REASONS: readonly BcOrderLineFailureReason[] = [
   "no_identifiers",
   "not_found",
   "ambiguous",
+  "size_unresolved",
+  "unit_mismatch",
   "rejected_by_bc",
 ];
 

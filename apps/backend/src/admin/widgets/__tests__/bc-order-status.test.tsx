@@ -88,6 +88,27 @@ describe("Business Central order widget", () => {
     expect(screen.getByRole("button", { name: "Write to BC" })).toBeEnabled();
   });
 
+  it("labels size and unit refusals", async () => {
+    fetchMock.mockResolvedValueOnce(
+      state({
+        status: "sent",
+        bc_order_id: "bc_1",
+        partial: true,
+        line_failures: [
+          { line_number: 1, reason: "size_unresolved" },
+          { line_number: 2, reason: "unit_mismatch" },
+        ],
+      })
+    );
+    mount();
+    expect(
+      await screen.findByText(/Line 1: Size could not be determined/)
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Line 2: Barcode is for a different unit of measure/)
+    ).toBeVisible();
+  });
+
   it("submits normally, keeps reads manual after acceptance/focus/reconnect, and refreshes the outcome", async () => {
     fetchMock
       .mockResolvedValueOnce(state())

@@ -21,3 +21,18 @@
 - Fetch-mocked BC module specs run only with `test:integration:modules -- <path>`; a path pattern
   without `__tests__/<file>` also picks up stale `.medusa/server` copies. `service.spec.ts` listOrders
   guardrail test fails at baseline.
+
+## Task 02 (resolution rule)
+
+- `resolveOrderLineItem(line, evidence)` in `workflows/business-central-order/utils/resolve-order-line-item.ts`;
+  exported types `OrderLineItemInput` (`eanNo: string` required; pass `""` when absent) and
+  `OrderLineItemResolution` (`{ resolved: true, itemId, itemVariantId, matchedBy }` or
+  `{ resolved: false, reason }`). Call it once per line with the whole order's evidence.
+- `reason` is assignable to `BcOrderLineFailure.reason` directly; `no_identifiers` is returned only
+  when barcode, item number and customer item number are all blank.
+- Item numbers, size codes and units are compared trimmed and upper-cased; the rule dedupes items by
+  `id`, so passing the same item in both evidence lists is fine.
+- `itemVariantId` is `null` for an item without sizes; map it to `undefined` for
+  `BCCreateSalesOrderLineInput.itemVariantId` (sent only when defined).
+- Widget labels and parsed reasons for `size_unresolved` / `unit_mismatch` are in place.
+- `pnpm ai:check` is over the root `AGENTS.md` size limit after the decisions.md row (open, human).

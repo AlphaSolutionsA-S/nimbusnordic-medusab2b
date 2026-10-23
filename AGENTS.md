@@ -417,6 +417,7 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | BC-managed company fields are read-only | `B/admin/routes/companies/bc-managed-fields.ts` | admin form; BC sync | storefront company card | ok |
 | Sent or recorded BC orders require duplicate protection and a force warning | `B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`) | pure verdict | Admin widget; submission guard | ok |
 | BC submission skips existing orders unless force is explicit | `B/workflows/business-central-order/utils/admin-bc-integration.ts` (`shouldSkipBcSubmission`) | preparation outcome | automatic and Admin workflows | ok |
+| Order line barcode resolution to BC item and size | `B/workflows/business-central-order/utils/resolve-order-line-item.ts` | line failures | BC order prepare step | ok |
 | Shipment notice match (R1, R2, R4), netting, revision and check schedule | `B/workflows/shipment-notice/utils/` | pure verdicts | shipment discovery and check workflows | ok |
 | Free-shipping threshold | `B/api/store/free-shipping/utils.ts` | `/store/free-shipping/prices` | `S/lib/data/fulfillment.ts` | ok |
 | Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale`; `default_locale` of `/store/country-languages` | `B/admin/lib/translations.ts`, `S/lib/data/country-languages.ts` | duplicate: `REFERENCE_LOCALE` in `B/admin/lib/translations.ts`; `DEFAULT_LOCALE` in `S/lib/i18n/country-language-map.ts` (cold-outage fallback only) |

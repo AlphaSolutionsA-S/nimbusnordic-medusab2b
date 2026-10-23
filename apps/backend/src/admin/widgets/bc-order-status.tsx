@@ -25,6 +25,8 @@ const LINE_FAILURE_LABELS = {
   no_identifiers: "No item identifiers",
   not_found: "Item not found",
   ambiguous: "Multiple items matched",
+  size_unresolved: "Size could not be determined",
+  unit_mismatch: "Barcode is for a different unit of measure",
   rejected_by_bc: "Rejected by Business Central",
 } as const;
 
