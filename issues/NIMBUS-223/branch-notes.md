@@ -19,3 +19,10 @@
 - Detail-page test pattern: `routes/companies/__tests__/company-details-layout.test.tsx` (mock only `lib/client`, `MemoryRouter` + `Route` with the param, `document.querySelector('[data-layout-entry="<id>"]')` then `within`).
 - `company-order-api-setting.test.tsx` failed once at the create-drawer Save click in a combined run, then passed 3 times; if it recurs in finalization, it is timing, not the layout.
 - Typecheck after task 03: 22 errors, same set (`tsc-03.txt` holds only `error TS` lines; `tsc-02.txt` holds full output, so compare `error TS` lines).
+
+## Task 04
+- `routes/quotes/[quoteId]/page.tsx`: `LayoutComposer` with `CORE_LAYOUT_IDS.TWO_COLUMN`, `data={quote}`; main fragment entries `quote-accepted` (conditional on `status === "accepted"`), `quote`, `messages`, `json`; side fragment `customer`, `company`; `<Toaster />` after the composer in an outer fragment. Early returns and the `throw "preview not found"` stay before it.
+- A conditional `LayoutComposer.Entry` inside a fragment works in the stand-in (absent entry simply not rendered); in Medusa an absent entry is ignored per plan section 9 row 3.
+- Test: `routes/quotes/__tests__/quote-details-layout.test.tsx`; sections checked with `[data-layout-section="main|side"]` then entry ids. Mocking a typed SDK method with a partial fixture needs a cast; instead use a top-level `const previewMock = jest.fn()` forwarded from the `jest.mock` factory through an arrow, so it is read only when called (works under `jest.admin.config.js`).
+- Admin tests print a harmless `react-i18next` "pass in an i18next instance" warning (no i18n provider in Jest).
+- Typecheck after task 04: 22 errors, same set (`tsc-04.txt`, `error TS` lines only).
