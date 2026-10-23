@@ -66,3 +66,18 @@
 - **Limits:** Browser navigation, runtime translation publication, mailbox delivery and deployed credential/login checks remain unverified and owned by task03/deployment. Existing signed-in password action remains unchanged.
 - **Next owner:** dispatcher/code-reviewer for task02 review and local commit; task03 then completes cross-app regression/documentation and available runtime evidence. Worker performed no tracker, commit or push operations.
 - **Handover prompt:** Review 02-storefront-recovery.md and the new recovery actions/forms/public routes. Use branch-notes02 for translation import and Playwright setup; preserve accepted concurrency/logging risks and finish task03 checks before final human gate.
+
+## 2026-10-23 — Recovery verification and runtime documentation ready for review
+- **Owner:** task03 tdd-worker, NIMBUS-230.
+- **Outcome:** Added real HTTP/PostgreSQL regression coverage for company/role preservation and the existing signed-in password-change flow, plus wrong-account proof coverage. Updated current store-access architecture and the business-rule registry with recovery ownership, trusted email link, publication/release checks and the accepted concurrency/token persistence/logging risks. No production source changed.
+- **Verification:** Two new shared security regressions pass (87 unrelated skipped); the new wrong-account proof case passes (12 unrelated skipped). Whole-backend tsc remains22 diagnostics, baseline22. Backend lint reports0 errors/13 existing warnings. Task01 lifecycle and task02's27 component/action/login tests provide preceding scoped evidence; full suites/build belong to finalization.
+- **Limits:** No browser run: the existing setup requires seeded running backend data, published DB translations and a current storefront build; the available build predates recovery. No actual mailbox or deployed credential/session result verified. No new infrastructure or workaround configuration introduced.
+- **Next owner:** dispatcher/code-reviewer for task03 review, then branch consolidation/final full checks and integration-reviewer deviation report. Worker performed no commit, push or tracker operation.
+- **Handover prompt:** Review task03 evidence and branch notes. Synchronize generated AI context after registry edits, then complete final verification once and record remaining deployment checks. Preserve accepted risks and prior progress entries.
+
+## 2026-10-23 — Generated recovery context synchronized
+- **Owner:** task03 worker, narrow dispatcher rework.
+- **Outcome:** Shortened only the new recovery registry row to meet the existing context byte cap, preserving owners, lifecycle and accepted risks. Regenerated AGENTS.md and .github/copilot-instructions.md.
+- **Verification:** `corepack pnpm ai:check --fix` and `corepack pnpm ai:check` pass. No other code or rule changes.
+- **Next owner:** dispatcher/reviewer for task03 completion and branch finalization.
+- **Handover prompt:** Include both generated context files with task03; continue pending review and final verification.

@@ -1,7 +1,7 @@
 # Store cart and order access
 
-**Last updated:** 2026-10-21
-**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204)
+**Last updated:** 2026-10-23
+**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204), NIMBUS-133
 
 ## Overview
 
@@ -18,6 +18,47 @@ exposure) and the rollout procedure are in
 and "Cart and order access rollout". This document describes how the code is put together.
 
 ## Components
+
+### Public customer password recovery
+
+The country-prefixed `/forgot-password` and `/reset-password` storefront pages are public,
+dynamic and excluded from indexing. Their forms call the server actions in
+`lib/data/password-recovery.ts`. Opening a link performs no credential mutation. Missing or
+rejected proofs offer a fresh request; completion returns the customer to ordinary login without
+creating an authenticated session.
+
+Recovery uses Medusa's Auth endpoints and proof storage:
+
+- `POST /auth/customer/emailpass/reset-password` accepts `{ identifier, metadata: { country_code } }`.
+  Known and unknown accounts receive the same acknowledgement; a provider failure also receives
+  the neutral core acknowledgement.
+- `POST /auth/customer/emailpass/update` accepts `{ password, password_confirmation }` and a reset
+  Bearer proof. The exact customer/emailpass middleware in `api/auth/middlewares.ts` validates
+  password length (at least eight characters), confirmation and unknown fields before core proof
+  consumption. No email, customer or company identifier is accepted on completion.
+- Medusa owns the 15-minute proof and credential update. Issuing a new proof replaces the previous
+  one; successful use refuses sequential replay. Company membership and roles are preserved.
+
+The `auth.password_reset` subscriber starts
+`workflows/customer/workflows/send-password-reset.ts` for customer events. Its preparation step
+builds an English email and a `/<country>/reset-password?token=...` link from the first configured
+`STORE_CORS` origin, defaulting the country to `dk`. The URL carries no email address. The workflow
+uses core `sendNotificationsStep` on channel `email` and the existing Notification provider;
+provider configuration and mailbox delivery remain deployment concerns.
+
+Accepted limits: Medusa's existing proof consumption does not guarantee a single winner for
+simultaneous submissions. Notification data persists the reset URL, and the configured local
+provider may log it. No extra lock, token store, log guard or retention cleanup is implemented.
+Existing sessions follow Medusa defaults; recovery makes no forced-logout promise. Signed-in
+password change remains the separate `/store/customers/me/password` flow requiring the current
+password.
+
+Runtime UI translations come from the database. Before release, import the recovery keys using
+the checklist in `apps/storefront/src/lib/i18n/README.md`; editing message JSON alone does not
+publish them. After deployment, use a controlled account and mailbox to verify receipt, trusted
+country link, expired/used-link guidance, successful reset, sequential replay refusal, refusal of
+the old password, ordinary login with the new password, and published UI keys. Local HTTP and
+component tests do not prove mailbox delivery or deployed browser behaviour.
 
 Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/storefront/src/`.
 

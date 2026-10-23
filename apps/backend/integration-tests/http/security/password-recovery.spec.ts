@@ -85,7 +85,7 @@ medusaIntegrationTestRunner({
       expect((await update(latest)).status).toBe(401);
     });
 
-    it.each(['expired', 'actor', 'provider', 'tampered'] as const)('rejects %s proof without consuming the original', async (kind) => {
+    it.each(['expired', 'actor', 'account', 'provider', 'tampered'] as const)('rejects %s proof without consuming the original', async (kind) => {
       const token = await proof();
       const claims = jwt.decode(token);
       if (!claims || typeof claims === 'string') throw new Error('Expected JWT claims');
@@ -93,6 +93,7 @@ medusaIntegrationTestRunner({
       const changed = { ...claims };
       if (kind === 'expired') changed.exp = Math.floor(Date.now() / 1000) - 1;
       if (kind === 'actor') changed.actor_type = 'user';
+      if (kind === 'account') changed.entity_id = 'other@example.test';
       const invalid = kind === 'tampered' ? jwt.sign(changed, 'wrong-secret') : jwt.sign(changed, secret);
       const url = kind === 'provider' ? '/auth/customer/unknown-provider/update' : '/auth/customer/emailpass/update';
       const response = await api.post(url, { password, password_confirmation: password }, {
