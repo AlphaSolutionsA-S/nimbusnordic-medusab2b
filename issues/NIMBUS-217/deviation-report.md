@@ -1,5 +1,7 @@
 # Deviation report: Only companies enabled for the order API can place orders and receive shipment notices
 
+> Record of NIMBUS-217, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-217`, merge-base `69155cf`, HEAD `2a43250` (tasks 01–05 as NIMBUS-218 to
 NIMBUS-222, plus one consolidation commit). Reviewed 2026-10-23 by the integration reviewer.
 

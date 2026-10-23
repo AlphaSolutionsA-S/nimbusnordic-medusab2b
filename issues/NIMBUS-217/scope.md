@@ -1,7 +1,9 @@
 # Only companies enabled for the order API can place orders and receive shipment notices
 
+> Record of NIMBUS-217, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-23
-**Status:** Approved (Klaus Petersen, 2026-10-23)
+**Status:** Implemented (2026-10-23; approved by Klaus Petersen, 2026-10-23)
 **Type:** Story
 **Priority:** Medium (Should)
 **Issue:** NIMBUS-217

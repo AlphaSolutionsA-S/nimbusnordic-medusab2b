@@ -1,5 +1,7 @@
 # Plan: Only companies enabled for the order API can place orders and receive shipment notices
 
+> Record of NIMBUS-217, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-217 · **Scope:** `scope.md` (approved 2026-10-23) · **Branch:** `feature/NIMBUS-217` from `develop`
 
 ## 1. Summary [High]

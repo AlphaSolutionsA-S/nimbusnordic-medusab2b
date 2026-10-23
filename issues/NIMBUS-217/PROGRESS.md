@@ -113,3 +113,20 @@
   `task-dispatcher` resumes at "After the gate".
 - Handover prompt: "Resume the task-dispatcher on NIMBUS-217 (issues/NIMBUS-217) after the gate.
   Klaus's answers to deviation-report open questions 1–4: <answers>. Database available: <yes/no>."
+
+## 2026-10-23 — task-dispatcher (after the gate, branch ready for review)
+
+- Outcome: Klaus's gate answers recorded in `deviation-report.md`; Jira gate comment posted. Fixes:
+  ed5db7a (generated `company` and `orderIngestion` migrations, applied on a throwaway Postgres 17
+  container), 4e81809 (required row field; `decisions.md` row shortened). Docs 464f028
+  (`docs/architecture/order-api/`). Working files removed by `cleanup`. Integration HTTP: 15/18
+  suites pass; the 9 failing tests (store and admin quotes, one admin shipment-tracking assertion)
+  fail identically on develop 69155cf. Modules: 34/36, the 2 failures the known BC guardrail test.
+  Unit 742/742, admin 59/59, typecheck 22 (= baseline), lint 0 errors, build OK. Nothing pushed.
+- Open for Klaus: `pnpm ai:check` fails only on a CRLF working copy (committed AGENTS.md 32,332
+  bytes, under the limit); decide whether to pin AGENTS.md to LF or change how the check measures.
+  Push go-ahead. PR description in the dispatcher's run scratchpad (not in the repo).
+- Next owner: Klaus (review, push go-ahead), then open the PR to `develop`; after deploy run the
+  "Verify after deploy" checks in `deviation-report.md`.
+- Handover prompt: "Klaus approved pushing NIMBUS-217 (feature/NIMBUS-217). Push the branch and open
+  the PR to develop with the prepared description."
