@@ -1,6 +1,7 @@
 import { Button, Drawer, Input, Label, Select, Text } from "@medusajs/ui";
 import { AdminUpdateCompany } from "../../../../types";
 import { useState } from "react";
+import { CoolSwitch } from "../../../components/common";
 import { useRegions } from "../../../hooks/api";
 import { BLOCKED_STATE_LABELS } from "../bc-managed-fields";
 import { BcManagedIndicator } from "./bc-managed-indicator";
@@ -204,6 +205,19 @@ export function CompanyForm({
             onChange={handleChange}
             placeholder="123456"
           />
+          {/* Edit only: the admin create schema rejects this field, so a new company always
+              starts with the order API off (NIMBUS-217). */}
+          {company && (
+            <CoolSwitch
+              fieldName="order_api_enabled"
+              label="Order API"
+              description="Allow this company to place orders and receive shipment notices through the order API."
+              checked={formData.order_api_enabled ?? false}
+              onChange={(checked) =>
+                setFormData({ ...formData, order_api_enabled: checked })
+              }
+            />
+          )}
           <div className="flex items-center gap-2">
             <Label size="xsmall">Blocked</Label>
             <BcManagedIndicator />

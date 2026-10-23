@@ -120,6 +120,14 @@ const CompanyDetails = () => {
                 </Table.Row>
                 <Table.Row>
                   <Table.Cell className="font-medium font-sans txt-compact-small">
+                    Order API
+                  </Table.Cell>
+                  <Table.Cell>
+                    {company.order_api_enabled ? "Enabled" : "Disabled"}
+                  </Table.Cell>
+                </Table.Row>
+                <Table.Row>
+                  <Table.Cell className="font-medium font-sans txt-compact-small">
                     Customer Group
                   </Table.Cell>
                   <Table.Cell>
