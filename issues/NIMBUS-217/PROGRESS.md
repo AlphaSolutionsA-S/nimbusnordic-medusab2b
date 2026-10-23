@@ -96,3 +96,20 @@
 - Next owner: Klaus (separate go-ahead for dispatch), then `task-dispatcher`.
 - Handover prompt: "Start the task-dispatcher on NIMBUS-217. Case folder: issues/NIMBUS-217 (read
   PROGRESS.md, then manifest.md). Branch feature/NIMBUS-217."
+
+## 2026-10-23 — task-dispatcher (tasks done, at the implementation gate)
+
+- Outcome: Klaus gave the dispatch go-ahead ("kør"). Tasks 01–05 done, reviewed and committed
+  locally: 25e90ce (NIMBUS-218), 169f878 (NIMBUS-219), e670ac5 (NIMBUS-220), d65bed7 (NIMBUS-221),
+  ee41553 (NIMBUS-222); consolidation 2a43250. Jira: NIMBUS-217 In Progress, sub-tasks Done with
+  closing comments. Finalization on 2a43250: backend unit 742/742, admin 59/59, typecheck 22 (=
+  baseline), lint 0 errors, build OK. Not run: every integration/contract spec (no local PostgreSQL).
+  `deviation-report.md` written by `integration-reviewer`. Nothing pushed.
+- Blocking before push: the `company` and `orderIngestion` migrations are not generated (needs a
+  database); `pnpm ai:check` fails (AGENTS.md 117 bytes over budget after the new decisions.md row).
+- Open for Klaus: deviation report Open questions 1–4 (byte budget, migrations and integration run,
+  R7 trail-scan edge, retry message order).
+- Next owner: Klaus (answer the open questions; provide a database or generate the migrations), then
+  `task-dispatcher` resumes at "After the gate".
+- Handover prompt: "Resume the task-dispatcher on NIMBUS-217 (issues/NIMBUS-217) after the gate.
+  Klaus's answers to deviation-report open questions 1–4: <answers>. Database available: <yes/no>."
