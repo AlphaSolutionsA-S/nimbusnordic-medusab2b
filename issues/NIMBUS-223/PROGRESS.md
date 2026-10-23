@@ -47,3 +47,46 @@
 - Next owner: Klaus (separate go-ahead for `implementation-planner`).
 - Handover prompt: "Plan NIMBUS-223 from issues/NIMBUS-223/scope.md; run the LayoutComposer
   build-and-run probe first."
+
+## 2026-10-23 — implementation-planner
+
+- Outcome: `plan.md`, `manifest.md` and task files 01–04 written; not approved yet, not in Jira.
+  Probe run while planning: Approvals wrapped in `LayoutComposer`, backend `build` passed and the
+  built Admin bundle shares one dashboard context (verified); the real dashboard cannot load under
+  Admin Jest (verified), so tests use a stand-in. Probe reverted. Browser click-through of
+  "Customize page" on our pages remains UNVERIFIED (plan, Needs your decision 1; default: Klaus at
+  the final gate before push).
+- Next owner: Klaus, to answer Needs your decision 1 and approve the plan.
+- Handover prompt: "Review issues/NIMBUS-223/plan.md; on approval set Ready for Dispatch, record
+  'plan approved' in Jira (sub-tasks per task), then decide separately on task-dispatcher."
+
+## 2026-10-23 — plan approved
+
+- Outcome: Klaus approved the plan. Decision 1: default (browser click-through by Klaus on every
+  page at the final gate; a failure stops the push). Heading hidden with the first section:
+  accepted. Ready for Dispatch set; sub-tasks NIMBUS-224 to NIMBUS-227 created and recorded in the
+  manifest; "plan approved" comment on NIMBUS-223.
+- Next owner: `task-dispatcher` (Klaus gave the go-ahead for dispatch).
+- Handover prompt: "Dispatch NIMBUS-223 from issues/NIMBUS-223/manifest.md on feature/NIMBUS-223."
+
+## 2026-10-23 — task-dispatcher (implementation gate)
+
+- Outcome: tasks 01–04 done, reviewed and committed (NIMBUS-224 to NIMBUS-227 closed in Jira),
+  consolidation committed, cross-task review approved; `deviation-report.md` written. Finalization:
+  Admin tests 10 suites / 70 passed, typecheck 22 errors = baseline, backend build passes. Accepted
+  deviation: Translations page key `storefront_translation.list` (core clash with `translation.list`;
+  confirmed by Klaus). Not pushed.
+- Next owner: Klaus, browser click-through of "Customize page" on all seven pages (deviation report,
+  Open questions 1); a failure stops the push.
+- Handover prompt: "Resume task-dispatcher for NIMBUS-223 after the gate with Klaus's click-through
+  result: record it in deviation-report.md, then docs, PR description, cleanup."
+
+## 2026-10-23 — task-dispatcher (after the gate)
+
+- Outcome: Klaus's browser click-through passed on all pages (recorded in `deviation-report.md` and
+  Jira); no fixes needed. `docs/architecture/admin-page-layout.md` written; PR description drafted;
+  scope status set to Implemented; pipeline working files removed by cleanup. Not pushed.
+- Next owner: main session, to merge `feature/NIMBUS-223` into `develop` and push (Klaus gave the
+  go-ahead), then move NIMBUS-223 to review/done with a closing comment.
+- Handover prompt: "Merge feature/NIMBUS-223 into develop and push; close NIMBUS-223 per
+  tracker-workflow § E."
