@@ -15,6 +15,7 @@ export const adminCompanyFields = [
   "blocked",
   "credit_limit",
   "vat_number",
+  "order_api_enabled",
   "*employees",
 ];
 

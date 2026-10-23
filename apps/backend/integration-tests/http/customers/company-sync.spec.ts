@@ -208,6 +208,52 @@ medusaIntegrationTestRunner({
         });
       });
 
+      it.each([true, false])(
+        "leaves order_api_enabled at %s after a sync",
+        async (orderApiEnabled) => {
+          const companyId = await createLinkedCompany("00011551");
+          const companyService =
+            getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+          await companyService.updateCompanies({
+            id: companyId,
+            order_api_enabled: orderApiEnabled,
+          });
+          const bcService =
+            getContainer().resolve<IBusinessCentralModuleService>(
+              BUSINESS_CENTRAL_MODULE
+            );
+          jest.spyOn(bcService, "getCustomer").mockResolvedValueOnce({
+            number: "00011551",
+            displayName: "Synced Company",
+            email: "synced@example.com",
+            phoneNumber: "87654321",
+            addressLine1: "Synced Street 1",
+            addressLine2: "",
+            city: "Synced city",
+            state: "",
+            postalCode: "2000",
+            country: "DK",
+            blocked: "not_blocked",
+            creditLimit: 0,
+            taxRegistrationNumber: "DK12345678",
+            currencyCode: "DKK",
+          });
+
+          const response = await api.post(
+            "/store/customers/me/company/sync-business-central",
+            {},
+            authenticatedStoreHeaders
+          );
+          const [company] = await companyService.listCompanies({
+            id: companyId,
+          });
+
+          expect(response.data).toEqual({ status: "updated" });
+          expect(company.name).toBe("Synced Company");
+          expect(company.order_api_enabled).toBe(orderApiEnabled);
+        }
+      );
+
       it("resolves a blank Business Central currency code to the local currency (LCY)", async () => {
         const companyId = await createLinkedCompany("00011552");
         const companyService =

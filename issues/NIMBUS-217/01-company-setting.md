@@ -12,3 +12,52 @@
 **Done when:** tests above pass; lint clean; typecheck at or below baseline; migration generated and applied locally.
 **Verify after deploy:** `company.order_api_enabled` exists and is `false` for every company right after the migration; one test company in Admin shows it.
 **Also update:** `integration-tests/http/companies/companies.spec.ts` (store and Admin company cases), `integration-tests/http/customers/company-sync.spec.ts`, `integration-tests/http/security/security-boundaries.spec.ts` (store negative case, or keep it in companies.spec and say so).
+
+## Deviations
+
+- **BLOCKING: migration not generated.** `medusa db:generate company` needs a live database (it
+  connects before diffing; run here failed with `ECONNREFUSED`, no Postgres on localhost:5432 and
+  no `.env.test`). Per `ai/architecture/data-ownership.md` no migration was hand-written. Someone
+  with a database must run `pnpm --filter @b2b-starter/backend exec medusa db:generate company`,
+  check the SQL is `alter table if exists "company" add column if not exists "order_api_enabled"
+  boolean not null default false;` (down: drop the column), commit it with the updated
+  `.snapshot-company.json`, then `medusa db:migrate`. Until then every integration test of this
+  branch that touches the company table fails, because the test runner migrates from the migration
+  files.
+- Contract and integration tests were written but NOT run (no database here); they typecheck.
+- `AdminUpdateCompany` (`src/types/company/http.ts`) gained the field as `Partial<AdminCreateCompany>
+  & { order_api_enabled?: boolean }` so the shared HTTP create type stays without it, matching the
+  create schema.
+- Store negative cases kept in `companies.spec.ts` (next to the existing store company
+  authorization cases) instead of `security-boundaries.spec.ts`, which has no company profile
+  section.
+- The Admin-create 400 case also asserts that no company was created.
+- The BC sync case runs through `POST /store/customers/me/company/sync-business-central`
+  (the same `syncCompanyFromBusinessCentralWorkflow` the login and freshness syncs use), once with
+  the setting on and once off.
+- No change needed in `src/api/store/companies/**` (strict create schema; reads go through the
+  explicit field lists in `company-projection.ts`) or `prepare-company-bc-sync.ts` (the update lists
+  only BC fields).
+
+## Done-when evidence
+
+- GET returns a boolean, `false` for a new company: `integration-tests/http/companies/companies.spec.ts`
+  "order_api_enabled company setting" › "a new company is returned with the setting off" (written, not run).
+- POST update `true` then `false` round-trips: same describe › "the Admin update switches the setting
+  on and off again" (written, not run).
+- Admin create with the field → 400: same describe › "the Admin create refuses the setting" (written, not run).
+- Store create with the field → 400: same describe › "the store create refuses the setting" (written, not run).
+- Store GET, also with `fields=order_api_enabled` / `+order_api_enabled`, has no key: same describe ›
+  "the store company read never returns the setting" (written, not run).
+- BC sync leaves the field unchanged on an enabled and a disabled company:
+  `integration-tests/http/customers/company-sync.spec.ts` › "leaves order_api_enabled at %s after a
+  sync" (`true`, `false`) (written, not run).
+- Migration adds the column `not null default false`: not provable in this task: generation needs a
+  database (blocking deviation above).
+- Migration applied locally: not provable in this task: no database.
+- Lint clean: `pnpm --filter @b2b-starter/backend lint` 0 errors (13 pre-existing warnings, none in
+  touched files).
+- Typecheck at or below baseline: `tsc --noEmit` 22 errors, baseline 22 (same files).
+- Also update `companies.spec.ts`: Admin and store cases added (describe "order_api_enabled company setting").
+- Also update `company-sync.spec.ts`: sync case added.
+- Also update `security-boundaries.spec.ts`: no change; store negative cases kept in `companies.spec.ts` (see Deviations).

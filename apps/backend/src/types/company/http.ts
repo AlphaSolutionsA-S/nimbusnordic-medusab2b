@@ -42,7 +42,9 @@ export type AdminCreateCompany = {
   vat_number?: string | null;
 };
 
-export type AdminUpdateCompany = Partial<AdminCreateCompany>;
+export type AdminUpdateCompany = Partial<AdminCreateCompany> & {
+  order_api_enabled?: boolean;
+};
 
 /* Employee */
 
