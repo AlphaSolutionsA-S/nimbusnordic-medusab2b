@@ -1,5 +1,5 @@
 # 04: Shipment job skips and closes switched-off companies
-**App:** backend · **Layer:** L0 (tracking close-reason enum), L3 steps, L5 check schedule, Admin UI label · **Depends on:** 03
+**App:** backend · **Layer:** L0 (tracking close-reason enum), L3 steps, L5 check schedule, Admin UI label · **Issue:** NIMBUS-221 · **Depends on:** 03
 
 **Goal:** Discovery never tracks shipments of switched-off companies (cursor still advances, no back-fill); the check run closes each due open row of a switched-off or missing company with close reason `company_not_enabled` without reading it from Business Central.
 **Files / areas:** `src/modules/order-ingestion/models/shipment-tracking.ts` (+ generated migration), `src/workflows/shipment-notice/steps/{scan-shipment-windows,prepare-shipment-checks,check-shipments}.ts`, `src/workflows/shipment-notice/utils/shipment-check-schedule.ts`, `src/admin/hooks/api/shipment-tracking.tsx`, `src/admin/routes/shipment-tracking/page.tsx`.

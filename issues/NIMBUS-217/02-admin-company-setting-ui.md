@@ -1,5 +1,5 @@
 # 02: Admin UI for the order API setting
-**App:** backend (Admin UI) · **Layer:** Admin UI over `admin/lib/client.ts` · **Depends on:** 01
+**App:** backend (Admin UI) · **Layer:** Admin UI over `admin/lib/client.ts` · **Issue:** NIMBUS-219 · **Depends on:** 01
 
 **Goal:** Staff see "Order API: Enabled / Disabled" on the company detail page and switch it in the edit drawer; the create drawer has no switch.
 **Files / areas:** `src/admin/routes/companies/[companyId]/page.tsx`, `src/admin/routes/companies/components/{company-form,company-update-drawer}.tsx`, existing `src/admin/components/common/cool-switch.tsx`.

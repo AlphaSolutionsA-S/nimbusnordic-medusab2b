@@ -1,5 +1,5 @@
 # 03: Rule home and 403 for switched-off companies on both order API endpoints
-**App:** backend · **Layer:** L5 decision fn, L3 step (shared company resolution) · **Depends on:** 01
+**App:** backend · **Layer:** L5 decision fn, L3 step (shared company resolution) · **Issue:** NIMBUS-220 · **Depends on:** 01
 
 **Goal:** One pure rule "a company is enabled for the order API"; the shared resolve step uses it so both `POST /orderapi/orders` and `GET /orderapi/shipment-notices` refuse a switched-off company with 403 "Customer not registered for the order API", after the unknown-customer 404 and before anything else.
 **Files / areas:** new `src/utils/order-api-access.ts` (pure), `src/workflows/order-ingestion/steps/resolve-company-by-customer-number.ts`, `ai/architecture/decisions.md` (new row: owning file, verdict, consumers intake, notices, discovery, check run, Admin retry).

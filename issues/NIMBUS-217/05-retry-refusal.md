@@ -1,5 +1,5 @@
 # 05: Admin retry refuses a shipment of a switched-off company
-**App:** backend · **Layer:** L3 validation step, L4 reopen workflow · **Depends on:** 03
+**App:** backend · **Layer:** L3 validation step, L4 reopen workflow · **Issue:** NIMBUS-222 · **Depends on:** 03
 
 **Goal:** `POST /admin/shipment-tracking/:id/retry` for a gave-up row whose company is switched off (or gone) answers 400 "The company is not enabled for the order API" and leaves the row unchanged.
 **Files / areas:** `src/workflows/shipment-notice/workflows/reopen-shipment-tracking.ts`, a new step in `src/workflows/shipment-notice/steps/`.

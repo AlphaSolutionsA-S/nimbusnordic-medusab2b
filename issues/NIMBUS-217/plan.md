@@ -25,7 +25,7 @@ asking the planning agent in chat than by reading further.
 
 ## 2. Needs your decision [Critical]
 
-All five answered by Klaus on 2026-10-23; dispatch waits only for plan approval.
+All five answered by Klaus on 2026-10-23. **Plan approved** by Klaus on 2026-10-23 ("godkendt"); Jira sub-tasks NIMBUS-218 to NIMBUS-222. Dispatch needs its own go-ahead.
 
 1. **O1, go-live list.** *Default:* a read-only aid query in the PR description.
    **Answer:** the system is not in production ("vi er ikke live - jeg tester"); Klaus switches

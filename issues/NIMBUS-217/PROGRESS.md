@@ -85,3 +85,14 @@
   and records plan approved; a separate go-ahead for `task-dispatcher`.
 - Handover prompt: "Klaus approved the NIMBUS-217 plan (issues/NIMBUS-217). Mark Ready for Dispatch,
   create the Jira sub-tasks and record plan approved; stop before dispatch."
+
+## 2026-10-23 — implementation-planner (plan approved)
+
+- Outcome: Klaus approved the plan ("godkendt"). `Ready for Dispatch: true`. Jira sub-tasks of
+  NIMBUS-217 created with component Customer Portal: NIMBUS-218 (01 company setting), NIMBUS-219 (02
+  Admin UI), NIMBUS-220 (03 order API 403), NIMBUS-221 (04 shipment job), NIMBUS-222 (05 retry
+  refusal); keys in the manifest and task files. "Plan approved" comment posted on NIMBUS-217 with
+  the new decisions and Klaus's answers. Not dispatched, not pushed.
+- Next owner: Klaus (separate go-ahead for dispatch), then `task-dispatcher`.
+- Handover prompt: "Start the task-dispatcher on NIMBUS-217. Case folder: issues/NIMBUS-217 (read
+  PROGRESS.md, then manifest.md). Branch feature/NIMBUS-217."

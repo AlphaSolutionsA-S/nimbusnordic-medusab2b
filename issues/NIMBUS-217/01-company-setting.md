@@ -1,5 +1,5 @@
 # 01: Company setting `order_api_enabled`
-**App:** backend · **Layer:** L0 data model, L6 Admin company routes (schema, query config) · **Depends on:** None
+**App:** backend · **Layer:** L0 data model, L6 Admin company routes (schema, query config) · **Issue:** NIMBUS-218 · **Depends on:** None
 
 **Goal:** Companies carry a stored boolean `order_api_enabled` (not null, default `false`) that only the Admin company update can change; new and existing companies are off.
 **Files / areas:** `src/modules/company/models/company.ts`, a generated migration in `src/modules/company/migrations/`, `src/api/admin/companies/{validators,query-config}.ts`, `src/types/company/{module,http}.ts`; read-only checks of `src/api/store/companies/**` and `src/workflows/company/steps/prepare-company-bc-sync.ts` (no change expected).
