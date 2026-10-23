@@ -17,40 +17,30 @@ consumer calls (R15); and nothing is cached, so a switch takes effect at the nex
 
 **How to review this plan.** This plan is the human review gate: approving it is what allows
 dispatch. Each heading carries a review level (Critical, High, Medium). Answer everything under
-"Needs your decision" and stop at each `Critical` flag (decision 5 on storefront visibility, the
-intake race in section 6, the go-live gap in section 10, and the security matrix).
+"Needs your decision" (all answered) and stop at each `Critical` flag (the intake race in
+section 6 and the security matrix).
 The data model and state tables are rated High because past misses were found there. The task
 files hold more depth but are not required reading. An uncertainty is often quicker to settle by
 asking the planning agent in chat than by reading further.
 
 ## 2. Needs your decision [Critical]
 
-1. **O1, go-live list.** Who decides which companies are switched on right after deploy? *Default:*
-   Nimbus Nordic decides; the PR description carries a read-only SQL query listing companies with
-   at least one order received through the order API (`order_external_reference` per company) as an
-   aid. Nothing in this plan switches a company on automatically.
-2. **Go-live gap (R13), alternative.** Instead of the manual step, a one-off migration script could
-   switch on every company that already has an order API order, so no live customer is refused
-   between deploy and the Admin step. It contradicts R13's "off for every existing company", so it
-   is your call. *Default:* no script; the manual step per R13, done before the first shipment job
-   run after deploy (within 15 minutes).
-3. **O2, Logic App and 403.** How the Logic App handles a 403 on order intake (pass back, alert,
-   never silent retry) is outside this repo (NIMBUS-178). *Default:* non-blocking for dispatch;
-   must be settled before the production deploy, owner Klaus with the NIMBUS-178 owner.
-4. **When open tracking of a switched-off company closes (R6).** *Default:* each open row is closed
-   with reason `company_not_enabled` when it next comes due in a check run (normally within 15
-   minutes; up to 6 hours for a row in failure back-off); it is never read from Business Central in
-   between. The alternative, closing every open row of the company at the start of the next run,
-   needs an extra query per run and is not proposed.
-5. **R12 "not readable from the storefront" vs two wildcard store reads** (`Critical`, found while
-   planning). The store company endpoints use explicit field lists and will not return the
-   setting, but two store reads select every company column: the company admin's approvals list
-   (`carts.company.*` in `workflows/approval/steps/list-company-approval-carts.ts`) and the store
-   quote responses (`*customer.employee.company` in `api/store/quotes/query-config.ts`). Both would
-   show the caller's own company's flag (read-only; never another company's). Narrowing them to
-   explicit lists changes two storefront-facing responses outside this story. *Default:* accept
-   the read-only exposure of the caller's own flag and read R12 as "not writable from the
-   storefront, not returned by the store company endpoints"; no change to those two reads.
+All five answered by Klaus on 2026-10-23; dispatch waits only for plan approval.
+
+1. **O1, go-live list.** *Default:* a read-only aid query in the PR description.
+   **Answer:** the system is not in production ("vi er ikke live - jeg tester"); Klaus switches
+   companies on himself while testing. No aid query; O1 and the go-live gap do not apply now.
+2. **Go-live gap (R13), one-off auto-enable script.** *Default:* no script.
+   **Answer:** no script; manual switch-on in Admin only.
+3. **O2, Logic App and 403.** *Default:* non-blocking, settle before production.
+   **Answer:** Klaus handles it himself outside this repo (NIMBUS-178); closed for this plan.
+4. **When open tracking of a switched-off company closes (R6).** *Default:* when the row next
+   comes due (normally within 15 minutes, up to 6 hours in failure back-off), no BC read.
+   **Answer:** agreed.
+5. **R12 vs two wildcard store reads** (approvals list `carts.company.*`, store quotes
+   `*customer.employee.company`), which show the caller's own company's flag read-only.
+   *Default:* accept. **Answer:** accepted; R12 reads "not writable from the storefront, not
+   returned by the store company endpoints"; those two reads are unchanged.
 
 ## 3. Flows [High]
 
@@ -217,7 +207,9 @@ No row is UNVERIFIED.
 
 ## 10. Open risks and gates [Medium; Critical where marked]
 
-- `Critical` Go-live gap (R13): until an admin switches on today's API companies, their orders get 403 and their open tracking closes at the first due check; shipments posted in the gap are never delivered. Owner: Klaus / Nimbus Nordic (decision 1–2). Blocking for the production deploy, not for dispatch.
-- O2, Logic App behaviour on 403 (NIMBUS-178). Owner: Klaus. Blocking for production deploy, not dispatch.
+- Go-live gap (R13): companies are off after the migration until switched on in Admin. The system is
+  not in production (Klaus, 2026-10-23), so no customer is affected now; Klaus switches companies on
+  while testing. Owner: Klaus. Non-blocking.
+- O2, Logic App behaviour on 403: handled by Klaus outside this repo (NIMBUS-178). Non-blocking.
 - Existing specs seed companies without the setting and would start failing; task 03 and 04 switch their seeds on (listed in "Also update"). Owner: workers. Non-blocking.
 - Backend typecheck baseline is red (`verification.md`); tasks hold it at or below the recorded count. Non-blocking.

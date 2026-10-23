@@ -10,5 +10,5 @@
 - Contract `shipment-notices.spec.ts`: switched-off company with stored notices → 403, no notice data; switched back on → 200 with the same notices (R8).
 - Security spec: one negative case per endpoint for a switched-off company.
 **Done when:** tests pass; every existing spec that drives the order API or the ingestion workflow switches its company on and stays green; lint, typecheck at or below baseline.
-**Verify after deploy:** before the go-live step, a Logic App call for one API company returns 403 with the fixed message; after switching it on, the next call returns 201/200.
+**Verify after deploy:** a Logic App call for one test company still switched off returns 403 with the fixed message; after switching it on in Admin, the next call returns 201/200.
 **Also update:** `integration-tests/http/orderapi/{orders,shipment-notices}.spec.ts`, `integration-tests/http/security/security-boundaries.spec.ts`, `integration-tests/http/order-ingestion/{create-order-workflow,enrich-order-event-chain}.spec.ts`, `integration-tests/utils/shipment-notices.ts` (`createApiCustomerCompany` seeds the company switched on), any other spec found seeding a company for the order API; `ai/architecture/decisions.md`.

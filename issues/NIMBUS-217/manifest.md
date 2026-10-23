@@ -32,7 +32,7 @@ All tasks are in `apps/backend` (`@b2b-starter/backend`); `<f>` = `pnpm --filter
 ## Scope items with no task
 | Scope item | Reason (already done / external / not needed) |
 |---|---|
-| F7, R13 go-live step (switch on today's API companies) | Operations step after deploy, owned by Nimbus Nordic (O1); the committer puts the step and an aid query in the PR description |
+| F7, R13 go-live step (switch on today's API companies) | Not needed now: no production customers; Klaus switches companies on manually in Admin while testing (2026-10-23) |
 | Proposed structure 6: `docs/architecture/` section on the order API and shipment notices | `documentation-writer` after ship |
-| APIM / Logic App passing on the 403 (O2) | External, NIMBUS-178 |
+| APIM / Logic App passing on the 403 (O2) | External: Klaus handles it outside this repo (NIMBUS-178) |
 | NIMBUS-216 overview showing the setting | Not part of this story (scope, Dependencies) |

@@ -10,5 +10,5 @@
 - Integration: a Business Central company sync run leaves the field unchanged on an enabled and on a disabled company.
 - The generated migration adds the column `not null default false` (inspect the SQL; never hand-edit).
 **Done when:** tests above pass; lint clean; typecheck at or below baseline; migration generated and applied locally.
-**Verify after deploy:** `company.order_api_enabled` exists and is `false` for every company before the go-live step; one known API company in Admin shows it.
+**Verify after deploy:** `company.order_api_enabled` exists and is `false` for every company right after the migration; one test company in Admin shows it.
 **Also update:** `integration-tests/http/companies/companies.spec.ts` (store and Admin company cases), `integration-tests/http/customers/company-sync.spec.ts`, `integration-tests/http/security/security-boundaries.spec.ts` (store negative case, or keep it in companies.spec and say so).

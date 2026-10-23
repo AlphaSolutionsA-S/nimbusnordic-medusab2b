@@ -71,3 +71,17 @@
 - Handover prompt: "Continue the implementation-planner on NIMBUS-217 (issues/NIMBUS-217). Klaus's
   answers to plan decisions 1–5: <answers>. Revise plan.md if needed, mark Ready for Dispatch, create
   the Jira sub-tasks and record plan approved; stop before dispatch."
+
+## 2026-10-23 — implementation-planner (Klaus's answers to plan decisions 1–5)
+
+- Outcome: answers recorded in `plan.md` section 2 (not plan approval). 1: not in production, Klaus
+  enables companies himself while testing; no go-live aid query; O1 and the go-live gap do not apply
+  now (risk downgraded to non-blocking). 2: no auto-enable script. 3: O2 closed, Klaus handles the
+  Logic App outside this repo. 4: rows close when next due, agreed. 5: wildcard store reads accepted;
+  R12 reads "not writable from the storefront, not returned by the store company endpoints".
+  Manifest "Scope items with no task" and the Verify-after-deploy lines of tasks 01, 03, 04 updated.
+  `Ready for Dispatch: false`; no Jira sub-tasks or "plan approved" comment yet.
+- Next owner: Klaus (approve the plan), then the planner marks it ready, creates the Jira sub-tasks
+  and records plan approved; a separate go-ahead for `task-dispatcher`.
+- Handover prompt: "Klaus approved the NIMBUS-217 plan (issues/NIMBUS-217). Mark Ready for Dispatch,
+  create the Jira sub-tasks and record plan approved; stop before dispatch."
