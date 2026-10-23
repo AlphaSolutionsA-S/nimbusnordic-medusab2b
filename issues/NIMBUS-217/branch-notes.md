@@ -55,3 +55,25 @@
 - Verified: the error handler turns `NOT_ALLOWED` into 400 with body `{ type: "not_allowed", message }` (`code` undefined, dropped from JSON), `@medusajs/framework/dist/http/middlewares/error-handler.js`.
 - A switched-off company's row that is not gave-up now gets the company message, not the "only gave up" one (both 400).
 - The new contract test was not run (no DB).
+
+## Fix 01: migrations
+
+- Generated `company/migrations/Migration20261023110444.ts` and
+  `order-ingestion/migrations/Migration20261023110454.ts`; snapshots updated. The earlier "No migration
+  yet" notes in tasks 01 and 04 no longer hold.
+- The generator diffs against `.snapshot-<kebab module>.json` (`@medusajs/utils`
+  `modules-sdk/migration-scripts/migration-generate.js`); the other `.snapshot-*.json` files in
+  `company/migrations/` are ignored.
+- Throwaway DB `nimbus217` on localhost:55499 is now fully migrated. `db:migrate` there logs a failure
+  of the `seed-country-languages.ts` data script on an empty DB (no active `en`); exit code 0, not
+  from this branch.
+
+## Fix 02: gate answers
+
+- `OrderApiCompanyRow` is now `{ id: string; order_api_enabled: boolean }`. Local `.medusa/types`
+  are fresh (2026-10-23 12:39), and the generated `Company.order_api_enabled` is `boolean`, so the
+  task 03 note on stale types and the task 04 `& OrderApiAccessCompany` row no longer hold.
+- `query.graph` rows are typed as the full entity (`Company[]`) regardless of `fields`, so a missing
+  column is not a compile error. Select through `ORDER_API_COMPANY_FIELDS`.
+- `ai:check` byte budget: on this checkout `core.autocrlf=true` adds 498 CR bytes to `AGENTS.md`.
+  Measure with CRs stripped (LF form 32,332 bytes after fix 02) before trimming Tier 0 text.
