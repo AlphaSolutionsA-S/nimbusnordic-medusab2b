@@ -16,7 +16,8 @@ Paths under `apps/backend/src/admin/`.
   not be movable stay outside `sections`: every child of a section becomes an entry. Admin tests
   render pages through a Jest stand-in (`__tests__/dashboard-components.tsx`, mapped in
   `jest.admin.config.js`) that shows sections in default order and exposes `data-page-key`,
-  `data-layout-id` and `data-layout-entry`; edit mode and saving are checked in a browser.
+  `data-layout-id` and `data-layout-entry` (query them with `__tests__/layout-queries.ts`); edit
+  mode and saving are checked in a browser.
 - BC-managed company fields are read-only in the admin: `routes/companies/bc-managed-fields.ts`.
 - Shipment recovery: `routes/shipment-tracking/page.tsx` lists gave-up shipment checks and, below
   them, all shipments in any state (`GET /admin/shipment-tracking/overview`); its hook

@@ -2,6 +2,11 @@ import { CORE_LAYOUT_IDS } from "@medusajs/admin-shared";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import {
+  layoutEntry as entry,
+  layoutEntryIds as entryIds,
+  layoutSection as section,
+} from "../../../__tests__/layout-queries";
 import QuoteDetails from "../[quoteId]/page";
 import { sdk } from "../../../lib/client";
 import { QUOTE_DETAILS_PAGE_KEY } from "../../../lib/page-keys";
@@ -70,24 +75,6 @@ function renderPage() {
       </MemoryRouter>
     </QueryClientProvider>
   );
-}
-
-function entry(id: string): HTMLElement {
-  const element = document.querySelector<HTMLElement>(`[data-layout-entry="${id}"]`);
-  if (!element) throw new Error(`no layout entry "${id}"`);
-  return element;
-}
-
-function entryIds(section: Element): (string | null)[] {
-  return Array.from(section.querySelectorAll("[data-layout-entry]")).map((el) =>
-    el.getAttribute("data-layout-entry")
-  );
-}
-
-function section(layout: HTMLElement, name: "main" | "side"): Element {
-  const element = layout.querySelector(`[data-layout-section="${name}"]`);
-  if (!element) throw new Error(`no layout section "${name}"`);
-  return element;
 }
 
 beforeEach(() => {

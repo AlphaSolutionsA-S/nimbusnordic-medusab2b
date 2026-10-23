@@ -2,6 +2,7 @@ import { CORE_LAYOUT_IDS } from "@medusajs/admin-shared";
 import { render, screen, within } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { layoutEntry as entry, layoutEntryIds } from "../../../__tests__/layout-queries";
 import CompanyDetails from "../[companyId]/page";
 import {
   BC_MANAGED_WARNING_DESCRIPTION,
@@ -87,12 +88,6 @@ function renderPage() {
   );
 }
 
-function entry(id: string): HTMLElement {
-  const element = document.querySelector<HTMLElement>(`[data-layout-entry="${id}"]`);
-  if (!element) throw new Error(`no layout entry "${id}"`);
-  return element;
-}
-
 beforeEach(() => {
   fetchMock.mockReset();
 });
@@ -105,11 +100,11 @@ describe("Company details page layout", () => {
     const layout = await screen.findByTestId("layout-composer");
     expect(layout).toHaveAttribute("data-page-key", COMPANY_DETAILS_PAGE_KEY);
     expect(layout).toHaveAttribute("data-layout-id", CORE_LAYOUT_IDS.SINGLE_COLUMN);
-    expect(
-      Array.from(layout.querySelectorAll("[data-layout-entry]")).map((el) =>
-        el.getAttribute("data-layout-entry")
-      )
-    ).toEqual(["business-central-warning", "company-information", "employees"]);
+    expect(layoutEntryIds(layout)).toEqual([
+      "business-central-warning",
+      "company-information",
+      "employees",
+    ]);
   });
 
   it("keeps the Business Central warning text, the Order API row and the employees table in their sections", async () => {
