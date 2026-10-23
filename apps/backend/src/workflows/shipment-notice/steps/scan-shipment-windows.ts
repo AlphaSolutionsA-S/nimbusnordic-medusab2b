@@ -19,7 +19,8 @@ import type OrderIngestionModuleService from "../../../modules/order-ingestion/s
 import type { ShipmentPollCursor } from "../../../modules/order-ingestion/shipment-notice-storage";
 import {
   isCompanyEnabledForOrderApi,
-  type OrderApiAccessCompany,
+  ORDER_API_COMPANY_FIELDS,
+  type OrderApiCompanyRow,
 } from "../../../utils/order-api-access";
 import {
   halveShipmentWindow,
@@ -50,9 +51,6 @@ export type ScanShipmentWindowsResult = {
   retry_after_seconds: number | null;
 };
 
-// Local generated types can lag the company model, so the row is a structural subset.
-type DiscoveryCompanyRow = { id: string } & OrderApiAccessCompany;
-
 function unique(values: readonly (string | null)[]): string[] {
   return [...new Set(values.filter((value): value is string => value !== null))];
 }
@@ -72,12 +70,12 @@ async function loadOrderCandidates(
   const query = container.resolve(ContainerRegistrationKeys.QUERY);
   const { data: rows } = await query.graph({
     entity: "companies",
-    fields: ["id", "business_central_customer_number", "order_api_enabled"],
+    fields: [...ORDER_API_COMPANY_FIELDS, "business_central_customer_number"],
     filters: { business_central_customer_number: customerNumbers },
   });
   // Shipments of switched-off companies are never tracked; the cursor still passes them, so they
   // are not back-filled when the company is switched on later (NIMBUS-217).
-  const companies = rows.filter((company: DiscoveryCompanyRow) =>
+  const companies = rows.filter((company: OrderApiCompanyRow) =>
     isCompanyEnabledForOrderApi(company)
   );
   if (!companies.length) {

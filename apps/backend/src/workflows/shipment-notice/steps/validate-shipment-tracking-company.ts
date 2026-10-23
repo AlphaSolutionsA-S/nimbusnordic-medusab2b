@@ -4,14 +4,12 @@ import { ORDER_INGESTION_MODULE } from "../../../modules/order-ingestion";
 import type OrderIngestionModuleService from "../../../modules/order-ingestion/service";
 import {
   isCompanyEnabledForOrderApi,
-  type OrderApiAccessCompany,
+  ORDER_API_COMPANY_FIELDS,
+  type OrderApiCompanyRow,
 } from "../../../utils/order-api-access";
 
 const COMPANY_NOT_ENABLED_FOR_ORDER_API_MESSAGE =
   "The company is not enabled for the order API";
-
-// Local generated types can lag the company model, so the row is a structural subset.
-type CompanySettingRow = { id: string } & OrderApiAccessCompany;
 
 /**
  * Refuses an Admin retry of a shipment whose company is switched off or gone (NIMBUS-217), before
@@ -32,10 +30,10 @@ export const validateShipmentTrackingCompanyStep = createStep(
     const query = container.resolve(ContainerRegistrationKeys.QUERY);
     const { data: companies } = await query.graph({
       entity: "companies",
-      fields: ["id", "order_api_enabled"],
+      fields: [...ORDER_API_COMPANY_FIELDS],
       filters: { id: tracking.company_id },
     });
-    const company: CompanySettingRow | undefined = companies[0];
+    const company: OrderApiCompanyRow | undefined = companies[0];
     if (!isCompanyEnabledForOrderApi(company)) {
       throw new MedusaError(
         MedusaError.Types.NOT_ALLOWED,

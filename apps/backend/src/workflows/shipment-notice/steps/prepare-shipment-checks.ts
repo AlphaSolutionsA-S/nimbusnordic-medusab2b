@@ -10,7 +10,8 @@ import {
 import type OrderIngestionModuleService from "../../../modules/order-ingestion/service";
 import {
   isCompanyEnabledForOrderApi,
-  type OrderApiAccessCompany,
+  ORDER_API_COMPANY_FIELDS,
+  type OrderApiCompanyRow,
 } from "../../../utils/order-api-access";
 import type { LatestShipmentRevision } from "../utils/decide-shipment-notice";
 
@@ -43,9 +44,6 @@ export type DueShipmentCheck = {
   /** The company may use the order API; false when it is switched off or gone. */
   company_enabled: boolean;
 };
-
-// Local generated types can lag the company model, so the row is a structural subset.
-type CompanySettingRow = { id: string } & OrderApiAccessCompany;
 
 // Only the listed BC line numbers are needed from a stored payload; other keys are ignored.
 const ListedLinesSchema = z.object({
@@ -112,11 +110,11 @@ export const prepareShipmentChecksStep = createStep(
 
     const { data: companies } = await query.graph({
       entity: "companies",
-      fields: ["id", "order_api_enabled"],
+      fields: [...ORDER_API_COMPANY_FIELDS],
       filters: { id: [...new Set(rows.map((row) => row.company_id))] },
     });
     const companyById = new Map(
-      companies.map((company: CompanySettingRow) => [company.id, company])
+      companies.map((company: OrderApiCompanyRow) => [company.id, company])
     );
 
     const checks = rows.map((row): DueShipmentCheck => {

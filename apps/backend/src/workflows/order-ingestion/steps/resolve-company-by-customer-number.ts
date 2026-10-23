@@ -4,7 +4,11 @@ import {
   MedusaError,
 } from "@medusajs/framework/utils";
 import type { Logger } from "@medusajs/framework/types";
-import { isCompanyEnabledForOrderApi } from "../../../utils/order-api-access";
+import {
+  isCompanyEnabledForOrderApi,
+  ORDER_API_COMPANY_FIELDS,
+  type OrderApiCompanyRow,
+} from "../../../utils/order-api-access";
 
 export const CUSTOMER_NOT_FOUND_MESSAGE = "Customer not found";
 export const CUSTOMER_NOT_REGISTERED_FOR_ORDER_API_MESSAGE =
@@ -16,11 +20,6 @@ export type ResolveCompanyByCustomerNumberInput = {
 
 export type ResolveCompanyByCustomerNumberOutput = {
   company_id: string;
-};
-
-type ResolvedCompanyRow = {
-  id: string;
-  order_api_enabled?: boolean | null;
 };
 
 /*
@@ -41,11 +40,11 @@ export const resolveCompanyByCustomerNumberStep = createStep(
 
     const { data: companies } = await query.graph({
       entity: "companies",
-      fields: ["id", "order_api_enabled"],
+      fields: [...ORDER_API_COMPANY_FIELDS],
       filters: { business_central_customer_number: input.customer_number },
     });
 
-    const company: ResolvedCompanyRow | undefined = companies[0];
+    const company: OrderApiCompanyRow | undefined = companies[0];
 
     if (!company) {
       const logger = container.resolve<Logger>(ContainerRegistrationKeys.LOGGER);
