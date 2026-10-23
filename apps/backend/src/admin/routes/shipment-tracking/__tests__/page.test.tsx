@@ -2,6 +2,7 @@ import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { toast } from "@medusajs/ui";
+import { layoutEntry, layoutEntryIds } from "../../../__tests__/layout-queries";
 import ShipmentTrackingPage from "../page";
 import { sdk } from "../../../lib/client";
 
@@ -130,6 +131,18 @@ it("pages the overview by 50 independently of the given-up list", async () => {
   await userEvent.setup().click(within(section).getByRole("button", { name: "Next" }));
   await waitFor(() => expect(fetchMock).toHaveBeenCalledWith(OVERVIEW, { method: "GET", query: { limit: 50, offset: 50 } }));
   expect(fetchMock).not.toHaveBeenCalledWith(LIST, { method: "GET", query: { limit: 20, offset: 20 } });
+});
+
+it("lays the page out under its own key with the given-up section before all shipments", async () => {
+  serve({ [LIST]: [ok(page)], [OVERVIEW]: [ok(overview)] });
+  mount();
+  await screen.findByText("SS-1");
+  const layout = screen.getByTestId("layout-composer");
+  expect(layout).toHaveAttribute("data-page-key", "shipment_tracking.list");
+  expect(layout).toHaveAttribute("data-layout-id", "core:single-column");
+  expect(layoutEntryIds(layout)).toEqual(["given-up-shipments", "all-shipments"]);
+  expect(within(layoutEntry("given-up-shipments")).getByRole("button", { name: "Retry" })).toBeVisible();
+  expect(within(layoutEntry("all-shipments")).getByRole("region", { name: "All shipments" })).toBeInTheDocument();
 });
 
 it("shows the overview's own load error while the given-up list still renders", async () => {
