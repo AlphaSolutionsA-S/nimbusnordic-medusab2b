@@ -112,6 +112,7 @@ Low, informational (no change required):
    Default and save. Also confirm the Translations page and Medusa's Settings → Translations page
    keep separate arrangements. Options: pass → push; fail on any page → stop the push and return the
    branch to the pipeline.
+   **Answer (Klaus Petersen, 2026-10-23):** passed on all pages ("alt er godt"). No fixes needed.
 
 ## Verify after deploy
 
