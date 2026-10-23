@@ -169,3 +169,9 @@ scope; standard widget places exposed with no widget added; Medusa's standard sp
   tests render the page.
 - Related: NIMBUS-216 (shipment tracking page), NIMBUS-219 (order API setting on Company details),
   NIMBUS-176 / NIMBUS-196 (Translations page); all merged into `develop`.
+
+## Documentation
+
+- [docs/architecture/admin-page-layout.md](../../docs/architecture/admin-page-layout.md) — Admin page layout and "Customize page" (created)
+
+AI base files updated: `ai/skills/medusa-admin/project.md` (link to the new doc)

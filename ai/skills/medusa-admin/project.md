@@ -7,7 +7,7 @@ Paths under `apps/backend/src/admin/`.
   (`pnpm --filter @b2b-starter/backend test:admin`). Also `routes/quotes/page.tsx`.
 - Order BC widget: `widgets/bc-order-status.tsx` with `hooks/api/bc-integration.tsx` and RTL behavior tests in `widgets/__tests__/bc-order-status.test.tsx`. It loads on mount and then refreshes only when the Admin selects Refresh; mutation invalidation and focus/reconnect/polling refresh are disabled per NIMBUS-158.
 - Custom pages render through `LayoutComposer` from `@medusajs/dashboard/components` (layout id
-  from `CORE_LAYOUT_IDS` in `@medusajs/admin-shared`) so "Customize page" works on them (NIMBUS-223).
+  from `CORE_LAYOUT_IDS` in `@medusajs/admin-shared`) so "Customize page" works on them (`docs/architecture/admin-page-layout.md`).
   The page key (`widgetsZonePrefix`) comes from `lib/page-keys.ts`, whose test checks that keys are
   unique and none starts another. A new key must also not equal, start or be started by a
   `widgetsZonePrefix` of Medusa's own pages (e.g. `translation.list`, `order.list`), or the pages
