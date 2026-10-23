@@ -68,3 +68,15 @@
   manifest; "plan approved" comment on NIMBUS-223.
 - Next owner: `task-dispatcher` (Klaus gave the go-ahead for dispatch).
 - Handover prompt: "Dispatch NIMBUS-223 from issues/NIMBUS-223/manifest.md on feature/NIMBUS-223."
+
+## 2026-10-23 — task-dispatcher (implementation gate)
+
+- Outcome: tasks 01–04 done, reviewed and committed (NIMBUS-224 to NIMBUS-227 closed in Jira),
+  consolidation committed, cross-task review approved; `deviation-report.md` written. Finalization:
+  Admin tests 10 suites / 70 passed, typecheck 22 errors = baseline, backend build passes. Accepted
+  deviation: Translations page key `storefront_translation.list` (core clash with `translation.list`;
+  confirmed by Klaus). Not pushed.
+- Next owner: Klaus, browser click-through of "Customize page" on all seven pages (deviation report,
+  Open questions 1); a failure stops the push.
+- Handover prompt: "Resume task-dispatcher for NIMBUS-223 after the gate with Klaus's click-through
+  result: record it in deviation-report.md, then docs, PR description, cleanup."
