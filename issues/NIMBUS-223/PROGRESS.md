@@ -47,3 +47,24 @@
 - Next owner: Klaus (separate go-ahead for `implementation-planner`).
 - Handover prompt: "Plan NIMBUS-223 from issues/NIMBUS-223/scope.md; run the LayoutComposer
   build-and-run probe first."
+
+## 2026-10-23 — implementation-planner
+
+- Outcome: `plan.md`, `manifest.md` and task files 01–04 written; not approved yet, not in Jira.
+  Probe run while planning: Approvals wrapped in `LayoutComposer`, backend `build` passed and the
+  built Admin bundle shares one dashboard context (verified); the real dashboard cannot load under
+  Admin Jest (verified), so tests use a stand-in. Probe reverted. Browser click-through of
+  "Customize page" on our pages remains UNVERIFIED (plan, Needs your decision 1; default: Klaus at
+  the final gate before push).
+- Next owner: Klaus, to answer Needs your decision 1 and approve the plan.
+- Handover prompt: "Review issues/NIMBUS-223/plan.md; on approval set Ready for Dispatch, record
+  'plan approved' in Jira (sub-tasks per task), then decide separately on task-dispatcher."
+
+## 2026-10-23 — plan approved
+
+- Outcome: Klaus approved the plan. Decision 1: default (browser click-through by Klaus on every
+  page at the final gate; a failure stops the push). Heading hidden with the first section:
+  accepted. Ready for Dispatch set; sub-tasks NIMBUS-224 to NIMBUS-227 created and recorded in the
+  manifest; "plan approved" comment on NIMBUS-223.
+- Next owner: `task-dispatcher` (Klaus gave the go-ahead for dispatch).
+- Handover prompt: "Dispatch NIMBUS-223 from issues/NIMBUS-223/manifest.md on feature/NIMBUS-223."
