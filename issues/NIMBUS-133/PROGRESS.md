@@ -24,3 +24,29 @@
 - **Verification:** Reviewed the scope documents and confirmed that the working tree contains only this case folder. Application tests are not applicable to this documentation-only change; staged whitespace validation runs before commit.
 - **Next owner:** Klaus Petersen for estimation or a separate implementation-planning instruction.
 - **Handover prompt:** Use the agreed SCOPE.md and the preceding decisions entry; implementation planning has not started.
+
+## 2026-10-23 — Implementation plan drafted and risks accepted
+- **Owner:** implementation-planner investigation, completed by Codex after the user's follow-up decisions.
+- **Outcome:** PLAN.md, manifest.md and three task briefs cover backend recovery/Notification, public translated storefront forms, integration verification/documentation. No application code changed; no Jira children or plan-approved event yet.
+- **Klaus's decisions:** "logning af token er ikke bekymring" and "samtidigt genbrug accepteres som risk". These supersede earlier no-token-logging and atomic one-winner requirements in this case. No local-provider guard, special token retention cleanup, custom lock or token store. Sequential single-use/latest-link remains.
+- **Evidence:** Installed Medusa 2.21.2 generates 900-second proofs and stores fingerprints. Consumption reads/checks/deletes without proven concurrent atomicity. Notification persists before send; local provider logs data. Both risks are accepted.
+- **Verification limits:** PostgreSQL connection returned ECONNREFUSED. Supported validation ordering before core consumption remains UNVERIFIED and must be resolved by the planner before dispatch. No mail delivery, reset or runtime security outcome verified.
+- **Next owner:** Klaus for plan review; planner resolves middleware ordering before task-dispatcher handoff. Recommend different-model-family review for authentication work.
+- **Handover prompt:** Review PLAN.md/manifest.md. Do not reopen accepted logging/concurrency risks. No implementation before plan gate. New drafts are uncommitted; previous scope publication is commit d12b272 on origin/feature/NIMBUS-133.
+
+## 2026-10-23 — Plan verification completed
+- **Owner:** Codex.
+- **Outcome:** Closed the middleware-order assumption from installed framework router/sorter source and runnable samples/verify-reset-order.cjs: exact static project matcher precedes parameterized core matcher. This supports validation before token consumption without importing core internals. Three tasks remain the proposed plan.
+- **Tracker:** Jira decision comment 255206 records Klaus's logging and concurrent-reuse risk acceptance. No plan-approved event, children or status transition performed.
+- **Verification:** The installed RoutesSorter probe passed, returning project-validation then core-consume. This proves ordering, not implemented HTTP validation, mailbox delivery or deployed recovery. PostgreSQL remains unavailable for later integration checks.
+- **Next owner:** Klaus for plan review/approval; only then record child tasks and request the separate dispatcher handoff per ai/agents/implementation-planner.md.
+- **Handover prompt:** Review PLAN.md, particularly new decisions and data/state/security tables. Accepted token logging/concurrent reuse are non-blocking; no custom provider guard, cleanup, token table or lock is authorized. Application code has not changed.
+
+## 2026-10-23 — Plan approved and tracker tasks created
+- **Owner:** Codex, following Klaus Petersen's explicit instruction: "plan godkendt".
+- **Outcome:** Marked PLAN.md approved and manifest.md Ready for Dispatch true. All three manifest tasks remain TODO; no application code or dispatcher started.
+- **Tracker:** Read NIMBUS-133 as Story, To Do, assigned to Klaus, Customer Portal; no existing subtasks. Created exactly three Sub-tasks under NIMBUS-133, each with Customer Portal: NIMBUS-228 Backend recovery and email, NIMBUS-229 Public translated recovery, NIMBUS-230 Verification and documentation. Recorded actual keys in the manifest. Plan-approved comment 255226 records the decisions, accepted risks, task breakdown and verification limits. Parent status unchanged.
+- **Decisions:** Existing Notification email setup, English reset email, 15-minute sequential single-use/latest-link behaviour and default existing sessions remain agreed. Existing token logging/persistence and concurrent reuse risk stay accepted; no new guard, cleanup, token store or lock.
+- **Verification:** Jira returned the three created issue keys and approval comment. Documentation-only changes in this stage; no application tests, mailbox delivery or runtime reset exercised. Existing PostgreSQL connectivity is needed for later integration tests.
+- **Next owner:** Klaus Petersen for the separate task-dispatcher handoff instruction required by ai/agents/implementation-planner.md. No commit or push performed in this stage.
+- **Handover prompt:** The plan is approved and marked ready. Hand off to task-dispatcher only after a separate instruction; then execute the manifest's three tasks in order with their tracker keys. Preserve accepted risks and all prior progress entries.

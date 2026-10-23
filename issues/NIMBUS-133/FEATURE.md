@@ -23,16 +23,17 @@ Agreed scope and accepted defaults:
 - [ ] After success, the old password no longer logs in, the new one does, and the user returns to normal login without being automatically signed in.
 - [ ] The recovery screens follow the portal's country/language experience and work on mobile and with a keyboard.
 - [ ] Reset email is English; broader email localization remains NIMBUS-162.
-- [ ] Links expire after 15 minutes, are single-use, and are superseded by a newer request.
+- [ ] Links expire after 15 minutes, reject sequential reuse and are superseded by a newer sequential request. Concurrent reuse risk is accepted; no custom locking/storage.
 - [ ] Existing sessions follow standard Medusa behaviour; no custom revocation or promise of logout on other devices.
 
 ## Out of scope
 - Changing a password while signed in (NIMBUS-134), Medusa Admin/CMS recovery, invitation or registration changes, changing an account's email, and company-wide password resets.
 - General translation of all transactional emails (NIMBUS-162).
 - Adding/provisioning a mail provider, sender/domain or mail infrastructure; custom revocation of existing sessions.
+- Token-log/retention hardening and concurrent-reuse protection: existing Notification behaviour and core race limitations are accepted by Klaus.
 
 ## Open questions
-None for the scope stage. Framework/security verification remains for implementation planning, which has not started.
+None for the scope stage. PLAN.md records the implementation breakdown and remaining technical verification.
 
 ## Mockups / references
 - https://docs.medusajs.com/resources/storefront-development/customers/reset-password
@@ -40,4 +41,4 @@ None for the scope stage. Framework/security verification remains for implementa
 - NIMBUS-162: https://alphasolutionsdk.atlassian.net/browse/NIMBUS-162
 
 ## Technical notes
-No implementation plan has been created. See SCOPE.md for current-code evidence, security acceptance targets and the limitation that the checked-in local notification provider logs rather than delivers mail. Reset secrets must not be passed to that logger.
+PLAN.md is prepared for review. See SCOPE.md for evidence and accepted logging/concurrency risks. The local provider logs rather than delivers mail; this is accepted, but inbox delivery remains an after-deploy check with an existing delivering provider.

@@ -14,7 +14,7 @@ Jira originally contained only the title “Forget password flow”. This scope 
 
 The current login screen has sign-in and registration, with no recovery entry point. Signed-in customers can already change their password using the old password; the backend requires a new password of at least eight characters. NIMBUS-134 covers that change-password feature. Recovery must work without a current login and without the old password.
 
-Use Medusa Notification on channel `email`, reusing the existing provider configuration and notification conventions, as requested by Klaus with user invitations as the reference. Adding or provisioning an email provider or sender/domain is outside this story. The checked-in local provider logs recipient and notification data instead of delivering email; reset secrets must not be sent to that logger. Provider acceptance proves dispatch only; actual inbox delivery remains an after-deployment check in an environment with email delivery configured.
+Use Medusa Notification on channel `email`, reusing the existing provider configuration and conventions, as requested by Klaus with invitations as reference. Provider/domain provisioning is outside scope. Klaus accepts existing Notification persistence and local-provider token logging; no provider guard or special cleanup is required. Provider acceptance proves dispatch only; inbox delivery remains an after-deploy check with an existing delivering provider.
 
 ## Requirements
 Requirements reflect the scope decisions and defaults recorded on 2026-10-23.
@@ -34,7 +34,7 @@ Requirements reflect the scope decisions and defaults recorded on 2026-10-23.
 ### Non-functional
 - Accessible labels, keyboard use, password-manager support, understandable loading/error/success states, and the existing responsive account-page styling.
 - Protect both request and submission paths against automated abuse; the planner must define enforceable limits and verify their behaviour across deployed instances, including direct calls to the backend.
-- Do not put passwords, reset tokens, full reset URLs or customer email addresses in application logs or client error output. Prevent tokens leaking through caching, referrers, analytics or missing-translation capture.
+- Do not introduce password logging or expose reset secrets/account details in client errors. Existing Notification persistence and local-provider token logging are accepted; no special logging/retention work is required.
 - A failed delivery or request must never change a password. Failures must be diagnosable using redacted operational information, without claiming that mail reached the recipient merely because the provider accepted it.
 - Verify security behaviour against the installed Medusa library and real HTTP/database integration; mocked success is insufficient. After deployment, prove delivery, reset and subsequent login using a controlled test account and mailbox.
 
@@ -46,7 +46,7 @@ Agreed scope rules and accepted defaults:
 | Anyone submits a syntactically valid recovery request | Neutral acknowledgement; send instructions only for an eligible existing customer email/password identity. No account creation. |
 | Someone requests recovery for another person | This grants no access. Instructions go only to the address bound to the target identity. |
 | Reset is submitted | The reset proof, not a browser login, submitted company/customer ID or company-admin role, determines the account that may change. Actor is the holder of the account-bound recovery proof, not a staff/admin user. |
-| An unused valid link is submitted with matching valid passwords | Change that account's credential only; consume the proof atomically so simultaneous submissions cannot both succeed. |
+| An unused valid link is submitted with matching valid passwords | Change that account's credential using core consumption. Sequential reuse is refused; concurrent reuse risk is accepted without custom locking/storage. |
 | A link is used, expired or replaced by a newer request | Refuse further resets and offer a new request. Lifetime: 15 minutes; single use; only the latest link remains valid. |
 | Password is too short or confirmation differs | Refuse the change. Existing product minimum: eight characters. |
 | Recovery completes | No automatic login. Retain Medusa's standard behaviour for existing sessions; no custom revocation or promise that other devices are logged out. |
@@ -60,7 +60,7 @@ This describes information and ownership, not a decision to introduce custom tab
 | Customer email/password identity | Existing provider identity bound to customer account; email is the delivery address | Medusa Auth; customer data remains Medusa Customer-owned | Existing account flows; recovery updates credential only | Existing stored identity / credential hash | Yes | Existing account policy; unchanged |
 | New password and confirmation | Transient recovery input; never an audit value | Auth flow; confirmation is presentation validation | Holder of valid recovery proof | Transient; password stored only as the provider's credential hash | Secret | No plaintext persistence |
 | Reset proof and validation state | Account-bound token, expiry and one-use state; exact ID/hash storage must be verified | Medusa Auth if supported as documented | Core recovery flow | Token delivered transiently; server state as required by core | Secret | 15-minute validity; deletion/cleanup verified by planner |
-| Notification delivery record | Dispatch attempt / result; must not become an unbounded store of usable reset links | Medusa Notification and existing email provider | Recovery notification flow | Stored where existing providers require | Yes, includes recipient and potentially secret content | Planner to establish cleanup/redaction with existing configuration |
+| Notification delivery record | Existing dispatch attempt/result | Medusa Notification and existing provider | Recovery workflow | Existing core storage | Yes, recipient and token content | Existing retention accepted; no special cleanup |
 | Country/language context | Presentation and reset destination context; never an authorization key | Existing storefront country/language publication | Trusted application configuration / existing publication | Derived; persistence only if required | No, absent recipient linkage | Request or notification lifetime |
 | Abuse counters / redacted operational events | Limit request/submission abuse and diagnose delivery failure | ? — planner to identify supported mechanism | Backend/edge protection | ? | Potentially personal data | ? — bounded retention to be specified |
 
@@ -70,13 +70,13 @@ Intended controls below are acceptance targets, not claims about the installed l
 | Property | Intended control | Trust root | Failure behaviour |
 |---|---|---|---|
 | Trust anchor / account binding | Signed, expiring recovery proof bound to the target customer and provider; email substitution cannot retarget it; proof is not a login credential | Backend Auth identity and verification secret plus access to account mailbox | No password or session change; generic invalid-link result |
-| Replay / concurrent use | Atomic consumption, one successful reset; a newer request supersedes earlier links | Shared authoritative Auth state, verified against installed source and integration tests | Reuse and losing concurrent requests fail |
-| Cross-instance consistency | Expiry, consumption, replacement and abuse protection hold across backend instances and restarts | Durable/shared implementation established by planner | No dependence on a local in-memory allow/deny list |
+| Replay / concurrent use | Core sequential single-use/supersession; concurrent reuse accepted | Existing Auth state | Sequential reuse fails; no concurrent one-winner guarantee |
+| Cross-instance consistency | Existing core shared database; no custom token list or lock | Existing core implementation | Concurrent consumption/issuance limitations accepted; normal expiry/binding still required |
 | Browser binding / CSRF | Link may open in a different browser; viewing it does not reset or log in. Submission needs the valid proof and explicit password entry; no reliance on ambient customer cookies | Recovery proof and trusted application origin | No change on GET or invalid cross-origin submission |
 | Account enumeration | Same request acknowledgement/status for known and unknown identities; evaluate timing and provider-error leakage | Public request handler and redacted error mapping | No account existence or eligibility details exposed |
 | Actor isolation | Customer recovery cannot alter Admin/CMS credentials or another identity even if an email is shared | Actor/provider binding validated by Auth | Refuse wrong-actor or wrong-account proof |
 | Logout / session lifecycle | No automatic login; retain standard Medusa behaviour for already-issued customer tokens and sessions, without custom revocation | Existing Medusa token/session authentication | Do not claim other devices or sessions have been logged out |
-| Personal data on failure | No passwords, tokens, full links, email addresses or company details in errors/logs; no public caching or referrer leakage | Server-only transport, sanitized errors and notification handling | Generic recoverable UI error; redacted diagnostics |
+| Personal data on failure | No new password logs or account/provider details in UI errors; existing token logging/persistence accepted | Server-only transport and existing Notification | Generic recoverable UI error; no special token-log hardening |
 
 ## Affected apps
 - **Storefront:** login entry, public recovery screens, server-side data actions, country routing, translations and recovery outcome.
@@ -94,15 +94,17 @@ High-level work areas, not an implementation plan or Jira subtasks:
 - **Accepted scope default:** English reset email in this story; broader multilingual transactional emails remain NIMBUS-162. Portal screens retain existing translated UI.
 - **Klaus, 2026-10-23:** single-use link accepted. Retain the proposed 15-minute validity and latest-link-only behaviour, matching the observed Medusa primitive.
 - **Klaus, 2026-10-23:** existing-session behaviour is not important; choose the simplest supported approach. Retain Medusa's default without custom revocation, and do not promise immediate logout of other sessions.
+- **Klaus, 2026-10-23, planning follow-up:** token logging is not a concern. Accept existing Notification persistence/local logging; remove fail-closed provider guards and special cleanup requirements.
+- **Klaus, 2026-10-23, planning follow-up:** concurrent reuse is accepted as a risk. Use core consumption without custom locking/storage or atomic one-winner guarantees. Sequential single-use/latest-link behaviour remains.
 - **Retained scope defaults:** existing storefront customer email/password accounts, minimum eight characters, normal login after successful reset and the boundaries above.
 
-No outstanding business questions for this scope stage. Remaining framework/security verification belongs to implementation planning, which has not been requested. No deadline is stated beyond Jira's Medium priority.
+No outstanding scope business questions. Implementation planning has been requested; PLAN.md records its technical verification limits. No deadline beyond Jira's Medium priority.
 
 ## Dependencies
-- Permission for implementation planning is a separate next stage.
+- Implementation planning was requested after scope publication; PLAN.md is the next review artifact. Implementation has not started.
 - Existing Medusa Notification email-provider configuration, a trusted storefront URL per environment, and a controlled mailbox/test account for delivery verification. Provisioning or replacing mail infrastructure is outside scope; if the target environment has only the local logger, inbox delivery remains unverified until an existing delivering provider is available.
 - Coordination with NIMBUS-134 (existing signed-in password change) and NIMBUS-162 (transactional email localization); neither is a prerequisite for this scope.
-- Installed Medusa source supports a 15-minute reset token, reset-purpose validation, fingerprinted server-side token state, expiry checks, sequential single use and invalidation of earlier tokens on a new request. **Concurrent atomicity, complete actor/account binding and cross-instance race behaviour remain UNVERIFIED**; the planner must establish them with executable probes before dispatch. The visible consume implementation reads then deletes, and consumes before updating the credential, so failure/retry semantics also require verification. A dependency upgrade or custom persistence is not assumed here.
+- Installed Medusa source supports 15-minute reset proofs, purpose validation, fingerprinted state, expiry checks, sequential single-use and supersession. Concurrent atomicity is unproven and explicitly accepted as residual risk, not a dispatch gate. Binding and password-validation order still need ordinary verification. Consumption precedes update; preserve core failure/retry semantics. No upgrade, custom token store or locking is required for the accepted race.
 
 ## Evidence and verification limits
 - `apps/storefront/src/modules/account/components/login/index.tsx` and `templates/login-template.tsx`: sign-in/registration only; no recovery entry.
