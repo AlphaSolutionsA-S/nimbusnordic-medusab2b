@@ -9,6 +9,8 @@ module.exports = {
     "^react$": require.resolve("react"),
     "^react/jsx-runtime$": require.resolve("react/jsx-runtime"),
     "^react/jsx-dev-runtime$": require.resolve("react/jsx-dev-runtime"),
+    // The real dashboard cannot load under jsdom; pages render through a stand-in layout.
+    "^@medusajs/dashboard/components$": "<rootDir>/src/admin/__tests__/dashboard-components.tsx",
   },
   transform: {
     "^.+\\.[jt]sx?$": [

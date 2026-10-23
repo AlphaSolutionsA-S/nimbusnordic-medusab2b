@@ -24,7 +24,7 @@ repo root:
 ## Tasks
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | Page keys, Jest stand-in, list pages on the layout | `01-list-pages-layout.md` | backend (Admin) | F1–F4, F6, F7, NF fixed names; structure 1 | None | NIMBUS-224 | TODO |
+| 01 | Page keys, Jest stand-in, list pages on the layout | `01-list-pages-layout.md` | backend (Admin) | F1–F4, F6, F7, NF fixed names; structure 1 | None | NIMBUS-224 | DONE |
 | 02 | Shipment tracking in two sections | `02-shipment-tracking-layout.md` | backend (Admin) | F1–F7; structure 4 | 01 | NIMBUS-225 | TODO |
 | 03 | Company details in three sections | `03-company-details-layout.md` | backend (Admin) | F1–F7; structure 2; BC warning rule | 01 | NIMBUS-226 | TODO |
 | 04 | Quote details in two columns | `04-quote-details-layout.md` | backend (Admin) | F1–F7; structure 3; NF widths | 01 | NIMBUS-227 | TODO |
