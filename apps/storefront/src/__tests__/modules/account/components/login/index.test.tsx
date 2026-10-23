@@ -6,7 +6,17 @@ jest.mock("@/lib/data/customer", () => ({
 
 import Login from "@/modules/account/components/login"
 
+jest.mock("next/navigation", () => ({
+  useParams: () => ({ countryCode: "dk" }),
+}))
+
 describe("Login", () => {
+  it("links signed-out customers to public recovery", () => {
+    render(<Login setCurrentView={() => {}} />)
+    expect(
+      screen.getByRole("link", { name: "Forgot password?" })
+    ).toHaveAttribute("href", "/dk/forgot-password")
+  })
   it("TC-1: renders extracted strings unchanged", () => {
     render(<Login setCurrentView={() => {}} />)
 
@@ -16,12 +26,8 @@ describe("Login", () => {
       screen.getByTitle("Enter a valid email address.")
     ).toBeInTheDocument()
     expect(screen.getByText("Remember me")).toBeInTheDocument()
-    expect(
-      screen.getByRole("button", { name: "Log in" })
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole("button", { name: "Register" })
-    ).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Register" })).toBeInTheDocument()
   })
 
   it("TC-2: renders the rich-text heading with a real <br> element", () => {

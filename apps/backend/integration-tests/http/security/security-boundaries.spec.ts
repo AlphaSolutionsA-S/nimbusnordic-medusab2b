@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { medusaIntegrationTestRunner } from '@medusajs/test-utils';
 import {
   createCartWorkflow,
+  generateResetPasswordTokenWorkflow,
   createOrderFulfillmentWorkflow,
   createProductsWorkflow,
   createShippingOptionsWorkflow,
@@ -68,6 +69,68 @@ medusaIntegrationTestRunner({
         name: 'Foreign empty company', email: 'foreign@example.test', currency_code: 'dkk',
       });
       foreignCompanyId = foreign.id;
+    });
+
+    it('refuses missing and ordinary login credentials on password recovery updates', async () => {
+      for (const credentials of [{ headers: {} }, headers]) {
+        const response = await api.post('/auth/customer/emailpass/update', {
+          password: 'replacement-password', password_confirmation: 'replacement-password',
+        }, { ...credentials, validateStatus: () => true });
+        expect(response.status).toBe(401);
+      }
+      const readOnly = await api.get('/auth/customer/emailpass/update', { validateStatus: () => true });
+      expect(readOnly.status).toBe(404);
+    });
+
+    it('preserves company membership and administrator role after password recovery', async () => {
+      const before = await companyService.listEmployees({ company_id: companyId });
+      expect(before).toHaveLength(1);
+      expect(before[0].is_admin).toBe(true);
+      const { result: proof } = await generateResetPasswordTokenWorkflow(container).run({
+        input: { entityId: 'test@email.com', actorType: 'customer', provider: 'emailpass', secret: 'supersecret' },
+      });
+      const reset = await api.post('/auth/customer/emailpass/update', {
+        password: 'recovered-password', password_confirmation: 'recovered-password',
+      }, { headers: { authorization: `Bearer ${proof}` } });
+      expect(reset.data).toEqual({ success: true });
+      expect(reset.headers['set-cookie']).toBeUndefined();
+      const { token } = (await api.post('/auth/customer/emailpass', {
+        email: 'test@email.com', password: 'recovered-password',
+      })).data;
+      const recoveredHeaders = { headers: { ...publicHeaders.headers, authorization: `Bearer ${token}` } };
+      const me = await api.get('/store/customers/me', recoveredHeaders);
+      expect(me.data.customer.id).toBe(customerId);
+      const after = await companyService.listEmployees({ company_id: companyId });
+      expect(after).toEqual(before);
+      expect((await api.post(`/store/companies/${companyId}/approval-settings`, {
+        requires_admin_approval: true,
+      }, recoveredHeaders)).status).toBe(201);
+      expect((await api.get(`/store/companies/${foreignCompanyId}`, {
+        ...recoveredHeaders, validateStatus: () => true,
+      })).status).toBe(403);
+    });
+
+    it('keeps signed-in password changes dependent on the current password', async () => {
+      const route = '/store/customers/me/password';
+      const nextPassword = 'signed-in-replacement';
+      expect((await api.post(route, {
+        old_password: 'password', new_password: nextPassword,
+      }, { ...publicHeaders, validateStatus: () => true })).status).toBe(401);
+      expect((await api.post(route, {
+        old_password: 'incorrect-password', new_password: nextPassword,
+      }, { ...headers, validateStatus: () => true })).status).toBe(401);
+      expect((await api.post('/auth/customer/emailpass', {
+        email: 'test@email.com', password: 'password',
+      })).status).toBe(200);
+      expect((await api.post(route, {
+        old_password: 'password', new_password: nextPassword,
+      }, headers)).data).toEqual({ success: true });
+      expect((await api.post('/auth/customer/emailpass', {
+        email: 'test@email.com', password: 'password',
+      }, { validateStatus: () => true })).status).toBe(401);
+      expect((await api.post('/auth/customer/emailpass', {
+        email: 'test@email.com', password: nextPassword,
+      })).status).toBe(200);
     });
 
     it.each(['none', 'customer', 'publishable'] as const)(

@@ -371,6 +371,7 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 
 | Rule | Owning file | Verdict exposed via | Consumers | Status |
 |------|-------------|---------------------|-----------|--------|
+| Password recovery: 15-minute customer proof, latest-link, sequential single use (NIMBUS-133) | Medusa Auth; `B/api/auth/middlewares.ts` (validation); `B/workflows/customer/workflows/send-password-reset.ts` (email) | Core Auth reset/update; Notification `email` | `S/lib/data/password-recovery.ts` | ok; concurrent reuse/token persistence/logging accepted; default sessions |
 | Spending limit (per order only, finding 7) | `B/utils/check-spending-limit.ts` | checkout error (`B/workflows/hooks/validate-cart-completion.ts`) | storefront cart, checkout | duplicate: `S/lib/util/check-spending-limit.ts` |
 | Cart approval status | `B/utils/get-cart-approval-status.ts`, `validate-cart-approvals.ts` | cart approvals | storefront cart, checkout, approvals | divergent duplicate: `S/lib/util/get-cart-approval-status.ts` (approved = all vs any) |
 | Cart access, verified cart–company association | `B/workflows/cart/utils/cart-access.ts` | 404 (`authorizeCartAccessWorkflow`) | cart guard; approvals list and decision | ok |

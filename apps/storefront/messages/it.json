@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Password dimenticata",
+      "resetHeading": "Reimposta password",
+      "requestDescription": "Inserisci la tua email per richiedere un link di reimpostazione.",
+      "resetDescription": "Scegli una nuova password di almeno otto caratteri e confermala.",
+      "emailLabel": "Email",
+      "passwordLabel": "Nuova password",
+      "confirmationLabel": "Conferma nuova password",
+      "requestSubmit": "Invia link",
+      "resetSubmit": "Salva nuova password",
+      "loading": "Attendi…",
+      "acknowledgement": "Se esiste un account con questa email, riceverai un link di reimpostazione.",
+      "success": "La password è stata modificata. Accedi con la nuova password.",
+      "freshLink": "Richiedi un nuovo link",
+      "backToLogin": "Torna al login",
+      "errors": {
+        "invalidEmail": "Inserisci un indirizzo email valido.",
+        "invalidPassword": "Usa almeno otto caratteri e la stessa password in entrambi i campi.",
+        "invalidLink": "Il link non è valido o è scaduto. Richiedi un nuovo link.",
+        "unavailable": "Impossibile completare la richiesta. Riprova."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Password dimenticata?",
       "heading": "Accedi per un<br></br>checkout più veloce.",
       "emailLabel": "E-mail",
       "emailValidationMessage": "Inserisci un indirizzo e-mail valido.",
