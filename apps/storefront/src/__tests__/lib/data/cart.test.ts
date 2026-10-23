@@ -47,6 +47,7 @@ import {
   applyPromotions,
   emptyCart,
   lookupCart,
+  submitPromotionForm,
 } from "@/lib/data/cart"
 import {
   getAuthHeaders,
@@ -96,6 +97,140 @@ describe("cart data errors", () => {
   it("throws the stable cart-not-found code when no cart exists (TC-8)", async () => {
     await expect(emptyCart()).rejects.toThrow("CART_NOT_FOUND")
     await expect(applyPromotions(["X"])).rejects.toThrow("CART_NOT_FOUND")
+  })
+})
+
+function promotionForm(fields: Array<[string, string]>): FormData {
+  const formData = new FormData()
+  fields.forEach(([name, value]) => formData.append(name, value))
+  return formData
+}
+
+describe("submitPromotionForm", () => {
+  const update = jest.mocked(sdk.store.cart.update)
+  let consoleError: jest.SpyInstance
+
+  beforeEach(() => {
+    mockGetCartId.mockResolvedValue("cart_1")
+    update.mockReset()
+    update.mockResolvedValue({ cart: { id: "cart_1" } } as Awaited<
+      ReturnType<typeof sdk.store.cart.update>
+    >)
+    consoleError = jest.spyOn(console, "error").mockImplementation(() => {})
+  })
+
+  afterEach(() => {
+    consoleError.mockRestore()
+  })
+
+  it.each([
+    {
+      name: "adds a second code without dropping the existing code",
+      fields: [
+        ["applied_code", "SAVE10"],
+        ["code", "NEW20"],
+      ],
+      codes: ["SAVE10", "NEW20"],
+    },
+    {
+      name: "adds the first code",
+      fields: [["code", "NEW20"]],
+      codes: ["NEW20"],
+    },
+    {
+      name: "does not duplicate an already applied code",
+      fields: [
+        ["applied_code", "SAVE10"],
+        ["code", "SAVE10"],
+      ],
+      codes: ["SAVE10"],
+    },
+    {
+      name: "removes one code while keeping the other",
+      fields: [
+        ["applied_code", "SAVE10"],
+        ["applied_code", "SAVE20"],
+        ["remove_code", "SAVE10"],
+      ],
+      codes: ["SAVE20"],
+    },
+    {
+      name: "sends an empty list when removing the only manual code",
+      fields: [
+        ["applied_code", "SAVE10"],
+        ["remove_code", "SAVE10"],
+      ],
+      codes: [],
+    },
+  ])("$name", async ({ fields, codes }) => {
+    await expect(
+      submitPromotionForm(
+        null,
+        promotionForm(fields as Array<[string, string]>)
+      )
+    ).resolves.toEqual({ success: true })
+    expect(update).toHaveBeenCalledWith(
+      "cart_1",
+      { promo_codes: codes },
+      {},
+      {}
+    )
+  })
+
+  it.each([
+    { field: "code", context: "cart.submit-promotion" },
+    { field: "remove_code", context: "cart.remove-promotion" },
+  ])(
+    "returns a failure without the raw message for $field",
+    async ({ field, context }) => {
+      update.mockRejectedValueOnce({
+        response: {
+          data: { message: "The promotion code NOPE is invalid" },
+          status: 400,
+          headers: {},
+        },
+        config: {
+          url: "/store/carts/cart_1",
+          baseURL: "http://localhost:9000",
+        },
+      })
+
+      await expect(
+        submitPromotionForm(
+          null,
+          promotionForm([
+            ["applied_code", "SAVE10"],
+            [field, "NOPE"],
+          ])
+        )
+      ).resolves.toEqual({ success: false })
+      expect(consoleError).toHaveBeenCalledWith("[customer-error]", {
+        context,
+        message: expect.stringContaining("is invalid"),
+      })
+    }
+  )
+
+  it("returns and logs a failure when the cart is missing", async () => {
+    mockGetCartId.mockResolvedValue(undefined)
+
+    await expect(
+      submitPromotionForm(null, promotionForm([["code", "NEW20"]]))
+    ).resolves.toEqual({ success: false })
+    expect(update).not.toHaveBeenCalled()
+    expect(consoleError).toHaveBeenCalledWith("[customer-error]", {
+      context: "cart.submit-promotion",
+      message: "CART_NOT_FOUND",
+    })
+  })
+
+  it.each(["empty", "missing", "file"])("ignores a %s code", async (kind) => {
+    const form = promotionForm([["applied_code", "SAVE10"]])
+    if (kind === "empty") form.append("code", "")
+    if (kind === "file") form.append("code", new File(["NEW20"], "code.txt"))
+
+    await expect(submitPromotionForm(null, form)).resolves.toBeNull()
+    expect(update).not.toHaveBeenCalled()
   })
 })
 
@@ -187,9 +322,11 @@ describe("add to cart", () => {
     mockCreate.mockResolvedValueOnce({
       cart: { id: "cart_new" },
     } as Awaited<ReturnType<typeof sdk.store.cart.create>>)
-    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
-    )
+    jest
+      .mocked(sdk.store.cart.createLineItem)
+      .mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
+      )
 
     await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
 
@@ -225,9 +362,11 @@ describe("add to cart", () => {
     mockCreate.mockResolvedValueOnce({
       cart: { id: "cart_new" },
     } as Awaited<ReturnType<typeof sdk.store.cart.create>>)
-    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
-    )
+    jest
+      .mocked(sdk.store.cart.createLineItem)
+      .mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
+      )
 
     await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
 
@@ -253,9 +392,11 @@ describe("add to cart", () => {
     mockFetch.mockResolvedValueOnce({
       cart: { id: "cart_own", customer_id: "cus_admin", region_id: "reg_1" },
     })
-    jest.mocked(sdk.store.cart.createLineItem).mockResolvedValueOnce(
-      {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
-    )
+    jest
+      .mocked(sdk.store.cart.createLineItem)
+      .mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof sdk.store.cart.createLineItem>>
+      )
 
     await addToCart({ variantId: "variant_1", quantity: 1, countryCode: "dk" })
 

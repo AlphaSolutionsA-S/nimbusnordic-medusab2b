@@ -1,6 +1,6 @@
 # Task 01: Result-returning promotion Server Action with the full code list — Implementation Plan
 
-**Status:** TODO
+**Status:** IMPLEMENTED (review pending)
 **App:** storefront
 **App Root:** apps/storefront
 **Task ID:** 01
@@ -251,3 +251,26 @@ must still pass: it proves `applyPromotions` itself is unchanged.
 3. Run `cd apps/storefront && npx jest src/__tests__/lib/data/cart.test.ts`; all pass.
 4. Run `npx tsc --noEmit` (still 9 errors, none in the files you touched) and `pnpm lint` (still 2 warnings).
 5. Run the full `pnpm test`: only the 3 baseline failures.
+
+## Deviations
+
+- Re-measured dispatcher typecheck baseline is 58 errors, rather than the September plan's 9; this task remains at 58.
+- Per-task execution runs scoped tests; full suite and build are deferred to finalization by the dispatcher.
+- Added missing-code and File-valued-code cases alongside the planned empty-code no-op, to verify the FormData boundary.
+- Existing SDK update mock was already present; preserved all current cart lifecycle tests and their mocks.
+- Lint is environment-blocked: the installed Next executable rejects `next lint` as a missing directory; direct ESLint 9.39.4 with the existing legacy config fails with `TypeError: Converting circular structure to JSON`. No dependency or configuration changes made.
+- Existing OWASP A09 logging concern outside this task: `src/lib/util/medusa-error.ts:6-9` logs response data and headers for Axios-shaped errors; the unchanged `applyPromotions`/`updateCart` path still invokes it. The new action itself uses the approved message-only `logCustomerError` helper. Shared error-util remediation requires separate scope.
+- Installed core-flows is 2.21.2 rather than the plan's 2.21.0; replacement behavior was rechecked against installed source.
+
+## Done-when evidence
+
+- Full-list add, first-code add and duplicate prevention: `cart.test.ts`, `submitPromotionForm` parameterized add cases; exact SDK payload and `{ success: true }` assertions.
+- Remove one and remove last: same describe block, `removes one code while keeping the other` and `sends an empty list when removing the only manual code`.
+- Failures return only `{ success: false }` and log the matching add/remove context: `returns a failure without the raw message for $field`; cart-not-found: `returns and logs a failure when the cart is missing`.
+- Empty/missing/File code does no mutation: `ignores a %s code`.
+- `applyPromotions` unchanged: source diff and existing `throws the stable cart-not-found code when no cart exists (TC-8)` still passes.
+- RED: 11 new cases failed, 13 existing cases passed; GREEN: all 24 passed. Logs: `.tmp/NIMBUS-174-20261023-1840/task01-red.log` and `task01-green.log`.
+- Typecheck: 58 errors, matching baseline; no new action, test or component signature diagnostic. Log: `task01-typecheck.log` in the same scratchpad.
+- Lint: attempted script and direct ESLint; blocked as recorded above. Logs: `task01-lint.log`, `task01-eslint.log`.
+- Vendor primitive: Medusa MCP confirmed the four-argument SDK update signature; installed `@medusajs/core-flows/dist/cart/workflows/refresh-cart-items.js` passes supplied codes with `PromotionActions.REPLACE`, and `steps/get-promotion-codes-to-apply.js` clears existing codes for REPLACE, including when `promo_codes` is empty. Repeated add is deduplicated by this action's test; concurrent form submissions are not serialized or claimed to merge stale lists.
+- Also update: component consumer and its existing test are owned by Task 02; searches found no other stale promotion-action tests, architecture rules or current documentation requiring change in this task. Production browser behavior is not provable here; Task 03 owns it.

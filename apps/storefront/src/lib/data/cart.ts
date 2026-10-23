@@ -6,6 +6,7 @@ import {
   CART_NOT_FOUND_ERROR,
   CART_UNAVAILABLE_ERROR,
   SIGN_IN_REQUIRED_ERROR,
+  logCustomerError,
 } from "@/lib/util/customer-error"
 import medusaError from "@/lib/util/medusa-error"
 import { StoreApprovalResponse } from "@/types/approval"
@@ -430,19 +431,46 @@ export async function removeGiftCard(
   //   }
 }
 
+export type PromotionFormState = { success: boolean } | null
+
+function getFormCodes(formData: FormData, name: string): string[] {
+  return formData
+    .getAll(name)
+    .filter(
+      (value): value is string => typeof value === "string" && value.length > 0
+    )
+}
+
+// Medusa replaces manual codes, so send the full intended list. Return a result
+// because Next.js hides thrown Server Action messages in production.
 export async function submitPromotionForm(
-  currentState: unknown,
+  currentState: PromotionFormState,
   formData: FormData
-) {
-  const code = formData.get("code") as string
+): Promise<PromotionFormState> {
+  const appliedCodes = getFormCodes(formData, "applied_code")
+  const removeCode = formData.get("remove_code")
+  const isRemove = typeof removeCode === "string" && removeCode.length > 0
+
+  let codes: string[]
+  if (isRemove) {
+    codes = appliedCodes.filter((code) => code !== removeCode)
+  } else {
+    const code = formData.get("code")
+    if (typeof code !== "string" || !code) {
+      return null
+    }
+    codes = Array.from(new Set([...appliedCodes, code]))
+  }
+
   try {
-    await applyPromotions([code])
-  } catch (e: any) {
-    console.error("[customer-error]", {
-      context: "cart.submit-promotion",
-      message: e.message,
-    })
-    return e.message
+    await applyPromotions(codes)
+    return { success: true }
+  } catch (error) {
+    logCustomerError(
+      isRemove ? "cart.remove-promotion" : "cart.submit-promotion",
+      error
+    )
+    return { success: false }
   }
 }
 

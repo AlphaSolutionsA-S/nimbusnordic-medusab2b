@@ -45,3 +45,9 @@
 - **Outcome:** The user approved `PLAN.md`, including its deviations from SCOPE.md. `manifest.md` is set to **Ready for Dispatch: true**. The user is running the implementation in another session.
 - **Handover to:** implementor agent
 - **Handover prompt:** Same as the implementation-planner handover prompt above: implement Tasks 01 → 03 from `issues/NIMBUS-174/manifest.md` on `feature/NIMBUS-174` from `develop`.
+
+- **Date:** 2026-10-23
+- **Updated by:** tdd-worker, Task 01
+- **Outcome:** Implemented the returning promotion action and full add/remove code lists. RED: 11 new cases failed; GREEN: 24/24 cart tests passed. Whole-app typecheck remains at the current 58-error baseline. Lint cannot run with the installed Next/ESLint tooling; failures and an existing shared error-util logging concern are recorded in the task deviations. No live browser or deployed result claimed.
+- **Handover to:** code-reviewer via task-dispatcher
+- **Handover prompt:** Review Task 01's cart.ts/cart.test.ts diff and evidence in `01-promotion-server-action-implementation.md`; then proceed to Task 02 using `branch-notes.md`. Full suite/build and production-browser checks remain finalization work.
