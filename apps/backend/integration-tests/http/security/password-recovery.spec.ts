@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
-import { medusaIntegrationTestRunner } from '@medusajs/test-utils';
+import { medusaIntegrationTestRunner, TestEventUtils } from '@medusajs/test-utils';
 import { generateResetPasswordTokenWorkflow } from '@medusajs/core-flows';
-import type { IAuthModuleService, INotificationModuleService, MedusaContainer } from '@medusajs/framework/types';
-import { Modules } from '@medusajs/framework/utils';
+import type { IAuthModuleService, IEventBusModuleService, INotificationModuleService, MedusaContainer } from '@medusajs/framework/types';
+import { AuthWorkflowEvents, Modules } from '@medusajs/framework/utils';
 import { createStoreUser } from '../../utils/admin';
 import { generatePublishableKey, generateStoreHeaders } from '../../utils/store';
 import { sendCustomerPasswordResetWorkflow } from '../../../src/workflows/customer/workflows/send-password-reset';
@@ -111,6 +111,28 @@ medusaIntegrationTestRunner({
       expect((await update(token, { password, password_confirmation: password, entity_id: other, email: other })).status).toBe(400);
       expect((await api.post('/auth/customer/emailpass', { email: other, password: 'original-other-password' })).status).toBe(200);
       expect((await api.post('/auth/customer/emailpass', { email, password: 'password' })).status).toBe(200);
+      expect((await update(token)).status).toBe(200);
+      expect((await api.post('/auth/customer/emailpass', { email, password })).status).toBe(200);
+    });
+
+    it('dispatches a usable reset link through the registered subscriber after a public request', async () => {
+      const eventBus = container.resolve<IEventBusModuleService>(Modules.EVENT_BUS);
+      const notifications = container.resolve<INotificationModuleService>(Modules.NOTIFICATION);
+      await Promise.all([
+        TestEventUtils.waitSubscribersExecution(AuthWorkflowEvents.PASSWORD_RESET, eventBus),
+        api.post('/auth/customer/emailpass/reset-password', {
+          identifier: email, metadata: { country_code: 'se' },
+        }),
+      ]);
+      const stored = await notifications.listNotifications({ to: email, template: 'customer-password-reset' });
+      expect(stored).toHaveLength(1);
+      expect(stored[0]).toMatchObject({ channel: 'email', status: 'success' });
+      const resetUrl = new URL(String(stored[0].data?.reset_url));
+      expect(resetUrl.origin).toBe('https://shop.example.test');
+      expect(resetUrl.pathname).toBe('/se/reset-password');
+      const token = resetUrl.searchParams.get('token');
+      expect(token).toEqual(expect.any(String));
+      if (!token) throw new Error('Expected a reset proof in the notification');
       expect((await update(token)).status).toBe(200);
       expect((await api.post('/auth/customer/emailpass', { email, password })).status).toBe(200);
     });

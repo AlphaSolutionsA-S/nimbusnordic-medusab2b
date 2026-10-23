@@ -29,3 +29,11 @@
 - Browser smoke was not run: no seeded running backend/published translations/current storefront build. Existing `.next/BUILD_ID` is from2026-10-22 and cannot verify these routes.
 - Dispatcher must run final full suites/build once, synchronize generated AI context after the registry change, and pass all task deviations to the integration-reviewer. Controlled mailbox and deployed browser/login checks remain release work.
 - Review rework: condensed only the new registry row to fit generated-context byte limits; regenerated `AGENTS.md` and `.github/copilot-instructions.md`. `ai:check --fix` and `ai:check` pass.
+
+## Consolidation / NIMBUS-133
+- Added real public request/event/registered-subscriber/Notification integration coverage in `password-recovery.spec.ts`; the dispatched link successfully resets credentials and permits normal login.
+- Mutation RED disabled subscriber registration and failed on missing Notification; original registration restored, full recovery HTTP suite GREEN14. No production change retained.
+- Backend lint0 errors/13 baseline warnings; tsc22 baseline22. Final full suites/build were inspected, not repeated; full HTTP remains incomplete with quotes plus empty-ADMIN_CORS baseline/configuration failures.
+- `notes.md` maps every security property to named tests and states browser/origin, cross-process, logging and delivery evidence limits. Source349 added lines; tests516 added/6 removed; translations184 additional lines.
+- No justified helper/API/test deletion. Existing account parallel-route paths are unchanged from merge-base; no dependency/config repair or repeat storefront build.
+- Integration-reviewer owns the final deviation report; real mailbox, deployed browser/login and translation publication checks remain release work. No commit, push or tracker operation by this worker.
