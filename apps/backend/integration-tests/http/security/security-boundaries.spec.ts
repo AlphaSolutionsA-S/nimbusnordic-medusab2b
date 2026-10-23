@@ -70,10 +70,11 @@ medusaIntegrationTestRunner({
     });
 
     it.each(['none', 'customer', 'publishable'] as const)(
-      'denies %s credentials on both admin shipment tracking endpoints', async (credentials) => {
+      'denies %s credentials on every admin shipment tracking endpoint', async (credentials) => {
         const selected = credentials === 'customer' ? headers : credentials === 'publishable' ? publicHeaders : { headers: {} };
         for (const [method, url] of [
           ['GET', '/admin/shipment-tracking'],
+          ['GET', '/admin/shipment-tracking/overview'],
           ['POST', '/admin/shipment-tracking/shtr_missing/retry'],
         ]) {
           const response = await api.request({ method, url, ...selected, data: method === 'POST' ? {} : undefined, validateStatus: () => true });

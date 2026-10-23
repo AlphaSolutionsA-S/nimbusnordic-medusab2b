@@ -13,8 +13,19 @@ export type AdminShipmentTracking = {
   attempts: number;
   closed_at: string;
 };
-type ShipmentTrackingList = {
-  shipment_trackings: AdminShipmentTracking[];
+export type AdminShipmentTrackingOverviewRow = {
+  id: string;
+  shipment_number: string;
+  bc_order_number: string;
+  external_order_number: string;
+  company_id: string;
+  company_name: string | null;
+  posting_date: string;
+  state: "open" | "closed";
+  close_reason: "cancelled" | "window_ended" | "superseded" | "gave_up" | null;
+};
+type Page<TRow> = {
+  shipment_trackings: TRow[];
   count: number;
   limit: number;
   offset: number;
@@ -23,7 +34,17 @@ type ShipmentTrackingList = {
 export function useShipmentTracking(limit: number, offset: number) {
   return useQuery({
     queryKey: ["shipment-tracking", limit, offset],
-    queryFn: () => sdk.client.fetch<ShipmentTrackingList>("/admin/shipment-tracking", {
+    queryFn: () => sdk.client.fetch<Page<AdminShipmentTracking>>("/admin/shipment-tracking", {
+      method: "GET", query: { limit, offset },
+    }),
+  });
+}
+
+// Keyed under "shipment-tracking" so a Retry also refreshes the retried row's status here.
+export function useShipmentTrackingOverview(limit: number, offset: number) {
+  return useQuery({
+    queryKey: ["shipment-tracking", "overview", limit, offset],
+    queryFn: () => sdk.client.fetch<Page<AdminShipmentTrackingOverviewRow>>("/admin/shipment-tracking/overview", {
       method: "GET", query: { limit, offset },
     }),
   });

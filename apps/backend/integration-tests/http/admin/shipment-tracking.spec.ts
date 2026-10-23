@@ -34,7 +34,10 @@ medusaIntegrationTestRunner({
     });
     afterEach(() => jest.restoreAllMocks());
 
-    async function seed(reason: "gave_up" | "window_ended" | null = "gave_up") {
+    async function seed(
+      reason: "gave_up" | "window_ended" | "cancelled" | "superseded" | null = "gave_up",
+      postingDate = "2026-01-01",
+    ) {
       counter += 1;
       const shipmentId = `bc-retry-${counter}`;
       const order = await getContainer().resolve<IOrderModuleService>(Modules.ORDER).createOrders({
@@ -46,7 +49,7 @@ medusaIntegrationTestRunner({
       });
       await service.upsertShipmentTracking([{
         bc_shipment_id: shipmentId, shipment_number: `SS-RETRY-${counter}`,
-        bc_order_number: "SO-RETRY", posting_date: "2026-01-01", company_id: companyId,
+        bc_order_number: "SO-RETRY", posting_date: postingDate, company_id: companyId,
         order_id: order.id, external_order_number: "EXT-RETRY",
         next_check_at: new Date(), recheck_until: new Date(Date.now() - 10 * DAY),
       }]);
@@ -73,6 +76,33 @@ medusaIntegrationTestRunner({
       expect(new Date(response.data.shipment_trackings[0].closed_at).getTime()).toBeGreaterThan(0);
       const next = await api.get("/admin/shipment-tracking?limit=1&offset=1", auth);
       expect(next.data.shipment_trackings[0].id).toBe(first.id);
+    });
+
+    it("overview lists every shipment in any state, newest posting date first, with safe fields and paging", async () => {
+      const open = await seed(null, "2026-03-05");
+      const gaveUp = await seed("gave_up", "2026-03-04");
+      const windowEnded = await seed("window_ended", "2026-03-03");
+      const cancelled = await seed("cancelled", "2026-03-02");
+      const superseded = await seed("superseded", "2026-03-01");
+      const response = await api.get("/admin/shipment-tracking/overview", auth);
+      expect(response.data).toMatchObject({ count: 5, limit: 50, offset: 0 });
+      expect(response.data.shipment_trackings).toEqual(([
+        [open, "open", null], [gaveUp, "closed", "gave_up"], [windowEnded, "closed", "window_ended"],
+        [cancelled, "closed", "cancelled"], [superseded, "closed", "superseded"],
+      ] as const).map(([row, state, closeReason]) => ({
+        id: row.id, shipment_number: row.shipment_number, bc_order_number: "SO-RETRY",
+        external_order_number: "EXT-RETRY", company_id: companyId, company_name: "Notice Co C-RETRY",
+        posting_date: row.posting_date, state, close_reason: closeReason,
+      })));
+      const page = await api.get("/admin/shipment-tracking/overview?limit=2&offset=2", auth);
+      expect(page.data).toMatchObject({ count: 5, limit: 2, offset: 2 });
+      expect(page.data.shipment_trackings.map((row: { id: string }) => row.id)).toEqual([windowEnded.id, cancelled.id]);
+    });
+
+    it("overview breaks equal posting dates by id, newest id first", async () => {
+      const ids = [(await seed(null)).id, (await seed("gave_up")).id];
+      const response = await api.get("/admin/shipment-tracking/overview", auth);
+      expect(response.data.shipment_trackings.map((row: { id: string }) => row.id)).toEqual([...ids].sort().reverse());
     });
 
     it("reopens once, records the authenticated actor, and preserves revision", async () => {
@@ -105,8 +135,11 @@ medusaIntegrationTestRunner({
 
     it("rejects unknown query/body keys, invalid paging and invalid ids", async () => {
       const row = await seed();
-      for (const query of ["limit=0", "offset=-1", "limit=201", "fields=*", "offset=1.5"]) {
-        expect((await api.get(`/admin/shipment-tracking?${query}`, { ...auth, validateStatus: () => true })).status).toBe(400);
+      for (const path of ["/admin/shipment-tracking", "/admin/shipment-tracking/overview"]) {
+        for (const query of ["limit=0", "offset=-1", "limit=201", "fields=*", "offset=1.5", "state=open"]) {
+          expect({ path, query, status: (await api.get(`${path}?${query}`, { ...auth, validateStatus: () => true })).status })
+            .toEqual({ path, query, status: 400 });
+        }
       }
       for (const [url, body] of [
         [`/admin/shipment-tracking/${row.id}/retry`, { reopened_by: "spoofed" }],
