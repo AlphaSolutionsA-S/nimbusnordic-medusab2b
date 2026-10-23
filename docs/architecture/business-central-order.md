@@ -1,7 +1,7 @@
 # Business Central order submission
 
-**Last updated:** 2026-10-05
-**Related work:** NIMBUS-158
+**Last updated:** 2026-10-23
+**Related work:** NIMBUS-158, NIMBUS-180
 
 ## Overview
 
@@ -19,6 +19,8 @@ Paths below are relative to `apps/backend/src/`.
 | `subscribers/business-central-order-ready.ts` | Starts the same delivery workflow for automatic and Admin events; maintains the shared reservation |
 | `api/admin/orders/[id]/bc-integration/` | Authenticated status projection and validated submission endpoint |
 | `admin/widgets/bc-order-status.tsx`, `admin/hooks/api/bc-integration.tsx` | Order-detail side widget and session SDK queries/mutation |
+| `modules/business-central/service.ts` (`getItemLookupEvidence`), `modules/business-central/item-lookup-evidence.ts` | Reads the item lookup evidence for an order's lines (no rule) |
+| `workflows/business-central-order/utils/resolve-order-line-item.ts` (`resolveOrderLineItem`) | Pure rule: which BC item and size a line names, or why it is refused |
 
 Delivery uses the existing Business Central module adapter, canonical order metadata and resolved company/customer context. An accepted start can later produce a failed outcome if the required delivery context is missing. There are no additional tables or migrations for Admin status/retry.
 
@@ -56,6 +58,39 @@ flowchart TD
 The subscriber handles `order_ingestion.ready_for_business_central` and `order_ingestion.admin_bc_submission_requested`. Both paths share `bc-submission-<orderId>` reservations and the deterministic `getSendOrderToBusinessCentralTransactionId(orderId)`. The delivery workflow retains `store: true`; overlapping active runs are also guarded by the configured workflow engine, while completed attempts can be retried.
 
 An Admin acceptance reservation is acquired in a workflow step, never in the route. Failed event emission compensates it. During delivery, the subscriber renews the same owner every 1200 seconds for a 3600-second lease, because vendor lookups can outlast the initial lease. Cleanup stops the timer, awaits pending renewal and releases only that owner. A 202 response means the start was reserved/emitted; it does not promise successful BC completion.
+
+## Item and size resolution
+
+The prepare step (`workflows/business-central-order/steps/prepare-bc-order.ts`) turns each canonical line into a BC sales line by naming a BC item and, for items with sizes, the size (BC item variant). It reads the evidence for the whole order once, then decides every line with one pure rule (NIMBUS-180).
+
+**Evidence.** `getItemLookupEvidence` makes three reads, in order:
+
+1. items whose item-card barcode (`gtin`) equals any line barcode (API v2.0 `items`, with `itemVariants` id and code and `baseUnitOfMeasureCode`);
+2. Item Reference rows for the same barcodes (ODataV4 `ItemReferenceEntries`, with the company parameter): barcode, item number, size code, unit and reference type;
+3. items by number, with sizes and base unit, for every item number named by those rows and by the lines' `itemNumber` and `custItemNo`.
+
+Values are trimmed, deduplicated and sent in `or` filters of at most 20 values, quote-escaped. Item numbers longer than 20 characters (BC's item number limit) are never sent, because BC rejects the whole request with 400; such a value finds no item. The adapter neither filters by reference type or unit nor decides a match.
+
+**Request budget.** For an order with B distinct barcodes and N distinct item numbers (lines plus reference rows, at most 20 characters each), one submission makes, sequentially: one token request, ceil(B/20) item-card reads, one company read (for the ODataV4 company name) plus ceil(B/20) Item Reference reads when B > 0, and ceil(N/20) item-number reads. A 20-line order therefore needs three reads plus one per 20 item numbers, where the earlier per-line lookup took up to three per line. Any failed read (non-OK status including 429, network failure, malformed JSON, or a response with a next link, which is never treated as complete) fails the whole lookup: the submission is recorded as `bc_item_lookup_failed` and can be retried.
+
+**Rule.** `resolveOrderLineItem(line, evidence)` in `workflows/business-central-order/utils/resolve-order-line-item.ts` is the rule's single home (`ai/architecture/decisions.md`). Item numbers, size codes and units are compared trimmed and upper-cased.
+
+- The barcode decides first. Only "Bar Code" Item Reference rows count, and only when their unit is empty, equals the line's unit, or, for a line without a unit, equals the named item's base unit.
+- A barcode that matches anything (item card or reference row) decides the line; the fallback is not tried. All matches must name one item and one size code, and the item must be in the evidence.
+- A size code from a reference row must be one of that item's sizes and is sent as `itemVariantId`. With no size code, or a match on the item card only, the item must have no sizes.
+- When the barcode matches nothing, `itemNumber` and then `custItemNo` are tried; each must name exactly one item, and that item must have no sizes.
+
+The BC line keeps the customer's unit exactly as sent; `itemVariantId` is sent only when a size was resolved. A refused line becomes a line failure with its reason; if no line resolves, the submission stops with `no_lines_resolved`.
+
+| Reason | When | Admin label |
+|--------|------|-------------|
+| `no_identifiers` | barcode, item number and customer item number are all blank | No item identifiers |
+| `not_found` | nothing matches, or the matched item number is not in BC's item list | Item not found |
+| `ambiguous` | the matches name more than one item or size, or a number names several items | Multiple items matched |
+| `size_unresolved` | the item has sizes but none was named, or the named size is not one of the item's sizes | Size could not be determined |
+| `unit_mismatch` | the barcode matches only reference rows for other units | Barcode is for a different unit of measure |
+
+Fetch-mocked module tests cover the evidence reads and request shapes against synthetic responses shaped like the TestDK probe; unit tests cover every rule row; HTTP tests run the prepare step through a fake BC. Live behaviour against BC (a real size barcode resolving to its size on the sales line, the request budget under throttling) is verified only after deploy, with an order in the approved BC test environment.
 
 ## Duplicate protection and Admin interaction
 

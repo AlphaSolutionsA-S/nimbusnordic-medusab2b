@@ -54,3 +54,11 @@
   `ItemReferenceEntries`. Any spec that runs the real adapter through `prepareBcOrderStep` needs both.
 - The docs (task 04) should name `getItemLookupEvidence` and `resolveOrderLineItem`, not the old
   `findItemsForOrderLines`.
+
+## Task 04 (docs)
+
+- Resolution is documented in `docs/architecture/business-central-order.md`, "Item and size
+  resolution" (evidence, request budget, rule, reason/label table, after-deploy note).
+- Request budget per submission: 1 token + ceil(B/20) item-card + (1 company + ceil(B/20) reference
+  when B > 0) + ceil(N/20) item-number reads; `getCompanyName` is not cached.
+- No `ai/` file changed; the root `AGENTS.md` size overrun is unchanged.

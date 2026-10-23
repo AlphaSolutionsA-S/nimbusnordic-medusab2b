@@ -78,10 +78,11 @@ export type CanonicalOrderAddress = z.infer<typeof CanonicalOrderAddressSchema>;
 export const CanonicalOrderLineSchema = z
   .object({
     lineNumber: z.number().int().nonnegative(),
-    // itemNumber/description are optional pass-through traceability only: the line's item is
-    // identified by eanNo, which Business Central resolves to a real item and whose own item
-    // master supplies the description. In the real EDI samples itemNumber duplicates
-    // custItemNo (the customer's own SKU), and nothing downstream resolves anything from it.
+    // The line's item (and size) is identified by eanNo; Business Central's item master supplies
+    // the description, so description is pass-through traceability only. itemNumber and
+    // custItemNo (in the real EDI samples often the same customer SKU) are a fallback that
+    // resolves only items without sizes, when eanNo matches nothing in Business Central
+    // (docs/architecture/business-central-order.md, "Item and size resolution").
     itemNumber: z.string().min(1).optional(),
     custItemNo: z.string().optional(),
     eanNo: z.string().regex(EAN_PATTERN, "must be a 13-digit EAN/GTIN"),
