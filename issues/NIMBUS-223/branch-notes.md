@@ -11,3 +11,11 @@
 - `routes/shipment-tracking/page.tsx`: `main` holds a fragment of two `LayoutComposer.Entry` (`given-up-shipments`, `all-shipments`); Medusa unwraps fragments into entries (plan section 9, row 2), and the stand-in renders them in order. A fragment is fine for multi-entry sections.
 - Page test pattern for layout: `screen.getByTestId("layout-composer")`, check `data-page-key` / `data-layout-id`, then `querySelectorAll("[data-layout-entry]")` mapped to ids for default order; `within(entry)` to check what each entry holds.
 - Typecheck after task 02: 22 errors, same set as task 01 (`tsc-02.txt` in the run scratchpad).
+
+## Task 03
+- `routes/companies/[companyId]/page.tsx`: early `return <div>Company not found</div>` stays before the layout; `LayoutComposer` gets `data={company}`, `main` is a fragment of three entries (`business-central-warning`, `company-information`, `employees`); `<Toaster />` sits after `LayoutComposer` in an outer fragment.
+- The stand-in's `data-layout-id` is the full id `core:single-column`; assert against `CORE_LAYOUT_IDS.SINGLE_COLUMN`, not a literal.
+- `LayoutComposer`'s `data` prop is generic (`data?: TData`), so a record passes without a cast.
+- Detail-page test pattern: `routes/companies/__tests__/company-details-layout.test.tsx` (mock only `lib/client`, `MemoryRouter` + `Route` with the param, `document.querySelector('[data-layout-entry="<id>"]')` then `within`).
+- `company-order-api-setting.test.tsx` failed once at the create-drawer Save click in a combined run, then passed 3 times; if it recurs in finalization, it is timing, not the layout.
+- Typecheck after task 03: 22 errors, same set (`tsc-03.txt` holds only `error TS` lines; `tsc-02.txt` holds full output, so compare `error TS` lines).
