@@ -1,5 +1,7 @@
 # Deviation report: Customer password recovery
 
+> Record of NIMBUS-133, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Date: 2026-10-23. Reviewed through `52c4b0e` against merge-base `a76afc7b33d63d5a298410e29fc9879079223877`.
 
 ## Deviations from scope and plan

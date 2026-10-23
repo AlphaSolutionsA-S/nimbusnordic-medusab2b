@@ -1,5 +1,7 @@
 # NIMBUS-133: Forgotten password implementation plan
 
+> Record of NIMBUS-133, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Date: 2026-10-23. Base: develop. Branch: feature/NIMBUS-133.
 State: approved by Klaus Petersen on 2026-10-23; ready for dispatch, awaiting separate dispatcher handoff instruction.
 

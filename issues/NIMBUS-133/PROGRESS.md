@@ -111,3 +111,14 @@
 - **Verification:** Documentation whitespace check passed. Fresh fetch confirms origin/develop remains a76afc7 and is already included in this branch; no additional merge or source revalidation required.
 - **Next owner:** committer for PR-description artifact, then cleanup and dispatcher for authorized publication/merge. Deployment checks remain outstanding.
 
+## 2026-10-23 — Publication preparation completed
+- **Owner:** task-dispatcher following documentation-writer and committer.
+- **Outcome:** Documentation finalized in 98ab750; scope marked Implemented (code complete, deployment checks outstanding). PR description saved under ignored .tmp/NIMBUS-133-20261023-implementation/pr-description.md. Cleanup freezes the records and removes only pipeline working files.
+- **Publication path:** GitHub CLI is unavailable in this environment. Use the authorized normal Git merge into develop and push without force; no hosted PR creation is claimed. Fresh origin/develop is already an ancestor of the feature branch.
+- **Next owner:** dispatcher for push/merge and remote ancestry verification; deployment owner for the documented release checks.
+
+## 2026-10-23 — Pipeline working files removed
+- **Owner:** cleanup, coordinated by task-dispatcher.
+- **Outcome:** Froze SCOPE.md, PLAN.md and deviation-report.md; removed manifest.md, three task briefs and branch-notes.md. FEATURE.md, PROGRESS.md, notes.md and samples remain. All task rows were DONE and human answers recorded before cleanup.
+- **Next owner:** dispatcher for the explicitly authorized push and normal merge to develop. No deployment result is claimed.
+

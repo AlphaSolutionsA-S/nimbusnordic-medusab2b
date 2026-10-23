@@ -1,7 +1,9 @@
 # NIMBUS-133: Forgotten password in the Customer Portal
 
+> Record of NIMBUS-133, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-23
-**Status:** Scope agreed — ready for estimation; implementation planning not started
+**Status:** Implemented — code complete and approved for merge; deployment checks outstanding
 **Type:** Story
 **Priority:** Medium (Jira at intake)
 **Issue:** [NIMBUS-133](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-133)
