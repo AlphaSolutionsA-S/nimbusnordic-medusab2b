@@ -71,3 +71,25 @@
   the size on shipment notice lines", linked "relates to"; case folder `issues/NIMBUS-231/`).
 - Next owner: `implementation-planner` (Klaus gave the go-ahead to plan).
 - Handover prompt: "Plan NIMBUS-180 from issues/NIMBUS-180/scope.md."
+
+## 2026-10-23 — plan approved
+
+- Outcome: Klaus accepted the four defaults in plan.md "Needs your decision" and approved the plan.
+  Ready for Dispatch set; sub-tasks NIMBUS-232 to NIMBUS-235 created and recorded in the manifest;
+  "plan approved" comment on NIMBUS-180.
+- Next owner: `task-dispatcher` (Klaus gave the go-ahead).
+- Handover prompt: "Dispatch NIMBUS-180 from issues/NIMBUS-180/manifest.md on feature/NIMBUS-180."
+
+## 2026-10-23 — Plan written, awaiting review (implementation-planner)
+
+- Outcome: `plan.md`, `manifest.md` and task files 01-04 written (backend only, no migrations).
+  Read-only TestDK probe run with the backend's credentials (`samples/bc-item-lookup-probe-planner.md`):
+  the ODataV4 call shape via `getODataV4Url` works; `Reference_Type` wire value is `"Bar Code"`;
+  batched `or` filters work on both APIs. Findings: no TestDK item has an item-card barcode; the Metz
+  sample barcodes are size barcodes on items with sizes; an item number over 20 characters makes BC
+  answer 400, which today aborts the whole submission.
+- Ready for Dispatch: false. Four items under "Needs your decision" (each with a default). No Jira
+  sub-tasks created; nothing committed.
+- Next owner: Klaus — review `plan.md` (Needs your decision, sections 5-7), then approve.
+- Handover prompt: "Revise the NIMBUS-180 plan with Klaus's answers, mark it ready, and record
+  'plan approved' in Jira (tracker-workflow § F) with the task sub-tasks."
