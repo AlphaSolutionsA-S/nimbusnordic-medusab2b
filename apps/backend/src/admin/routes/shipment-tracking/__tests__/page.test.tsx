@@ -132,6 +132,19 @@ it("pages the overview by 50 independently of the given-up list", async () => {
   expect(fetchMock).not.toHaveBeenCalledWith(LIST, { method: "GET", query: { limit: 20, offset: 20 } });
 });
 
+it("lays the page out under its own key with the given-up section before all shipments", async () => {
+  serve({ [LIST]: [ok(page)], [OVERVIEW]: [ok(overview)] });
+  mount();
+  await screen.findByText("SS-1");
+  const layout = screen.getByTestId("layout-composer");
+  expect(layout).toHaveAttribute("data-page-key", "shipment_tracking.list");
+  expect(layout).toHaveAttribute("data-layout-id", "core:single-column");
+  const entries = Array.from(layout.querySelectorAll("[data-layout-entry]"));
+  expect(entries.map((entry) => entry.getAttribute("data-layout-entry"))).toEqual(["given-up-shipments", "all-shipments"]);
+  expect(within(entries[0] as HTMLElement).getByRole("button", { name: "Retry" })).toBeVisible();
+  expect(within(entries[1] as HTMLElement).getByRole("region", { name: "All shipments" })).toBeInTheDocument();
+});
+
 it("shows the overview's own load error while the given-up list still renders", async () => {
   serve({ [LIST]: [ok(page)], [OVERVIEW]: [fail("Overview unavailable")] });
   mount();

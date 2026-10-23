@@ -6,3 +6,8 @@
 - Children of a section that are not `LayoutComposer.Entry` get no attribute in the stand-in; wrap every section child in an Entry if a test should see it.
 - Imports used: `CORE_LAYOUT_IDS` from `@medusajs/admin-shared`, `LayoutComposer` from `@medusajs/dashboard/components`; both resolve and typecheck from `apps/backend` (Node16 resolution). `sections` is typed per layout id (`main` for single column, `main` + `side` for two column).
 - Typecheck after task 01: 22 errors, identical set to the baseline (the baseline file has a BOM on its first line; compare sorted lines, not the raw file).
+
+## Task 02
+- `routes/shipment-tracking/page.tsx`: `main` holds a fragment of two `LayoutComposer.Entry` (`given-up-shipments`, `all-shipments`); Medusa unwraps fragments into entries (plan section 9, row 2), and the stand-in renders them in order. A fragment is fine for multi-entry sections.
+- Page test pattern for layout: `screen.getByTestId("layout-composer")`, check `data-page-key` / `data-layout-id`, then `querySelectorAll("[data-layout-entry]")` mapped to ids for default order; `within(entry)` to check what each entry holds.
+- Typecheck after task 02: 22 errors, same set as task 01 (`tsc-02.txt` in the run scratchpad).
