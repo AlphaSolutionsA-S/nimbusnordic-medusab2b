@@ -9,3 +9,19 @@
 **Done when:** tests pass; lint, typecheck at or below baseline.
 **Verify after deploy:** none (no stored data or screen changes beyond the error toast).
 **Also update:** `integration-tests/http/admin/shipment-tracking.spec.ts` (its seeds switch the company on for the existing retry cases).
+
+## Deviations
+
+- The contract test was written and typechecks but was NOT run: no PostgreSQL in this environment (and the company and close-reason migrations from tasks 01/04 are not generated yet).
+- The step refuses any existing row of a switched-off company, so a not-gave-up row of a switched-off company now gets the new message instead of "Only a shipment that gave up can be retried"; both are 400 `not_allowed`, and plan section E reads the company before the row state. For enabled companies the existing 400 is unchanged.
+- No test-intent case dropped; "unknown id → 404 unchanged" is asserted in the new test while the company is switched off (and still in the existing "refuses window-ended, open and unknown rows").
+
+## Done-when evidence
+
+- 400 with the exact message, row unchanged (`closed`/`gave_up`, `reopened_by` and `reopened_at` null, attempts 8): `integration-tests/http/admin/shipment-tracking.spec.ts` "refuses a gave-up row of a switched-off company and leaves it unchanged, then reopens it once switched on" (written, NOT run: no DB).
+- Same row reopened after switching the company on: same test, second half (NOT run).
+- Unknown id stays 404: same test, and existing "refuses window-ended, open and unknown rows" (NOT run).
+- Existing 400 for a not-gave-up row unchanged (enabled company): existing "refuses window-ended, open and unknown rows" and the second retry in "reopens once, ..." (NOT run).
+- Lint: `corepack pnpm --filter @b2b-starter/backend lint` 0 errors, no warnings in touched files.
+- Typecheck: `apps/backend/node_modules/.bin/tsc --noEmit` 22 errors (baseline 22), none in touched files.
+- Also update `shipment-tracking.spec.ts`: its seed already switches the company on through `createApiCustomerCompany` (task 03); added the refusal test using `setOrderApiEnabled`.

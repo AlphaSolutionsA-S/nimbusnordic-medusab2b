@@ -2,7 +2,7 @@ import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import { Modules } from "@medusajs/framework/utils";
 import type { IOrderModuleService } from "@medusajs/framework/types";
 import { createAdminUser } from "../../utils/admin";
-import { createApiCustomerCompany, orderApiSecretHeaders } from "../../utils/shipment-notices";
+import { createApiCustomerCompany, orderApiSecretHeaders, setOrderApiEnabled } from "../../utils/shipment-notices";
 import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
 import type OrderIngestionModuleService from "../../../src/modules/order-ingestion/service";
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
@@ -134,6 +134,29 @@ medusaIntegrationTestRunner({
       }
       const response = await api.post("/admin/shipment-tracking/shtr_missing/retry", {}, { ...auth, validateStatus: () => true });
       expect(response.status).toBe(404);
+    });
+
+    it("refuses a gave-up row of a switched-off company and leaves it unchanged, then reopens it once switched on", async () => {
+      const row = await seed();
+      await setOrderApiEnabled(getContainer(), companyId, false);
+      const refused = await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, { ...auth, validateStatus: () => true });
+      expect(refused.status).toBe(400);
+      expect(refused.data).toEqual({
+        type: "not_allowed", message: "The company is not enabled for the order API",
+      });
+      const [unchanged] = await service.listShipmentTrackings({ id: row.id });
+      expect(unchanged).toMatchObject({
+        state: "closed", close_reason: "gave_up", attempts: 8, reopened_by: null, reopened_at: null,
+      });
+      const missing = await api.post("/admin/shipment-tracking/shtr_missing/retry", {}, { ...auth, validateStatus: () => true });
+      expect(missing.status).toBe(404);
+
+      await setOrderApiEnabled(getContainer(), companyId, true);
+      const reopened = await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, auth);
+      expect(reopened.status).toBe(200);
+      expect(reopened.data.shipment_tracking).toMatchObject({
+        id: row.id, state: "open", close_reason: null, reopened_by: actorId,
+      });
     });
 
     it("rejects unknown query/body keys, invalid paging and invalid ids", async () => {

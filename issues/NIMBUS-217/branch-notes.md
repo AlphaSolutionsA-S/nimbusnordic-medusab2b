@@ -48,3 +48,10 @@
 - Row types for `query.graph` companies: `{ id: string } & OrderApiAccessCompany` annotated on the callback parameter (no cast); typecheck stays at 22.
 - `check-shipments.spec.ts` now has `companyId` (an enabled company from `beforeEach`) and `track(orderId, { companyId })`.
 - Task 05: a reopen of a `company_not_enabled` row is already refused by the existing "only gave_up" rule.
+
+## Task 05: retry refusal
+
+- New step `validateShipmentTrackingCompanyStep({ id })` in `workflows/shipment-notice/steps/validate-shipment-tracking-company.ts`, first step of `reopenShipmentTrackingWorkflow`. Reads the row via `listShipmentTrackings({ id }, { select: ["id", "company_id"] })`, the company via `query.graph` `companies`, then the rule; throws `NOT_ALLOWED` "The company is not enabled for the order API". Missing row: returns, so the reopen step's 404 applies.
+- Verified: the error handler turns `NOT_ALLOWED` into 400 with body `{ type: "not_allowed", message }` (`code` undefined, dropped from JSON), `@medusajs/framework/dist/http/middlewares/error-handler.js`.
+- A switched-off company's row that is not gave-up now gets the company message, not the "only gave up" one (both 400).
+- The new contract test was not run (no DB).
