@@ -80,3 +80,13 @@
   Open questions 1); a failure stops the push.
 - Handover prompt: "Resume task-dispatcher for NIMBUS-223 after the gate with Klaus's click-through
   result: record it in deviation-report.md, then docs, PR description, cleanup."
+
+## 2026-10-23 — task-dispatcher (after the gate)
+
+- Outcome: Klaus's browser click-through passed on all pages (recorded in `deviation-report.md` and
+  Jira); no fixes needed. `docs/architecture/admin-page-layout.md` written; PR description drafted;
+  scope status set to Implemented; pipeline working files removed by cleanup. Not pushed.
+- Next owner: main session, to merge `feature/NIMBUS-223` into `develop` and push (Klaus gave the
+  go-ahead), then move NIMBUS-223 to review/done with a closing comment.
+- Handover prompt: "Merge feature/NIMBUS-223 into develop and push; close NIMBUS-223 per
+  tracker-workflow § E."

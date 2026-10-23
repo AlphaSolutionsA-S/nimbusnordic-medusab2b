@@ -1,7 +1,9 @@
 # Customize page on all custom Medusa Admin pages
 
+> Record of NIMBUS-223, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-23
-**Status:** Approved (Klaus Petersen, 2026-10-23)
+**Status:** Implemented
 **Type:** Story
 **Priority:** Should
 **Parent:** NIMBUS-123

@@ -1,5 +1,7 @@
 # Plan: Customize page on all custom Medusa Admin pages
 
+> Record of NIMBUS-223, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-223 · **Scope:** `scope.md` (approved 2026-10-23) · **Branch:** `feature/NIMBUS-223` from `develop`
 
 ## 1. Summary [High]

@@ -1,5 +1,7 @@
 # Deviation report: Customize page on all custom Medusa Admin pages
 
+> Record of NIMBUS-223, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-223`, merge-base `c43aabf`, HEAD `4c46b82` (5 commits after the plan commit:
 NIMBUS-224 to NIMBUS-227 and the consolidation). Tree clean. No architecture check is configured.
 
