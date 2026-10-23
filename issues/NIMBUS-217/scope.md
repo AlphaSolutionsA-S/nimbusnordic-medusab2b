@@ -173,3 +173,11 @@ All scope questions Q1–Q6 were answered by Klaus on 2026-10-23. Open items:
 - NIMBUS-191 (Admin retry of tracked shipments), NIMBUS-192/193 (generic 404).
 - NIMBUS-216 (Admin shipment overview), in progress on `feature/NIMBUS-216`: may want to show the
   setting; not part of this story.
+
+## Documentation
+
+- [docs/architecture/order-api/overview.md](../../docs/architecture/order-api/overview.md) — Order API endpoints, the company setting, error table (created)
+- [docs/architecture/order-api/shipment-notices.md](../../docs/architecture/order-api/shipment-notices.md) — Shipment discovery, checks, tracking states, notice reads (created)
+- [docs/architecture/business-central-order.md](../../docs/architecture/business-central-order.md) — link to shipment notices (updated)
+
+AI base files updated: none (the `decisions.md` row was added by the implementation)
