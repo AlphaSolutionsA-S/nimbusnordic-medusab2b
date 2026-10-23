@@ -53,6 +53,11 @@ Existing sessions follow Medusa defaults; recovery makes no forced-logout promis
 password change remains the separate `/store/customers/me/password` flow requiring the current
 password.
 
+No recovery rate limiter or abuse threshold is implemented. Protection by deployment infrastructure
+has not been verified for direct backend calls or across instances. Repeated requests can replace
+the latest proof and trigger further notifications. This unmet abuse-protection requirement and
+its residual risk were explicitly accepted/deferred for NIMBUS-133 on 2026-10-23.
+
 Runtime UI translations come from the database. Before release, import the recovery keys using
 the checklist in `apps/storefront/src/lib/i18n/README.md`; editing message JSON alone does not
 publish them. After deployment, use a controlled account and mailbox to verify receipt, trusted

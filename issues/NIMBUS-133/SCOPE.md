@@ -116,3 +116,9 @@ No outstanding scope business questions. Implementation planning has been reques
 - Jira search restricted to component Customer Portal found NIMBUS-134 and NIMBUS-162; no duplicate recovery story was found in that search.
 - [Medusa recovery notification documentation](https://docs.medusajs.com/resources/commerce-modules/auth/reset-password) and [storefront recovery guide](https://docs.medusajs.com/resources/storefront-development/customers/reset-password) consulted through the Medusa MCP on 2026-10-23.
 - No runtime system was changed, no email was sent and no recovery/security behaviour was tested. Scope decisions are settled; delivery and the implementation design remain unverified.
+
+## Documentation
+
+- [docs/architecture/store-access.md](../../docs/architecture/store-access.md) — Backend Auth/Notification ownership, public storefront recovery, accepted limits and deployment checks (updated).
+
+AI base files updated: `ai/architecture/decisions.md` (recovery ownership), with generated `AGENTS.md` and `.github/copilot-instructions.md` synchronized during implementation.

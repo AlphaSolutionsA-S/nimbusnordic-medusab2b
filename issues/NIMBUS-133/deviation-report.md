@@ -43,7 +43,9 @@ Evidence below was supplied by finalization/consolidation and checked against th
 ## Open questions
 
 1. How should the unmet abuse-protection requirement be resolved before accepting this branch? Options: identify and verify existing edge/backend limits covering both direct Auth endpoints across instances; create a separately scoped abuse-protection task and keep release dependent on it; or explicitly accept/defer this requirement and record the residual automated-request/notification risk. No such acceptance is inferred from the earlier logging/concurrent-reuse decisions.
+   **Answer (Klaus Petersen, 2026-10-23):** "alt ok - push og merge til develop". Accept/defer this requirement and its residual automated-request/notification risk. No rate limiter, counter module or additional task is added in this change.
 2. Does the human accept the recorded verification limitations for this branch, with current build/install repair, runtime translation publication, browser checks and controlled-mailbox reset/login checks remaining explicit release obligations, or require those checks before proceeding? A push approval must not be described as proof of deployment or delivery.
+   **Answer (Klaus Petersen, 2026-10-23):** Accepted for push and merge to develop. Existing verification limitations and after-deploy checks remain documented release obligations; this approval does not establish deployment, browser operation or inbox delivery. Push and merge are explicitly authorized without another approval gate.
 
 ## Verify after deploy
 

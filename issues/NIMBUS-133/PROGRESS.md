@@ -99,3 +99,15 @@
 - **Next owner:** Klaus Petersen for the deviation-report gate: choose verified existing abuse controls, a separately scoped dependent task, or explicit acceptance/deferral; acknowledge recorded verification and release obligations. No push, cleanup or final tracker transition performed.
 - **Handover prompt:** Read deviation-report.md Open questions and respond. After answers, resume task-dispatcher at After the gate; then complete documentation/PR description/cleanup and request a separate explicit push instruction. Browser navigation, runtime translations, mailbox delivery and deployed reset/login remain unverified.
 
+## 2026-10-23 — Human gate approved; publication authorized
+- **Owner:** task-dispatcher, following Klaus Petersen's instruction: "alt ok - push og merge til develop".
+- **Outcome:** Recorded answers to both deviation-report questions and the implementation-gate comment in Jira. The automated-abuse requirement and repeated-request/notification residual risk are accepted/deferred; no new limiter, counter module or follow-up issue is added. Verification limitations are accepted for merge; previous token logging/concurrency decisions remain closed.
+- **Next owner:** documentation-writer, then committer PR-description mode and cleanup; dispatcher completes authorized push and normal merge to develop without another approval request.
+- **Verification limits:** Publication is not deployment evidence. Browser operation, runtime translation publication, controlled inbox delivery and deployed reset/login remain release checks.
+
+## 2026-10-23 — Documentation finalized
+- **Owner:** documentation-writer, coordinated by task-dispatcher.
+- **Outcome:** Updated docs/architecture/store-access.md with absent abuse limits, unverified infrastructure coverage and the accepted/deferred risk. Added the current architecture link to SCOPE.md. Existing backend/Notification and storefront coverage remains current; no further AI-base change needed.
+- **Verification:** Documentation whitespace check passed. Fresh fetch confirms origin/develop remains a76afc7 and is already included in this branch; no additional merge or source revalidation required.
+- **Next owner:** committer for PR-description artifact, then cleanup and dispatcher for authorized publication/merge. Deployment checks remain outstanding.
+
