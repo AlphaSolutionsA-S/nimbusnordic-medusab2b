@@ -1,7 +1,7 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import { SkipExecutionError } from "@medusajs/framework/orchestration";
-import { Modules } from "@medusajs/framework/utils";
-import type { IOrderModuleService } from "@medusajs/framework/types";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
+import type { IOrderModuleService, Logger } from "@medusajs/framework/types";
 import {
   getSendOrderToBusinessCentralTransactionId,
   sendOrderToBusinessCentralWorkflow,
@@ -12,7 +12,8 @@ import type {
   BCCreatedSalesOrder,
   BCCustomer,
   BCItem,
-  BCItemLookupResult,
+  BCItemBarcodeReference,
+  BCItemLookupEvidence,
   IBusinessCentralModuleService,
 } from "../../../src/modules/business-central/types";
 import { COMPANY_MODULE } from "../../../src/modules/company";
@@ -23,6 +24,7 @@ import {
 } from "../../../src/modules/order-ingestion/bc-integration-state";
 import type { BcIntegrationState } from "../../../src/modules/order-ingestion/bc-integration-state";
 import { multiLineCanonicalOrder } from "../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures";
+import type { CanonicalOrderLine } from "../../../src/modules/order-ingestion/canonical-order-schema";
 
 jest.setTimeout(60 * 1000);
 
@@ -44,18 +46,59 @@ const ITEM_TWO: BCItem = {
   variants: [],
 };
 
-const matchedLine = (lineNumber: number, item: BCItem): BCItemLookupResult => ({
-  lineNumber,
-  matched: true,
-  item,
-  matchedBy: "eanNo",
+const NO_EVIDENCE: BCItemLookupEvidence = {
+  itemsByBarcode: [],
+  barcodeReferences: [],
+  itemsByNumber: [],
+};
+
+// Items found by their card barcode (gtin), i.e. the fixture lines' EANs.
+const byCardBarcode = (...items: BCItem[]): BCItemLookupEvidence => ({
+  ...NO_EVIDENCE,
+  itemsByBarcode: items,
 });
 
-const unmatchedLine = (lineNumber: number): BCItemLookupResult => ({
-  lineNumber,
-  matched: false,
-  reason: "not_found",
-});
+const BOTH_LINES_FOUND = byCardBarcode(ITEM_ONE, ITEM_TWO);
+
+// Shapes from samples/bc-variant-barcodes-testdk.md: a size barcode lives on an Item Reference
+// row that names the item and its size, not on the item card.
+const SIZE_BARCODE = "5712094132141";
+
+const SIZED_ITEM: BCItem = {
+  id: "55555555-5555-5555-5555-555555555555",
+  number: "HEND-L-MIDNBLUE",
+  displayName: "Hendrix Jacket, Midnight Blue",
+  gtin: "",
+  baseUnitOfMeasureCode: "PCS",
+  variants: [
+    { id: "66666666-6666-6666-6666-666666666666", code: "M" },
+    { id: "77777777-7777-7777-7777-777777777777", code: "L" },
+  ],
+};
+
+const SIZE_REFERENCE: BCItemBarcodeReference = {
+  barcode: SIZE_BARCODE,
+  itemNumber: "HEND-L-MIDNBLUE",
+  variantCode: "L",
+  unitOfMeasureCode: "PCS",
+  referenceType: "bar_code",
+};
+
+const SIZE_EVIDENCE: BCItemLookupEvidence = {
+  itemsByBarcode: [],
+  barcodeReferences: [SIZE_REFERENCE],
+  itemsByNumber: [SIZED_ITEM],
+};
+
+// The customer's unit in its own spelling: the rule compares it case-insensitively, BC gets it as sent.
+const sizeLine: CanonicalOrderLine = {
+  lineNumber: 1,
+  eanNo: SIZE_BARCODE,
+  description: "Hendrix Jacket, Midnight Blue - L",
+  quantity: 2,
+  unitPrice: 100,
+  unitOfMeasureCode: "pcs",
+};
 
 const createdSalesOrder = (
   acceptedLineNumbers: number[],
@@ -110,6 +153,7 @@ medusaIntegrationTestRunner({
           businessCentralCustomerNumber?: string | null;
           withCanonicalOrder?: boolean;
           currencyCode?: string;
+          lines?: CanonicalOrderLine[];
         } = {}
       ) {
         counter += 1;
@@ -142,6 +186,7 @@ medusaIntegrationTestRunner({
             ...multiLineCanonicalOrder,
             externalOrderNumber: `BC-ORDER-${counter}`,
             currencyCode: options.currencyCode ?? multiLineCanonicalOrder.currencyCode,
+            lines: options.lines ?? multiLineCanonicalOrder.lines,
           };
         }
 
@@ -168,12 +213,12 @@ medusaIntegrationTestRunner({
       }
 
       /**
-       * Stubs the two BC methods on the container-resolved module service (same pattern as
-       * integration-tests/http/customers/company-sync.spec.ts). The HTTP behaviour of those methods
-       * is covered by Tasks 02/03's fetch-mocked specs.
+       * Stubs the BC methods on the container-resolved module service (same pattern as
+       * integration-tests/http/customers/company-sync.spec.ts). Their HTTP behaviour is covered by
+       * the business-central module's fetch-mocked specs.
        */
       function stubBusinessCentral(
-        lookupResults: BCItemLookupResult[] | Error,
+        evidence: BCItemLookupEvidence | Error,
         createResult: BCCreatedSalesOrder | Error,
         customer: BCCustomer | null | Error = bcCustomer("DKK")
       ) {
@@ -185,13 +230,9 @@ medusaIntegrationTestRunner({
             ? jest.spyOn(bcService, "getCustomer").mockRejectedValue(customer)
             : jest.spyOn(bcService, "getCustomer").mockResolvedValue(customer);
         const findItems =
-          lookupResults instanceof Error
-            ? jest
-                .spyOn(bcService, "findItemsForOrderLines")
-                .mockRejectedValue(lookupResults)
-            : jest
-                .spyOn(bcService, "findItemsForOrderLines")
-                .mockResolvedValue(lookupResults);
+          evidence instanceof Error
+            ? jest.spyOn(bcService, "getItemLookupEvidence").mockRejectedValue(evidence)
+            : jest.spyOn(bcService, "getItemLookupEvidence").mockResolvedValue(evidence);
         const createSalesOrder =
           createResult instanceof Error
             ? jest.spyOn(bcService, "createSalesOrder").mockRejectedValue(createResult)
@@ -206,6 +247,13 @@ medusaIntegrationTestRunner({
         });
       }
 
+      // An unstubbed BC method must fail the test, never reach a real tenant.
+      beforeEach(() => {
+        jest
+          .spyOn(globalThis, "fetch")
+          .mockRejectedValue(new Error("Unexpected outbound request blocked by test"));
+      });
+
       afterEach(() => {
         jest.restoreAllMocks();
       });
@@ -213,7 +261,7 @@ medusaIntegrationTestRunner({
       it("TC-1: submits every line, records sent with the real BC order id", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
 
@@ -230,7 +278,10 @@ medusaIntegrationTestRunner({
         expect(params.lines).toHaveLength(2);
         for (const line of params.lines) {
           expect(Object.keys(line)).not.toContain("unitPrice");
+          // Items without sizes are sent without a size.
+          expect(line.itemVariantId).toBeUndefined();
         }
+        expect(params.lines.map((line) => line.itemId)).toEqual([ITEM_ONE.id, ITEM_TWO.id]);
 
         const state = await readIntegrationState(order.id);
         expect(state.status).toEqual("sent");
@@ -248,7 +299,7 @@ medusaIntegrationTestRunner({
       it("TC-2: submits the resolved subset and records both failure levels", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), unmatchedLine(2)],
+          byCardBarcode(ITEM_ONE),
           createdSalesOrder([1])
         );
 
@@ -274,10 +325,7 @@ medusaIntegrationTestRunner({
 
       it("TC-3: creates no BC order at all when zero lines resolve", async () => {
         const { order } = await seedOrder();
-        const { createSalesOrder } = stubBusinessCentral(
-          [unmatchedLine(1), unmatchedLine(2)],
-          createdSalesOrder([])
-        );
+        const { createSalesOrder } = stubBusinessCentral(NO_EVIDENCE, createdSalesOrder([]));
 
         await run(order.id);
 
@@ -288,13 +336,106 @@ medusaIntegrationTestRunner({
         expect(state.bc_order_id).toBeNull();
         expect(state.failure_reason).toEqual("no_lines_resolved");
         expect(state.attempt_count).toEqual(1);
-        expect(state.line_failures).toHaveLength(2);
+        expect(state.line_failures.map((failure) => failure.reason)).toEqual([
+          "not_found",
+          "not_found",
+        ]);
+      });
+
+      it("sends a size barcode line with its item and size, in the customer's unit", async () => {
+        const { order } = await seedOrder({ lines: [sizeLine] });
+        const { createSalesOrder, findItems } = stubBusinessCentral(
+          SIZE_EVIDENCE,
+          createdSalesOrder([1])
+        );
+
+        await run(order.id);
+
+        expect(findItems).toHaveBeenCalledTimes(1);
+        expect(createSalesOrder.mock.calls[0][0].lines).toEqual([
+          {
+            lineNumber: 1,
+            itemId: SIZED_ITEM.id,
+            itemVariantId: "77777777-7777-7777-7777-777777777777",
+            quantity: 2,
+            unitOfMeasureCode: "pcs",
+            shipmentDate: undefined,
+          },
+        ]);
+
+        const state = await readIntegrationState(order.id);
+        expect(state.status).toEqual("sent");
+        expect(state.partial).toBe(false);
+        expect(state.bc_lines).toEqual([
+          { line_number: 1, ean_no: SIZE_BARCODE, bc_sequence: 10000 },
+        ]);
+      });
+
+      it("refuses a sized item reached by item number and submits the size barcode line", async () => {
+        const { order } = await seedOrder({
+          lines: [
+            sizeLine,
+            {
+              lineNumber: 2,
+              eanNo: "5712094999999",
+              itemNumber: "HEND-L-MIDNBLUE",
+              quantity: 1,
+            },
+          ],
+        });
+        const { createSalesOrder } = stubBusinessCentral(
+          SIZE_EVIDENCE,
+          createdSalesOrder([1])
+        );
+
+        await run(order.id);
+
+        expect(createSalesOrder.mock.calls[0][0].lines).toEqual([
+          expect.objectContaining({ lineNumber: 1, itemVariantId: SIZED_ITEM.variants[1].id }),
+        ]);
+
+        const state = await readIntegrationState(order.id);
+        expect(state.status).toEqual("sent");
+        expect(state.partial).toBe(true);
+        expect(state.failure_reason).toEqual("partial_lines_submitted");
+        expect(state.line_failures).toEqual([
+          {
+            line_number: 2,
+            ean_no: "5712094999999",
+            item_number: "HEND-L-MIDNBLUE",
+            cust_item_no: null,
+            reason: "size_unresolved",
+            message: null,
+          },
+        ]);
+      });
+
+      it("sends no line without its size: an order whose every line is refused creates no BC order", async () => {
+        const { order } = await seedOrder({
+          lines: [
+            { lineNumber: 1, eanNo: "5712094999999", itemNumber: "HEND-L-MIDNBLUE", quantity: 1 },
+            { ...sizeLine, lineNumber: 2, unitOfMeasureCode: "BOX" },
+          ],
+        });
+        const { createSalesOrder } = stubBusinessCentral(SIZE_EVIDENCE, createdSalesOrder([]));
+
+        await run(order.id);
+
+        expect(createSalesOrder).not.toHaveBeenCalled();
+
+        const state = await readIntegrationState(order.id);
+        expect(state.status).toEqual("failed");
+        expect(state.failure_reason).toEqual("no_lines_resolved");
+        expect(state.line_failures.map((failure) => [failure.line_number, failure.reason])).toEqual([
+          [1, "size_unresolved"],
+          [2, "unit_mismatch"],
+        ]);
       });
 
       it("TC-4: records failed with no fabricated BC order id when BC rejects the order", async () => {
         const { order } = await seedOrder();
         stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           new Error("Business Central sales order request failed with status 422")
         );
 
@@ -311,7 +452,7 @@ medusaIntegrationTestRunner({
       it("TC-5: increments the attempt count on every repeated invocation", async () => {
         const { order } = await seedOrder();
         stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           new Error("boom")
         );
 
@@ -331,7 +472,7 @@ medusaIntegrationTestRunner({
       it("TC-6: does not create a second BC order when invoked twice for the same order", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
 
@@ -348,7 +489,7 @@ medusaIntegrationTestRunner({
 
       it("TC-7: records failed rather than leaving pending when the canonical payload is missing", async () => {
         const { order } = await seedOrder({ withCanonicalOrder: false });
-        const { createSalesOrder } = stubBusinessCentral([], createdSalesOrder([]));
+        const { createSalesOrder } = stubBusinessCentral(NO_EVIDENCE, createdSalesOrder([]));
 
         await run(order.id);
 
@@ -363,7 +504,7 @@ medusaIntegrationTestRunner({
       it("TC-8: records failed when the matched company has no BC customer number", async () => {
         const { order } = await seedOrder({ businessCentralCustomerNumber: null });
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
 
@@ -390,7 +531,7 @@ medusaIntegrationTestRunner({
       it("TC-10: preserves every other metadata key when recording the outcome", async () => {
         const { company, order } = await seedOrder();
         stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
 
@@ -410,6 +551,8 @@ medusaIntegrationTestRunner({
       });
 
       it("TC-11: records bc_item_lookup_failed when the item lookup request fails", async () => {
+        const logger = getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER);
+        const error = jest.spyOn(logger, "error");
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
           new Error("Business Central item request failed with status 500"),
@@ -419,6 +562,10 @@ medusaIntegrationTestRunner({
         await run(order.id);
 
         expect(createSalesOrder).not.toHaveBeenCalled();
+        // The order id and the error message only: no barcode, item number or customer data.
+        expect(error).toHaveBeenCalledWith(
+          `Business Central item lookup failed for Medusa order ${order.id}: Business Central item request failed with status 500`
+        );
 
         const state = await readIntegrationState(order.id);
         expect(state.status).toEqual("failed");
@@ -429,7 +576,7 @@ medusaIntegrationTestRunner({
       it("TC-12: records bc_submission_outcome_unknown for an ambiguous BC outcome", async () => {
         const { order } = await seedOrder();
         stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           new BusinessCentralAmbiguousOutcomeError("timeout", "BC-ORDER-x")
         );
 
@@ -444,7 +591,7 @@ medusaIntegrationTestRunner({
       it("TC-13: records a BC-rejected line with that line's identifiers", async () => {
         const { order } = await seedOrder();
         stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder(
             [1],
             [
@@ -476,7 +623,7 @@ medusaIntegrationTestRunner({
       it("TC-14: sends the order currency as an override when it differs from the BC customer's", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2]),
           bcCustomer("EUR")
         );
@@ -493,7 +640,7 @@ medusaIntegrationTestRunner({
         try {
           const { order: dkkOrder } = await seedOrder();
           const { createSalesOrder } = stubBusinessCentral(
-            [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+            BOTH_LINES_FOUND,
             createdSalesOrder([1, 2]),
             bcCustomer(null)
           );
@@ -517,7 +664,7 @@ medusaIntegrationTestRunner({
       it("TC-16: records bc_customer_not_found when BC has no such customer", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder, findItems } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2]),
           null
         );
@@ -536,7 +683,7 @@ medusaIntegrationTestRunner({
       it("TC-17: records bc_customer_lookup_failed when the BC customer request fails", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2]),
           new Error("Business Central customer request failed with status 500")
         );
@@ -553,7 +700,7 @@ medusaIntegrationTestRunner({
       it("TC-18: runs only once when two runs for the same order overlap", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
         createSalesOrder.mockImplementation(async () => {
@@ -591,7 +738,7 @@ medusaIntegrationTestRunner({
       it("TC-19: lets a later run with the same transaction id retry a failed order", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           new Error("Business Central sales order request failed with status 400")
         );
         const transactionId = getSendOrderToBusinessCentralTransactionId(order.id);
@@ -616,7 +763,7 @@ medusaIntegrationTestRunner({
       it("records the BC line map with the canonical EAN in the same update as the BC order number", async () => {
         const { order } = await seedOrder();
         stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder(
             [1],
             [
@@ -641,7 +788,7 @@ medusaIntegrationTestRunner({
       it("replaces the BC order number and the line map together on a force resend", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1])
         );
 
@@ -666,7 +813,7 @@ medusaIntegrationTestRunner({
       it("leaves the BC order number and the line map unchanged when a resend fails", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
 
@@ -687,7 +834,7 @@ medusaIntegrationTestRunner({
       it("keeps an ordinary retry after a sent outcome stopped by the duplicate guard", async () => {
         const { order } = await seedOrder();
         const { createSalesOrder } = stubBusinessCentral(
-          [matchedLine(1, ITEM_ONE), matchedLine(2, ITEM_TWO)],
+          BOTH_LINES_FOUND,
           createdSalesOrder([1, 2])
         );
 

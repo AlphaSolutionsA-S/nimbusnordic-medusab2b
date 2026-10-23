@@ -12,7 +12,7 @@ import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
 import type {
   BCCreatedSalesOrder,
   BCCustomer,
-  BCItemLookupResult,
+  BCItemLookupEvidence,
   IBusinessCentralModuleService,
 } from "../../../src/modules/business-central/types";
 import { COMPANY_MODULE } from "../../../src/modules/company";
@@ -44,12 +44,9 @@ const BC_CUSTOMER: BCCustomer = {
   currencyCode: "DKK",
 };
 
-const LOOKUP_RESULTS: BCItemLookupResult[] = [
-  {
-    lineNumber: 1,
-    matched: true,
-    matchedBy: "eanNo",
-    item: {
+const LOOKUP_EVIDENCE: BCItemLookupEvidence = {
+  itemsByBarcode: [
+    {
       id: "11111111-1111-1111-1111-111111111111",
       number: "FLS-NIM-VESPERMNA-XL",
       displayName: "Vesper Vest Unisex, Navy - XL",
@@ -57,8 +54,10 @@ const LOOKUP_RESULTS: BCItemLookupResult[] = [
       baseUnitOfMeasureCode: "PCS",
       variants: [],
     },
-  },
-];
+  ],
+  barcodeReferences: [],
+  itemsByNumber: [],
+};
 
 const CREATED: BCCreatedSalesOrder = {
   id: "22222222-2222-2222-2222-222222222222",
@@ -113,8 +112,8 @@ medusaIntegrationTestRunner({
 
         jest.spyOn(bcService, "getCustomer").mockResolvedValue(BC_CUSTOMER);
         jest
-          .spyOn(bcService, "findItemsForOrderLines")
-          .mockResolvedValue(LOOKUP_RESULTS);
+          .spyOn(bcService, "getItemLookupEvidence")
+          .mockResolvedValue(LOOKUP_EVIDENCE);
 
         return jest
           .spyOn(bcService, "createSalesOrder")

@@ -36,3 +36,21 @@
   `BCCreateSalesOrderLineInput.itemVariantId` (sent only when defined).
 - Widget labels and parsed reasons for `size_unresolved` / `unit_mismatch` are in place.
 - `pnpm ai:check` is over the root `AGENTS.md` size limit after the decisions.md row (open, human).
+
+## Task 03 (submission wiring)
+
+- `prepare-bc-order.ts` calls `bcService.getItemLookupEvidence` once per order, then calls
+  `resolveOrderLineItem(line, evidence)` for each payload line. Line failures come from the same
+  index in `lineIdentifiers`.
+- The BC line keeps `line.unitOfMeasureCode` exactly as the customer sent it (`"pcs"` stays
+  lower-case). `itemVariantId` is `resolution.itemVariantId ?? undefined`.
+- Removed `findItemsForOrderLines`, `findItemsByFilter`, `buildItemLookupCandidates`,
+  `BCItemLookupResult` and `BCItemLookupFailureReason`. `BCItemLookupInput` and `BCItemMatchSource`
+  remain because the evidence read and the rule use them.
+- A stale `.medusa/server/.../item-lookup.spec.js` build copy still runs under `test:integration:modules`
+  until the next build. It is not a source file.
+- `integration-tests/http/admin/bc-integration.spec.ts` fails locally at HEAD: admin auth returns
+  401 in 10 of 12 tests. Its fake vendor now answers `/companies(<id>)` and ODataV4
+  `ItemReferenceEntries`. Any spec that runs the real adapter through `prepareBcOrderStep` needs both.
+- The docs (task 04) should name `getItemLookupEvidence` and `resolveOrderLineItem`, not the old
+  `findItemsForOrderLines`.

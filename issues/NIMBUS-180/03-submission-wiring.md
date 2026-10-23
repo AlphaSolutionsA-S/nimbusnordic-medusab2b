@@ -30,3 +30,60 @@ into BC TestDK; the BC sales order line (`salesOrderLines?$expand=itemVariant`) 
 fixtures `matchedLine`/`unmatchedLine` become evidence); `integration-tests/http/admin/bc-integration.spec.ts`
 if it asserts reason codes; `src/modules/business-central/__tests__/item-lookup.spec.ts` (deleted with
 the method it tests; its behaviours are covered by tasks 01 and 02).
+
+## Deviations
+
+- Also removed the private `findItemsByFilter` in `service.ts`: its only caller was
+  `findItemsForOrderLines`. The comment on `fetchItemLookupRows` that compared it to "the per-line
+  lookup it replaces" was reworded, since that lookup no longer exists.
+- `send-order-to-bc.spec.ts` gained a `beforeEach` that makes `globalThis.fetch` reject. A BC method
+  left unstubbed now fails the test instead of reaching a tenant. It also made the red run against
+  the old step safe.
+- The "Admin GET returns that reason" check is a new test in `integration-tests/http/admin/bc-integration.spec.ts`
+  that seeds `size_unresolved` and `unit_mismatch` line failures and reads them through
+  `GET /admin/orders/:id/bc-integration`. `send-order-to-bc.spec.ts` has no HTTP client, so the
+  check could not go there.
+- `bc-integration.spec.ts` needed more than reason codes. Its fake vendor runs the real adapter, so
+  it now also answers the company-name read (`/companies(<id>)`) and the ODataV4
+  `ItemReferenceEntries` read (empty), which the new evidence read calls.
+- Added test: an order whose every line is refused by the new reasons (`size_unresolved` and
+  `unit_mismatch`) creates no BC order. TC-3 still covers all lines `not_found`.
+- Not verified locally: `bc-integration.spec.ts`. 10 of its 12 tests already fail at HEAD with 401
+  on admin auth in this environment (checked by stashing this task's changes), and the new test
+  fails the same way. The fake-vendor additions and the new GET test are unproven until the spec
+  runs where admin auth works.
+- `item-lookup.spec.ts` was deleted with `git rm`, so the deletion is already staged.
+
+## Done-when evidence
+
+- Step wired (evidence read once, rule per line, refusals become line failures, `itemVariantId` passed):
+  `send-order-to-bc.spec.ts`, tests "sends a size barcode line with its item and size, in the
+  customer's unit" (one `getItemLookupEvidence` call; BC line has `itemVariantId`, unit `pcs` as
+  sent; `bc_lines[0].ean_no = 5712094132141`), "refuses a sized item reached by item number and
+  submits the size barcode line" (`partial`, `reason: size_unresolved`, identifiers from the
+  canonical line), "sends no line without its size: an order whose every line is refused creates no
+  BC order", and TC-1 (an item without sizes is sent without `itemVariantId`). All pass.
+- Evidence read throws gives `bc_item_lookup_failed`, and the log has the order id and the error
+  message only: `send-order-to-bc.spec.ts` TC-11 (exact log string asserted). Passes.
+- Admin GET returns the new reason: `bc-integration.spec.ts`, "returns the size and unit refusal
+  reasons of a partial submission". Not provable locally because admin auth returns 401 at HEAD (see
+  Deviations); it runs at finalization.
+- Old lookup and its spec removed: `findItemsForOrderLines`, `findItemsByFilter`,
+  `buildItemLookupCandidates`, `BCItemLookupResult` and `BCItemLookupFailureReason` are gone, and
+  `item-lookup.spec.ts` is deleted. A grep over `apps/backend` (excluding `node_modules` and
+  `.medusa`) finds no references. Typecheck is at baseline.
+- HTTP specs use the new read: both business-central-order specs spy on `getItemLookupEvidence`
+  with evidence fixtures. `send-order-to-bc.spec.ts` passes 26/26 and
+  `bc-order-ready-subscriber.spec.ts` passes 5/5.
+- Lint: `pnpm --filter @b2b-starter/backend lint` reports 0 errors (13 existing warnings, none in
+  touched files). Typecheck: 22 errors, the same set as the baseline.
+- Also update, `send-order-to-bc.spec.ts`: moved to `getItemLookupEvidence`;
+  `matchedLine`/`unmatchedLine` replaced by `NO_EVIDENCE`, `byCardBarcode(...)` and
+  `BOTH_LINES_FOUND`.
+- Also update, `bc-order-ready-subscriber.spec.ts`: moved to `getItemLookupEvidence` with
+  `LOOKUP_EVIDENCE`.
+- Also update, `bc-integration.spec.ts`: it asserts reason codes, so it got the new reason test and
+  the fake-vendor additions (see Deviations).
+- Also update, `item-lookup.spec.ts`: deleted.
+- Verify after deploy: not provable in this task. It needs a real order into BC TestDK (see the
+  task's "Verify after deploy").

@@ -238,9 +238,6 @@ export interface IBusinessCentralModuleService {
   getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
   getReturn(params: BCGetReturnParams): Promise<BCReturnDetail | null>;
   getCustomer(customerNumber: string): Promise<BCCustomer | null>;
-  findItemsForOrderLines(
-    lines: BCItemLookupInput[]
-  ): Promise<BCItemLookupResult[]>;
   getItemLookupEvidence(lines: BCItemLookupInput[]): Promise<BCItemLookupEvidence>;
   createSalesOrder(
     params: BCCreateSalesOrderParams
@@ -354,30 +351,12 @@ export type BCItemLookupEvidence = {
 
 export type BCItemMatchSource = "eanNo" | "itemReference" | "itemNumber" | "custItemNo";
 
-export type BCItemLookupFailureReason =
-  | "no_identifiers"
-  | "not_found"
-  | "ambiguous";
-
 export type BCItemLookupInput = {
   lineNumber: number;
   eanNo?: string;
   itemNumber?: string;
   custItemNo?: string;
 };
-
-export type BCItemLookupResult =
-  | {
-      lineNumber: number;
-      matched: true;
-      item: BCItem;
-      matchedBy: BCItemMatchSource;
-    }
-  | {
-      lineNumber: number;
-      matched: false;
-      reason: BCItemLookupFailureReason;
-    };
 
 export type BCSalesOrderAddressInput = {
   name?: string;

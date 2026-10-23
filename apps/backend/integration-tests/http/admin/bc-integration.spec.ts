@@ -28,6 +28,8 @@ const JWT_SECRET = "supersecret";
 const INITIALIZED_AT = "2026-10-01T00:00:00.000Z";
 const DISCOVERY =
   "https://api.businesscentral.dynamics.com/v2.0/00000000-0000-0000-0000-000000000001/TestDK/api/v2.0";
+const DISCOVERY_ODATA_V4 =
+  "https://api.businesscentral.dynamics.com/v2.0/00000000-0000-0000-0000-000000000001/TestDK/ODataV4";
 const realNow = Date.now;
 function deferred<T>() {
   let complete: (value: T) => void;
@@ -80,11 +82,20 @@ medusaIntegrationTestRunner({
           ) {
             return Response.json({ access_token: "synthetic-vendor-token" });
           }
+          // The item lookup reads barcode references from the ODataV4 web service: none here.
+          if (url.startsWith(`${DISCOVERY_ODATA_V4}/ItemReferenceEntries?`))
+            return Response.json({ value: [] });
           if (!url.startsWith(`${DISCOVERY}/`))
             throw new Error(
               "Unexpected outbound request blocked by test vendor"
             );
           const pathname = new URL(url).pathname;
+          if (
+            pathname.endsWith(
+              "/companies(00000000-0000-0000-0000-000000000003)"
+            )
+          )
+            return Response.json({ name: "Synthetic company" });
           if (pathname.endsWith("/customers()")) {
             vendor.customerEntered.resolve();
             if (vendor.customerGate) return vendor.customerGate.promise;
@@ -323,6 +334,40 @@ medusaIntegrationTestRunner({
         bc_order_id: null,
         attempt_count: 0,
       });
+    });
+
+    it("returns the size and unit refusal reasons of a partial submission", async () => {
+      const order = await seed({
+        state: {
+          status: "sent",
+          attempt_count: 1,
+          partial: true,
+          failure_reason: "partial_lines_submitted",
+          line_failures: [
+            {
+              line_number: 2,
+              reason: "size_unresolved",
+              message: null,
+              ean_no: null,
+              item_number: "HEND-L-MIDNBLUE",
+              cust_item_no: null,
+            },
+            {
+              line_number: 3,
+              reason: "unit_mismatch",
+              message: null,
+              ean_no: "5712094132141",
+              item_number: null,
+              cust_item_no: null,
+            },
+          ],
+        },
+      });
+
+      expect((await read(order.id)).line_failures).toEqual([
+        { line_number: 2, reason: "size_unresolved" },
+        { line_number: 3, reason: "unit_mismatch" },
+      ]);
     });
 
     it("denies anonymous, invalid and customer bearer access to both admin operations", async () => {

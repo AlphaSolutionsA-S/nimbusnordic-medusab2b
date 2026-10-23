@@ -25,8 +25,6 @@ import type {
   BCItemBarcodeReference,
   BCItemLookupEvidence,
   BCItemLookupInput,
-  BCItemLookupResult,
-  BCItemMatchSource,
   BCReturnListItem,
   BCReturnOrder,
   BCReturnReason,
@@ -212,47 +210,6 @@ function formatAddress(
   return [name, addressLine1, addressLine2, cityLine, country].filter(
     (value): value is string => Boolean(value)
   );
-}
-
-type BCItemLookupCandidate = {
-  source: BCItemMatchSource;
-  field: "gtin" | "number";
-  value: string;
-};
-
-function buildItemLookupCandidates(
-  line: BCItemLookupInput
-): BCItemLookupCandidate[] {
-  const ordered: BCItemLookupCandidate[] = [
-    { source: "eanNo", field: "gtin", value: (line.eanNo ?? "").trim() },
-    {
-      source: "itemNumber",
-      field: "number",
-      value: (line.itemNumber ?? "").trim(),
-    },
-    {
-      source: "custItemNo",
-      field: "number",
-      value: (line.custItemNo ?? "").trim(),
-    },
-  ];
-  const seen = new Set<string>();
-
-  return ordered.filter((candidate) => {
-    if (!candidate.value) {
-      return false;
-    }
-
-    const key = `${candidate.field}:${candidate.value}`;
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-
-    return true;
-  });
 }
 
 type BCJsonBody = Record<string, string | number>;
@@ -1410,60 +1367,8 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
   }
 
-  private async findItemsByFilter(
-    discoveryUrl: URL,
-    accessToken: string,
-    field: "gtin" | "number",
-    value: string
-  ): Promise<BCItem[]> {
-    const itemsUrl = new URL(`${discoveryUrl.toString()}/items()`);
-    itemsUrl.searchParams.set(
-      "$filter",
-      `${field} eq '${escapeODataString(value)}'`
-    );
-    itemsUrl.searchParams.set("$select", ITEM_LOOKUP_SELECT);
-    itemsUrl.searchParams.set("$top", "2");
-
-    let itemsResponse: Response;
-
-    try {
-      itemsResponse = await fetch(itemsUrl.toString(), {
-        method: "GET",
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          accept: "application/json",
-        },
-      });
-    } catch {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        "Business Central item request failed"
-      );
-    }
-
-    if (!itemsResponse.ok) {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        `Business Central item request failed with status ${itemsResponse.status}`
-      );
-    }
-
-    let body: { value?: BCItemLookupItemRaw[] };
-
-    try {
-      body = (await itemsResponse.json()) as { value?: BCItemLookupItemRaw[] };
-    } catch {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        "Malformed Business Central item response"
-      );
-    }
-
-    return (body.value ?? []).map(mapLookupItem);
-  }
-
-  // Reads every chunk one request at a time, like the per-line lookup it replaces, so an order's
-  // load on BC stays predictable. A page with a next link is never taken as the whole answer.
+  // Reads every chunk one request at a time, so an order's load on BC stays predictable. A page
+  // with a next link is never taken as the whole answer.
   private async fetchItemLookupRows<TRaw>(
     baseUrl: URL,
     accessToken: string,
@@ -1592,69 +1497,6 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     ).map(mapLookupItem);
 
     return { itemsByBarcode, barcodeReferences, itemsByNumber };
-  }
-
-  async findItemsForOrderLines(
-    lines: BCItemLookupInput[]
-  ): Promise<BCItemLookupResult[]> {
-    if (lines.length === 0) {
-      return [];
-    }
-
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
-    const { clientId, clientSecret } = this.getClientCredentials();
-    const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
-    const results: BCItemLookupResult[] = [];
-
-    for (const line of lines) {
-      const candidates = buildItemLookupCandidates(line);
-
-      if (candidates.length === 0) {
-        results.push({
-          lineNumber: line.lineNumber,
-          matched: false,
-          reason: "no_identifiers",
-        });
-        continue;
-      }
-
-      let sawAmbiguousMatch = false;
-      let resolved: BCItemLookupResult | null = null;
-
-      for (const candidate of candidates) {
-        const items = await this.findItemsByFilter(
-          discoveryUrl,
-          accessToken,
-          candidate.field,
-          candidate.value
-        );
-
-        if (items.length === 1) {
-          resolved = {
-            lineNumber: line.lineNumber,
-            matched: true,
-            item: items[0],
-            matchedBy: candidate.source,
-          };
-          break;
-        }
-
-        if (items.length > 1) {
-          sawAmbiguousMatch = true;
-        }
-      }
-
-      results.push(
-        resolved ?? {
-          lineNumber: line.lineNumber,
-          matched: false,
-          reason: sawAmbiguousMatch ? "ambiguous" : "not_found",
-        }
-      );
-    }
-
-    return results;
   }
 
   private async postSalesOrderLine(
