@@ -26,7 +26,7 @@ const HEND: BCItem = {
 const HEND_L_BARCODE = "5712094132141";
 const HEND_L_ID = "a019dfc8-ab92-ee11-8178-0022489b54b1";
 
-// An item without sizes, reachable by its item-card barcode (scope F3, Metz case).
+// An item without sizes, reachable by its item-card barcode (the Metz case).
 const METZ_PLAIN: BCItem = {
   id: "item-plain",
   number: "POS LOGO SIGN-BLACK",
@@ -94,7 +94,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "not_found" });
     });
 
-    it("row 5: resolves the size when the item card agrees on the item", () => {
+    it("resolves the size when the item card agrees on the item", () => {
       const hendWithGtin = { ...HEND, gtin: HEND_L_BARCODE };
       expect(
         resolveOrderLineItem(
@@ -122,7 +122,7 @@ describe("resolveOrderLineItem", () => {
       ).toMatchObject({ resolved: true, itemVariantId: HEND_L_ID });
     });
 
-    it("row 6: refuses a size the item does not list", () => {
+    it("refuses a size the item does not list", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE },
@@ -131,7 +131,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "size_unresolved" });
     });
 
-    it("row 6: refuses a size on an item without sizes", () => {
+    it("refuses a size on an item without sizes", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE },
@@ -143,7 +143,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "size_unresolved" });
     });
 
-    it("row 7: resolves a row with no size on an item without sizes, with no size", () => {
+    it("resolves a reference with no size on an item without sizes, with no size", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE },
@@ -160,7 +160,7 @@ describe("resolveOrderLineItem", () => {
       });
     });
 
-    it("row 8: refuses a row with no size on an item with sizes", () => {
+    it("refuses a reference with no size on an item with sizes", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE },
@@ -169,7 +169,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "size_unresolved" });
     });
 
-    it("row 9: refuses a row whose item the number read did not return", () => {
+    it("refuses a reference whose item the item-number read did not return", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: OTHER_PLAIN.number },
@@ -213,7 +213,7 @@ describe("resolveOrderLineItem", () => {
       ).toMatchObject({ resolved: true, itemVariantId: HEND_L_ID });
     });
 
-    it("row 2: refuses with unit_mismatch when only a CTN row exists, without fallback", () => {
+    it("refuses as unit_mismatch, without fallback, when every reference is for another unit", () => {
       for (const unitOfMeasureCode of [undefined, "PCS"]) {
         expect(
           resolveOrderLineItem(
@@ -244,7 +244,7 @@ describe("resolveOrderLineItem", () => {
   });
 
   describe("ambiguity", () => {
-    it("row 3: refuses when the item card and a reference name different items", () => {
+    it("refuses when the item card and a reference name different items", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE },
@@ -257,7 +257,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "ambiguous" });
     });
 
-    it("row 3: refuses when two item cards carry the barcode", () => {
+    it("refuses when two item cards carry the barcode", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: METZ_PLAIN.gtin },
@@ -266,7 +266,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "ambiguous" });
     });
 
-    it("row 3: an ambiguous barcode does not fall back to an item number that would match", () => {
+    it("an ambiguous barcode does not fall back to an item number that would match", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: OTHER_PLAIN.number },
@@ -278,7 +278,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "ambiguous" });
     });
 
-    it("row 4: refuses when the rows name more than one size, an empty code counting as one", () => {
+    it("refuses when the rows name more than one size, an empty code counting as one", () => {
       for (const otherCode of ["M", ""]) {
         expect(
           resolveOrderLineItem(
@@ -294,7 +294,7 @@ describe("resolveOrderLineItem", () => {
   });
 
   describe("item-card barcode", () => {
-    it("row 7: resolves an item-card barcode on an item without sizes, with no size (Metz)", () => {
+    it("resolves an item-card barcode on an item without sizes, with no size (Metz)", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: METZ_PLAIN.gtin },
@@ -308,7 +308,7 @@ describe("resolveOrderLineItem", () => {
       });
     });
 
-    it("row 8: refuses an item-card barcode on an item with sizes", () => {
+    it("refuses an item-card barcode on an item with sizes", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE },
@@ -325,14 +325,14 @@ describe("resolveOrderLineItem", () => {
   });
 
   describe("item number fallback", () => {
-    it("row 1: refuses as not_found when nothing matches and no number is usable", () => {
+    it("refuses as not_found when nothing matches and no number is usable", () => {
       expect(resolveOrderLineItem({ eanNo: HEND_L_BARCODE }, evidence())).toEqual({
         resolved: false,
         reason: "not_found",
       });
     });
 
-    it("row 1: refuses as no_identifiers only when every identifier is blank", () => {
+    it("refuses as no_identifiers only when every identifier is blank", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: "", itemNumber: " ", custItemNo: "" },
@@ -341,7 +341,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "no_identifiers" });
     });
 
-    it("row 10: resolves by item number to an item without sizes", () => {
+    it("resolves by item number to an item without sizes", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: ` ${OTHER_PLAIN.number} ` },
@@ -355,7 +355,7 @@ describe("resolveOrderLineItem", () => {
       });
     });
 
-    it("row 10: falls back to the customer item number when the item number finds nothing", () => {
+    it("falls back to the customer item number when the item number finds nothing", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: "NKT-NIM-TELLURIDENA-S", custItemNo: OTHER_PLAIN.number },
@@ -369,7 +369,7 @@ describe("resolveOrderLineItem", () => {
       });
     });
 
-    it("row 10: reports itemNumber when both numbers are the same", () => {
+    it("reports itemNumber when both numbers are the same", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: OTHER_PLAIN.number, custItemNo: OTHER_PLAIN.number },
@@ -378,7 +378,7 @@ describe("resolveOrderLineItem", () => {
       ).toMatchObject({ resolved: true, matchedBy: "itemNumber" });
     });
 
-    it("row 11: refuses an item with sizes reached by item number", () => {
+    it("refuses an item with sizes reached by item number", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: HEND.number, custItemNo: OTHER_PLAIN.number },
@@ -387,7 +387,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "size_unresolved" });
     });
 
-    it("row 12: refuses as ambiguous when a number matches several items and none exactly one", () => {
+    it("refuses as ambiguous when a number matches several items and none exactly one", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: OTHER_PLAIN.number },
@@ -396,7 +396,7 @@ describe("resolveOrderLineItem", () => {
       ).toEqual({ resolved: false, reason: "ambiguous" });
     });
 
-    it("row 12: a later number that matches exactly one item still resolves", () => {
+    it("a later number that matches exactly one item still resolves", () => {
       expect(
         resolveOrderLineItem(
           { eanNo: HEND_L_BARCODE, itemNumber: OTHER_PLAIN.number, custItemNo: METZ_PLAIN.number },

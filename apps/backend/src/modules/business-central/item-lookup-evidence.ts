@@ -3,7 +3,7 @@ import { MedusaError } from "@medusajs/framework/utils";
 import type { BCItem, BCItemBarcodeReference, BCItemLookupInput } from "./types";
 
 // Keeps every `or` filter, and so the request URL, bounded.
-export const ITEM_LOOKUP_VALUES_PER_REQUEST = 20;
+const ITEM_LOOKUP_VALUES_PER_REQUEST = 20;
 // BC's item No. field; a longer value in a filter makes BC reject the whole request with 400.
 const BC_ITEM_NUMBER_MAX_LENGTH = 20;
 const BC_BAR_CODE_REFERENCE_TYPE = "Bar Code";
