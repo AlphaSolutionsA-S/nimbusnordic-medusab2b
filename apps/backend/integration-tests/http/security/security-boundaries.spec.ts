@@ -70,6 +70,17 @@ medusaIntegrationTestRunner({
       foreignCompanyId = foreign.id;
     });
 
+    it('refuses missing and ordinary login credentials on password recovery updates', async () => {
+      for (const credentials of [{ headers: {} }, headers]) {
+        const response = await api.post('/auth/customer/emailpass/update', {
+          password: 'replacement-password', password_confirmation: 'replacement-password',
+        }, { ...credentials, validateStatus: () => true });
+        expect(response.status).toBe(401);
+      }
+      const readOnly = await api.get('/auth/customer/emailpass/update', { validateStatus: () => true });
+      expect(readOnly.status).toBe(404);
+    });
+
     it.each(['none', 'customer', 'publishable'] as const)(
       'denies %s credentials on every admin shipment tracking endpoint', async (credentials) => {
         const selected = credentials === 'customer' ? headers : credentials === 'publishable' ? publicHeaders : { headers: {} };
