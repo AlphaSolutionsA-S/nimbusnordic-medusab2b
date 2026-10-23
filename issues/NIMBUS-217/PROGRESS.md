@@ -53,3 +53,21 @@
 - Handover prompt: "Start the implementation-planner on NIMBUS-217. Case folder: issues/NIMBUS-217
   (read PROGRESS.md, then scope.md: rules R1–R15, draft data-model and security tables, open items O1
   and O2). Base branch develop, work branch feature/NIMBUS-217."
+
+## 2026-10-23 — implementation-planner (plan written, awaiting review)
+
+- Outcome: branch `feature/NIMBUS-217` created from `develop` (69155cf); case folder committed.
+  `plan.md`, `manifest.md` and task files 01–05 written: company setting, Admin UI, rule home and
+  403 on both order API endpoints, shipment job (discovery skip, new close reason
+  `company_not_enabled`), Admin retry refusal. Framework assumptions all verified (no UNVERIFIED
+  row). `Ready for Dispatch: false`. Jira sub-tasks not created: per `tracker-workflow` they are
+  created at "plan approved"; the Atlassian MCP also failed to connect in this session.
+- Needs Klaus: decisions 1–5 in `plan.md` section 2 (O1 go-live list, optional auto-enable script,
+  O2 Logic App 403 handling, when open tracking closes, R12 vs two wildcard store reads of company
+  fields). Competing-model review recommended (authorization and regulated-order flow).
+- Next owner: Klaus (review and approve the plan, answer decisions 1–5), then the planner sets
+  Ready for Dispatch, creates the five Jira sub-tasks (component Customer Portal) and comments the
+  new decisions on NIMBUS-217; a separate go-ahead for `task-dispatcher`.
+- Handover prompt: "Continue the implementation-planner on NIMBUS-217 (issues/NIMBUS-217). Klaus's
+  answers to plan decisions 1–5: <answers>. Revise plan.md if needed, mark Ready for Dispatch, create
+  the Jira sub-tasks and record plan approved; stop before dispatch."
