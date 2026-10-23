@@ -1,0 +1,2 @@
+# ai:check limits AGENTS.md by bytes (Codex stops reading past 32 KiB); CRLF would push it over.
+AGENTS.md text eol=lf
