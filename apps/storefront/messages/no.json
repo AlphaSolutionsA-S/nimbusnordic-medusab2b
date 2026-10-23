@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Glemt passord",
+      "resetHeading": "Tilbakestill passord",
+      "requestDescription": "Skriv inn e-postadressen din for å be om en tilbakestillingslenke.",
+      "resetDescription": "Velg et nytt passord med minst åtte tegn og bekreft det.",
+      "emailLabel": "E-post",
+      "passwordLabel": "Nytt passord",
+      "confirmationLabel": "Bekreft nytt passord",
+      "requestSubmit": "Send tilbakestillingslenke",
+      "resetSubmit": "Lagre nytt passord",
+      "loading": "Vennligst vent…",
+      "acknowledgement": "Hvis det finnes en konto med denne e-postadressen, mottar du en tilbakestillingslenke.",
+      "success": "Passordet ditt er endret. Logg inn med det nye passordet.",
+      "freshLink": "Be om en ny lenke",
+      "backToLogin": "Tilbake til innlogging",
+      "errors": {
+        "invalidEmail": "Skriv inn en gyldig e-postadresse.",
+        "invalidPassword": "Bruk minst åtte tegn og samme passord i begge feltene.",
+        "invalidLink": "Lenken er ugyldig eller utløpt. Be om en ny lenke.",
+        "unavailable": "Vi kunne ikke fullføre forespørselen. Prøv igjen."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Glemt passord?",
       "heading": "Logg inn for raskere<br></br>utsjekk.",
       "emailLabel": "E-post",
       "emailValidationMessage": "Angi en gyldig e-postadresse.",

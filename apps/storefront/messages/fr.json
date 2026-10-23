@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Mot de passe oublié",
+      "resetHeading": "Réinitialiser le mot de passe",
+      "requestDescription": "Saisissez votre adresse e-mail pour demander un lien de réinitialisation.",
+      "resetDescription": "Choisissez un nouveau mot de passe d’au moins huit caractères et confirmez-le.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Nouveau mot de passe",
+      "confirmationLabel": "Confirmer le nouveau mot de passe",
+      "requestSubmit": "Envoyer le lien",
+      "resetSubmit": "Enregistrer le nouveau mot de passe",
+      "loading": "Veuillez patienter…",
+      "acknowledgement": "Si un compte existe avec cette adresse e-mail, vous recevrez un lien de réinitialisation.",
+      "success": "Votre mot de passe a été modifié. Connectez-vous avec votre nouveau mot de passe.",
+      "freshLink": "Demander un nouveau lien",
+      "backToLogin": "Retour à la connexion",
+      "errors": {
+        "invalidEmail": "Saisissez une adresse e-mail valide.",
+        "invalidPassword": "Utilisez au moins huit caractères et le même mot de passe dans les deux champs.",
+        "invalidLink": "Ce lien est invalide ou a expiré. Demandez un nouveau lien.",
+        "unavailable": "Votre demande n’a pas pu aboutir. Veuillez réessayer."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Mot de passe oublié ?",
       "heading": "Connectez-vous pour un<br></br>paiement plus rapide.",
       "emailLabel": "E-mail",
       "emailValidationMessage": "Saisissez une adresse e-mail valide.",

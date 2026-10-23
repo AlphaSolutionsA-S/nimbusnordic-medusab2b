@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Glömt lösenord",
+      "resetHeading": "Återställ lösenord",
+      "requestDescription": "Ange din e-postadress för att begära en återställningslänk.",
+      "resetDescription": "Välj ett nytt lösenord med minst åtta tecken och bekräfta det.",
+      "emailLabel": "E-post",
+      "passwordLabel": "Nytt lösenord",
+      "confirmationLabel": "Bekräfta nytt lösenord",
+      "requestSubmit": "Skicka återställningslänk",
+      "resetSubmit": "Spara nytt lösenord",
+      "loading": "Vänta…",
+      "acknowledgement": "Om ett konto finns med denna e-postadress får du en återställningslänk.",
+      "success": "Ditt lösenord har ändrats. Logga in med ditt nya lösenord.",
+      "freshLink": "Begär en ny länk",
+      "backToLogin": "Tillbaka till inloggning",
+      "errors": {
+        "invalidEmail": "Ange en giltig e-postadress.",
+        "invalidPassword": "Använd minst åtta tecken och samma lösenord i båda fälten.",
+        "invalidLink": "Länken är ogiltig eller har gått ut. Begär en ny länk.",
+        "unavailable": "Din begäran kunde inte slutföras. Försök igen."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Glömt lösenord?",
       "heading": "Logga in för snabbare<br></br>utcheckning.",
       "emailLabel": "E-post",
       "emailValidationMessage": "Ange en giltig e-postadress.",

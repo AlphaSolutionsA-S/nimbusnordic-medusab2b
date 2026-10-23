@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Glemt adgangskode",
+      "resetHeading": "Nulstil adgangskode",
+      "requestDescription": "Indtast din e-mail for at få et link til nulstilling.",
+      "resetDescription": "Vælg en ny adgangskode på mindst otte tegn, og bekræft den.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Ny adgangskode",
+      "confirmationLabel": "Bekræft ny adgangskode",
+      "requestSubmit": "Send nulstillingslink",
+      "resetSubmit": "Gem ny adgangskode",
+      "loading": "Vent venligst…",
+      "acknowledgement": "Hvis der findes en konto med denne e-mail, modtager du et link til nulstilling.",
+      "success": "Din adgangskode er ændret. Log ind med din nye adgangskode.",
+      "freshLink": "Anmod om et nyt link",
+      "backToLogin": "Tilbage til login",
+      "errors": {
+        "invalidEmail": "Indtast en gyldig e-mailadresse.",
+        "invalidPassword": "Brug mindst otte tegn, og indtast samme adgangskode i begge felter.",
+        "invalidLink": "Linket er ugyldigt eller udløbet. Anmod om et nyt link.",
+        "unavailable": "Vi kunne ikke gennemføre din anmodning. Prøv igen."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Glemt adgangskode?",
       "heading": "Log ind for hurtigere<br></br>checkout.",
       "emailLabel": "E-mail",
       "emailValidationMessage": "Indtast en gyldig e-mailadresse.",

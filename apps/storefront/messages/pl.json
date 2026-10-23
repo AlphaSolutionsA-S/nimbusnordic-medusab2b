@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Nie pamiętasz hasła",
+      "resetHeading": "Zresetuj hasło",
+      "requestDescription": "Podaj adres e-mail, aby otrzymać link do zresetowania hasła.",
+      "resetDescription": "Wybierz nowe hasło zawierające co najmniej osiem znaków i potwierdź je.",
+      "emailLabel": "E-mail",
+      "passwordLabel": "Nowe hasło",
+      "confirmationLabel": "Potwierdź nowe hasło",
+      "requestSubmit": "Wyślij link",
+      "resetSubmit": "Zapisz nowe hasło",
+      "loading": "Proszę czekać…",
+      "acknowledgement": "Jeśli istnieje konto z tym adresem e-mail, otrzymasz link do zresetowania hasła.",
+      "success": "Hasło zostało zmienione. Zaloguj się nowym hasłem.",
+      "freshLink": "Poproś o nowy link",
+      "backToLogin": "Powrót do logowania",
+      "errors": {
+        "invalidEmail": "Podaj prawidłowy adres e-mail.",
+        "invalidPassword": "Użyj co najmniej ośmiu znaków i tego samego hasła w obu polach.",
+        "invalidLink": "Link jest nieprawidłowy lub wygasł. Poproś o nowy link.",
+        "unavailable": "Nie udało się wykonać żądania. Spróbuj ponownie."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Nie pamiętasz hasła?",
       "heading": "Zaloguj się, aby szybciej<br></br>sfinalizować zamówienie.",
       "emailLabel": "E-mail",
       "emailValidationMessage": "Wprowadź prawidłowy adres e-mail.",

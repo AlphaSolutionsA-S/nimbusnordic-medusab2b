@@ -66,6 +66,16 @@ through it, memoized per request.
 
 ## Adding a language
 
+### Password recovery release (NIMBUS-133)
+
+Before releasing the recovery pages, merge `Account.recovery` and
+`Account.login.forgotPasswordLabel` from the updated `messages/<locale>.json` into each
+environment's database on **Translations → Import**. Import all eight supplied languages
+and translate the same keys for any additional active language. Confirm the country's
+assigned language is active, refresh the portal, and check the login link, request
+acknowledgement, password validation, invalid-link message and reset success. JSON files
+remain import material; they are never a runtime fallback. Mail content stays English.
+
 No code change or deployment is needed (NIMBUS-176):
 
 1. Admin: **Translations → Add language**, as a copy of an existing language or from a file. It

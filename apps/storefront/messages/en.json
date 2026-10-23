@@ -155,7 +155,30 @@
     }
   },
   "Account": {
+    "recovery": {
+      "requestHeading": "Forgot password",
+      "resetHeading": "Reset password",
+      "requestDescription": "Enter your email to request a password reset link.",
+      "resetDescription": "Choose a new password of at least eight characters and confirm it.",
+      "emailLabel": "Email",
+      "passwordLabel": "New password",
+      "confirmationLabel": "Confirm new password",
+      "requestSubmit": "Send reset link",
+      "resetSubmit": "Save new password",
+      "loading": "Please wait…",
+      "acknowledgement": "If an account exists for this email, you will receive a password reset link.",
+      "success": "Your password has been changed. Log in with your new password.",
+      "freshLink": "Request a new link",
+      "backToLogin": "Back to login",
+      "errors": {
+        "invalidEmail": "Enter a valid email address.",
+        "invalidPassword": "Use at least eight characters and enter the same password in both fields.",
+        "invalidLink": "This link is invalid or has expired. Request a new link.",
+        "unavailable": "We could not complete your request. Please try again."
+      }
+    },
     "login": {
+      "forgotPasswordLabel": "Forgot password?",
       "heading": "Log in for faster<br></br>checkout.",
       "emailLabel": "Email",
       "emailValidationMessage": "Enter a valid email address.",

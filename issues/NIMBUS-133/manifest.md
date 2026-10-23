@@ -13,7 +13,7 @@ Each affected app runs filtered `lint` and `exec tsc --noEmit` against recorded 
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|---|---|---|---|---|---|---|
 | 01 | Backend recovery and email | `01-backend-recovery.md` | Backend | Core customer-bound recovery, neutral reply, sequential single-use/latest links, server validation, English Notification email | None | NIMBUS-228 | DONE |
-| 02 | Public translated recovery | `02-storefront-recovery.md` | Storefront | Login entry, public forms, country routing, translated accessible states, normal login afterward | 01 | NIMBUS-229 | TODO |
+| 02 | Public translated recovery | `02-storefront-recovery.md` | Storefront | Login entry, public forms, country routing, translated accessible states, normal login afterward | 01 | NIMBUS-229 | DONE |
 | 03 | Verification and documentation | `03-verification.md` | Both | Security negatives, regression, cross-app checks, architecture and delivery evidence | 01, 02 | NIMBUS-230 | TODO |
 
 ## Scope items with no task

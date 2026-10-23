@@ -4,6 +4,7 @@ import ErrorMessage from "@/modules/checkout/components/error-message"
 import { SubmitButton } from "@/modules/checkout/components/submit-button"
 import Button from "@/modules/common/components/button"
 import Input from "@/modules/common/components/input"
+import LocalizedClientLink from "@/modules/common/components/localized-client-link"
 import { Checkbox, Text } from "@medusajs/ui"
 import { useTranslations } from "next-intl"
 import { useActionState } from "react"
@@ -44,6 +45,9 @@ const Login = ({ setCurrentView }: Props) => {
             data-testid="password-input"
           />
           <div className="flex flex-col gap-2 w-full border-b border-neutral-200 my-6" />
+          <LocalizedClientLink href="/forgot-password" className="underline">
+            {t("forgotPasswordLabel")}
+          </LocalizedClientLink>
           <div className="flex items-center gap-2">
             <Checkbox name="remember_me" data-testid="remember-me-checkbox" />
             <Text className="text-neutral-950 text-base-regular">
