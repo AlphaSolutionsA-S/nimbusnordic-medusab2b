@@ -192,7 +192,7 @@ medusaIntegrationTestRunner({
       await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, auth);
       const { result } = await checkShipmentsWorkflow(getContainer()).run({ input: { deadline: new Date(Date.now() + 60_000) } });
       expect(result.checked).toBe(1);
-      expect(read).toHaveBeenCalledWith([row.shipment_number]);
+      expect(read).toHaveBeenCalledWith([row.shipment_number], expect.any(Number));
       const [after] = await service.listShipmentTrackings({ id: row.id });
       expect(after).toMatchObject({ state: "open", attempts: 1 });
       await service.updateShipmentTrackings({ id: row.id, next_check_at: new Date(), reopened_at: new Date(Date.now() - 3 * DAY - 1000) });
