@@ -173,6 +173,19 @@ Mechanical wiring: no issues found.
    - (b) check the row state first, so only gave-up rows get the company message. This is a small
      reorder in the validation step.
 
+### Answers (Klaus, 2026-10-23)
+
+1. Shorten the new `decisions.md` row until `pnpm ai:check` passes; do not raise the limit or trim
+   other text.
+2. Before push: a throwaway local Postgres container for this branch is allowed (not another
+   project's database). Generate both migrations with `medusa db:generate`, inspect the SQL, commit
+   them, then run the integration and contract suites.
+3. R7 trail-scan edge accepted as is: "never back-filled" holds once both scan cursors have passed
+   the header (up to about 45 minutes). No follow-up issue.
+4. Keep the company check first (plan flow E).
+5. Also (accepted recommendation, finding 4): make `order_api_enabled` required on the shared
+   `OrderApiCompanyRow` type, so a query that omits the column fails to compile.
+
 ## Verify after deploy
 
 - **01 Company setting:** `company.order_api_enabled` exists and is `false` for every company right

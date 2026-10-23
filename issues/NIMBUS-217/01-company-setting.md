@@ -24,6 +24,9 @@
   `.snapshot-company.json`, then `medusa db:migrate`. Until then every integration test of this
   branch that touches the company table fails, because the test runner migrates from the migration
   files.
+- **Resolved (fix 01, 2026-10-23):** generated `Migration20261023110444.ts` with the SQL above (up
+  adds the column `boolean not null default false`, down drops it, nothing else) and the updated
+  `.snapshot-company.json`; `medusa db:migrate` applied it on the throwaway database.
 - Contract and integration tests were written but NOT run (no database here); they typecheck.
 - `AdminUpdateCompany` (`src/types/company/http.ts`) gained the field as `Partial<AdminCreateCompany>
   & { order_api_enabled?: boolean }` so the shared HTTP create type stays without it, matching the
