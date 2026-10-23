@@ -50,6 +50,7 @@ export const AdminUpdateCompany = z
     blocked: z.enum(["not_blocked", "Ship", "Invoice", "All"]).optional(),
     credit_limit: z.number().nonnegative().optional().nullable(),
     vat_number: z.string().optional().nullable(),
+    order_api_enabled: z.boolean().optional(),
   })
   .strict();
 

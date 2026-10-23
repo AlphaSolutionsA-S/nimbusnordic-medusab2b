@@ -894,7 +894,8 @@
             "cancelled",
             "window_ended",
             "superseded",
-            "gave_up"
+            "gave_up",
+            "company_not_enabled"
           ],
           "mappedType": "enum"
         },

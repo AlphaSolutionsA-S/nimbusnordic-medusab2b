@@ -27,6 +27,7 @@ import {
 import {
   checkShipmentsWorkflow,
 } from "../../../src/workflows/shipment-notice/workflows/check-shipments";
+import { createApiCustomerCompany, setOrderApiEnabled } from "../../utils/shipment-notices";
 
 jest.setTimeout(180 * 1000);
 
@@ -60,6 +61,8 @@ medusaIntegrationTestRunner({
       let bcShipments: Map<string, BCShipment>;
       let getShipmentsByNumbers: jest.SpyInstance;
       let counter = 0;
+      /** An API company switched on for the order API; rows are tracked under it by default. */
+      let companyId: string;
 
       const orderIngestion = (): OrderIngestionModuleService =>
         getContainer().resolve<OrderIngestionModuleService>(ORDER_INGESTION_MODULE);
@@ -73,6 +76,7 @@ medusaIntegrationTestRunner({
             [...bcShipments.values()].filter((shipment) => numbers.includes(shipment.number))
           );
         await orderIngestion().initializeShipmentPollState(at(new Date(), -DAY));
+        companyId = await createApiCustomerCompany(getContainer(), "C-100");
       });
 
       afterEach(() => {
@@ -99,7 +103,7 @@ medusaIntegrationTestRunner({
 
       async function track(
         orderId: string,
-        options: { due?: Date; recheckUntil?: Date; bcOrderNumber?: string } = {}
+        options: { due?: Date; recheckUntil?: Date; bcOrderNumber?: string; companyId?: string } = {}
       ): Promise<Tracked> {
         counter += 1;
         const now = new Date();
@@ -110,7 +114,7 @@ medusaIntegrationTestRunner({
             shipment_number: tracked.number,
             bc_order_number: options.bcOrderNumber ?? "SO-100",
             posting_date: utcDay(now),
-            company_id: "comp_shipment_checks",
+            company_id: options.companyId ?? companyId,
             order_id: orderId,
             external_order_number: "METZ-1",
             next_check_at: options.due ?? at(now, -MINUTE),
@@ -230,7 +234,7 @@ medusaIntegrationTestRunner({
         await orderIngestion().storeShipmentNotice({
           bc_shipment_id: tracked.id,
           expected_revision: latest.revision,
-          company_id: "comp_shipment_checks",
+          company_id: companyId,
           order_id: tracked.orderId,
           external_order_number: "METZ-1",
           bc_order_number: "SO-100",
@@ -404,6 +408,76 @@ medusaIntegrationTestRunner({
         expect(await row(tracked)).toMatchObject({ state: "closed", close_reason: "superseded" });
         expect(await notices(tracked)).toHaveLength(0);
         expect(getShipmentsByNumbers).not.toHaveBeenCalled();
+      });
+
+      it("closes a switched-off company's due shipment without a BC read and keeps its notices", async () => {
+        const order = await seedOrder("SO-100", null);
+        const offCompanyId = await createApiCustomerCompany(getContainer(), "C-OFF");
+        const switchedOff = await track(order.id, { companyId: offCompanyId });
+        const enabled = await track(order.id);
+        inBc(switchedOff, [line(10000, 5)]);
+        inBc(enabled, [line(10000, 2)]);
+        await run();
+        expect(await notices(switchedOff)).toHaveLength(1);
+
+        await setOrderApiEnabled(getContainer(), offCompanyId, false);
+        await makeDue(switchedOff);
+        await makeDue(enabled);
+        inBc(switchedOff, [line(10000, 5), line(20000, 1, "ITEM-2")]);
+        inBc(enabled, [line(10000, 2), line(20000, 1, "ITEM-2")]);
+        getShipmentsByNumbers.mockClear();
+
+        const result = await run();
+
+        expect(result).toMatchObject({ checked: 2, recorded: 1, errors: 0 });
+        expect(await row(switchedOff)).toMatchObject({
+          state: "closed",
+          close_reason: "company_not_enabled",
+          latest_revision: 1,
+        });
+        expect((await notices(switchedOff)).map((notice) => notice.status)).toEqual(["shipped"]);
+        const requested = getShipmentsByNumbers.mock.calls.flatMap(([numbers]) => numbers);
+        expect(requested).toEqual([enabled.number]);
+        expect(await row(enabled)).toMatchObject({ state: "open", latest_revision: 2 });
+        expect((await notices(enabled)).map((notice) => notice.status)).toEqual([
+          "shipped",
+          "revised",
+        ]);
+      });
+
+      it("closes a due shipment whose company no longer exists without a BC read", async () => {
+        const order = await seedOrder("SO-100", null);
+        const orphan = await track(order.id, { companyId: "comp_does_not_exist" });
+        inBc(orphan, [line(10000, 5)]);
+
+        await run();
+
+        expect(await row(orphan)).toMatchObject({
+          state: "closed",
+          close_reason: "company_not_enabled",
+        });
+        expect(getShipmentsByNumbers).not.toHaveBeenCalled();
+        expect(await notices(orphan)).toHaveLength(0);
+      });
+
+      it("keeps a company_not_enabled row closed after the company is switched on again", async () => {
+        const order = await seedOrder("SO-100", null);
+        await setOrderApiEnabled(getContainer(), companyId, false);
+        const tracked = await track(order.id);
+        inBc(tracked, [line(10000, 5)]);
+        await run();
+        expect(await row(tracked)).toMatchObject({ close_reason: "company_not_enabled" });
+
+        await setOrderApiEnabled(getContainer(), companyId, true);
+        const result = await run();
+
+        expect(result).toMatchObject({ checked: 0, recorded: 0 });
+        expect(await row(tracked)).toMatchObject({
+          state: "closed",
+          close_reason: "company_not_enabled",
+        });
+        expect(getShipmentsByNumbers).not.toHaveBeenCalled();
+        expect(await notices(tracked)).toHaveLength(0);
       });
 
       it("backs off an unpairable shipment, then gives up after the window", async () => {

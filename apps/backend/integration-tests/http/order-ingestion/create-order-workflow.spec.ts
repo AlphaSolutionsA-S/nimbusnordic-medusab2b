@@ -26,6 +26,10 @@ import {
   singleLineCanonicalOrder,
   sampleCustomerNumber,
 } from "../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures";
+import {
+  createApiCustomerCompany,
+  setOrderApiEnabled,
+} from "../../utils/shipment-notices";
 
 jest.setTimeout(60 * 1000);
 
@@ -98,6 +102,7 @@ medusaIntegrationTestRunner({
           name: "TC-1 Company",
           email: "tc1@example.com",
           business_central_customer_number: sampleCustomerNumber,
+          order_api_enabled: true,
         });
 
         const { result: order } = await createOrderFromCanonicalPayloadWorkflow(
@@ -165,6 +170,51 @@ medusaIntegrationTestRunner({
         }
       });
 
+      // NIMBUS-217: the warn line names the company id only, never the customer number.
+      it("rejects a company switched off for the order API with FORBIDDEN and logs only its id", async () => {
+        const container = getContainer();
+        const logger = container.resolve<Logger>(
+          ContainerRegistrationKeys.LOGGER
+        );
+        const companyId = await createApiCustomerCompany(
+          container,
+          "switched-off-customer-number"
+        );
+        await setOrderApiEnabled(container, companyId, false);
+        const warn = jest.spyOn(logger, "warn");
+
+        try {
+          const error = await createOrderFromCanonicalPayloadWorkflow(container)
+            .run({
+              input: {
+                customer_number: "switched-off-customer-number",
+                canonicalOrder: {
+                  ...singleLineCanonicalOrder,
+                  externalOrderNumber: "SWITCHED-OFF-1",
+                },
+              },
+            })
+            .then(
+              () => null,
+              (e) => e
+            );
+
+          expect(error).toMatchObject({
+            type: "forbidden",
+            message: "Customer not registered for the order API",
+          });
+
+          const warnLines = warn.mock.calls
+            .map(([message]) => String(message))
+            .filter((message) => message.includes(companyId));
+          expect(warnLines).toHaveLength(1);
+          expect(warnLines[0]).not.toContain("switched-off-customer-number");
+          expect(warnLines[0]).not.toContain("SWITCHED-OFF-1");
+        } finally {
+          warn.mockRestore();
+        }
+      });
+
       it("TC-3: rejects a second submission of the same externalOrderNumber for the same company with a DUPLICATE_ERROR (per-company duplicate rule)", async () => {
         const container = getContainer();
         const companyService =
@@ -174,6 +224,7 @@ medusaIntegrationTestRunner({
           name: "TC-3 Company",
           email: "tc3@example.com",
           business_central_customer_number: "tc3-customer-number",
+          order_api_enabled: true,
         });
 
         const payload = {
@@ -210,11 +261,13 @@ medusaIntegrationTestRunner({
           name: "TC-4 Company A",
           email: "tc4a@example.com",
           business_central_customer_number: "tc4-customer-a",
+          order_api_enabled: true,
         });
         await companyService.createCompanies({
           name: "TC-4 Company B",
           email: "tc4b@example.com",
           business_central_customer_number: "tc4-customer-b",
+          order_api_enabled: true,
         });
 
         const payload = {
@@ -256,6 +309,7 @@ medusaIntegrationTestRunner({
           name: "TC-5 Company",
           email: "tc5@example.com",
           business_central_customer_number: "tc5-customer-number",
+          order_api_enabled: true,
         });
 
         await orderIngestionService.createOrderExternalReferences({
@@ -305,6 +359,7 @@ medusaIntegrationTestRunner({
           name: "TC-6 Company",
           email: "tc6@example.com",
           business_central_customer_number: "tc6-customer-number",
+          order_api_enabled: true,
         });
 
         const input = {
@@ -353,6 +408,7 @@ medusaIntegrationTestRunner({
           name: "TC-10 Company",
           email: "tc10@example.com",
           business_central_customer_number: "tc10-customer-number",
+          order_api_enabled: true,
         });
 
         for (const externalOrderNumber of ["MANY-1", "MANY-2"]) {
@@ -384,6 +440,7 @@ medusaIntegrationTestRunner({
           name: "TC-7 Company",
           email: "tc7@example.com",
           business_central_customer_number: "tc7-customer-number",
+          order_api_enabled: true,
         });
 
         const { result: order } = await createOrderFromCanonicalPayloadWorkflow(
@@ -424,6 +481,7 @@ medusaIntegrationTestRunner({
           name: "TC-8 Company",
           email: "tc8@example.com",
           business_central_customer_number: "tc8-customer-number",
+          order_api_enabled: true,
         });
 
         const { result: order } = await createOrderFromCanonicalPayloadWorkflow(
@@ -468,6 +526,7 @@ medusaIntegrationTestRunner({
           name: "TC-9 Company",
           email: "tc9@example.com",
           business_central_customer_number: "tc9-customer-number",
+          order_api_enabled: true,
         });
 
         const { result: order } = await createOrderFromCanonicalPayloadWorkflow(
@@ -503,6 +562,7 @@ medusaIntegrationTestRunner({
           name: "TC-11 Company",
           email: "tc11@example.com",
           business_central_customer_number: "tc11-customer-number",
+          order_api_enabled: true,
         });
 
         const address = {

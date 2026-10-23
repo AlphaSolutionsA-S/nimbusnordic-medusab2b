@@ -35,6 +35,7 @@ import {
   createApiCustomerCompany,
   EXAMPLE_SHIPMENT_NOTICE_PAYLOAD,
   orderApiSecretHeaders,
+  setOrderApiEnabled,
   storeShipmentNoticeRevision,
 } from '../../utils/shipment-notices';
 
@@ -235,6 +236,22 @@ medusaIntegrationTestRunner({
       expect(JSON.stringify(response.data)).not.toContain('unknown-security-customer');
     });
 
+    // NIMBUS-217: a company switched off for the order API places no order.
+    it('refuses an order for a company switched off for the order API', async () => {
+      const offCompanyId = await createApiCustomerCompany(container, 'security-off-orders');
+      await setOrderApiEnabled(container, offCompanyId, false);
+      const response = await api.post('/orderapi/orders?customerNumber=security-off-orders',
+        { ...singleLineCanonicalOrder, externalOrderNumber: 'SECURITY-OFF-1' },
+        { headers: await orderApiSecretHeaders(container), validateStatus: () => true });
+      expect(response.status).toBe(403);
+      expect(response.data)
+        .toEqual({ type: 'forbidden', message: 'Customer not registered for the order API' });
+      const { data } = await container.resolve('query').graph({
+        entity: 'company', fields: ['id', 'orders.id'], filters: { id: offCompanyId },
+      });
+      expect(data[0].orders ?? []).toHaveLength(0);
+    });
+
     // NIMBUS-130: shipment notices carry names and addresses; only the Logic App's secret key reads
     // them, and only for the company the customer number resolves to.
     describe('GET /orderapi/shipment-notices', () => {
@@ -278,6 +295,18 @@ medusaIntegrationTestRunner({
         expect(response.status).toBe(404);
         expect(response.data).toEqual({ type: 'not_found', message: 'Customer not found' });
         expect(JSON.stringify(response.data)).not.toContain('unknown-notices-customer');
+      });
+
+      // NIMBUS-217: stored notices are not served while the company is switched off.
+      it('refuses a company switched off for the order API without returning its notices', async () => {
+        const companyA = await createApiCustomerCompany(container, 'security-notices-a');
+        await seed(companyA, 'security-ship-a');
+        await setOrderApiEnabled(container, companyA, false);
+        const response = await api.get(path,
+          { headers: await orderApiSecretHeaders(container), validateStatus: () => true });
+        expect(response.status).toBe(403);
+        expect(response.data)
+          .toEqual({ type: 'forbidden', message: 'Customer not registered for the order API' });
       });
     });
 

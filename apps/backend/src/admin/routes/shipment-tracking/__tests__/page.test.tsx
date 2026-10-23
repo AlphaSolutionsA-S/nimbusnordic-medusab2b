@@ -112,6 +112,16 @@ it("lists all shipments below the given-up section with their status", async () 
   expect(fetchMock).toHaveBeenCalledWith(OVERVIEW, { method: "GET", query: { limit: 50, offset: 0 } });
 });
 
+it("labels a shipment closed because its company is not enabled for the order API", async () => {
+  const closedOff = { ...overview.shipment_trackings[1], id: "shtr_12", shipment_number: "SS-12",
+    close_reason: "company_not_enabled" };
+  serve({ [LIST]: [ok(page)], [OVERVIEW]: [ok({ ...overview, shipment_trackings: [closedOff], count: 1 })] });
+  mount();
+  const section = allShipments();
+  await within(section).findByText("SS-12");
+  expect(within(section).getByText("Closed: company not enabled for the order API")).toBeVisible();
+});
+
 it("pages the overview by 50 independently of the given-up list", async () => {
   serve({ [LIST]: [ok(page)], [OVERVIEW]: [ok({ ...overview, count: 120 })] });
   mount();

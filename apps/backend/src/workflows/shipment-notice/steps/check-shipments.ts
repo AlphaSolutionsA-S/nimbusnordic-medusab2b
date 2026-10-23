@@ -176,7 +176,10 @@ export const checkShipmentsStep = createStep(
     const current: DueShipmentCheck[] = [];
     for (const item of input.checks) {
       const state = { bc_order_number: item.current_bc_order_number };
-      if (isCurrentBcOrder(item.bc_order_number, state)) {
+      if (!item.company_enabled) {
+        // Closed for good, before any BC read: switching the company on again does not reopen it.
+        await apply(item, { kind: "company_not_enabled" }, new Date());
+      } else if (isCurrentBcOrder(item.bc_order_number, state)) {
         current.push(item);
       } else {
         // A force resend replaced the BC order: its shipments are no longer the order's.

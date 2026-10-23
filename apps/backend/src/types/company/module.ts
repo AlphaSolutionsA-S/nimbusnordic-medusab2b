@@ -36,6 +36,7 @@ export type ModuleCompany = {
   credit_limit: number | null;
   vat_number: string | null;
   spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency;
+  order_api_enabled: boolean;
   created_at: Date;
   updated_at: Date;
   customer_group: CustomerGroupDTO;
@@ -55,6 +56,7 @@ export type ModuleCreateCompany = {
   currency_code: string;
   business_central_customer_number?: string | null;
   spending_limit_reset_frequency: ModuleCompanySpendingLimitResetFrequency | null;
+  order_api_enabled?: boolean;
 };
 
 export interface ModuleUpdateCompany extends Partial<ModuleCompany> {

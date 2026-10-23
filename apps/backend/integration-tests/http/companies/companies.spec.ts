@@ -812,5 +812,132 @@ medusaIntegrationTestRunner({
         expect(Number(company.credit_limit)).toBe(9876.54);
       });
     });
+
+    describe("order_api_enabled company setting", () => {
+      async function createAdminCompany(): Promise<string> {
+        const response = await api.post(
+          "/admin/companies",
+          {
+            name: "Admin Company",
+            email: "admin-company@example.com",
+            currency_code: "DKK",
+          },
+          adminHeaders
+        );
+        return response.data.companies[0].id as string;
+      }
+
+      it("a new company is returned with the setting off", async () => {
+        const companyId = await createAdminCompany();
+
+        const response = await api.get(
+          `/admin/companies/${companyId}`,
+          adminHeaders
+        );
+
+        expect(response.status).toBe(200);
+        expect(response.data.company.order_api_enabled).toBe(false);
+      });
+
+      it("the Admin update switches the setting on and off again", async () => {
+        const companyId = await createAdminCompany();
+
+        const on = await api.post(
+          `/admin/companies/${companyId}`,
+          { order_api_enabled: true },
+          adminHeaders
+        );
+        expect(on.status).toBe(200);
+        expect(on.data.company.order_api_enabled).toBe(true);
+        const readOn = await api.get(
+          `/admin/companies/${companyId}`,
+          adminHeaders
+        );
+        expect(readOn.data.company.order_api_enabled).toBe(true);
+
+        const off = await api.post(
+          `/admin/companies/${companyId}`,
+          { order_api_enabled: false },
+          adminHeaders
+        );
+        expect(off.status).toBe(200);
+        expect(off.data.company.order_api_enabled).toBe(false);
+        const readOff = await api.get(
+          `/admin/companies/${companyId}`,
+          adminHeaders
+        );
+        expect(readOff.data.company.order_api_enabled).toBe(false);
+      });
+
+      it("the Admin create refuses the setting", async () => {
+        const response = await api.post(
+          "/admin/companies",
+          {
+            name: "Enabled At Birth",
+            email: "enabled@example.com",
+            currency_code: "DKK",
+            order_api_enabled: true,
+          },
+          { ...adminHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toBe(400);
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const companies = await companyService.listCompanies({});
+        expect(
+          companies.filter((company) => company.name === "Enabled At Birth")
+        ).toHaveLength(0);
+      });
+
+      it("the store create refuses the setting", async () => {
+        const response = await api.post(
+          "/store/companies",
+          {
+            name: "Store Enabled",
+            email: "store-enabled@example.com",
+            currency_code: "DKK",
+            order_api_enabled: true,
+          },
+          { ...storeHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toBe(400);
+      });
+
+      it("the store company read never returns the setting", async () => {
+        const companyId = await createLinkedCompany();
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        await companyService.updateCompanies({
+          id: companyId,
+          order_api_enabled: true,
+          business_central_synced_at: new Date(),
+        });
+
+        for (const query of [
+          "",
+          "?fields=order_api_enabled",
+          "?fields=+order_api_enabled",
+        ]) {
+          const response = await api.get(
+            `/store/companies/${companyId}${query}`,
+            { ...storeHeaders, validateStatus: () => true }
+          );
+          expect({ query, status: response.status }).toEqual({
+            query,
+            status: 200,
+          });
+          expect(response.data.company).not.toHaveProperty(
+            "order_api_enabled"
+          );
+          expect(JSON.stringify(response.data)).not.toMatch(
+            /order_api_enabled/
+          );
+        }
+      });
+    });
   },
 });

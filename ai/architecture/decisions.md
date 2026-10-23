@@ -10,6 +10,7 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | Cart approval status | `B/utils/get-cart-approval-status.ts`, `validate-cart-approvals.ts` | cart approvals | storefront cart, checkout, approvals | divergent duplicate: `S/lib/util/get-cart-approval-status.ts` (approved = all vs any) |
 | Cart access, verified cart–company association | `B/workflows/cart/utils/cart-access.ts` | 404 (`authorizeCartAccessWorkflow`) | cart guard; approvals list and decision | ok |
 | Store order read and return: owner, or company admin of the approved source cart (NIMBUS-177) | `B/workflows/order/utils/order-access.ts` | 404 (`B/api/middlewares/ensure-order-access.ts`) | `GET /store/orders/:id`, `POST /store/returns` | ok |
+| Order API enabled per company (NIMBUS-217) | `B/utils/order-api-access.ts` | 403 | order API; shipment jobs; Admin retry | ok |
 | Order transfer only without an account owner (NIMBUS-177) | `B/workflows/order/utils/order-transfer.ts` | 400 | `POST /store/orders/:id/transfer/request` | ok |
 | BC-managed company fields are read-only | `B/admin/routes/companies/bc-managed-fields.ts` | admin form; BC sync | storefront company card | ok |
 | Sent or recorded BC orders require duplicate protection and a force warning | `B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`) | pure verdict | Admin widget; submission guard | ok |

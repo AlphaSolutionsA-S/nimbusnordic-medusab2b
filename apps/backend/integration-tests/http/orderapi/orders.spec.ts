@@ -11,6 +11,10 @@ import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
 import type OrderIngestionModuleService from "../../../src/modules/order-ingestion/service";
 import type { CanonicalOrder } from "../../../src/modules/order-ingestion/canonical-order-schema";
 import { singleLineCanonicalOrder } from "../../../src/modules/order-ingestion/__fixtures__/canonical-order-fixtures";
+import {
+  createApiCustomerCompany,
+  setOrderApiEnabled,
+} from "../../utils/shipment-notices";
 
 jest.setTimeout(60 * 1000);
 
@@ -87,6 +91,7 @@ medusaIntegrationTestRunner({
           name: "TC-1 HTTP Company",
           email: "tc1-http@example.com",
           business_central_customer_number: "tc1-http-customer",
+          order_api_enabled: true,
         });
 
         const response = await api.post(
@@ -182,6 +187,7 @@ medusaIntegrationTestRunner({
           name: "TC-6 HTTP Company",
           email: "tc6-http@example.com",
           business_central_customer_number: "tc6-http-customer",
+          order_api_enabled: true,
         });
 
         const payload = {
@@ -218,6 +224,7 @@ medusaIntegrationTestRunner({
           name: "TC-7 HTTP Company",
           email: "tc7-http@example.com",
           business_central_customer_number: "tc7-http-customer",
+          order_api_enabled: true,
         });
 
         const response = await api.post(
@@ -256,6 +263,7 @@ medusaIntegrationTestRunner({
           name: "TC-8 HTTP Company",
           email: "tc8-http@example.com",
           business_central_customer_number: "tc8-http-customer",
+          order_api_enabled: true,
         });
 
         const error = await api
@@ -303,6 +311,7 @@ medusaIntegrationTestRunner({
           name: "TC-9 HTTP Company",
           email: "tc9-http@example.com",
           business_central_customer_number: "tc9-http-customer",
+          order_api_enabled: true,
         });
 
         await expect(
@@ -342,6 +351,7 @@ medusaIntegrationTestRunner({
           name: "TC-10 HTTP Company",
           email: "tc10-http@example.com",
           business_central_customer_number: "tc10-http-customer",
+          order_api_enabled: true,
         });
 
         const response = await api.post(
@@ -365,6 +375,102 @@ medusaIntegrationTestRunner({
           (persisted.metadata?.canonical_order as CanonicalOrder | undefined)
             ?.shipTo?.country
         ).toEqual("SE");
+      });
+
+      describe("a company switched off for the order API (NIMBUS-217)", () => {
+        const CUSTOMER = "switched-off-http-customer";
+        const PATH = `/orderapi/orders?customerNumber=${CUSTOMER}`;
+        const FORBIDDEN_BODY = {
+          type: "forbidden",
+          message: "Customer not registered for the order API",
+        };
+
+        let companyId: string;
+        let secretHeaders: { headers: { authorization: string } };
+
+        const post = (body: object) =>
+          api.post(PATH, body, { ...secretHeaders, validateStatus: () => true });
+
+        const companyOrderIds = async (): Promise<string[]> => {
+          const { data } = await getContainer().resolve("query").graph({
+            entity: "company",
+            fields: ["id", "orders.id"],
+            filters: { id: companyId },
+          });
+          return (data[0]?.orders ?? []).flatMap((order) => (order ? [order.id] : []));
+        };
+
+        beforeEach(async () => {
+          const container = getContainer();
+          secretHeaders = await generateSecretApiKeyHeaders(container);
+          companyId = await createApiCustomerCompany(container, CUSTOMER);
+          await setOrderApiEnabled(container, companyId, false);
+        });
+
+        it("refuses with 403 and a fixed body, and creates no order, external reference or company link", async () => {
+          const container = getContainer();
+          const orderModuleService = container.resolve<IOrderModuleService>(Modules.ORDER);
+          const orderIngestionService =
+            container.resolve<OrderIngestionModuleService>(ORDER_INGESTION_MODULE);
+
+          const response = await post({
+            ...singleLineCanonicalOrder,
+            externalOrderNumber: "SWITCHED-OFF-HTTP-1",
+          });
+
+          expect(response.status).toEqual(403);
+          expect(response.data).toEqual(FORBIDDEN_BODY);
+          expect(JSON.stringify(response.data)).not.toContain(CUSTOMER);
+          expect(JSON.stringify(response.data)).not.toContain(companyId);
+
+          expect(
+            await listOrdersForExternalNumber(orderModuleService, "SWITCHED-OFF-HTTP-1")
+          ).toHaveLength(0);
+          expect(
+            await orderIngestionService.listOrderExternalReferences({ company_id: companyId })
+          ).toHaveLength(0);
+          expect(await companyOrderIds()).toEqual([]);
+        });
+
+        it("refuses a duplicate external number with 403, not 422", async () => {
+          const container = getContainer();
+          const payload = { ...singleLineCanonicalOrder, externalOrderNumber: "SWITCHED-OFF-DUP-1" };
+
+          await setOrderApiEnabled(container, companyId, true);
+          expect((await post(payload)).status).toEqual(201);
+          await setOrderApiEnabled(container, companyId, false);
+
+          const response = await post(payload);
+          expect(response.status).toEqual(403);
+          expect(response.data).toEqual(FORBIDDEN_BODY);
+        });
+
+        it("still answers an invalid body with 400 before the company is checked", async () => {
+          const { externalOrderNumber, ...invalidBody } = singleLineCanonicalOrder;
+
+          const response = await post(invalidBody);
+          expect(response.status).toEqual(400);
+          expect(response.data.type).toEqual("invalid_data");
+        });
+
+        it("accepts the next order once the company is switched back on, keeping earlier orders", async () => {
+          const container = getContainer();
+
+          await setOrderApiEnabled(container, companyId, true);
+          const first = await post({ ...singleLineCanonicalOrder, externalOrderNumber: "TOGGLE-1" });
+          expect(first.status).toEqual(201);
+
+          await setOrderApiEnabled(container, companyId, false);
+          const refused = await post({ ...singleLineCanonicalOrder, externalOrderNumber: "TOGGLE-2" });
+          expect(refused.status).toEqual(403);
+          expect(await companyOrderIds()).toEqual([first.data.order_id]);
+
+          await setOrderApiEnabled(container, companyId, true);
+          const accepted = await post({ ...singleLineCanonicalOrder, externalOrderNumber: "TOGGLE-2" });
+          expect(accepted.status).toEqual(201);
+          expect((await companyOrderIds()).sort())
+            .toEqual([first.data.order_id, accepted.data.order_id].sort());
+        });
       });
     });
   },

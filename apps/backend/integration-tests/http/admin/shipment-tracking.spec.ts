@@ -2,7 +2,7 @@ import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import { Modules } from "@medusajs/framework/utils";
 import type { IOrderModuleService } from "@medusajs/framework/types";
 import { createAdminUser } from "../../utils/admin";
-import { createApiCustomerCompany, orderApiSecretHeaders } from "../../utils/shipment-notices";
+import { createApiCustomerCompany, orderApiSecretHeaders, setOrderApiEnabled } from "../../utils/shipment-notices";
 import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
 import type OrderIngestionModuleService from "../../../src/modules/order-ingestion/service";
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
@@ -35,7 +35,8 @@ medusaIntegrationTestRunner({
     afterEach(() => jest.restoreAllMocks());
 
     async function seed(
-      reason: "gave_up" | "window_ended" | "cancelled" | "superseded" | null = "gave_up",
+      reason:
+        | "gave_up" | "window_ended" | "cancelled" | "superseded" | "company_not_enabled" | null = "gave_up",
       postingDate = "2026-01-01",
     ) {
       counter += 1;
@@ -84,18 +85,20 @@ medusaIntegrationTestRunner({
       const windowEnded = await seed("window_ended", "2026-03-03");
       const cancelled = await seed("cancelled", "2026-03-02");
       const superseded = await seed("superseded", "2026-03-01");
+      const companyOff = await seed("company_not_enabled", "2026-02-28");
       const response = await api.get("/admin/shipment-tracking/overview", auth);
-      expect(response.data).toMatchObject({ count: 5, limit: 50, offset: 0 });
+      expect(response.data).toMatchObject({ count: 6, limit: 50, offset: 0 });
       expect(response.data.shipment_trackings).toEqual(([
         [open, "open", null], [gaveUp, "closed", "gave_up"], [windowEnded, "closed", "window_ended"],
         [cancelled, "closed", "cancelled"], [superseded, "closed", "superseded"],
+        [companyOff, "closed", "company_not_enabled"],
       ] as const).map(([row, state, closeReason]) => ({
         id: row.id, shipment_number: row.shipment_number, bc_order_number: "SO-RETRY",
         external_order_number: "EXT-RETRY", company_id: companyId, company_name: "Notice Co C-RETRY",
         posting_date: row.posting_date, state, close_reason: closeReason,
       })));
       const page = await api.get("/admin/shipment-tracking/overview?limit=2&offset=2", auth);
-      expect(page.data).toMatchObject({ count: 5, limit: 2, offset: 2 });
+      expect(page.data).toMatchObject({ count: 6, limit: 2, offset: 2 });
       expect(page.data.shipment_trackings.map((row: { id: string }) => row.id)).toEqual([windowEnded.id, cancelled.id]);
     });
 
@@ -133,6 +136,29 @@ medusaIntegrationTestRunner({
       expect(response.status).toBe(404);
     });
 
+    it("refuses a gave-up row of a switched-off company and leaves it unchanged, then reopens it once switched on", async () => {
+      const row = await seed();
+      await setOrderApiEnabled(getContainer(), companyId, false);
+      const refused = await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, { ...auth, validateStatus: () => true });
+      expect(refused.status).toBe(400);
+      expect(refused.data).toEqual({
+        type: "not_allowed", message: "The company is not enabled for the order API",
+      });
+      const [unchanged] = await service.listShipmentTrackings({ id: row.id });
+      expect(unchanged).toMatchObject({
+        state: "closed", close_reason: "gave_up", attempts: 8, reopened_by: null, reopened_at: null,
+      });
+      const missing = await api.post("/admin/shipment-tracking/shtr_missing/retry", {}, { ...auth, validateStatus: () => true });
+      expect(missing.status).toBe(404);
+
+      await setOrderApiEnabled(getContainer(), companyId, true);
+      const reopened = await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, auth);
+      expect(reopened.status).toBe(200);
+      expect(reopened.data.shipment_tracking).toMatchObject({
+        id: row.id, state: "open", close_reason: null, reopened_by: actorId,
+      });
+    });
+
     it("rejects unknown query/body keys, invalid paging and invalid ids", async () => {
       const row = await seed();
       for (const path of ["/admin/shipment-tracking", "/admin/shipment-tracking/overview"]) {
@@ -166,7 +192,7 @@ medusaIntegrationTestRunner({
       await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, auth);
       const { result } = await checkShipmentsWorkflow(getContainer()).run({ input: { deadline: new Date(Date.now() + 60_000) } });
       expect(result.checked).toBe(1);
-      expect(read).toHaveBeenCalledWith([row.shipment_number]);
+      expect(read).toHaveBeenCalledWith([row.shipment_number], expect.any(Number));
       const [after] = await service.listShipmentTrackings({ id: row.id });
       expect(after).toMatchObject({ state: "open", attempts: 1 });
       await service.updateShipmentTrackings({ id: row.id, next_check_at: new Date(), reopened_at: new Date(Date.now() - 3 * DAY - 1000) });

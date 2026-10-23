@@ -55,8 +55,21 @@ export async function createApiCustomerCompany(
     currency_code: "dkk",
     business_central_customer_number: customerNumber,
     spending_limit_reset_frequency: null,
+    order_api_enabled: true,
   });
   return company.id;
+}
+
+/** Switches a company on or off for the order API, as an Admin user does. */
+export async function setOrderApiEnabled(
+  container: MedusaContainer,
+  companyId: string,
+  enabled: boolean
+): Promise<void> {
+  await container.resolve<ICompanyModuleService>(COMPANY_MODULE).updateCompanies({
+    id: companyId,
+    order_api_enabled: enabled,
+  });
 }
 
 /**

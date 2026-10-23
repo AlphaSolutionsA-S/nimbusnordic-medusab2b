@@ -10,14 +10,13 @@ import type {
   BCShipmentWindow,
   IBusinessCentralModuleService,
 } from "../../../src/modules/business-central/types";
-import { COMPANY_MODULE } from "../../../src/modules/company";
-import type { ICompanyModuleService } from "../../../src/types";
 import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
 import type OrderIngestionModuleService from "../../../src/modules/order-ingestion/service";
 import {
   BC_INTEGRATION_STATE_METADATA_KEY,
   createInitialBcIntegrationState,
 } from "../../../src/modules/order-ingestion/bc-integration-state";
+import { createApiCustomerCompany } from "../../utils/shipment-notices";
 
 jest.setTimeout(120 * 1000);
 
@@ -102,23 +101,9 @@ medusaIntegrationTestRunner({
 
       async function seedApiOrder() {
         const container = getContainer();
-        const companies = container.resolve<ICompanyModuleService>(COMPANY_MODULE);
         const orders = container.resolve<IOrderModuleService>(Modules.ORDER);
 
-        const company = await companies.createCompanies({
-          name: "Shipment Poll Co",
-          phone: "+4500000000",
-          email: "shipment-poll@example.com",
-          address: null,
-          city: null,
-          state: null,
-          zip: null,
-          country: "dk",
-          logo_url: null,
-          currency_code: "dkk",
-          business_central_customer_number: "C-100",
-          spending_limit_reset_frequency: null,
-        });
+        const company = { id: await createApiCustomerCompany(container, "C-100") };
         const order = await orders.createOrders({
           currency_code: "dkk",
           metadata: {

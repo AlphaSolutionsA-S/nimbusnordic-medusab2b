@@ -18,6 +18,11 @@ import {
 import type OrderIngestionModuleService from "../../../modules/order-ingestion/service";
 import type { ShipmentPollCursor } from "../../../modules/order-ingestion/shipment-notice-storage";
 import {
+  isCompanyEnabledForOrderApi,
+  ORDER_API_COMPANY_FIELDS,
+  type OrderApiCompanyRow,
+} from "../../../utils/order-api-access";
+import {
   halveShipmentWindow,
   SHIPMENT_WINDOW_HEADER_BUDGET,
   shipmentTrackingForHeaders,
@@ -63,11 +68,16 @@ async function loadOrderCandidates(
   }
 
   const query = container.resolve(ContainerRegistrationKeys.QUERY);
-  const { data: companies } = await query.graph({
+  const { data: rows } = await query.graph({
     entity: "companies",
-    fields: ["id", "business_central_customer_number"],
+    fields: [...ORDER_API_COMPANY_FIELDS, "business_central_customer_number"],
     filters: { business_central_customer_number: customerNumbers },
   });
+  // Shipments of switched-off companies are never tracked; the cursor still passes them, so they
+  // are not back-filled when the company is switched on later (NIMBUS-217).
+  const companies = rows.filter((company: OrderApiCompanyRow) =>
+    isCompanyEnabledForOrderApi(company)
+  );
   if (!companies.length) {
     return [];
   }

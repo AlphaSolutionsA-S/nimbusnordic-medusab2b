@@ -45,6 +45,7 @@ async function createTestOrder(
     name: `Company for ${customerNumber}`,
     email: `${customerNumber}@example.com`,
     business_central_customer_number: customerNumber,
+    order_api_enabled: true,
   });
 
   const { result: order } = await createOrderFromCanonicalPayloadWorkflow(
