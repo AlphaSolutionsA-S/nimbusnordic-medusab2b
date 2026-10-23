@@ -1,0 +1,14 @@
+export type OrderApiAccessCompany = {
+  order_api_enabled?: boolean | null;
+};
+
+/*
+  The single home of "a company may use the order API" (NIMBUS-217): intake, shipment notices,
+  shipment discovery, the check run and the Admin retry all ask this. Only an explicit `true`
+  enables; a missing company or an unset value counts as switched off.
+*/
+export function isCompanyEnabledForOrderApi(
+  company: OrderApiAccessCompany | null | undefined
+): boolean {
+  return company?.order_api_enabled === true;
+}

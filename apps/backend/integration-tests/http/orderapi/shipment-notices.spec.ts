@@ -4,6 +4,7 @@ import {
   createApiCustomerCompany,
   EXAMPLE_SHIPMENT_NOTICE_PAYLOAD,
   orderApiSecretHeaders,
+  setOrderApiEnabled,
   storeShipmentNoticeRevision,
 } from "../../utils/shipment-notices";
 
@@ -22,6 +23,7 @@ medusaIntegrationTestRunner({
       let headers: { authorization: string };
       /** Company A's sequences, oldest first: shipment 1 r1, shipment 2 r1, shipment 1 r2. */
       let sequences: number[];
+      let companyAId: string;
 
       const get = (query: string) => api.get(
         `${PATH}?customerNumber=${CUSTOMER}${query}`, { headers, validateStatus: () => true });
@@ -30,6 +32,7 @@ medusaIntegrationTestRunner({
         container = getContainer();
         headers = await orderApiSecretHeaders(container);
         const companyA = await createApiCustomerCompany(container, CUSTOMER);
+        companyAId = companyA;
         const companyB = await createApiCustomerCompany(container, "notices-http-other");
         const store = (company_id: string, bc_shipment_id: string, revision: number) =>
           storeShipmentNoticeRevision(container, { company_id, bc_shipment_id, revision });
@@ -128,6 +131,29 @@ medusaIntegrationTestRunner({
         const response = await get(query);
         expect(response.status).toBe(400);
         expect(response.data).toEqual({ type: "invalid_data", message: expect.any(String) });
+      });
+
+      // NIMBUS-217: stored notices are kept while the company is off and served again once on.
+      it("refuses a switched-off company with 403 and no notice data, then serves the same notices once it is switched back on", async () => {
+        const before = await get("");
+        expect(before.status).toBe(200);
+
+        await setOrderApiEnabled(container, companyAId, false);
+        const refused = await get("");
+        expect(refused.status).toBe(403);
+        expect(refused.data).toEqual({
+          type: "forbidden",
+          message: "Customer not registered for the order API",
+        });
+        expect(JSON.stringify(refused.data)).not.toContain(CUSTOMER);
+        expect(JSON.stringify(refused.data)).not.toContain(companyAId);
+
+        await setOrderApiEnabled(container, companyAId, true);
+        const served = await get("");
+        expect(served.status).toBe(200);
+        expect(served.data).toEqual(before.data);
+        expect(served.data.shipment_notices.map((notice) => notice.cursor))
+          .toEqual(sequences.map(String));
       });
     });
   },
