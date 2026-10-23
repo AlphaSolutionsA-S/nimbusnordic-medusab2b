@@ -1,7 +1,7 @@
 import { validateAndTransformBody, validateAndTransformQuery } from "@medusajs/framework/http";
 import type { MedusaRequest, MedusaResponse, MedusaNextFunction, MiddlewareRoute } from "@medusajs/framework/http";
 import { MedusaError } from "@medusajs/framework/utils";
-import { AdminShipmentTrackingParams, AdminShipmentTrackingQuery, AdminShipmentTrackingRetry } from "./validators";
+import { AdminShipmentTrackingOverviewQuery, AdminShipmentTrackingParams, AdminShipmentTrackingQuery, AdminShipmentTrackingRetry } from "./validators";
 
 function validateTrackingParams(req: MedusaRequest, _res: MedusaResponse, next: MedusaNextFunction): void {
   const parsed = AdminShipmentTrackingParams.safeParse(req.params);
@@ -17,9 +17,13 @@ export const adminShipmentTrackingMiddlewares: MiddlewareRoute[] = [
     middlewares: [validateAndTransformQuery(AdminShipmentTrackingQuery, {})],
   },
   {
+    matcher: "/admin/shipment-tracking/overview", method: "GET",
+    middlewares: [validateAndTransformQuery(AdminShipmentTrackingOverviewQuery, {})],
+  },
+  {
     matcher: "/admin/shipment-tracking/:id/retry", method: "POST",
     middlewares: [validateTrackingParams, validateAndTransformQuery(AdminShipmentTrackingRetry, {}), validateAndTransformBody(AdminShipmentTrackingRetry)],
   },
 ];
-export { AdminShipmentTrackingQuery, AdminShipmentTrackingRetry } from "./validators";
-export type { AdminShipmentTrackingQueryType, AdminShipmentTrackingRetryType } from "./validators";
+export { AdminShipmentTrackingOverviewQuery, AdminShipmentTrackingQuery, AdminShipmentTrackingRetry } from "./validators";
+export type { AdminShipmentTrackingOverviewQueryType, AdminShipmentTrackingQueryType, AdminShipmentTrackingRetryType } from "./validators";
