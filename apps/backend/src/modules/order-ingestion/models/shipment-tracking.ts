@@ -7,6 +7,7 @@ export const SHIPMENT_TRACKING_CLOSE_REASONS = [
   "window_ended",
   "superseded",
   "gave_up",
+  "company_not_enabled",
 ] as const;
 
 // The check schedule of one BC shipment of an API order.

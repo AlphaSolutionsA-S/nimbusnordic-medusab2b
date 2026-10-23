@@ -11,8 +11,6 @@ import type {
   BCShipmentWindow,
   IBusinessCentralModuleService,
 } from "../../../src/modules/business-central/types";
-import { COMPANY_MODULE } from "../../../src/modules/company";
-import type { ICompanyModuleService } from "../../../src/types";
 import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
 import type OrderIngestionModuleService from "../../../src/modules/order-ingestion/service";
 import {
@@ -25,6 +23,7 @@ import type {
 import {
   discoverShipmentsWorkflow,
 } from "../../../src/workflows/shipment-notice/workflows/discover-shipments";
+import { createApiCustomerCompany, setOrderApiEnabled } from "../../utils/shipment-notices";
 
 jest.setTimeout(120 * 1000);
 
@@ -91,25 +90,15 @@ medusaIntegrationTestRunner({
         customerNumber: string;
         externalOrderNumber: string;
         bcOrderNumber: string;
+        orderApiEnabled?: boolean;
       }) {
         const container = getContainer();
-        const companies = container.resolve<ICompanyModuleService>(COMPANY_MODULE);
         const orders = container.resolve<IOrderModuleService>(Modules.ORDER);
 
-        const company = await companies.createCompanies({
-          name: `Shipment Co ${options.customerNumber}`,
-          phone: "+4500000000",
-          email: `shipments-${options.customerNumber}@example.com`,
-          address: null,
-          city: null,
-          state: null,
-          zip: null,
-          country: "dk",
-          logo_url: null,
-          currency_code: "dkk",
-          business_central_customer_number: options.customerNumber,
-          spending_limit_reset_frequency: null,
-        });
+        const company = { id: await createApiCustomerCompany(container, options.customerNumber) };
+        if (options.orderApiEnabled === false) {
+          await setOrderApiEnabled(container, company.id, false);
+        }
         const order = await orders.createOrders({
           currency_code: "dkk",
           metadata: {
@@ -374,6 +363,48 @@ medusaIntegrationTestRunner({
         });
         expect(rows[0].next_check_at).toEqual(at(modified, 15 * MINUTE));
         expect(result).toMatchObject({ headers: 5, matched: 1, tracked: 1 });
+      });
+
+      it("never tracks a switched-off company's shipment, not even after it is switched on", async () => {
+        const now = new Date();
+        const goLive = at(now, -120 * MINUTE);
+        const { order } = await seedApiOrder({
+          customerNumber: "C-100",
+          externalOrderNumber: "METZ-1",
+          bcOrderNumber: "SO-100",
+        });
+        const { company: off } = await seedApiOrder({
+          customerNumber: "C-OFF",
+          externalOrderNumber: "OFF-1",
+          bcOrderNumber: "SO-300",
+          orderApiEnabled: false,
+        });
+        await startPollStateAt(goLive);
+        // Behind both scan bounds, so the lead and the trail scan both pass it in the first run.
+        const modified = at(now, -60 * MINUTE);
+        const enabled = header(modified);
+        const switchedOff = header(modified, {
+          customerNumber: "C-OFF",
+          externalDocumentNumber: "OFF-1",
+          orderNumber: "SO-300",
+        });
+        fake.headers = [enabled, switchedOff];
+
+        const result = await run();
+
+        let rows = await trackingRows();
+        expect(rows.map((row) => row.bc_shipment_id)).toEqual([enabled.id]);
+        expect(rows[0]).toMatchObject({ order_id: order.id, state: "open" });
+        expect(result.complete).toBe(true);
+        const state = (await orderIngestion().retrieveShipmentPollState())!;
+        expect(state.lead_cursor.getTime()).toBeGreaterThan(modified.getTime());
+        expect(state.trail_cursor.getTime()).toBeGreaterThan(modified.getTime());
+
+        await setOrderApiEnabled(getContainer(), off.id, true);
+        await run();
+
+        rows = await trackingRows();
+        expect(rows.map((row) => row.bc_shipment_id)).toEqual([enabled.id]);
       });
 
       it("moves an open row's due time earlier for a newer header, never later", async () => {

@@ -35,7 +35,8 @@ medusaIntegrationTestRunner({
     afterEach(() => jest.restoreAllMocks());
 
     async function seed(
-      reason: "gave_up" | "window_ended" | "cancelled" | "superseded" | null = "gave_up",
+      reason:
+        | "gave_up" | "window_ended" | "cancelled" | "superseded" | "company_not_enabled" | null = "gave_up",
       postingDate = "2026-01-01",
     ) {
       counter += 1;
@@ -84,18 +85,20 @@ medusaIntegrationTestRunner({
       const windowEnded = await seed("window_ended", "2026-03-03");
       const cancelled = await seed("cancelled", "2026-03-02");
       const superseded = await seed("superseded", "2026-03-01");
+      const companyOff = await seed("company_not_enabled", "2026-02-28");
       const response = await api.get("/admin/shipment-tracking/overview", auth);
-      expect(response.data).toMatchObject({ count: 5, limit: 50, offset: 0 });
+      expect(response.data).toMatchObject({ count: 6, limit: 50, offset: 0 });
       expect(response.data.shipment_trackings).toEqual(([
         [open, "open", null], [gaveUp, "closed", "gave_up"], [windowEnded, "closed", "window_ended"],
         [cancelled, "closed", "cancelled"], [superseded, "closed", "superseded"],
+        [companyOff, "closed", "company_not_enabled"],
       ] as const).map(([row, state, closeReason]) => ({
         id: row.id, shipment_number: row.shipment_number, bc_order_number: "SO-RETRY",
         external_order_number: "EXT-RETRY", company_id: companyId, company_name: "Notice Co C-RETRY",
         posting_date: row.posting_date, state, close_reason: closeReason,
       })));
       const page = await api.get("/admin/shipment-tracking/overview?limit=2&offset=2", auth);
-      expect(page.data).toMatchObject({ count: 5, limit: 2, offset: 2 });
+      expect(page.data).toMatchObject({ count: 6, limit: 2, offset: 2 });
       expect(page.data.shipment_trackings.map((row: { id: string }) => row.id)).toEqual([windowEnded.id, cancelled.id]);
     });
 

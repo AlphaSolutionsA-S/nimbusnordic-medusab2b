@@ -22,7 +22,13 @@ export type AdminShipmentTrackingOverviewRow = {
   company_name: string | null;
   posting_date: string;
   state: "open" | "closed";
-  close_reason: "cancelled" | "window_ended" | "superseded" | "gave_up" | null;
+  close_reason:
+    | "cancelled"
+    | "window_ended"
+    | "superseded"
+    | "gave_up"
+    | "company_not_enabled"
+    | null;
 };
 type Page<TRow> = {
   shipment_trackings: TRow[];

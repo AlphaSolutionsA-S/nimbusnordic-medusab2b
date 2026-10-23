@@ -38,3 +38,13 @@
 - Task 05: `admin/shipment-tracking.spec.ts` seeds through `createApiCustomerCompany`, so its company is now on. Switch it off with `setOrderApiEnabled` for the refusal case.
 - `ai:check` fails on the AGENTS.md byte budget (32885 > 32768) after the decisions row. Don't add more Tier 0 text without a human decision.
 - Error body for FORBIDDEN is exactly `{ type: "forbidden", message }` (verified in error-handler.js 2.21.2).
+
+## Task 04: shipment job
+
+- `DueShipmentCheck.company_enabled: boolean` (prepare step, one `companies` query per batch via the rule); the check step closes `!company_enabled` rows with outcome `{ kind: "company_not_enabled" }` before the superseded check and any BC read.
+- Close reason `company_not_enabled` added to `SHIPMENT_TRACKING_CLOSE_REASONS` (model), the Admin hook union and the page label map ("company not enabled for the order API"). The reopen SQL only reopens `gave_up`, so these rows can never be retried.
+- **No migration yet** for the close-reason check constraint (needs a DB). Until generated, closing a row with the new reason fails in a real DB.
+- Discovery filters the companies query rows through `isCompanyEnabledForOrderApi` in `loadOrderCandidates` (`scan-shipment-windows.ts`); the cursor logic is unchanged.
+- Row types for `query.graph` companies: `{ id: string } & OrderApiAccessCompany` annotated on the callback parameter (no cast); typecheck stays at 22.
+- `check-shipments.spec.ts` now has `companyId` (an enabled company from `beforeEach`) and `track(orderId, { companyId })`.
+- Task 05: a reopen of a `company_not_enabled` row is already refused by the existing "only gave_up" rule.

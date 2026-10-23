@@ -29,6 +29,7 @@ export type ShipmentScheduleRow = Pick<
  * - `checked`: read and decided "nothing", or a `shipped`/`revised` revision stored;
  * - `cancelled`: a `cancelled` revision stored;
  * - `superseded`: the order has another current BC order number;
+ * - `company_not_enabled`: the company is switched off for the order API or gone (NIMBUS-217);
  * - `conflict`: the store found a newer revision than the one decided against;
  * - `failed`: unpairable, or not returned by BC; `error` is a code, never BC text.
  */
@@ -36,6 +37,7 @@ export type ShipmentCheckOutcome =
   | { kind: "checked" }
   | { kind: "cancelled" }
   | { kind: "superseded" }
+  | { kind: "company_not_enabled" }
   | { kind: "conflict" }
   | { kind: "failed"; error: string };
 
@@ -85,6 +87,7 @@ export function scheduleShipmentCheck(
           };
     case "cancelled":
     case "superseded":
+    case "company_not_enabled":
       return {
         action: "close",
         close_reason: outcome.kind,

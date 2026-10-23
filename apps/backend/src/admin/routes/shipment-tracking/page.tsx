@@ -10,6 +10,7 @@ const PAGE_SIZE = 20;
 const OVERVIEW_PAGE_SIZE = 50;
 const CLOSE_REASON_LABELS: Record<NonNullable<AdminShipmentTrackingOverviewRow["close_reason"]>, string> = {
   cancelled: "cancelled", window_ended: "window ended", superseded: "superseded", gave_up: "gave up",
+  company_not_enabled: "company not enabled for the order API",
 };
 
 function statusText(row: AdminShipmentTrackingOverviewRow): string {

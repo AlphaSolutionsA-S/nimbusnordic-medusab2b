@@ -89,6 +89,24 @@ describe("scheduleShipmentCheck", () => {
     });
   });
 
+  it("closes company_not_enabled like superseded when the company is switched off", () => {
+    const now = day(2);
+    const row = { ...openRow, attempts: 2, last_error: "not_returned", last_checked_at: day(1) };
+    expect(scheduleShipmentCheck(row, { kind: "company_not_enabled" }, now)).toEqual({
+      action: "close",
+      close_reason: "company_not_enabled",
+      attempts: 0,
+      last_error: null,
+      last_checked_at: now,
+      final_check_done: false,
+    });
+    expect(scheduleShipmentCheck(row, { kind: "company_not_enabled" }, day(16))).toMatchObject({
+      action: "close",
+      close_reason: "company_not_enabled",
+      final_check_done: true,
+    });
+  });
+
   it("is due again at once after a store conflict, without counting a failure", () => {
     const now = day(2);
     const row = { ...openRow, attempts: 1, last_error: "not_returned", last_checked_at: day(1) };

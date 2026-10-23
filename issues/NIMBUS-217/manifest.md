@@ -26,7 +26,7 @@ All tasks are in `apps/backend` (`@b2b-starter/backend`); `<f>` = `pnpm --filter
 | 01 | Company setting `order_api_enabled`: model, migration, Admin read/update, kept out of store and BC sync | `01-company-setting.md` | backend | F1, R12, R13, R14 | None | NIMBUS-218 | DONE |
 | 02 | Admin UI: show and edit the setting on the company page | `02-admin-company-setting-ui.md` | backend (admin) | F2 | 01 | NIMBUS-219 | DONE |
 | 03 | Rule home and 403 for switched-off companies on both order API endpoints | `03-order-api-refusal.md` | backend | F3, F4, R1–R5, R8, R11, R15, N1–N3 | 01 | NIMBUS-220 | DONE |
-| 04 | Shipment job: discovery skips and check run closes switched-off companies | `04-shipment-job-filter.md` | backend | F5, F6, R6, R7, R9, N2, N4 | 03 | NIMBUS-221 | TODO |
+| 04 | Shipment job: discovery skips and check run closes switched-off companies | `04-shipment-job-filter.md` | backend | F5, F6, R6, R7, R9, N2, N4 | 03 | NIMBUS-221 | DONE |
 | 05 | Admin retry refuses a shipment of a switched-off company | `05-retry-refusal.md` | backend | R10 | 03 | NIMBUS-222 | TODO |
 
 ## Scope items with no task

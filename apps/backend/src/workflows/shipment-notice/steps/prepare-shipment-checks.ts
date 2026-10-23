@@ -8,6 +8,10 @@ import {
   type BcOrderLineMapEntry,
 } from "../../../modules/order-ingestion/bc-integration-state";
 import type OrderIngestionModuleService from "../../../modules/order-ingestion/service";
+import {
+  isCompanyEnabledForOrderApi,
+  type OrderApiAccessCompany,
+} from "../../../utils/order-api-access";
 import type { LatestShipmentRevision } from "../utils/decide-shipment-notice";
 
 /** At most this many due tracking rows are checked per run, oldest due first. */
@@ -36,7 +40,12 @@ export type DueShipmentCheck = {
   /** The order's BC order number now; null when the order or its BC state is gone. */
   current_bc_order_number: string | null;
   bc_lines: BcOrderLineMapEntry[] | null;
+  /** The company may use the order API; false when it is switched off or gone. */
+  company_enabled: boolean;
 };
+
+// Local generated types can lag the company model, so the row is a structural subset.
+type CompanySettingRow = { id: string } & OrderApiAccessCompany;
 
 // Only the listed BC line numbers are needed from a stored payload; other keys are ignored.
 const ListedLinesSchema = z.object({
@@ -48,7 +57,8 @@ const iso = (date: Date | null): string | null => (date ? date.toISOString() : n
 /**
  * Selects the due tracking rows of this run and reads, before any BC read, the latest stored
  * revision of each (NIMBUS-130): a revision another run stores after this read makes the store a
- * conflict instead of overwriting a newer observation.
+ * conflict instead of overwriting a newer observation. Also reads each row's company setting in
+ * one query, so switched-off companies are closed without a BC read (NIMBUS-217).
  */
 export const prepareShipmentChecksStep = createStep(
   "prepare-shipment-checks",
@@ -100,6 +110,15 @@ export const prepareShipmentChecksStep = createStep(
       ])
     );
 
+    const { data: companies } = await query.graph({
+      entity: "companies",
+      fields: ["id", "order_api_enabled"],
+      filters: { id: [...new Set(rows.map((row) => row.company_id))] },
+    });
+    const companyById = new Map(
+      companies.map((company: CompanySettingRow) => [company.id, company])
+    );
+
     const checks = rows.map((row): DueShipmentCheck => {
       const state = stateByOrder.get(row.order_id);
       return {
@@ -119,6 +138,7 @@ export const prepareShipmentChecksStep = createStep(
         expected: latestByShipment.get(row.bc_shipment_id) ?? null,
         current_bc_order_number: state?.bc_order_number ?? null,
         bc_lines: state?.bc_lines ?? null,
+        company_enabled: isCompanyEnabledForOrderApi(companyById.get(row.company_id)),
       };
     });
 
