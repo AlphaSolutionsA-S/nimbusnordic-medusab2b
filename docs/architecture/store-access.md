@@ -1,7 +1,7 @@
 # Store cart and order access
 
-**Last updated:** 2026-10-23
-**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204), NIMBUS-133
+**Last updated:** 2026-10-24
+**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204), NIMBUS-133, NIMBUS-207
 
 ## Overview
 
@@ -206,6 +206,9 @@ verified.
 
 ## Extension Points
 
+- **Changing store quote fields:** update the shared quote query configuration and its middleware
+  and HTTP contracts. Keep sensitive relations at scalar leaves; a bare allowed parent also admits
+  scalar wildcards. Add only fields required by a consumer and retain the local relation-depth limit.
 - **A new store route that takes a cart ID** (path, body or query, or via a payment collection):
   add `ensureCartAccess(<operation>, <source>)` in its middlewares, after its validators. Choose
   `read` for reads, `owner` for any change, `pay` for payment and completion. For a cart route by

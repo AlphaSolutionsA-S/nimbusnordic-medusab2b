@@ -1,7 +1,7 @@
 # Quote responses expose the company's financial details
 
 **Date:** 2026-10-21
-**Status:** Scoped
+**Status:** Implemented
 **Type:** Bug
 **Priority:** Medium (Jira; `bug.md` registered it as Major)
 **Issue:** NIMBUS-207 (relates to NIMBUS-177)
@@ -163,3 +163,17 @@ row to `decisions.md`. 5: keep Medium.
 - Builds on the company field tiers from NIMBUS-157 (company information read-only in the storefront).
 - Baseline: quote HTTP specs fail today (`ai/architecture/verification.md`); a new security spec
   case must run green on its own.
+
+## Documentation
+
+- [docs/architecture/store-access.md](../../../docs/architecture/store-access.md) — Shared quote projection, field filtering and extension constraints (updated).
+- [docs/architecture/order-api/overview.md](../../../docs/architecture/order-api/overview.md) — Quote responses no longer expose the Order API flag (updated).
+
+AI base files updated: `ai/architecture/decisions.md` (company field visibility owner),
+`ai/skills/medusa-api-route/project.md` (exact-path allowlist and local relation depth), with
+generated `AGENTS.md` and `.github/copilot-instructions.md` refreshed during implementation.
+
+Implementation is complete. HTTP/database verification remains blocked by the guarded test
+environment configuration; Klaus Petersen accepted proceeding with that recorded gap on
+2026-10-24. Controlled response and quote/conversation display verification is still required
+after deployment, as recorded in `deviation-report.md`.

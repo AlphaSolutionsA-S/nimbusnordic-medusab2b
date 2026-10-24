@@ -1,7 +1,7 @@
 # Order API Architecture
 
-**Last updated:** 2026-10-23
-**Related work:** NIMBUS-129, NIMBUS-130, NIMBUS-192, NIMBUS-217
+**Last updated:** 2026-10-24
+**Related work:** NIMBUS-129, NIMBUS-130, NIMBUS-192, NIMBUS-217, NIMBUS-207
 
 ## Overview
 
