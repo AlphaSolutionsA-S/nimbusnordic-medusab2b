@@ -46,3 +46,28 @@
   open questions) and NIMBUS-231 moved to Estimation via "Scope approved".
 - Next owner: `implementation-planner` (Klaus gave the go-ahead).
 - Handover prompt: "Plan NIMBUS-231 from issues/NIMBUS-231/scope.md."
+
+## 2026-10-24 — planned, waiting at the plan gate (implementation-planner)
+
+- Outcome: `plan.md`, `manifest.md` and task files 01–04 written (backend only, 4 tasks;
+  `Ready for Dispatch: false`). Design: the adapter reads `TRCShipmentLine` rows; the join, undo
+  pairing with variant (B3) and missing-row failure (B4, new code `variant_missing`) are in the L5
+  decision rule; company name cached with the shipment-read token. One UNVERIFIED vendor claim blocks
+  dispatch: that `TRCShipmentLine` next links stay on the BC origin (planner's probe could not reach
+  BC from the sandbox; script saved as `samples/probe-trc-paging.mjs`). No Jira sub-tasks, no
+  commit.
+- Next owner: Klaus — answer plan section 2 (run the paging probe; confirm the deployed APIM policy
+  and Logic App at release) and approve the plan.
+- Handover prompt: "Revise issues/NIMBUS-231/plan.md with Klaus's answers, set Ready for Dispatch,
+  record 'plan approved' and create the sub-tasks per tracker-workflow § F." Dispatch needs a
+  separate go-ahead.
+
+## 2026-10-24 — plan approved
+
+- Outcome: Klaus ran the paging probe (`samples/probe-trc-paging-output.md`): the next link stays on
+  the BC origin, so the blocking item is verified. The main session first changed the probe to
+  follow the next link only on the BC origin. Decision 2 default accepted. Plan approved; Ready for
+  Dispatch set; sub-tasks NIMBUS-238 to NIMBUS-241 created and recorded in the manifest; "plan
+  approved" comment on NIMBUS-231.
+- Next owner: `task-dispatcher` (Klaus gave the go-ahead).
+- Handover prompt: "Dispatch NIMBUS-231 from issues/NIMBUS-231/manifest.md on feature/NIMBUS-231."
