@@ -4,10 +4,9 @@ The import edges of `layers.md` as rules. `B` = `apps/backend/src`, `S` = `apps/
 `<m>` is one module, `<other>` any other. Tests (`**/__tests__/**`, `*.spec.ts`, `*.test.ts`) are
 exempt. "Value import" excludes `import type`. Existing violations get a baseline, not a retrofit.
 
-No import-boundary lint runs yet: every row is enforced by review. `@medusajs/eslint-plugin`
-(`medusa lint`) adds `link-no-cross-module-relationship` (error) and
-`no-service-mutations-in-api-route` (warning), which back `bound-module-isolation` and
-`bound-route-no-service`.
+Review enforces every row (no import-boundary lint yet); `medusa lint` (`@medusajs/eslint-plugin`)
+backs `bound-module-isolation` and `bound-route-no-service` with `link-no-cross-module-relationship`
+(error) and `no-service-mutations-in-api-route` (warning).
 
 | ID | From | To | Verdict |
 |---|---|---|---|
@@ -30,11 +29,11 @@ Baseline: `bound-route-no-service` in `B/api/store/bc-orders/[id]/returns/route.
 
 ## Locks
 
-No Redis is configured, so locks are in memory and don't hold across instances (unverified for
-production, `docs/security-remediation.md`).
+No Redis: locks are in memory and don't hold across instances (unverified for production,
+`docs/security-remediation.md`).
 
-- `lock-single-run`: a lock that keeps a sync or batch to one run at a time is acquired in the L7
-  trigger that starts the workflow: try once, skip if held, release in `finally`.
+- `lock-single-run`: a lock keeping a sync or batch to one run at a time is acquired in the L7
+  trigger starting the workflow: try once, skip if held, release in `finally`.
 - `lock-critical-section`: a lock around changing specific data is acquired by a step whose
   compensation releases it and released by a later step (or try/finally within one step).
   `acquireLockStep` skips itself under `runAsStep` unless `executeOnSubWorkflow: true`.
