@@ -33,27 +33,33 @@ import type {
   BCSalesOrderLineRejection,
   BCShipment,
   BCShipmentHeader,
+  BCShipmentLineVariant,
   BCShipmentWindow,
   IBusinessCentralModuleService,
 } from "./types";
 import {
   ShipmentReadDeadlineError,
   BusinessCentralThrottledError,
+  buildODataCompanyParameter,
+  buildShipmentLineVariantFilter,
   buildShipmentNumberFilter,
   buildShipmentWindowFilter,
   chunkShipmentNumbers,
   isThrottlingStatus,
   mapShipment,
   mapShipmentHeader,
+  mapShipmentLineVariant,
   parseRetryAfterSeconds,
   SHIPMENT_DETAIL_FIELDS,
   SHIPMENT_HEADER_FIELDS,
   SHIPMENT_LINE_FIELDS,
+  SHIPMENT_LINE_VARIANT_ENTITY_SET,
+  SHIPMENT_LINE_VARIANT_FIELDS,
   SHIPMENT_PAGE_SIZE,
   SHIPMENT_REQUEST_TIMEOUT_MS,
   SHIPMENT_TOKEN_RENEW_BEFORE_MS,
 } from "./shipment-reads";
-import type { BCSalesShipmentRaw } from "./shipment-reads";
+import type { BCSalesShipmentRaw, BCShipmentLineVariantRaw } from "./shipment-reads";
 import {
   buildPostedReturnReceipts,
   buildReturnListRows,
@@ -128,6 +134,12 @@ type BusinessCentralTokenResponse = {
 type BusinessCentralTokenErrorResponse = {
   error?: string;
   error_description?: string;
+};
+
+type ShipmentPageBody<TRow> = {
+  value?: TRow[];
+  "@odata.nextLink"?: unknown;
+  "@odata.count"?: unknown;
 };
 
 export class BusinessCentralAmbiguousOutcomeError extends Error {
@@ -732,7 +744,13 @@ function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturn
 
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
   private readonly logger?: Logger;
-  private shipmentReadToken: { accessToken: string; renewAtMs: number } | null = null;
+  // The company name for ODataV4 shipment reads is kept with the token, so it is read once per
+  // token lifetime.
+  private shipmentReadToken: {
+    accessToken: string;
+    renewAtMs: number;
+    companyName: string | null;
+  } | null = null;
 
   constructor({ logger }: { logger?: Logger } = {}) {
     this.logger = logger;
@@ -1088,16 +1106,17 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
         : {
             accessToken,
             renewAtMs: Date.now() + expiresInSeconds * 1000 - SHIPMENT_TOKEN_RENEW_BEFORE_MS,
+            companyName: null,
           };
 
     return accessToken;
   }
 
-  private async getShipmentJson(
+  private async getShipmentJson<TBody = ShipmentPageBody<BCSalesShipmentRaw>>(
     url: string,
     accessToken: string,
     deadlineMs?: number
-  ): Promise<{ value?: BCSalesShipmentRaw[]; "@odata.nextLink"?: unknown; "@odata.count"?: unknown }> {
+  ): Promise<TBody> {
     let response: Response;
 
     if (deadlineMs !== undefined && Date.now() >= deadlineMs) {
@@ -1136,11 +1155,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     try {
-      return (await response.json()) as {
-        value?: BCSalesShipmentRaw[];
-        "@odata.nextLink"?: unknown;
-        "@odata.count"?: unknown;
-      };
+      return (await response.json()) as TBody;
     } catch {
       throw new MedusaError(
         MedusaError.Types.UNEXPECTED_STATE,
@@ -1150,17 +1165,17 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   // Follows @odata.nextLink to the end, so a window is read completely or not at all.
-  private async getAllShipmentPages(
+  private async getAllShipmentPages<TRow = BCSalesShipmentRaw>(
     firstUrl: URL,
     discoveryUrl: URL,
     accessToken: string,
     deadlineMs?: number
-  ): Promise<BCSalesShipmentRaw[]> {
-    const rows: BCSalesShipmentRaw[] = [];
+  ): Promise<TRow[]> {
+    const rows: TRow[] = [];
     let nextUrl: string | null = firstUrl.toString();
 
     while (nextUrl !== null) {
-      const body = await this.getShipmentJson(nextUrl, accessToken, deadlineMs);
+      const body = await this.getShipmentJson<ShipmentPageBody<TRow>>(nextUrl, accessToken, deadlineMs);
       rows.push(...(body.value ?? []));
       nextUrl = this.resolveShipmentNextLink(body["@odata.nextLink"], discoveryUrl);
     }
@@ -1249,6 +1264,67 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     return shipments;
+  }
+
+  // Read through the shipment request path (timeout, deadline, throttling), unlike getCompanyName.
+  private async getShipmentReadCompanyName(
+    discoveryUrl: URL,
+    accessToken: string,
+    deadlineMs?: number
+  ): Promise<string> {
+    const cached = this.shipmentReadToken;
+
+    if (cached?.accessToken === accessToken && cached.companyName !== null) {
+      return cached.companyName;
+    }
+
+    const body = await this.getShipmentJson<{ name?: unknown }>(
+      `${discoveryUrl.toString()}/companies(${this.getCompanyId()})`,
+      accessToken,
+      deadlineMs
+    );
+    const companyName = requireBusinessCentralString(body.name, "name");
+
+    if (this.shipmentReadToken?.accessToken === accessToken) {
+      this.shipmentReadToken.companyName = companyName;
+    }
+
+    return companyName;
+  }
+
+  async getShipmentLineVariants(
+    numbers: readonly string[],
+    deadlineMs?: number
+  ): Promise<BCShipmentLineVariant[]> {
+    const chunks = chunkShipmentNumbers(numbers);
+
+    if (chunks.length === 0) {
+      return [];
+    }
+
+    const discoveryUrl = this.getDiscoveryUrl();
+    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
+    const companyName = await this.getShipmentReadCompanyName(discoveryUrl, accessToken, deadlineMs);
+    const variants: BCShipmentLineVariant[] = [];
+
+    for (const chunk of chunks) {
+      const url = new URL(
+        `${this.getEnvironmentBaseUrl(discoveryUrl)}/ODataV4/${SHIPMENT_LINE_VARIANT_ENTITY_SET}`
+      );
+      url.searchParams.set("company", buildODataCompanyParameter(companyName));
+      url.searchParams.set("$filter", buildShipmentLineVariantFilter(chunk));
+      url.searchParams.set("$select", SHIPMENT_LINE_VARIANT_FIELDS);
+
+      const rows = await this.getAllShipmentPages<BCShipmentLineVariantRaw>(
+        url,
+        discoveryUrl,
+        accessToken,
+        deadlineMs
+      );
+      variants.push(...rows.map(mapShipmentLineVariant));
+    }
+
+    return variants;
   }
 
   async getOperations(): Promise<unknown> {
