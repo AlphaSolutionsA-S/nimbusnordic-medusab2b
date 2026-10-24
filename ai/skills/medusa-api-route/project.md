@@ -12,5 +12,6 @@ API key), `internal/`. Middlewares aggregate from `middlewares.ts` through each 
 - Company-scoped store routes add `middlewares/ensure-role.ts`.
 - Business Central reads (`store/bc-orders`, `store/bc-returns`, `store/business-central`) call the
   BC service directly: they are reads from an external system, not mutations.
-- Do not copy: the default `fields` in `store/quotes/query-config.ts` (deeper than Medusa's relation
-  limit).
+- Store quote query configs use an exact-path allowlist and a route-local relation depth of four
+  for the existing product expansion. Keep customer/employee/company and author selections at
+  scalar leaves; allowing their bare parent paths also permits scalar wildcards.

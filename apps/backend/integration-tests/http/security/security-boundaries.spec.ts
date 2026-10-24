@@ -20,6 +20,7 @@ import type {
   IPaymentModuleService,
   IRegionModuleService,
   ISalesChannelModuleService,
+  IUserModuleService,
   MedusaContainer,
 } from '@medusajs/framework/types';
 import CompanyModuleService from '../../../src/modules/company/service';
@@ -227,6 +228,144 @@ medusaIntegrationTestRunner({
       expect({ status: response.status, body: response.data }).toMatchObject({ status: 404 });
       expect((await quotes.retrieveQuote(quote.id)).status).toBe('pending_customer');
       expect(await quotes.listMessages({ quote_id: quote.id })).toHaveLength(0);
+    });
+
+    describe('store quote response privacy', () => {
+      const forbidden = [
+        'customer.employee.company.credit_limit', 'customer.employee.company.blocked',
+        'customer.employee.company.business_central_synced_at', 'customer.employee.company.order_api_enabled',
+        'customer.employee.company.employees.spending_limit', 'messages.admin.email', 'messages.customer.email',
+        '*customer', 'customer.employee.*', '*customer.employee.company',
+        'customer.employee.company.*', '*messages.admin', 'messages.customer.*',
+      ];
+      const safe = [
+        'id', 'draft_order_id', 'customer.employee.company.name',
+        'messages.admin.first_name', 'messages.admin.last_name',
+        'messages.customer.first_name', 'messages.customer.last_name',
+      ];
+      const selections = [
+        ['default', ''],
+        ['additive malicious', `?fields=${encodeURIComponent(forbidden.map((field) => `+${field}`).join(','))}`],
+        ['explicit malicious', `?fields=${encodeURIComponent([...safe, ...forbidden].join(','))}`],
+      ] as const;
+      let regionId: string;
+      let staffId: string;
+
+      beforeEach(async () => {
+        const region = await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+          name: 'Quote privacy region', currency_code: 'dkk', countries: ['dk'],
+        });
+        regionId = region.id;
+        const staff = await container.resolve<IUserModuleService>(Modules.USER).createUsers({
+          email: 'quote-staff@example.test', first_name: 'Quote', last_name: 'Staff', metadata: { private: 'staff-only' },
+        });
+        staffId = staff.id;
+        await container.resolve<ICustomerModuleService>(Modules.CUSTOMER).updateCustomers(customerId, {
+          first_name: 'Quote', last_name: 'Customer', phone: '12345678',
+        });
+        await companyService.updateCompanies({
+          id: companyId, credit_limit: 98765, blocked: 'All', spending_limit_reset_frequency: 'yearly',
+          business_central_synced_at: new Date(), order_api_enabled: true,
+        });
+        await companyService.createEmployees({ company_id: companyId, spending_limit: 87654, is_admin: false });
+      });
+
+      async function createOwnedQuote(selection = '') {
+        const { result: cart } = await createCartWorkflow(container).run({
+          input: { customer_id: customerId, currency_code: 'dkk', region_id: regionId },
+        });
+        await container.resolve<ICartModuleService>(Modules.CART).addLineItems([{
+          cart_id: cart.id, title: 'Quote privacy item', quantity: 1, unit_price: 100,
+        }]);
+        const created = await api.post(`/store/quotes${selection}`, { cart_id: cart.id }, headers);
+        expect(created.status).toBe(200);
+        return created.data.quote;
+      }
+
+      function expectPrivateQuote(quote: {
+        customer: { employee: { company: unknown } };
+        messages: { admin?: unknown; customer?: unknown }[];
+      }, populated = true) {
+        expect(quote.customer.employee.company).toEqual({ name: 'Own company' });
+        if (populated) {
+          expect(quote.messages).toEqual(expect.arrayContaining([
+            expect.objectContaining({ admin: { first_name: 'Quote', last_name: 'Staff' } }),
+            expect.objectContaining({ customer: { first_name: 'Quote', last_name: 'Customer' } }),
+          ]));
+        }
+        for (const message of quote.messages) {
+          if (message.admin) expect(message.admin).toEqual({ first_name: 'Quote', last_name: 'Staff' });
+          if (message.customer) expect(message.customer).toEqual({ first_name: 'Quote', last_name: 'Customer' });
+        }
+      }
+
+      it.each([false, true])('bounds every response route for is_admin=%s with default and malicious fields', async (isAdmin) => {
+        const [employee] = await companyService.listEmployees({ company_id: companyId, is_admin: true });
+        await companyService.updateEmployees({ id: employee.id, is_admin: isAdmin, spending_limit: 1000 });
+        const quotes = container.resolve<QuoteModuleService>('quote');
+        for (const [_label, selection] of selections) {
+          const quote = await createOwnedQuote(selection);
+          expectPrivateQuote(quote, false);
+          expect(quote.messages).toEqual([]);
+          await quotes.createMessages([
+            { quote_id: quote.id, admin_id: staffId, text: 'Staff response' },
+            { quote_id: quote.id, customer_id: customerId, text: 'Customer request' },
+          ]);
+          const list = await api.get(`/store/quotes${selection}`, headers);
+          expect(list.status).toBe(200);
+          expectPrivateQuote(list.data.quotes.find((entry: { id: string }) => entry.id === quote.id));
+          for (const suffix of ['', '/preview']) {
+            const response = await api.get(`/store/quotes/${quote.id}${suffix}${selection}`, headers);
+            expect(response.status).toBe(200);
+            expectPrivateQuote(response.data.quote);
+          }
+          const message = await api.post(`/store/quotes/${quote.id}/messages${selection}`, { text: 'New message' }, headers);
+          expect(message.status).toBe(200);
+          expectPrivateQuote(message.data.quote);
+          await quotes.updateQuotes({ id: quote.id, status: 'pending_customer' });
+          const rejected = await api.post(`/store/quotes/${quote.id}/reject${selection}`, {}, headers);
+          expect(rejected.status).toBe(200);
+          expectPrivateQuote(rejected.data.quote);
+
+          const acceptedQuote = await createOwnedQuote();
+          await quotes.createMessages([
+            { quote_id: acceptedQuote.id, admin_id: staffId, text: 'Staff response' },
+            { quote_id: acceptedQuote.id, customer_id: customerId, text: 'Customer request' },
+          ]);
+          await quotes.updateQuotes({ id: acceptedQuote.id, status: 'pending_customer' });
+          const accepted = await api.post(`/store/quotes/${acceptedQuote.id}/accept${selection}`, {}, headers);
+          expect(accepted.status).toBe(200);
+          expectPrivateQuote(accepted.data.quote);
+        }
+      });
+
+      it('keeps another customer quote absent on list, retrieve, preview and mutations with expanded fields', async () => {
+        const quote = await createOwnedQuote();
+        const quotes = container.resolve<QuoteModuleService>('quote');
+        await quotes.updateQuotes({ id: quote.id, status: 'pending_customer' });
+        const foreign = await createStoreUser({ api, storeHeaders: publicHeaders, email: 'quote-outsider@example.test' });
+        const foreignHeaders = { headers: { ...publicHeaders.headers, authorization: `Bearer ${foreign.token}` } };
+        const selection = selections[1][1];
+        const list = await api.get(`/store/quotes${selection}`, foreignHeaders);
+        expect(list.status).toBe(200);
+        expect(list.data.quotes).toEqual([]);
+        for (const operation of ['', '/preview', '/accept', '/reject', '/messages']) {
+          const response = await api.request({
+            method: ['', '/preview'].includes(operation) ? 'GET' : 'POST',
+            url: `/store/quotes/${quote.id}${operation}${selection}`, ...foreignHeaders,
+            data: operation === '/messages' ? { text: 'Unauthorized' }
+              : ['', '/preview'].includes(operation) ? undefined : {},
+            validateStatus: () => true,
+          });
+          expect(response.status).toBe(404);
+          const body = JSON.stringify(response.data);
+          for (const privateValue of ['Own company', 'test@email.com', '12345678', '98765', 'Staff response']) {
+            expect(body).not.toContain(privateValue);
+          }
+        }
+        expect((await quotes.retrieveQuote(quote.id)).status).toBe('pending_customer');
+        expect(await quotes.listMessages({ quote_id: quote.id })).toEqual([]);
+      });
     });
 
     it('denies deciding another company approval', async () => {

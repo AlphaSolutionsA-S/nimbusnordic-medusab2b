@@ -1,8 +1,7 @@
 # Business-rule registry
 
-Each business rule has one home; consumers render its verdict and never re-derive it. Before adding a
-rule, find its row here; a second implementation is a defect. Paths: `B` = `apps/backend/src`,
-`S` = `apps/storefront/src`.
+One home per rule; consumers render its verdict. Check here before adding one.
+Paths: `B` = `apps/backend/src`, `S` = `apps/storefront/src`.
 
 | Rule | Owning file | Verdict exposed via | Consumers | Status |
 |------|-------------|---------------------|-----------|--------|
@@ -14,6 +13,7 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | Order API enabled per company (NIMBUS-217) | `B/utils/order-api-access.ts` | 403 | order API; shipment jobs; Admin retry | ok |
 | Order transfer only without an account owner (NIMBUS-177) | `B/workflows/order/utils/order-transfer.ts` | 400 | `POST /store/orders/:id/transfer/request` | ok |
 | BC-managed company fields are read-only | `B/admin/routes/companies/bc-managed-fields.ts` | admin form; BC sync | storefront company card | ok |
+| Company credit/blocked/reset fields and colleague spending limits: admin-only | `B/api/store/companies/company-projection.ts` | store profiles | storefront | ok; quotes: name only (`B/api/store/quotes/query-config.ts`) |
 | Sent or recorded BC orders require duplicate protection and a force warning | `B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`) | pure verdict | Admin widget; submission guard | ok |
 | BC submission skips existing orders unless force is explicit | `B/workflows/business-central-order/utils/admin-bc-integration.ts` (`shouldSkipBcSubmission`) | preparation outcome | automatic and Admin workflows | ok |
 | Order line barcode resolution to BC item and size | `B/workflows/business-central-order/utils/resolve-order-line-item.ts` | line failures | BC order prepare step | ok |

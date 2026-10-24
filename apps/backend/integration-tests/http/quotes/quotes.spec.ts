@@ -1,4 +1,8 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
+import type { ICustomerModuleService } from "@medusajs/framework/types";
+import { Modules } from "@medusajs/framework/utils";
+import type CompanyModuleService from "../../../src/modules/company/service";
+import type QuoteModuleService from "../../../src/modules/quote/service";
 import {
   adminHeaders,
   createAdminUser,
@@ -22,16 +26,28 @@ medusaIntegrationTestRunner({
   env: {},
   testSuite: ({ api, getContainer }) => {
     let storeHeaders, cart, product, salesChannel, region, customerToken;
+    let customerId: string;
+    let staffId: string;
 
     beforeEach(async () => {
       const container = getContainer();
-      await createAdminUser(adminHeaders, container);
+      staffId = (await createAdminUser(adminHeaders, container)).user.id;
       const publishableKey = await generatePublishableKey(container);
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
       customerToken = res.token;
+      customerId = res.customer.id;
       storeHeaders.headers["Authorization"] = `Bearer ${customerToken}`;
-      region = await regionSeeder({ api, adminHeaders, data: {} });
+      await container.resolve<ICustomerModuleService>(Modules.CUSTOMER).updateCustomers(customerId, {
+        first_name: "Quote", last_name: "Customer", phone: "12345678",
+      });
+      const company = (await api.post("/store/companies", {
+        name: "Quote company", email: "quote-company@example.test", currency_code: "usd",
+      }, storeHeaders)).data.companies[0];
+      const companies = container.resolve<CompanyModuleService>("company");
+      const [employee] = await companies.listEmployees({ company_id: company.id });
+      await companies.updateEmployees({ id: employee.id, spending_limit: 1000 });
+      region = await regionSeeder({ api, adminHeaders, data: { countries: ["us"] } });
 
       salesChannel = await salesChannelSeeder({
         api,
@@ -42,10 +58,21 @@ medusaIntegrationTestRunner({
       product = await productSeeder({
         api,
         adminHeaders,
-        data: {
+        data: {},
+      });
+      const published = await api.post(
+        `/admin/products/${product.id}`,
+        {
+          status: "published",
           sales_channels: [{ id: salesChannel.id }],
         },
-      });
+        adminHeaders
+      );
+      expect(published.status).toBe(200);
+      expect(published.data.product.status).toBe("published");
+      expect(published.data.product.sales_channels).toEqual(
+        expect.arrayContaining([expect.objectContaining({ id: salesChannel.id })])
+      );
 
       await api.post(
         `/admin/api-keys/${publishableKey.id}/sales-channels`,
@@ -62,6 +89,63 @@ medusaIntegrationTestRunner({
           items: [{ quantity: 1, variant_id: product.variants[0].id }],
         },
       });
+    });
+
+    it("retains contact, spending, message references and numeric quote detail and preview data", async () => {
+      const created = await api.post("/store/quotes", { cart_id: cart.id }, storeHeaders);
+      expect(created.status).toBe(200);
+      const id = created.data.quote.id;
+      const itemId = created.data.quote.draft_order.items[0].id;
+      const messages = await getContainer().resolve<QuoteModuleService>("quote").createMessages([
+        { quote_id: id, admin_id: staffId, text: "Staff item response", item_id: itemId },
+        { quote_id: id, customer_id: customerId, text: "Customer request" },
+      ]);
+      const posted = await api.post(`/store/quotes/${id}/messages`, {
+        text: "Customer item request", item_id: itemId,
+      }, storeHeaders);
+      expect(posted.status).toBe(200);
+
+      const detail = await api.get(`/store/quotes/${id}`, storeHeaders);
+      const list = await api.get("/store/quotes?order=-created_at", storeHeaders);
+      const preview = await api.get(`/store/quotes/${id}/preview`, storeHeaders);
+      expect([detail.status, list.status, preview.status]).toEqual([200, 200, 200]);
+      for (const quote of [posted.data.quote, detail.data.quote, list.data.quotes[0], preview.data.quote]) {
+        expect(quote).toEqual(expect.objectContaining({
+          id, draft_order_id: expect.any(String),
+          customer: expect.objectContaining({
+            id: customerId, email: "test@email.com", phone: "12345678", first_name: "Quote", last_name: "Customer",
+            employee: expect.objectContaining({ spending_limit: 1000, is_admin: true, company: { name: "Quote company" } }),
+          }),
+          draft_order: expect.objectContaining({
+            display_id: expect.any(Number), currency_code: "usd",
+            total: expect.any(Number), subtotal: expect.any(Number), tax_total: expect.any(Number),
+            discount_total: expect.any(Number), shipping_total: expect.any(Number),
+            summary: expect.objectContaining({ current_order_total: expect.any(Number), pending_difference: expect.any(Number) }),
+            items: [expect.objectContaining({
+              id: itemId, quantity: expect.any(Number), unit_price: expect.any(Number),
+              total: expect.any(Number), subtotal: expect.any(Number),
+              variant: expect.objectContaining({ id: product.variants[0].id, product: expect.objectContaining({ id: product.id }) }),
+              detail: expect.objectContaining({ fulfilled_quantity: expect.any(Number) }),
+            })],
+          }),
+          messages: expect.arrayContaining([
+            expect.objectContaining({ id: messages[0].id, text: "Staff item response", item_id: itemId, admin_id: staffId,
+              admin: { first_name: "Admin", last_name: "User" }, created_at: expect.any(String) }),
+            expect.objectContaining({ id: messages[1].id, text: "Customer request", customer_id: customerId,
+              customer: { first_name: "Quote", last_name: "Customer" } }),
+            expect.objectContaining({ id: expect.any(String), text: "Customer item request", item_id: itemId, customer_id: customerId }),
+          ]),
+        }));
+      }
+      expect(preview.data.quote.order_preview).toEqual(expect.objectContaining({
+        total: expect.any(Number), subtotal: expect.any(Number), tax_total: expect.any(Number),
+        discount_total: expect.any(Number), shipping_total: expect.any(Number),
+        items: [expect.objectContaining({
+          id: itemId, quantity: expect.any(Number), unit_price: expect.any(Number), total: expect.any(Number),
+          variant_sku: expect.any(String), product_title: expect.any(String),
+          detail: expect.objectContaining({ fulfilled_quantity: expect.any(Number) }),
+        })],
+      }));
     });
 
     describe("POST /store/quotes", () => {
