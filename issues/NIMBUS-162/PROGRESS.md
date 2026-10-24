@@ -38,3 +38,11 @@
 - **Next owner:** Klaus Petersen: answer plan section 2 and approve the plan (competing-model review recommended: personal data, auth-adjacent reset email). Then the planner sets Ready for Dispatch and records plan approved. Dispatch needs a separate go-ahead.
 - **Handover prompt:** "Read issues/NIMBUS-162/PROGRESS.md and plan.md. Apply Klaus's answers to section 2, set Ready for Dispatch: true in manifest.md, and record plan approved on NIMBUS-162 and NIMBUS-242. Do not dispatch without a separate go-ahead."
 - **Verification:** Source, installed-package and Jira reads; Jira writes as listed. No code built, sent or tested.
+
+## 2026-10-24 — Plan approved
+- **Owner:** implementation-planner, on Klaus Petersen's approval ("All ok", relayed by the coordinator).
+- **Outcome:** All four section-2 defaults accepted and recorded as answers in `plan.md`: dispatch now, with `company.country` read from production as a release check; stricter R4 (country outside every region → English and `dk` link); greeting without a name; unknown placeholders or ICU syntax fall back without a report. `manifest.md` set to `Ready for Dispatch: true`.
+- **Tracker:** Plan-approved comments 255279 (NIMBUS-162) and 255280 (NIMBUS-242). No transition: the procedure has none for plan approval; the dispatcher moves the issues to in progress when implementation starts. Sub-tasks NIMBUS-244 to NIMBUS-249 already exist.
+- **Next owner:** task-dispatcher, started by the coordinator (Klaus said "dispatch").
+- **Handover prompt:** "Run the plan in issues/NIMBUS-162/ (manifest.md, Ready for Dispatch: true) on branch feature/NIMBUS-162 from develop. Tasks 01–03 belong to NIMBUS-162 (NIMBUS-244/245/246), tasks 04–06 to NIMBUS-242 (NIMBUS-247/248/249); use each task's Issue column. Read plan.md section 2 answers first. Do not touch the customer_id branches (NIMBUS-243). Nothing is pushed without the human's go-ahead."
+- **Verification:** Jira writes returned comment ids. No code built, sent or tested.

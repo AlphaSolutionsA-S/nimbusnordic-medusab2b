@@ -3,7 +3,7 @@
 **Key:** NIMBUS-162 (with NIMBUS-242)
 **Issue:** NIMBUS-162; NIMBUS-242 (tasks 04–06)
 **Branch:** feature/NIMBUS-162 (from develop)
-**Ready for Dispatch:** false
+**Ready for Dispatch:** true
 
 ## Conventions and commands
 

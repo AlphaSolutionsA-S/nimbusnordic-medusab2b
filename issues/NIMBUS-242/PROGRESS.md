@@ -28,3 +28,9 @@
 - **Tracker:** Sub-tasks NIMBUS-247 (trigger and store request country), NIMBUS-248 (invitation email), NIMBUS-249 (storefront invite card sends the country); comment 255278. Status left at Scoping.
 - **Next owner:** Klaus Petersen, reviewing the NIMBUS-162 plan. Follow `issues/NIMBUS-162/PROGRESS.md` from here.
 - **Handover prompt:** "This issue's work runs under issues/NIMBUS-162/; read that PROGRESS.md."
+
+## 2026-10-24 — Plan approved (under NIMBUS-162)
+- **Owner:** implementation-planner, on Klaus Petersen's approval of the NIMBUS-162 plan.
+- **Outcome:** Plan approved with all section-2 answers accepted (incl. greeting without a name; company country checked before release). Tasks 04–06 (NIMBUS-247, -248, -249) are ready for dispatch on `feature/NIMBUS-162`.
+- **Tracker:** Plan-approved comment 255280. Status left at Scoping; the dispatcher moves it when implementation starts.
+- **Next owner:** task-dispatcher (via the coordinator). Follow `issues/NIMBUS-162/PROGRESS.md`.

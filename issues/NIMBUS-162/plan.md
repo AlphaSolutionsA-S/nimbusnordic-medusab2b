@@ -42,14 +42,21 @@ not required reading. A question is often quicker to settle by asking the planni
    usefulness of the Admin fallback does. *Default:* dispatch; read `country` for a handful of
    production companies before release (Admin company page or a database read) and register a
    follow-up if names such as "Denmark" appear.
+   **Answer:** Accepted (Klaus Petersen, 2026-10-24): dispatch now; reading a few production values
+   stays a release check.
 2. **R4 tightens the reset link country.** Today any two-letter code builds `/<code>/reset-password`;
    per R4, a code not in any region now gives English and the `dk` link. *Default:* apply R4.
+   **Answer:** Accepted (Klaus Petersen, 2026-10-24).
 3. **Invitation without a first name** (Admin can create one). *Default:* a separate greeting key
    without the name ("Hi,"), so the text never shows an empty placeholder.
+   **Answer:** Accepted (Klaus Petersen, 2026-10-24).
 4. **A text with an unknown placeholder or other ICU syntax** (for example a pasted `{password}`) is
    treated as unusable for the email and the next fallback is used; it is not reported, because the
    key is not missing (the Admin editor already warns about placeholder differences from English).
    *Default:* accept.
+   **Answer:** Accepted (Klaus Petersen, 2026-10-24).
+
+Plan approved by Klaus Petersen on 2026-10-24.
 
 ## 3. Flows [High]
 
