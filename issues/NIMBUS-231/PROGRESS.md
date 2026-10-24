@@ -71,3 +71,16 @@
   approved" comment on NIMBUS-231.
 - Next owner: `task-dispatcher` (Klaus gave the go-ahead).
 - Handover prompt: "Dispatch NIMBUS-231 from issues/NIMBUS-231/manifest.md on feature/NIMBUS-231."
+
+## 2026-10-24 — implemented, waiting at the implementation gate (task-dispatcher)
+
+- Outcome: tasks 01–04 done, reviewed and committed on `feature/NIMBUS-231` (local, not pushed);
+  sub-tasks NIMBUS-238 to NIMBUS-241 closed with comments. Finalization: one test-setup failure in
+  `check-shipments.spec.ts` fixed (fix-01); remaining HTTP failures identical to `develop`; module
+  suite only the documented guardrail baseline; typecheck 22 = baseline; build OK. Consolidation
+  removed one duplicate test. `deviation-report.md` written: no blocking deviation, two open
+  questions (schema release timing; deployed APIM policy and Logic App check). NIMBUS-231 left in
+  Estimation for the main session to move.
+- Next owner: Klaus — answer the deviation report's open questions.
+- Handover prompt: "Resume the NIMBUS-231 dispatch after the gate with these answers: …"
+  (`task-dispatcher`, step 4). Push only on Klaus's explicit go-ahead.
