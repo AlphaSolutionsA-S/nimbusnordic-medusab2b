@@ -1,7 +1,7 @@
 # Data ownership
 
-Every table has one owning module. Core tables belong to their Medusa module. The CMS
-(`apps/cms`) has its own Postgres database (`DATABASE_URI`), owned by Payload; no other app touches it.
+Every table has one owning module (core tables: their Medusa module). The CMS (`apps/cms`) has its
+own Postgres database (`DATABASE_URI`), owned by Payload; no other app touches it.
 
 - Only the owner's L1 service reads or writes its tables; other modules read them through
   `query.graph()` (or `query.index()` to filter by linked-module fields).
@@ -13,8 +13,8 @@ Every table has one owning module. Core tables belong to their Medusa module. Th
   from Business Central) and Medusa customers. Never log it: errors log the message only
   (`apps/storefront/src/lib/util/customer-error.ts`); page paths stored with missing translation keys
   are sanitized first (`apps/storefront/src/i18n/request.ts`).
-- Business Central is the source of truth for the BC-managed company fields
-  (`apps/backend/src/admin/routes/companies/bc-managed-fields.ts`); they are synced, not edited.
+- BC-managed company fields (`apps/backend/src/admin/routes/companies/bc-managed-fields.ts`) are
+  synced from Business Central, their source of truth, not edited.
 
 ## Registry (`apps/backend/src/modules`)
 

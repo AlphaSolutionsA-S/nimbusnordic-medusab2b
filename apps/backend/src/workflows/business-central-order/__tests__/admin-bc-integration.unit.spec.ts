@@ -35,6 +35,27 @@ describe("Admin BC integration contract", () => {
     ]);
     expect(JSON.stringify(result)).not.toMatch(/secret|personal|customer/);
   });
+  it("keeps every known line failure reason", () => {
+    const reasons = [
+      "no_identifiers",
+      "not_found",
+      "ambiguous",
+      "size_unresolved",
+      "unit_mismatch",
+      "rejected_by_bc",
+    ];
+    const result = toAdminBcIntegration({
+      ...createInitialBcIntegrationState("2026-10-01T00:00:00.000Z"),
+      status: "sent",
+      line_failures: reasons.map((reason, index) => ({
+        line_number: index + 1,
+        reason,
+      })),
+    });
+    expect(result.line_failures.map((failure) => failure.reason)).toEqual(
+      reasons
+    );
+  });
   it("does not expose the BC line map", () => {
     const result = toAdminBcIntegration({
       ...createInitialBcIntegrationState("2026-10-01T00:00:00.000Z"),

@@ -6,17 +6,17 @@ packages. Code examples and detail: the `medusa-backend` skill (`reference/medus
 
 ## Verify, don't assume
 
-- A framework or vendor behaviour a design relies on is verified before use, from installed source
-  or the `medusa` MCP (otherwise the Medusa documentation). Record the primitive, the evidence and
+- Verify a framework or vendor behaviour a design relies on before use, from installed source or
+  the `medusa` MCP (else the Medusa docs). Record the primitive, the evidence and
   the behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
   unverified claim is marked UNVERIFIED in the plan and blocks dispatch.
 - Security-relevant vendor claims are verified from dist code or a runnable probe, never docs.
-- A `query.graph` path that is wrong fails silently: verify the shape once against real data and
+- A wrong `query.graph` path fails silently: verify the shape once against real data and
   mock only that shape.
-- Installed source: `apps/backend` uses `node-linker=hoisted` (`apps/backend/.npmrc`), so read
-  `apps/backend/node_modules/@medusajs/<pkg>/dist/...`; if a package is missing there, grep the
-  store `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is
-  evidence only once it has provably searched a real path.
+- Installed source: `apps/backend/node_modules/@medusajs/<pkg>/dist/...` (`node-linker=hoisted`,
+  `apps/backend/.npmrc`); if missing there, grep the store
+  `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is evidence
+  only once it provably searched a real path.
 
 ## OOTB first
 
@@ -30,14 +30,14 @@ guarantee. Extend core flows through `apps/backend/src/workflows/hooks/`, never 
   field; where the value is computed does (module service: yes; core-flows workflow: never, e.g.
   `order.payment_status`; wrong path: silent `undefined`, e.g. `items.detail.quantity` on an order).
 - `data-core-read-workflows`: a substantive read of a core entity goes through its core read
-  workflow (`getOrderDetailWorkflow`, `getOrdersListWorkflow`); `query.graph()` stays right for our
-  own models and narrow existence or scope checks, each commented as a deliberate exemption.
+  workflow (`getOrderDetailWorkflow`, `getOrdersListWorkflow`); `query.graph()` suits our own
+  models and narrow existence or scope checks, each commented as a deliberate exemption.
 - `data-no-core-internals`: call the workflow, not the core internal it wraps.
 
 ## Types
 
-- Never `as unknown as` (`NO_UNKNOWN_CAST`). If an escape is unavoidable, there is exactly one, in a
-  named helper, with a comment stating the verified runtime shape.
+- Never `as unknown as` (`NO_UNKNOWN_CAST`). An unavoidable escape is exactly one, in a named
+  helper, commented with the verified runtime shape.
 - A declared type matches the runtime value: `model.dateTime()` is a `Date`.
 - `apps/backend/tsconfig.json` sets only `strictNullChecks` (not `strict`): implicit `any` compiles,
   so `type-no-any` is a review rule here.

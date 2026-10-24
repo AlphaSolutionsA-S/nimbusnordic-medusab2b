@@ -105,6 +105,21 @@ describe("parseBcIntegrationState", () => {
     });
   });
 
+  it("keeps the size and unit refusal reasons", () => {
+    const parsed = parseBcIntegrationState({
+      status: "sent",
+      line_failures: [
+        { line_number: 1, reason: "size_unresolved" },
+        { line_number: 2, reason: "unit_mismatch" },
+      ],
+    });
+
+    expect(parsed.line_failures.map((failure) => failure.reason)).toEqual([
+      "size_unresolved",
+      "unit_mismatch",
+    ]);
+  });
+
   it("reads a state written before the line map existed as having no line map", () => {
     const parsed = parseBcIntegrationState({
       status: "sent",

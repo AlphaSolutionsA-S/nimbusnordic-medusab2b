@@ -76,6 +76,7 @@ const twoLineOrder: BCCreateSalesOrderParams = {
     {
       lineNumber: 1,
       itemId: "11111111-1111-1111-1111-111111111111",
+      itemVariantId: "a019dfc8-ab92-ee11-8178-0022489b54b1",
       quantity: 1,
       unitOfMeasureCode: "PCS",
       shipmentDate: "2026-09-01",
@@ -166,7 +167,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     }
   });
 
-  it("TC-3: sends lineType Item, the itemId, and nothing Business Central prices", async () => {
+  it("TC-3: sends lineType Item, the itemId, the size, and nothing Business Central prices", async () => {
     const fetchMock = mockBusinessCentral([
       headerResponse(),
       lineResponse(),
@@ -179,10 +180,12 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     expect(bcRequests(fetchMock)[1].body).toEqual({
       lineType: "Item",
       itemId: "11111111-1111-1111-1111-111111111111",
+      itemVariantId: "a019dfc8-ab92-ee11-8178-0022489b54b1",
       quantity: 1,
       unitOfMeasureCode: "PCS",
       shipmentDate: "2026-09-01",
     });
+    expect(Object.keys(bcRequests(fetchMock)[2].body)).not.toContain("itemVariantId");
   });
 
   it("TC-4: omits absent optional fields rather than sending nulls", async () => {

@@ -10,7 +10,7 @@ import type {
   BCCreateSalesOrderLineInput,
   BCCreateSalesOrderParams,
   BCCustomer,
-  BCItemLookupResult,
+  BCItemLookupEvidence,
   BCSalesOrderAddressInput,
   IBusinessCentralModuleService,
 } from "../../../modules/business-central/types";
@@ -33,6 +33,7 @@ import type {
 } from "../../../modules/order-ingestion/bc-order-payload";
 import { resolveBcCurrencyOverride } from "../utils/resolve-bc-currency-override";
 import { shouldSkipBcSubmission } from "../utils/admin-bc-integration";
+import { resolveOrderLineItem } from "../utils/resolve-order-line-item";
 
 export type PrepareBcOrderInput = {
   order_id: string;
@@ -86,21 +87,10 @@ function toLineIdentifiers(payload: BcOrderPayload): BcLineIdentifiers[] {
 }
 
 function toLineFailure(
-  identifiers: BcLineIdentifiers[],
-  result: Extract<BCItemLookupResult, { matched: false }>
+  identifiers: BcLineIdentifiers,
+  reason: BcOrderLineFailure["reason"]
 ): BcOrderLineFailure {
-  const line = identifiers.find(
-    (candidate) => candidate.line_number === result.lineNumber
-  );
-
-  return {
-    line_number: result.lineNumber,
-    ean_no: line?.ean_no ?? null,
-    item_number: line?.item_number ?? null,
-    cust_item_no: line?.cust_item_no ?? null,
-    reason: result.reason,
-    message: null,
-  };
+  return { ...identifiers, reason, message: null };
 }
 
 function aborted(
@@ -224,10 +214,10 @@ export const prepareBcOrderStep = createStep(
       );
     }
 
-    let lookupResults: BCItemLookupResult[];
+    let evidence: BCItemLookupEvidence;
 
     try {
-      lookupResults = await bcService.findItemsForOrderLines(
+      evidence = await bcService.getItemLookupEvidence(
         payload.lines.map((line) => ({
           lineNumber: line.lineNumber,
           eanNo: line.eanNo,
@@ -250,32 +240,28 @@ export const prepareBcOrderStep = createStep(
     const lineFailures: BcOrderLineFailure[] = [];
     const resolvedLines: BCCreateSalesOrderLineInput[] = [];
 
-    for (const result of lookupResults) {
-      if (!result.matched) {
-        lineFailures.push(toLineFailure(lineIdentifiers, result));
-        continue;
-      }
+    payload.lines.forEach((line, index) => {
+      const resolution = resolveOrderLineItem(line, evidence);
 
-      const line = payload.lines.find(
-        (candidate) => candidate.lineNumber === result.lineNumber
-      );
-
-      if (!line) {
-        continue;
+      if (!resolution.resolved) {
+        lineFailures.push(toLineFailure(lineIdentifiers[index], resolution.reason));
+        return;
       }
 
       // No unitPrice, discount, tax or description: Business Central prices and describes the
-      // line from its own master data (NIMBUS-129 PROGRESS.md, 2026-09-16).
+      // line from its own master data (NIMBUS-129 PROGRESS.md, 2026-09-16). The unit is the
+      // customer's as sent; the rule only checked that it fits the barcode.
       resolvedLines.push({
         lineNumber: line.lineNumber,
-        itemId: result.item.id,
+        itemId: resolution.itemId,
+        itemVariantId: resolution.itemVariantId ?? undefined,
         quantity: line.quantity,
         unitOfMeasureCode: line.unitOfMeasureCode,
         shipmentDate: line.requestedShipmentDate
           ? canonicalDateToBcDate(line.requestedShipmentDate)
           : undefined,
       });
-    }
+    });
 
     // SCOPE.md: if NO lines resolve, the submission fails rather than creating an empty BC order.
     if (resolvedLines.length === 0) {

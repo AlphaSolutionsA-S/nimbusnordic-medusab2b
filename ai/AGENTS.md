@@ -25,32 +25,31 @@ Hosting: Medusa Cloud (backend, storefront); Azure App Service (CMS).
 
 ### Commands
 
-Run from the repo root, one command at a time. `<path>` is a test file path or pattern.
+Run from the repo root, one command at a time. `<path>` is a test file path or pattern; `<f>` is
+`pnpm --filter <package>` with the package from the table above.
 
-`<f>` is `pnpm --filter <package>` with the package from the table above.
+| App | Scoped tests | Full tests |
+|-----|--------------|------------|
+| Backend | `<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>` | `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin` |
+| Storefront | `<f> test -- <path>` | `<f> test`; visual: `<f> test:visual` |
+| CMS | `<f> test -- <path>` | `<f> test` |
 
-| App | Scoped tests | Full tests | Lint | Typecheck / build |
-|-----|--------------|------------|------|-------------------|
-| Backend | `<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>` | `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin` | `<f> lint` | `<f> exec tsc --noEmit`; `<f> build` |
-| Storefront | `<f> test -- <path>` | `<f> test`; visual: `<f> test:visual` | `<f> lint` | `<f> exec tsc --noEmit`; `<f> build` |
-| CMS | `<f> test -- <path>` | `<f> test` | `<f> lint` | `<f> exec tsc --noEmit`; `<f> build` |
+Every app: lint `<f> lint`; typecheck `<f> exec tsc --noEmit`; build `<f> build`. Root `pnpm test` skips the backend (no `test` script). Typecheck and some tests fail today
+(baseline: `ai/architecture/verification.md`). Dev servers: `<f> dev` (root `backend:dev` and
+`storefront:dev` filter nonexistent package names).
 
-Root `pnpm test` skips the backend (no `test` script). Typecheck and some tests fail today
-(baseline: `ai/architecture/verification.md`). Dev servers: `<f> dev` (the root `backend:dev` and
-`storefront:dev` scripts filter package names that don't exist).
-
-Architecture check: none (no boundary lint yet; `medusa lint` covers Medusa's own rules).
+Architecture check: none (`medusa lint` covers Medusa's own rules).
 
 ### Tools and vendor documentation
 
 - `atlassian` MCP: Jira. `medusa` MCP: Medusa docs and API signatures (token in the
-  `MEDUSA_MCP_TOKEN` user environment variable, never in a file). `mcloud` CLI: Medusa Cloud.
+  `MEDUSA_MCP_TOKEN` user env variable, never a file). `mcloud` CLI: Medusa Cloud.
 
-Check a signature a skill shows against the vendor documentation server before relying on it.
+Check a signature a skill shows against the vendor docs server before relying on it.
 
 Read, search and write files with the file tools, not shell `grep`/`cat`/heredocs (25x slower;
-heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): run
-commands from the repo root as the Commands table gives them.
+heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): use
+the Commands table's forms.
 
 ### Starting work
 
@@ -205,7 +204,7 @@ explicit, separate go-ahead from a human; approving one stage's output does not 
 
 ## Instructions
 
-Path-scoped conventions, applied automatically in each tool when working in the matching files.
+Path-scoped conventions, applied automatically in each tool to the matching files.
 
 | Instruction | Applies to |
 |-------------|------------|

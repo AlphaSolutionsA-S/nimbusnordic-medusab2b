@@ -22,9 +22,9 @@ import type {
   BCCustomer,
   BCCustomerBlockedState,
   BCItem,
+  BCItemBarcodeReference,
+  BCItemLookupEvidence,
   BCItemLookupInput,
-  BCItemLookupResult,
-  BCItemMatchSource,
   BCReturnListItem,
   BCReturnOrder,
   BCReturnReason,
@@ -65,6 +65,18 @@ import type {
   PostedReturnReceiptHeader,
   PostedReturnReceiptLineRecord,
 } from "./return-history";
+import {
+  chunkLookupValues,
+  collectItemNumbers,
+  collectLineBarcodes,
+  ITEM_LOOKUP_EXPAND,
+  ITEM_LOOKUP_SELECT,
+  ITEM_REFERENCE_ENTITY_SET,
+  ITEM_REFERENCE_FIELDS,
+  mapItemBarcodeReference,
+  mapLookupItem,
+} from "./item-lookup-evidence";
+import type { BCItemLookupItemRaw, BCItemReferenceRaw } from "./item-lookup-evidence";
 
 const DEFAULT_BUSINESS_CENTRAL_DISCOVERY_URL =
   "https://api.businesscentral.dynamics.com/v2.0/f44eef10-122f-4a63-9f5c-bd9fbd87a364/TestDK/api/v2.0";
@@ -200,49 +212,6 @@ function formatAddress(
   );
 }
 
-const BC_ITEM_SELECT = "id,number,displayName,gtin,baseUnitOfMeasureCode";
-
-type BCItemLookupCandidate = {
-  source: BCItemMatchSource;
-  field: "gtin" | "number";
-  value: string;
-};
-
-function buildItemLookupCandidates(
-  line: BCItemLookupInput
-): BCItemLookupCandidate[] {
-  const ordered: BCItemLookupCandidate[] = [
-    { source: "eanNo", field: "gtin", value: (line.eanNo ?? "").trim() },
-    {
-      source: "itemNumber",
-      field: "number",
-      value: (line.itemNumber ?? "").trim(),
-    },
-    {
-      source: "custItemNo",
-      field: "number",
-      value: (line.custItemNo ?? "").trim(),
-    },
-  ];
-  const seen = new Set<string>();
-
-  return ordered.filter((candidate) => {
-    if (!candidate.value) {
-      return false;
-    }
-
-    const key = `${candidate.field}:${candidate.value}`;
-
-    if (seen.has(key)) {
-      return false;
-    }
-
-    seen.add(key);
-
-    return true;
-  });
-}
-
 type BCJsonBody = Record<string, string | number>;
 
 function assignIfDefined(
@@ -305,6 +274,7 @@ function buildSalesOrderLineBody(
     quantity: line.quantity,
   };
 
+  assignIfDefined(body, "itemVariantId", line.itemVariantId);
   assignIfDefined(body, "unitOfMeasureCode", line.unitOfMeasureCode);
   assignIfDefined(body, "shipmentDate", line.shipmentDate);
 
@@ -1397,133 +1367,136 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
   }
 
-  private async findItemsByFilter(
-    discoveryUrl: URL,
+  // Reads every chunk one request at a time, so an order's load on BC stays predictable. A page
+  // with a next link is never taken as the whole answer.
+  private async fetchItemLookupRows<TRaw>(
+    baseUrl: URL,
     accessToken: string,
-    field: "gtin" | "number",
-    value: string
-  ): Promise<BCItem[]> {
-    const itemsUrl = new URL(`${discoveryUrl.toString()}/items()`);
-    itemsUrl.searchParams.set(
-      "$filter",
-      `${field} eq '${escapeODataString(value)}'`
-    );
-    itemsUrl.searchParams.set("$select", BC_ITEM_SELECT);
-    itemsUrl.searchParams.set("$top", "2");
+    filterField: string,
+    values: readonly string[],
+    configure: (url: URL) => void,
+    label: string
+  ): Promise<TRaw[]> {
+    const rows: TRaw[] = [];
 
-    let itemsResponse: Response;
-
-    try {
-      itemsResponse = await fetch(itemsUrl.toString(), {
-        method: "GET",
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-          accept: "application/json",
-        },
-      });
-    } catch {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        "Business Central item request failed"
+    for (const chunk of chunkLookupValues(values)) {
+      const url = new URL(baseUrl.toString());
+      url.searchParams.set(
+        "$filter",
+        chunk.map((value) => `${filterField} eq '${escapeODataString(value)}'`).join(" or ")
       );
+      configure(url);
+
+      let response: Response;
+
+      try {
+        response = await fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            accept: "application/json",
+          },
+        });
+      } catch {
+        throw new MedusaError(
+          MedusaError.Types.UNEXPECTED_STATE,
+          `Business Central ${label} request did not complete`
+        );
+      }
+
+      if (!response.ok) {
+        throw new MedusaError(
+          MedusaError.Types.UNEXPECTED_STATE,
+          `Business Central ${label} request failed with status ${response.status}`
+        );
+      }
+
+      let body: { value?: TRaw[]; "@odata.nextLink"?: unknown };
+
+      try {
+        body = (await response.json()) as { value?: TRaw[]; "@odata.nextLink"?: unknown };
+      } catch {
+        throw new MedusaError(
+          MedusaError.Types.UNEXPECTED_STATE,
+          `Malformed Business Central ${label} response`
+        );
+      }
+
+      if (body["@odata.nextLink"] !== undefined && body["@odata.nextLink"] !== null) {
+        throw new MedusaError(
+          MedusaError.Types.UNEXPECTED_STATE,
+          `Business Central ${label} response was incomplete`
+        );
+      }
+
+      rows.push(...(body.value ?? []));
     }
 
-    if (!itemsResponse.ok) {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        `Business Central item request failed with status ${itemsResponse.status}`
-      );
-    }
-
-    type BCItemRaw = {
-      id?: unknown;
-      number?: unknown;
-      displayName?: unknown;
-      gtin?: unknown;
-      baseUnitOfMeasureCode?: unknown;
-    };
-
-    let body: { value?: BCItemRaw[] };
-
-    try {
-      body = (await itemsResponse.json()) as { value?: BCItemRaw[] };
-    } catch {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        "Malformed Business Central item response"
-      );
-    }
-
-    return (body.value ?? []).map((raw) => ({
-      id: requireBusinessCentralString(raw.id, "item.id"),
-      number: optionalString(raw.number),
-      displayName: optionalString(raw.displayName),
-      gtin: optionalString(raw.gtin),
-      baseUnitOfMeasureCode: optionalString(raw.baseUnitOfMeasureCode),
-    }));
+    return rows;
   }
 
-  async findItemsForOrderLines(
-    lines: BCItemLookupInput[]
-  ): Promise<BCItemLookupResult[]> {
-    if (lines.length === 0) {
-      return [];
+  async getItemLookupEvidence(lines: BCItemLookupInput[]): Promise<BCItemLookupEvidence> {
+    const barcodes = collectLineBarcodes(lines);
+    const lineItemNumbers = collectItemNumbers(lines, []);
+
+    if (barcodes.length === 0 && lineItemNumbers.length === 0) {
+      return { itemsByBarcode: [], barcodeReferences: [], itemsByNumber: [] };
     }
 
     const discoveryUrl = this.getDiscoveryUrl();
     const tenantId = this.getTenantId(discoveryUrl);
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
-    const results: BCItemLookupResult[] = [];
+    const itemsUrl = new URL(`${discoveryUrl.toString()}/items()`);
+    const configureItems = (url: URL): void => {
+      url.searchParams.set("$select", ITEM_LOOKUP_SELECT);
+      url.searchParams.set("$expand", ITEM_LOOKUP_EXPAND);
+    };
 
-    for (const line of lines) {
-      const candidates = buildItemLookupCandidates(line);
+    let itemsByBarcode: BCItem[] = [];
+    let barcodeReferences: BCItemBarcodeReference[] = [];
 
-      if (candidates.length === 0) {
-        results.push({
-          lineNumber: line.lineNumber,
-          matched: false,
-          reason: "no_identifiers",
-        });
-        continue;
-      }
-
-      let sawAmbiguousMatch = false;
-      let resolved: BCItemLookupResult | null = null;
-
-      for (const candidate of candidates) {
-        const items = await this.findItemsByFilter(
-          discoveryUrl,
+    if (barcodes.length > 0) {
+      itemsByBarcode = (
+        await this.fetchItemLookupRows<BCItemLookupItemRaw>(
+          itemsUrl,
           accessToken,
-          candidate.field,
-          candidate.value
-        );
+          "gtin",
+          barcodes,
+          configureItems,
+          "item"
+        )
+      ).map(mapLookupItem);
 
-        if (items.length === 1) {
-          resolved = {
-            lineNumber: line.lineNumber,
-            matched: true,
-            item: items[0],
-            matchedBy: candidate.source,
-          };
-          break;
-        }
-
-        if (items.length > 1) {
-          sawAmbiguousMatch = true;
-        }
-      }
-
-      results.push(
-        resolved ?? {
-          lineNumber: line.lineNumber,
-          matched: false,
-          reason: sawAmbiguousMatch ? "ambiguous" : "not_found",
-        }
+      const referencesUrl = await this.getODataV4Url(
+        discoveryUrl,
+        accessToken,
+        ITEM_REFERENCE_ENTITY_SET
       );
+      barcodeReferences = (
+        await this.fetchItemLookupRows<BCItemReferenceRaw>(
+          referencesUrl,
+          accessToken,
+          "Reference_No",
+          barcodes,
+          (url) => url.searchParams.set("$select", ITEM_REFERENCE_FIELDS),
+          "item reference"
+        )
+      ).map(mapItemBarcodeReference);
     }
 
-    return results;
+    const itemsByNumber = (
+      await this.fetchItemLookupRows<BCItemLookupItemRaw>(
+        itemsUrl,
+        accessToken,
+        "number",
+        collectItemNumbers(lines, barcodeReferences),
+        configureItems,
+        "item"
+      )
+    ).map(mapLookupItem);
+
+    return { itemsByBarcode, barcodeReferences, itemsByNumber };
   }
 
   private async postSalesOrderLine(

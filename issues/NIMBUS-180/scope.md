@@ -1,7 +1,9 @@
 # Order API: match size barcodes to the right Business Central item and size
 
+> Record of NIMBUS-180, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-23
-**Status:** Approved (Klaus Petersen, 2026-10-23)
+**Status:** Implemented
 **Type:** Bug
 **Priority:** Medium
 **Issue:** NIMBUS-180 (parent NIMBUS-206 "bugs")
@@ -185,3 +187,9 @@ None open. All answered by Klaus on 2026-10-23.
 - No code dependency: NIMBUS-217 and NIMBUS-130/216 are merged; the line map (NIMBUS-183) is in
   place.
 - Related: NIMBUS-129 (order API), NIMBUS-130 (shipment notices), NIMBUS-148 (submission to BC).
+
+## Documentation
+
+- [docs/architecture/business-central-order.md](../../docs/architecture/business-central-order.md) — Business Central order submission, "Item and size resolution" (updated)
+
+AI base files updated: none (the `decisions.md` row was added by task 02)

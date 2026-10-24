@@ -24,32 +24,31 @@ Hosting: Medusa Cloud (backend, storefront); Azure App Service (CMS).
 
 ### Commands
 
-Run from the repo root, one command at a time. `<path>` is a test file path or pattern.
+Run from the repo root, one command at a time. `<path>` is a test file path or pattern; `<f>` is
+`pnpm --filter <package>` with the package from the table above.
 
-`<f>` is `pnpm --filter <package>` with the package from the table above.
+| App | Scoped tests | Full tests |
+|-----|--------------|------------|
+| Backend | `<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>` | `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin` |
+| Storefront | `<f> test -- <path>` | `<f> test`; visual: `<f> test:visual` |
+| CMS | `<f> test -- <path>` | `<f> test` |
 
-| App | Scoped tests | Full tests | Lint | Typecheck / build |
-|-----|--------------|------------|------|-------------------|
-| Backend | `<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>` | `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin` | `<f> lint` | `<f> exec tsc --noEmit`; `<f> build` |
-| Storefront | `<f> test -- <path>` | `<f> test`; visual: `<f> test:visual` | `<f> lint` | `<f> exec tsc --noEmit`; `<f> build` |
-| CMS | `<f> test -- <path>` | `<f> test` | `<f> lint` | `<f> exec tsc --noEmit`; `<f> build` |
+Every app: lint `<f> lint`; typecheck `<f> exec tsc --noEmit`; build `<f> build`. Root `pnpm test` skips the backend (no `test` script). Typecheck and some tests fail today
+(baseline: `ai/architecture/verification.md`). Dev servers: `<f> dev` (root `backend:dev` and
+`storefront:dev` filter nonexistent package names).
 
-Root `pnpm test` skips the backend (no `test` script). Typecheck and some tests fail today
-(baseline: `ai/architecture/verification.md`). Dev servers: `<f> dev` (the root `backend:dev` and
-`storefront:dev` scripts filter package names that don't exist).
-
-Architecture check: none (no boundary lint yet; `medusa lint` covers Medusa's own rules).
+Architecture check: none (`medusa lint` covers Medusa's own rules).
 
 ### Tools and vendor documentation
 
 - `atlassian` MCP: Jira. `medusa` MCP: Medusa docs and API signatures (token in the
-  `MEDUSA_MCP_TOKEN` user environment variable, never in a file). `mcloud` CLI: Medusa Cloud.
+  `MEDUSA_MCP_TOKEN` user env variable, never a file). `mcloud` CLI: Medusa Cloud.
 
-Check a signature a skill shows against the vendor documentation server before relying on it.
+Check a signature a skill shows against the vendor docs server before relying on it.
 
 Read, search and write files with the file tools, not shell `grep`/`cat`/heredocs (25x slower;
-heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): run
-commands from the repo root as the Commands table gives them.
+heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): use
+the Commands table's forms.
 
 ### Starting work
 
@@ -171,7 +170,7 @@ technology skill). A skill's `project.md` is read with it and wins where they di
 
 ## Instructions
 
-Path-scoped conventions, applied automatically in each tool when working in the matching files.
+Path-scoped conventions, applied automatically in each tool to the matching files.
 
 | Instruction | Applies to |
 |-------------|------------|
@@ -230,28 +229,26 @@ Paths are relative to `apps/backend/src/`, `apps/storefront/src/` and `apps/cms/
 |---|---|---|---|---|---|
 | L0 | Data model | `modules/<m>/models/*.ts` | its tables (`data-ownership.md`) | — | be imported outside its module |
 | L1 | Module service | `modules/<m>/service.ts` | CRUD + invariants on its own tables | its own L0, its module's L2 client | resolve another module, do HTTP itself or while holding a transaction, know a workflow exists |
-| L2 | Infra adapter | `modules/business-central/service.ts` (Business Central HTTP client, no tables); notification provider `notification-local` (`medusa-config.ts`) | exactly one external system | that vendor's HTTP API | hold a domain rule |
+| L2 | Infra adapter | `modules/business-central/service.ts`; notification provider `notification-local` (`medusa-config.ts`) | exactly one external system | that vendor's HTTP API | hold a domain rule |
 | L3 | Step | `workflows/<domain>/steps/*.ts` | one compensatable unit | L1, L2, L5, Query | orchestrate other steps |
 | L4 | Workflow | `workflows/<domain>/workflows/*.ts`; core-flow hooks in `workflows/hooks/*.ts` | logic spanning more than one module; compensation | L3, L5 inside `transform()`, other workflows via `runAsStep` | `await`, branch outside `when()`, `new Date()` |
-| L5 | Decision fn | `workflows/<domain>/utils/*.ts`, `utils/*.ts` (pure parts) | one pure business rule | nothing | any I/O |
+| L5 | Decision fn | `workflows/<domain>/utils/*.ts`, `utils/*.ts` (pure functions only) | one pure business rule | nothing | any I/O |
 | L6 | API route | `api/{store,admin,orderapi,internal}/**/route.ts`, `api/**/middlewares.ts`, `api/middlewares/*.ts` | validate → run L4 or Query → shape the response | L4, Query, event bus | branch on a business condition; mutate via L1 |
 | L7 | Trigger | `subscribers/*.ts`; `jobs/*.ts` | call one workflow | L4 | hold logic |
 
-Only the pure functions in `utils/` are L5. Admin UI (`admin/**`) calls the backend only over HTTP
-through `admin/lib/client.ts`.
+L5 names a business rule, never a mocking seam. Admin UI (`admin/**`) calls the backend only over
+HTTP through `admin/lib/client.ts`.
 
 Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
 (`limit-route-body`); no L1 method touches more than one module's data (`limit-service-one-module`).
-
-L5 names a business rule, never a mocking seam.
 
 ### Storefront (Next.js App Router, Medusa JS SDK)
 
 | # | Layer | Location | Must never |
 |---|---|---|---|
-| S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` because the Edge runtime cannot load the SDK | map, validate, decide |
+| S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` (the Edge runtime cannot load the SDK) | map, validate, decide |
 | S1 | Mapper | `lib/util/*.ts` (pure helpers; no dedicated mapper files yet, UNVERIFIED as a layer) | fetch |
-| S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions; `cms.ts`, `ui-translations.ts` and `country-languages.ts` are `server-only` loaders | hold a domain rule |
+| S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions and `server-only` loaders (`bound-sf-server-only`) | hold a domain rule |
 | S3 | Route / server component | `app/[countryCode]/**`, `app/api/**`, `i18n/request.ts` | fetch vendor APIs directly |
 | S4 | Feature component | `modules/<feature>/{components,templates}/**` | fetch, or import `lib/` beyond S1 helpers and S2 actions |
 
@@ -260,8 +257,8 @@ L5 names a business rule, never a mocking seam.
 `collections/*.ts` and `blocks/*.ts` define the schema, registered in `payload.config.ts`; migrations
 in `migrations/`. The storefront reads the CMS only through `lib/data/cms.ts`.
 
-Not retrofitted: each layer skill's `project.md` lists the legacy files that break these rows
-("Do not copy"); new code never copies them.
+Not retrofitted: legacy files that break these rows are listed under "Do not copy" in each layer
+skill's `project.md`; new code never copies them.
 
 ## Boundaries (`ai/architecture/boundaries.md`)
 
@@ -269,10 +266,9 @@ The import edges of `layers.md` as rules. `B` = `apps/backend/src`, `S` = `apps/
 `<m>` is one module, `<other>` any other. Tests (`**/__tests__/**`, `*.spec.ts`, `*.test.ts`) are
 exempt. "Value import" excludes `import type`. Existing violations get a baseline, not a retrofit.
 
-No import-boundary lint runs yet: every row is enforced by review. `@medusajs/eslint-plugin`
-(`medusa lint`) adds `link-no-cross-module-relationship` (error) and
-`no-service-mutations-in-api-route` (warning), which back `bound-module-isolation` and
-`bound-route-no-service`.
+Review enforces every row (no import-boundary lint yet); `medusa lint` (`@medusajs/eslint-plugin`)
+backs `bound-module-isolation` and `bound-route-no-service` with `link-no-cross-module-relationship`
+(error) and `no-service-mutations-in-api-route` (warning).
 
 | ID | From | To | Verdict |
 |---|---|---|---|
@@ -295,11 +291,11 @@ Baseline: `bound-route-no-service` in `B/api/store/bc-orders/[id]/returns/route.
 
 ### Locks
 
-No Redis is configured, so locks are in memory and don't hold across instances (unverified for
-production, `docs/security-remediation.md`).
+No Redis: locks are in memory and don't hold across instances (unverified for production,
+`docs/security-remediation.md`).
 
-- `lock-single-run`: a lock that keeps a sync or batch to one run at a time is acquired in the L7
-  trigger that starts the workflow: try once, skip if held, release in `finally`.
+- `lock-single-run`: a lock keeping a sync or batch to one run at a time is acquired in the L7
+  trigger starting the workflow: try once, skip if held, release in `finally`.
 - `lock-critical-section`: a lock around changing specific data is acquired by a step whose
   compensation releases it and released by a later step (or try/finally within one step).
   `acquireLockStep` skips itself under `runAsStep` unless `executeOnSubWorkflow: true`.
@@ -315,17 +311,17 @@ packages. Code examples and detail: the `medusa-backend` skill (`reference/medus
 
 ### Verify, don't assume
 
-- A framework or vendor behaviour a design relies on is verified before use, from installed source
-  or the `medusa` MCP (otherwise the Medusa documentation). Record the primitive, the evidence and
+- Verify a framework or vendor behaviour a design relies on before use, from installed source or
+  the `medusa` MCP (else the Medusa docs). Record the primitive, the evidence and
   the behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
   unverified claim is marked UNVERIFIED in the plan and blocks dispatch.
 - Security-relevant vendor claims are verified from dist code or a runnable probe, never docs.
-- A `query.graph` path that is wrong fails silently: verify the shape once against real data and
+- A wrong `query.graph` path fails silently: verify the shape once against real data and
   mock only that shape.
-- Installed source: `apps/backend` uses `node-linker=hoisted` (`apps/backend/.npmrc`), so read
-  `apps/backend/node_modules/@medusajs/<pkg>/dist/...`; if a package is missing there, grep the
-  store `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is
-  evidence only once it has provably searched a real path.
+- Installed source: `apps/backend/node_modules/@medusajs/<pkg>/dist/...` (`node-linker=hoisted`,
+  `apps/backend/.npmrc`); if missing there, grep the store
+  `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is evidence
+  only once it provably searched a real path.
 
 ### OOTB first
 
@@ -339,14 +335,14 @@ guarantee. Extend core flows through `apps/backend/src/workflows/hooks/`, never 
   field; where the value is computed does (module service: yes; core-flows workflow: never, e.g.
   `order.payment_status`; wrong path: silent `undefined`, e.g. `items.detail.quantity` on an order).
 - `data-core-read-workflows`: a substantive read of a core entity goes through its core read
-  workflow (`getOrderDetailWorkflow`, `getOrdersListWorkflow`); `query.graph()` stays right for our
-  own models and narrow existence or scope checks, each commented as a deliberate exemption.
+  workflow (`getOrderDetailWorkflow`, `getOrdersListWorkflow`); `query.graph()` suits our own
+  models and narrow existence or scope checks, each commented as a deliberate exemption.
 - `data-no-core-internals`: call the workflow, not the core internal it wraps.
 
 ### Types
 
-- Never `as unknown as` (`NO_UNKNOWN_CAST`). If an escape is unavoidable, there is exactly one, in a
-  named helper, with a comment stating the verified runtime shape.
+- Never `as unknown as` (`NO_UNKNOWN_CAST`). An unavoidable escape is exactly one, in a named
+  helper, commented with the verified runtime shape.
 - A declared type matches the runtime value: `model.dateTime()` is a `Date`.
 - `apps/backend/tsconfig.json` sets only `strictNullChecks` (not `strict`): implicit `any` compiles,
   so `type-no-any` is a review rule here.
@@ -370,8 +366,8 @@ A failed workflow rejects with a serialised object, not an `Error`. In a test, a
 
 ## Data ownership (`ai/architecture/data-ownership.md`)
 
-Every table has one owning module. Core tables belong to their Medusa module. The CMS
-(`apps/cms`) has its own Postgres database (`DATABASE_URI`), owned by Payload; no other app touches it.
+Every table has one owning module (core tables: their Medusa module). The CMS (`apps/cms`) has its
+own Postgres database (`DATABASE_URI`), owned by Payload; no other app touches it.
 
 - Only the owner's L1 service reads or writes its tables; other modules read them through
   `query.graph()` (or `query.index()` to filter by linked-module fields).
@@ -383,8 +379,8 @@ Every table has one owning module. Core tables belong to their Medusa module. Th
   from Business Central) and Medusa customers. Never log it: errors log the message only
   (`apps/storefront/src/lib/util/customer-error.ts`); page paths stored with missing translation keys
   are sanitized first (`apps/storefront/src/i18n/request.ts`).
-- Business Central is the source of truth for the BC-managed company fields
-  (`apps/backend/src/admin/routes/companies/bc-managed-fields.ts`); they are synced, not edited.
+- BC-managed company fields (`apps/backend/src/admin/routes/companies/bc-managed-fields.ts`) are
+  synced from Business Central, their source of truth, not edited.
 
 ### Registry (`apps/backend/src/modules`)
 
@@ -417,12 +413,13 @@ rule, find its row here; a second implementation is a defect. Paths: `B` = `apps
 | BC-managed company fields are read-only | `B/admin/routes/companies/bc-managed-fields.ts` | admin form; BC sync | storefront company card | ok |
 | Sent or recorded BC orders require duplicate protection and a force warning | `B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`) | pure verdict | Admin widget; submission guard | ok |
 | BC submission skips existing orders unless force is explicit | `B/workflows/business-central-order/utils/admin-bc-integration.ts` (`shouldSkipBcSubmission`) | preparation outcome | automatic and Admin workflows | ok |
+| Order line barcode resolution to BC item and size | `B/workflows/business-central-order/utils/resolve-order-line-item.ts` | line failures | BC order prepare step | ok |
 | Shipment notice match (R1, R2, R4), netting, revision and check schedule | `B/workflows/shipment-notice/utils/` | pure verdicts | shipment discovery and check workflows | ok |
 | Free-shipping threshold | `B/api/store/free-shipping/utils.ts` | `/store/free-shipping/prices` | `S/lib/data/fulfillment.ts` | ok |
-| Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale`; `default_locale` of `/store/country-languages` | `B/admin/lib/translations.ts`, `S/lib/data/country-languages.ts` | duplicate: `REFERENCE_LOCALE` in `B/admin/lib/translations.ts`; `DEFAULT_LOCALE` in `S/lib/i18n/country-language-map.ts` (cold-outage fallback only) |
-| Deploy country-language bootstrap skips countries whose legacy language is unavailable (English default) | `B/workflows/storefront-translation/utils/country-language-scope.ts` (`skipUnavailableAssignments`) | `skipped` in the bootstrap workflow result | `B/migration-scripts/seed-country-languages.ts` | ok |
+| Supported and reference (`en`) locales | `B/modules/storefront-translation/service.ts` | `/store/ui-translations/:locale`; `default_locale` of `/store/country-languages` | `B/admin/lib/translations.ts`, `S/lib/data/country-languages.ts` | duplicate: `REFERENCE_LOCALE` in the admin consumer; `DEFAULT_LOCALE` in `S/lib/i18n/country-language-map.ts` (cold-outage fallback only) |
+| Deploy country-language bootstrap skips countries whose legacy language is unavailable (English default) | `B/workflows/storefront-translation/utils/country-language-scope.ts` (`skipUnavailableAssignments`) | `skipped` in the workflow result | `B/migration-scripts/seed-country-languages.ts` | ok |
 | Runtime UI text from the database, not `S/messages/*.json` | `B/modules/storefront-translation` | `/store/ui-translations/:locale` (300 s cache) | `S/lib/data/ui-translations.ts` | ok |
-| Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | `/admin/country-languages`, `/store/country-languages` | Admin Translations page; `S/lib/data/country-languages.ts` (request config, layouts, metadata, switcher, text refresh) | ok; `COUNTRY_LANGUAGE_MAP` in `S/lib/i18n/country-language-map.ts` is the approved cold-outage fallback, not a second rule |
+| Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | `/admin/country-languages`, `/store/country-languages` | Admin Translations page; `S/lib/data/country-languages.ts` (request config, layouts, metadata, switcher, text refresh) | ok; `COUNTRY_LANGUAGE_MAP` in `S/lib/i18n/country-language-map.ts`: approved cold-outage fallback, not a second rule |
 | Formatting tag and hreflang key of a country's language | `S/lib/i18n/formatting-locale.ts`, `S/lib/seo/locale-alternates.ts` | pure helpers | prices and dates; product, collection and category metadata | ok |
 
 Domain types are duplicated in `B/types/` and `S/types/` (no shared package yet).
@@ -445,26 +442,31 @@ What a test must prove and at which layer. Commands are in `ai/AGENTS.md` (Comma
 - Security work carries negative cases per property (membership, role, cross-company access) in
   `integration-tests/http/security/security-boundaries.spec.ts`; a property that depends on vendor
   behaviour is tested once against the real library.
-- Never mock framework-resolved services to assert their call order; test the extracted pure decision
-  or move the case to integration. Keep dependency resolution and I/O where the framework puts them
-  and extract only pure logic, never a `*Logic(input, deps)` mocking seam.
-- Never read source files as text in a test; prefer a behaviour assertion, then importing the module
-  and asserting on its exports, then a lint rule for absence claims. Reading a fixture is fine.
+- Never mock framework-resolved services to assert call order: test the extracted pure decision or
+  move the case to integration. Dependency resolution and I/O stay where the framework puts them;
+  extract only pure logic, never a `*Logic(input, deps)` mocking seam.
+- Never read source files as text in a test (fixtures are fine); prefer a behaviour assertion, then
+  asserting on the module's exports, then a lint rule for absence claims.
 - Per task: only the tests created or changed, lint and whole-app typecheck (at or below the
-  recorded baseline). The full suite, integration tests and build run once, at finalization.
+  baseline). The full suite, integration tests and build run once, at finalization.
 - Test volume is a signal, not a target.
-- "Also update" (a task file's or quick-fix `task.md`'s list): every existing test that asserts the
-  behaviour being changed, contract and end-to-end spec, `docs/` section, `ai/` file (business-rule
-  registry, Tier 0 rows, a skill's `project.md`) and user-facing doc that describes it, or "none
-  found". Find them by searching the behaviour's names, routes, fields, messages and rule wording;
-  change what a stale test asserts, never delete it to make it pass.
+- "Also update" (a task file's or quick-fix `task.md`'s list): every existing test (incl. contract
+  and end-to-end specs), `docs/` section, `ai/` file (business-rule registry, Tier 0 rows, a skill's
+  `project.md`) and user-facing doc that asserts or describes the behaviour being changed, or "none
+  found". Search its names, routes, fields, messages and rule wording; fix a stale test's
+  assertion, never delete it to make it pass.
 
 ### Baseline (not green today)
 
 Per `docs/security-remediation.md` (2026-09-20; re-measure first): `tsc --noEmit` fails in backend
-and storefront (`next build` hides it); quote HTTP specs, one BC module test, 3 storefront and 1 CMS
-test fail. No CI runs backend or storefront tests. Backend tests abort unless
-`BUSINESS_CENTRAL_DISCOVERY_URL` is an allowed test environment (`integration-tests/global-setup.ts`).
+and storefront (`next build` hides it); one BC module test, 3 storefront and 1 CMS test fail. No CI
+runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_DISCOVERY_URL` is an
+allowed test environment (`integration-tests/global-setup.ts`).
+
+Local `pnpm test:integration:http` (develop `eea3a01`, 2026-10-23): 7 suites, 77 tests fail with 401
+on admin or customer login (cause unknown), in `integration-tests/http/` (`.spec.ts`):
+`admin/bc-integration`, `quotes/quotes`, `admin/quotes/quotes`, `security/password-recovery`,
+`translations/translations`, `security/security-boundaries`, `companies/companies`.
 
 ### Whole-branch checks
 
@@ -487,13 +489,13 @@ error: never suppress it or weaken the rule to pass a task.
 | `limit-route-body`, `limit-service-one-module` (`layers.md`) | medium | review |
 | `arch-*`, `data-*`, `type-*`, `file-*`, `logic-*`, `sdk-*` (Medusa skills) | as the skill states | review; `medusa lint` for workflow composition |
 | `type-no-any` | high | review; baseline: 16 storefront files, `workflows/order/steps/update-order.ts` |
-| `no-plan-id-comments` (comments citing task, test-case or scope ids) | high | review |
+| `no-plan-id-comments` (task, test-case or scope ids in comments) | high | review |
 | One home per business rule | high | `decisions.md`; review |
 | `trust-no-client-company`: never authorize from client `metadata.company_id` | high, blocker | review; baseline: `workflows/hooks/order-created.ts` |
 | `ui-text-translated`: storefront UI text is a translation key | medium | `react/jsx-no-literals` (warn) |
 
 Open security findings 7 (spending limit per order only), 8 (client company id) and 10 (claims live
-preview bypasses login) are tracked in
-`docs/security-remediation.md`; work touching carts, checkout or company access reads it first.
+preview bypasses login) are in `docs/security-remediation.md`; work touching carts, checkout or
+company access reads it first.
 
 <!-- tier0:end -->
