@@ -18,3 +18,13 @@
   also stub `getShipmentLineVariants`, or they will call TestDK (plan section 10).
 - Pitfall: the company-name read needs `BUSINESS_CENTRAL_COMPANY_ID` (a GUID) in the environment. Without
   it the read throws `INVALID_DATA` before any request.
+
+## Task 02 (size on notice lines)
+
+- Wire line: `ShipmentNoticeLineSchema.variant_code: z.string().nullable()` (required key, after `item_number`); `ShipmentNoticePayloadSchema` derives from it, so it also requires the key. Task 03 must loosen the stored-row type, not the wire schema.
+- Fixture `shipmentNoticeEnvelopeExample`: line NN-1001 has `variant_code: "M"`, NN-2040 `null`, in both notices.
+- `decideShipmentNotice` input gains `variants: readonly BCShipmentLineVariant[]` (whole batch is fine; it filters by `shipment.number`). New outcome `{ kind: "variant_missing"; sequence }`, checked before netting.
+- Content hash is unchanged; golden for the spec's fixed shipment: `c4d492f8899f43b710c92a1ddd3e5aa15fc682578c8a2c3a00362bc02409920d`.
+- `ShipmentCheckErrorCode` gains `variant_missing`; the warn line is `... failed: variant_missing at BC line <n>`.
+- The step reads `getShipmentLineVariants(numbers, deadline)` right after `getShipmentsByNumbers` in the same try, so deadline/throttle/other errors behave exactly as for the shipment read.
+- Integration specs: `check-shipments.spec.ts` has `inBc(tracked, lines, sizes?)` and a `getShipmentLineVariants` spy built from `bcShipments`; any new spec that spies on `getShipmentsByNumbers` must stub the variant read too.

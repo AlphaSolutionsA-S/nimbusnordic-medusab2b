@@ -50,6 +50,8 @@ export const ShipmentNoticeLineSchema = z
     ean_no: z.string().nullable(),
     bc_line_number: z.number().int().nonnegative(),
     item_number: z.string().min(1),
+    // BC variant code (the size) of the posted line; null for an item without variants (NIMBUS-231).
+    variant_code: z.string().nullable(),
     description: z.string().nullable(),
     description_2: z.string().nullable(),
     unit_of_measure_code: z.string().nullable(),

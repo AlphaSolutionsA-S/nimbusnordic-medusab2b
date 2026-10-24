@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import type {
   BCShipment,
   BCShipmentLine,
+  BCShipmentLineVariant,
   BCShipmentParty,
   BCShipmentShipTo,
 } from "../../../modules/business-central/types";
@@ -29,6 +30,8 @@ export interface ShipmentNoticeDecisionInput {
     "order_id" | "external_order_number" | "bc_order_number" | "posting_date"
   > & { bc_lines: readonly BcOrderLineMapEntry[] | null };
   latest: LatestShipmentRevision | null;
+  /** `TRCShipmentLine` rows read for the batch; rows of other shipments are ignored. */
+  variants: readonly BCShipmentLineVariant[];
 }
 
 export type ShipmentNoticeDecision =
@@ -39,21 +42,49 @@ export type ShipmentNoticeDecision =
       payload: ShipmentNoticePayload;
     }
   | { kind: "nothing" }
-  | { kind: "unpairable"; sequence: number };
+  | { kind: "unpairable"; sequence: number }
+  | { kind: "variant_missing"; sequence: number };
 
-type NettedLine = { line: BCShipmentLine; net: number; corrected: boolean };
+type SizedLine = BCShipmentLine & { variantCode: string | null };
+
+type NettedLine = { line: SizedLine; net: number; corrected: boolean };
+
+/**
+ * Joins each item line to its `TRCShipmentLine` row by shipment number and BC line number. A
+ * missing row is never guessed as "no size": the item line's BC line number is returned instead.
+ */
+function sizeItemLines(
+  shipment: BCShipment,
+  variants: readonly BCShipmentLineVariant[]
+): SizedLine[] | { missing: number } {
+  const byLine = new Map(
+    variants
+      .filter((row) => row.shipmentNumber === shipment.number)
+      .map((row) => [row.lineNumber, row.variantCode])
+  );
+  const sized: SizedLine[] = [];
+  for (const line of [...shipment.lines].sort((a, b) => a.sequence - b.sequence)) {
+    if (line.lineType !== "item") {
+      continue;
+    }
+    if (!byLine.has(line.sequence)) {
+      return { missing: line.sequence };
+    }
+    sized.push({ ...line, variantCode: byLine.get(line.sequence) || null });
+  }
+  return sized;
+}
 
 /**
  * BC exposes no correction flag, so an undo correction (negative quantity) is paired with the
  * nearest preceding positive item line not yet corrected, by BC line number (held for every
- * correction pair in TestDK, NIMBUS-130). That line must have the same item, unit and the opposite quantity, else the shipment is
- * unpairable. Sorting first makes the result independent of BC's response order.
+ * correction pair in TestDK, NIMBUS-130). That line must have the same item, unit, variant code
+ * (NIMBUS-231: one item in several sizes is undone per size) and the opposite quantity, else the
+ * shipment is unpairable. The item lines come sorted, so the result is independent of BC's
+ * response order.
  */
-function netItemLines(lines: readonly BCShipmentLine[]): NettedLine[] | { unpairable: number } {
+function netItemLines(itemLines: readonly SizedLine[]): NettedLine[] | { unpairable: number } {
   const netted: NettedLine[] = [];
-  const itemLines = lines
-    .filter((line) => line.lineType === "item")
-    .sort((a, b) => a.sequence - b.sequence);
 
   for (const line of itemLines) {
     if (line.quantity >= 0) {
@@ -72,6 +103,7 @@ function netItemLines(lines: readonly BCShipmentLine[]): NettedLine[] | { unpair
       !original ||
       original.line.itemNumber !== line.itemNumber ||
       original.line.unitOfMeasureCode !== line.unitOfMeasureCode ||
+      original.line.variantCode !== line.variantCode ||
       original.line.quantity !== -line.quantity
     ) {
       return { unpairable: line.sequence };
@@ -84,7 +116,8 @@ function netItemLines(lines: readonly BCShipmentLine[]): NettedLine[] | { unpair
   return netted;
 }
 
-// Canonical (BC line number, item, unit, net quantity) of the lines shipped now.
+// Canonical (BC line number, item, unit, net quantity) of the lines shipped now. The size is left
+// out on purpose (NIMBUS-231): revisions stored before sizes existed keep matching.
 function contentHash(shipped: readonly NettedLine[]): string {
   const canonical = shipped.map(({ line, net }) => [
     line.sequence,
@@ -123,13 +156,20 @@ function toShipTo(shipTo: BCShipmentShipTo): ShipmentNoticePayload["ship_to"] {
 
 /**
  * Turns one BC shipment, the order's BC line map and the latest stored revision into a
- * notice to record, nothing, or "unpairable" (the BC line that could not be netted or listed).
+ * notice to record, nothing, "variant_missing" (an item line with no size row) or "unpairable"
+ * (the BC line that could not be netted or listed).
  * Revision 1 lists the lines shipped (net > 0); a later revision lists every line listed before,
  * 0 where undone, and is `cancelled` when all are 0.
  */
 export function decideShipmentNotice(input: ShipmentNoticeDecisionInput): ShipmentNoticeDecision {
   const { shipment, order, latest } = input;
-  const netted = netItemLines(shipment.lines);
+  const sized = sizeItemLines(shipment, input.variants);
+
+  if (!Array.isArray(sized)) {
+    return { kind: "variant_missing", sequence: sized.missing };
+  }
+
+  const netted = netItemLines(sized);
 
   if (!Array.isArray(netted)) {
     return { kind: "unpairable", sequence: netted.unpairable };
@@ -160,6 +200,7 @@ export function decideShipmentNotice(input: ShipmentNoticeDecisionInput): Shipme
       ean_no: mapped?.ean_no ?? null,
       bc_line_number: sequence,
       item_number: entry.line.itemNumber,
+      variant_code: entry.line.variantCode,
       description: entry.line.description,
       description_2: entry.line.description2,
       unit_of_measure_code: entry.line.unitOfMeasureCode,

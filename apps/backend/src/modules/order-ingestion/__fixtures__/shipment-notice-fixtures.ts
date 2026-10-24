@@ -1,7 +1,7 @@
 /*
   The success example of the shipment notice contract. It is identical to the customer-facing
-  example `shipment-notices.example.json` handed to Metz with the JSON Schema and XSD (NIMBUS-130).
-  Fictitious names and addresses.
+  example `shipment-notices.example.json` handed to Metz with the JSON Schema and XSD (NIMBUS-130),
+  with `variant_code` added to each line (NIMBUS-231). Fictitious names and addresses.
 */
 export const shipmentNoticeEnvelopeExample = {
   shipment_notices: [
@@ -54,6 +54,7 @@ export const shipmentNoticeEnvelopeExample = {
           ean_no: "5701234567892",
           bc_line_number: 10000,
           item_number: "NN-1001",
+          variant_code: "M",
           description: "Winter jacket, navy",
           description_2: "Size M",
           unit_of_measure_code: "PCS",
@@ -65,6 +66,7 @@ export const shipmentNoticeEnvelopeExample = {
           ean_no: null,
           bc_line_number: 20000,
           item_number: "NN-2040",
+          variant_code: null,
           description: "Wool scarf, grey",
           description_2: null,
           unit_of_measure_code: "PCS",
@@ -122,6 +124,7 @@ export const shipmentNoticeEnvelopeExample = {
           ean_no: "5701234567892",
           bc_line_number: 10000,
           item_number: "NN-1001",
+          variant_code: "M",
           description: "Winter jacket, navy",
           description_2: "Size M",
           unit_of_measure_code: "PCS",
@@ -133,6 +136,7 @@ export const shipmentNoticeEnvelopeExample = {
           ean_no: null,
           bc_line_number: 20000,
           item_number: "NN-2040",
+          variant_code: null,
           description: "Wool scarf, grey",
           description_2: null,
           unit_of_measure_code: "PCS",
