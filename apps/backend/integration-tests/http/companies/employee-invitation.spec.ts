@@ -1,10 +1,17 @@
 import { medusaIntegrationTestRunner, TestEventUtils } from "@medusajs/test-utils";
 import type {
   IEventBusModuleService,
+  INotificationModuleService,
+  IRegionModuleService,
   MedusaContainer,
 } from "@medusajs/framework/types";
 import { Modules } from "@medusajs/framework/utils";
 
+import { COMPANY_MODULE } from "../../../src/modules/company";
+import { STOREFRONT_TRANSLATION_MODULE } from "../../../src/modules/storefront-translation";
+import type StorefrontTranslationModuleService from "../../../src/modules/storefront-translation/service";
+import type { ICompanyModuleService } from "../../../src/types";
+import type { MessageDocument } from "../../../src/types/storefront-translation";
 import { EMPLOYEE_INVITED_EVENT } from "../../../src/workflows/employee/workflows/create-employee-account";
 import { adminHeaders, createAdminUser, createStoreUser } from "../../utils/admin";
 import {
@@ -20,7 +27,7 @@ type Headers = { headers: Record<string, string> };
 
 medusaIntegrationTestRunner({
   inApp: true,
-  env: { JWT_SECRET: "supersecret" },
+  env: { JWT_SECRET: "supersecret", STORE_CORS: "https://shop.example.test" },
   testSuite: ({ api, getContainer }) => {
     let container: MedusaContainer;
     let eventBus: IEventBusModuleService;
@@ -241,6 +248,151 @@ medusaIntegrationTestRunner({
           .listCustomers({ email: "rejected@example.test" })
       ).toHaveLength(0);
       expect(await receivedBeforeControl()).toEqual([]);
+    });
+
+    describe("invitation email", () => {
+      const INVITATION_TEMPLATE = "employee-invitation";
+      const fullEnglish = {
+        subject: "Your account (en)",
+        greeting: "Hi {firstName},",
+        greetingWithoutName: "Hi,",
+        body: "{companyName} created your account.",
+        passwordHint: "Ask your administrator.",
+        loginLabel: "Log in",
+      };
+
+      const translations = () =>
+        container.resolve<StorefrontTranslationModuleService>(STOREFRONT_TRANSLATION_MODULE);
+      const notifications = () =>
+        container.resolve<INotificationModuleService>(Modules.NOTIFICATION);
+      const companies = () => container.resolve<ICompanyModuleService>(COMPANY_MODULE);
+
+      async function activeLanguage(locale: string, employeeInvitation: Record<string, string>) {
+        const messages: MessageDocument = { Emails: { employeeInvitation } };
+        await translations().mutateDocument({
+          operation: "import",
+          input: { locale, expected_version: null, mode: "replace", messages, confirm_removed: false },
+        });
+        await translations().mutateDocument({
+          operation: "activate", locale, expected_version: 1, is_active: true,
+        });
+      }
+
+      // Region with se and dk; se is Swedish (its document lacks the login label), dk is Danish.
+      beforeEach(async () => {
+        await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+          name: "Nordics", currency_code: "dkk", countries: ["se", "dk"],
+        });
+        await activeLanguage("en", fullEnglish);
+        const { loginLabel: _missing, ...swedish } = { ...fullEnglish, subject: "Ditt konto (sv)" };
+        await activeLanguage("sv", swedish);
+        await activeLanguage("da", { ...fullEnglish, subject: "Din konto (da)" });
+        await translations().bootstrapCountryLanguages({ se: "sv", dk: "da" });
+      });
+
+      async function invite(create: () => Promise<{ status: number }>) {
+        const delivered = TestEventUtils.waitSubscribersExecution(EMPLOYEE_INVITED_EVENT, eventBus);
+        const response = await create();
+        await delivered;
+        return response;
+      }
+
+      async function invitationsTo(email: string) {
+        return notifications().listNotifications({ to: email, template: INVITATION_TEMPLATE });
+      }
+
+      it("sends one invitation to the invited address in the page country's language", async () => {
+        const response = await invite(() =>
+          storeCreate({
+            email: "store-invite@example.test", password: "password123",
+            first_name: "Stina", country_code: "se",
+          })
+        );
+
+        expect(response.status).toBe(200);
+        const stored = await invitationsTo("store-invite@example.test");
+        expect(stored).toHaveLength(1);
+        expect(stored[0]).toMatchObject({ channel: "email", status: "success" });
+        expect(stored[0].data?.locale).toBe("sv");
+        const loginUrl = new URL(String(stored[0].data?.login_url));
+        expect(loginUrl.origin).toBe("https://shop.example.test");
+        expect(loginUrl.pathname).toBe("/se/account");
+        const all = await notifications().listNotifications({ template: INVITATION_TEMPLATE });
+        expect(all.map((notification) => notification.to)).toEqual(["store-invite@example.test"]);
+        expect(JSON.stringify(stored[0].data)).not.toMatch(/password|token|reset-password/i);
+      });
+
+      it("uses the company country's language for an Admin invitation", async () => {
+        await companies().updateCompanies({ id: companyId, country: "DK" });
+
+        const response = await invite(() =>
+          adminCreate({ email: "admin-invite@example.test", password: "password123" })
+        );
+
+        expect(response.status).toBe(200);
+        const stored = await invitationsTo("admin-invite@example.test");
+        expect(stored).toHaveLength(1);
+        expect(stored[0].data?.locale).toBe("da");
+        expect(new URL(String(stored[0].data?.login_url)).pathname).toBe("/dk/account");
+      });
+
+      it("sends English with the dk link when the company country is not a code", async () => {
+        await companies().updateCompanies({ id: companyId, country: "Denmark" });
+
+        await invite(() =>
+          adminCreate({ email: "named-country@example.test", password: "password123" })
+        );
+
+        const stored = await invitationsTo("named-country@example.test");
+        expect(stored).toHaveLength(1);
+        expect(stored[0].data?.locale).toBe("en");
+        expect(new URL(String(stored[0].data?.login_url)).pathname).toBe("/dk/account");
+      });
+
+      it("reports a missing text under the email source without personal data", async () => {
+        await invite(() =>
+          storeCreate({
+            email: "report-invite@example.test", password: "password123",
+            first_name: "Reportina", country_code: "se",
+          })
+        );
+
+        expect(await invitationsTo("report-invite@example.test")).toHaveLength(1);
+        const rows = await translations().listTranslationMissingKeys({ locale: "sv" });
+        expect(rows).toEqual([
+          expect.objectContaining({
+            locale: "sv",
+            key: "Emails.employeeInvitation.loginLabel",
+            last_page_path: "email:employee-invitation",
+          }),
+        ]);
+        const serialized = JSON.stringify(await translations().listTranslationMissingKeys({}));
+        expect(serialized).not.toContain("report-invite@example.test");
+        expect(serialized).not.toContain("Reportina");
+        expect(serialized).not.toContain("Invite Co");
+      });
+
+      it("keeps the employee and answers 200 when sending the email fails", async () => {
+        const failed = jest
+          .spyOn(notifications(), "createNotifications")
+          .mockRejectedValue(new Error("provider down"));
+        try {
+          const response = await invite(() =>
+            storeCreate({
+              email: "failed-email@example.test", password: "password123", country_code: "se",
+            })
+          );
+
+          expect(response.status).toBe(200);
+          expect(failed).toHaveBeenCalled();
+          const customerId = await customerIdOf("failed-email@example.test");
+          expect(
+            await companies().listEmployees({ customer_id: customerId, company_id: companyId })
+          ).toHaveLength(1);
+        } finally {
+          failed.mockRestore();
+        }
+      });
     });
   },
 });

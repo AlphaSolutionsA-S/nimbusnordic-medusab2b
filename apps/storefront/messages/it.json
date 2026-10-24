@@ -927,6 +927,14 @@
       "intro": "Abbiamo ricevuto una richiesta di reimpostazione della tua password Nimbus Nordic.",
       "linkLabel": "Scegli una nuova password",
       "expiry": "Questo link scade tra 15 minuti. Se non hai richiesto la reimpostazione della password, puoi ignorare questa e-mail."
+    },
+    "employeeInvitation": {
+      "subject": "Il tuo account sul portale clienti Nimbus Nordic",
+      "greeting": "Ciao {firstName},",
+      "greetingWithoutName": "Ciao,",
+      "body": "{companyName} ha creato un account per te sul portale clienti Nimbus Nordic. Accedi con questo indirizzo e-mail.",
+      "passwordHint": "L’amministratore della tua azienda ti comunicherà la password. Puoi anche scegliere una tua password con \"Password dimenticata\" nella pagina di accesso.",
+      "loginLabel": "Accedi al portale clienti"
     }
   }
 }

@@ -1,8 +1,8 @@
 import type { SendNotificationsStepInput } from '@medusajs/medusa/core-flows';
-import { MedusaError } from '@medusajs/framework/utils';
 import type { MessageDocument, MissingReport } from '../../../types/storefront-translation';
 import { resolveEmailTexts } from '../../transactional-email/utils/email-texts';
 import { escapeHtml } from '../../transactional-email/utils/escape-html';
+import { emailStorefrontOrigin } from '../../transactional-email/utils/storefront-origin';
 
 export type PasswordResetEvent = {
   entity_id: string;
@@ -38,14 +38,7 @@ export function buildPasswordResetNotification(
   storeCors: string,
   localization: PasswordResetLocalization,
 ): PasswordResetNotification {
-  // STORE_CORS is deployment-owned; request origins and redirect URLs never choose the destination.
-  const storefront = new URL(storeCors.split(',')[0].trim());
-  if (storefront.username || storefront.password ||
-      (storefront.protocol !== 'https:' &&
-       !(storefront.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(storefront.hostname)))) {
-    throw new MedusaError(MedusaError.Types.INVALID_DATA, 'Password recovery storefront configuration is invalid');
-  }
-  const url = new URL(`/${localization.linkCountry}/reset-password`, storefront.origin);
+  const url = new URL(`/${localization.linkCountry}/reset-password`, emailStorefrontOrigin(storeCors));
   url.searchParams.set('token', event.token);
   const resetUrl = url.toString();
   const { texts, fallbacks } = resolveEmailTexts({

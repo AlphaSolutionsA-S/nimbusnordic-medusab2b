@@ -80,12 +80,34 @@ has not been verified for direct backend calls or across instances. Repeated req
 the latest proof and trigger further notifications. This unmet abuse-protection requirement and
 its residual risk were explicitly accepted/deferred for NIMBUS-133 on 2026-10-23.
 
+The link origin check is shared by both emails in
+`workflows/transactional-email/utils/storefront-origin.ts` (https, or http on a local host; no
+credentials).
+
 Runtime UI translations come from the database. Before release, import the recovery keys using
 the checklist in `apps/storefront/src/lib/i18n/README.md`; editing message JSON alone does not
 publish them. After deployment, use a controlled account and mailbox to verify receipt, trusted
 country link, expired/used-link guidance, successful reset, sequential replay refusal, refusal of
 the old password, ordinary login with the new password, and published UI keys. Local HTTP and
 component tests do not prove mailbox delivery or deployed browser behaviour.
+
+### Employee invitation email
+
+Creating an employee account with email and password (`POST /store/companies/:id/employees`, company
+admin, or `POST /admin/companies/:id/employees`) runs `createEmployeeAccountWorkflow`, which stages
+`employee.invited` with `customer_id`, `company_id` and the page `country_code` (null from Admin).
+Medusa releases it only when the account creation succeeds. Linking an existing `customer_id` sends
+nothing. The `subscribers/employee-invited.ts` subscriber runs
+`workflows/employee/workflows/send-employee-invitation.ts`: it reads the customer's email and first
+name and the company's name and country by id (the event carries no address), chooses the language
+with the page country first and the company country second, and builds the email in
+`workflows/employee/utils/employee-invitation-notification.ts` from the
+`Emails.employeeInvitation.*` keys (`greetingWithoutName` when the first name is empty), with the
+same fallback, escaping and reporting as the reset email under source `email:employee-invitation`.
+The email has one link, `/<country>/account` on the `STORE_CORS` origin, and no password, token or
+reset link; notification `to` is the customer's email and `data` holds `login_url` and `locale`. A
+failed send fails only the email workflow (logged by the event bus); the account and the route's
+200 response stand.
 
 Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/storefront/src/`.
 

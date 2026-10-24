@@ -927,6 +927,14 @@
       "intro": "Vi har modtaget en anmodning om at nulstille din Nimbus Nordic-adgangskode.",
       "linkLabel": "Vælg en ny adgangskode",
       "expiry": "Linket udløber om 15 minutter. Hvis du ikke har anmodet om at nulstille din adgangskode, kan du se bort fra denne e-mail."
+    },
+    "employeeInvitation": {
+      "subject": "Din konto på Nimbus Nordics kundeportal",
+      "greeting": "Hej {firstName},",
+      "greetingWithoutName": "Hej,",
+      "body": "{companyName} har oprettet en konto til dig på Nimbus Nordics kundeportal. Du logger ind med denne e-mailadresse.",
+      "passwordHint": "Din virksomheds administrator giver dig din adgangskode. Du kan også selv vælge en adgangskode med \"Glemt adgangskode\" på login-siden.",
+      "loginLabel": "Log ind på kundeportalen"
     }
   }
 }

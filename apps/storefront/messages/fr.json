@@ -927,6 +927,14 @@
       "intro": "Nous avons reçu une demande de réinitialisation de votre mot de passe Nimbus Nordic.",
       "linkLabel": "Choisir un nouveau mot de passe",
       "expiry": "Ce lien expire dans 15 minutes. Si vous n’avez pas demandé la réinitialisation de votre mot de passe, vous pouvez ignorer cet e-mail."
+    },
+    "employeeInvitation": {
+      "subject": "Votre compte sur le portail client Nimbus Nordic",
+      "greeting": "Bonjour {firstName},",
+      "greetingWithoutName": "Bonjour,",
+      "body": "{companyName} a créé un compte pour vous sur le portail client Nimbus Nordic. Vous vous connectez avec cette adresse e-mail.",
+      "passwordHint": "L’administrateur de votre entreprise vous communiquera votre mot de passe. Vous pouvez aussi choisir votre propre mot de passe avec « Mot de passe oublié » sur la page de connexion.",
+      "loginLabel": "Se connecter au portail client"
     }
   }
 }

@@ -927,6 +927,14 @@
       "intro": "We received a request to reset your Nimbus Nordic password.",
       "linkLabel": "Choose a new password",
       "expiry": "This link expires in 15 minutes. If you did not request a password reset, you can ignore this email."
+    },
+    "employeeInvitation": {
+      "subject": "Your Nimbus Nordic customer portal account",
+      "greeting": "Hi {firstName},",
+      "greetingWithoutName": "Hi,",
+      "body": "{companyName} has created an account for you on the Nimbus Nordic customer portal. You log in with this email address.",
+      "passwordHint": "Your company administrator will give you your password. You can also choose your own password with \"Forgot password\" on the login page.",
+      "loginLabel": "Log in to the customer portal"
     }
   }
 }

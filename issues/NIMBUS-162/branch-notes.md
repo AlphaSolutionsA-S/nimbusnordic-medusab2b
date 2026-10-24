@@ -66,3 +66,16 @@
   workflow then runs in these specs, so they need whatever fixtures it requires not to throw (a throw is
   caught and logged by the local bus, not failed).
 - Not run locally (no Postgres); typechecked only.
+
+## 05 Invitation email
+
+- `subscribers/employee-invited.ts` → `workflows/employee/workflows/send-employee-invitation.ts`
+  (`sendEmployeeInvitationWorkflow`, input `EmployeeInvitedEventData`, returns the sent notifications).
+- Steps: `employee/steps/read-invitation-recipient.ts` (customer email/first name, company name/country by id;
+  throws when the customer has no email) and `prepare-employee-invitation-notification.ts`.
+- Builder `employee/utils/employee-invitation-notification.ts`: `buildEmployeeInvitationNotification(recipient, storeCors, localization)`,
+  `EMPLOYEE_INVITATION_EMAIL_SOURCE`; it resolves only the greeting it sends (`greeting` with a first name,
+  else `greetingWithoutName`) so the built-in copy never lacks a value.
+- New shared `transactional-email/utils/storefront-origin.ts` (`emailStorefrontOrigin`), now also used by the reset builder.
+- `employee-invitation.spec.ts` now sets `STORE_CORS` and seeds a se/dk region with en/sv/da in its
+  "invitation email" block; the real subscriber runs in every case of that spec. Not run locally.

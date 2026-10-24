@@ -927,6 +927,14 @@
       "intro": "Otrzymaliśmy prośbę o zresetowanie Twojego hasła do Nimbus Nordic.",
       "linkLabel": "Wybierz nowe hasło",
       "expiry": "Ten link wygaśnie za 15 minut. Jeśli nie prosiłeś o zresetowanie hasła, możesz zignorować tę wiadomość."
+    },
+    "employeeInvitation": {
+      "subject": "Twoje konto w portalu klienta Nimbus Nordic",
+      "greeting": "Cześć {firstName},",
+      "greetingWithoutName": "Cześć,",
+      "body": "{companyName} utworzyła dla Ciebie konto w portalu klienta Nimbus Nordic. Logujesz się za pomocą tego adresu e-mail.",
+      "passwordHint": "Administrator Twojej firmy przekaże Ci hasło. Możesz też ustawić własne hasło za pomocą opcji „Nie pamiętasz hasła” na stronie logowania.",
+      "loginLabel": "Zaloguj się do portalu klienta"
     }
   }
 }
