@@ -32,3 +32,22 @@
   English document as both `chosen` and `english` (only `en` is consulted).
 - `source` becomes `page_path` on every report; use a fixed label, never a value.
 - `AGENTS.md` is now 33103 bytes after this task's registry row (ai:check size failure persists).
+
+## 03 Reset email on the translated mechanism
+
+- `workflows/transactional-email/steps/localize-email.ts`: `localizeEmailStep({ requestCountry?, companyCountry?, configuredCountries })`
+  → `EmailLocalization` `{ locale, linkCountry, chosen, english }` (active documents only; for `en`
+  `chosen` and `english` are the same document). Feed `configuredCountries` from
+  `listConfiguredCountryCodesStep()` (no input).
+- `workflows/transactional-email/steps/report-email-fallbacks.ts`: `reportEmailFallbacksStep(MissingReport[])`;
+  skips an empty list, catches and logs `error.message` only. Call it after `sendNotificationsStep`
+  (steps run in declaration order).
+- Pattern in `workflows/customer/workflows/send-password-reset.ts`: prepare step returns
+  `{ notification, fallbacks }`; `transform` splits them for send and report. Named `when` block
+  (lint `when-block-must-have-name`).
+- Subject is a header: collapse `\s+` to one space, do not HTML-escape; escape body texts and the URL.
+- Integration fixtures: `mutateDocument({ operation: 'import', input: { locale, expected_version: null, mode: 'replace', messages, confirm_removed: false } })`,
+  then `activate` at version 1; `bootstrapCountryLanguages({ se: 'sv' })` needs `en` and targets active;
+  regions via `Modules.REGION` `createRegions`. Missing rows: `listTranslationMissingKeys({ locale })`.
+- HTTP specs can't run locally here: no Postgres on 5432 and `BUSINESS_CENTRAL_DISCOVERY_URL` unset.
+- Import files are CRLF with a trailing CRLF; `JSON.stringify(doc, null, 2)` with CRLF round-trips exactly.

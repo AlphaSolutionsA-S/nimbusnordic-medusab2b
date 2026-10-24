@@ -920,5 +920,13 @@
       "title": "Order confirmed",
       "description": "Your purchase was successful."
     }
+  },
+  "Emails": {
+    "passwordReset": {
+      "subject": "Reset your Nimbus Nordic password",
+      "intro": "We received a request to reset your Nimbus Nordic password.",
+      "linkLabel": "Choose a new password",
+      "expiry": "This link expires in 15 minutes. If you did not request a password reset, you can ignore this email."
+    }
   }
 }

@@ -920,5 +920,13 @@
       "title": "Beställningen är bekräftad",
       "description": "Ditt köp har genomförts."
     }
+  },
+  "Emails": {
+    "passwordReset": {
+      "subject": "Återställ ditt lösenord för Nimbus Nordic",
+      "intro": "Vi har tagit emot en begäran om att återställa ditt lösenord för Nimbus Nordic.",
+      "linkLabel": "Välj ett nytt lösenord",
+      "expiry": "Länken går ut om 15 minuter. Om du inte har begärt att återställa ditt lösenord kan du bortse från detta e-postmeddelande."
+    }
   }
 }

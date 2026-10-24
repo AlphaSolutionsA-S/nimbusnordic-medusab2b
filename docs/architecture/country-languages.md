@@ -45,6 +45,9 @@ Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/sto
 - The deploy bootstrap leaves out a country whose legacy language is missing or inactive (it uses
   English) and logs it; English itself unavailable fails the bootstrap. It never overwrites an
   existing configuration.
+- Transactional emails (NIMBUS-162) use the stored assignments directly, not the publication, so an
+  inactive assigned language or a missing configuration gives English instead of no email
+  (`workflows/transactional-email/`).
 
 ## HTTP contract
 

@@ -920,5 +920,13 @@
       "title": "Zamówienie potwierdzone",
       "description": "Zakup zakończył się pomyślnie."
     }
+  },
+  "Emails": {
+    "passwordReset": {
+      "subject": "Zresetuj hasło do Nimbus Nordic",
+      "intro": "Otrzymaliśmy prośbę o zresetowanie Twojego hasła do Nimbus Nordic.",
+      "linkLabel": "Wybierz nowe hasło",
+      "expiry": "Ten link wygaśnie za 15 minut. Jeśli nie prosiłeś o zresetowanie hasła, możesz zignorować tę wiadomość."
+    }
   }
 }

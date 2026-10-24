@@ -920,5 +920,13 @@
       "title": "Bestellung bestätigt",
       "description": "Ihr Kauf war erfolgreich."
     }
+  },
+  "Emails": {
+    "passwordReset": {
+      "subject": "Setzen Sie Ihr Nimbus Nordic-Passwort zurück",
+      "intro": "Wir haben eine Anfrage erhalten, Ihr Nimbus Nordic-Passwort zurückzusetzen.",
+      "linkLabel": "Neues Passwort wählen",
+      "expiry": "Dieser Link ist 15 Minuten gültig. Wenn Sie keine Zurücksetzung Ihres Passworts angefordert haben, können Sie diese E-Mail ignorieren."
+    }
   }
 }

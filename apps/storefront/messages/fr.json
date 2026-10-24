@@ -920,5 +920,13 @@
       "title": "Commande confirmée",
       "description": "Votre achat a bien été effectué."
     }
+  },
+  "Emails": {
+    "passwordReset": {
+      "subject": "Réinitialisez votre mot de passe Nimbus Nordic",
+      "intro": "Nous avons reçu une demande de réinitialisation de votre mot de passe Nimbus Nordic.",
+      "linkLabel": "Choisir un nouveau mot de passe",
+      "expiry": "Ce lien expire dans 15 minutes. Si vous n’avez pas demandé la réinitialisation de votre mot de passe, vous pouvez ignorer cet e-mail."
+    }
   }
 }

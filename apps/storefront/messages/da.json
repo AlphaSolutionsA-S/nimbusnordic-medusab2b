@@ -920,5 +920,13 @@
       "title": "Ordre bekræftet",
       "description": "Dit køb er gennemført."
     }
+  },
+  "Emails": {
+    "passwordReset": {
+      "subject": "Nulstil din Nimbus Nordic-adgangskode",
+      "intro": "Vi har modtaget en anmodning om at nulstille din Nimbus Nordic-adgangskode.",
+      "linkLabel": "Vælg en ny adgangskode",
+      "expiry": "Linket udløber om 15 minutter. Hvis du ikke har anmodet om at nulstille din adgangskode, kan du se bort fra denne e-mail."
+    }
   }
 }

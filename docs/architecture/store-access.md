@@ -56,11 +56,17 @@ Recovery uses Medusa's Auth endpoints and proof storage:
   one; successful use refuses sequential replay. Company membership and roles are preserved.
 
 The `auth.password_reset` subscriber starts
-`workflows/customer/workflows/send-password-reset.ts` for customer events. Its preparation step
-builds an English email and a `/<country>/reset-password?token=...` link from the first configured
-`STORE_CORS` origin, defaulting the country to `dk`. The URL carries no email address. The workflow
-uses core `sendNotificationsStep` on channel `email` and the existing Notification provider;
-provider configuration and mailbox delivery remain deployment concerns.
+`workflows/customer/workflows/send-password-reset.ts` for customer events. The request country
+chooses the email language and link country (`workflows/transactional-email/utils/email-language.ts`):
+a country in a region gets its assigned language (English when unassigned) and its own link;
+anything else gets English and `dk`. The texts are the `Emails.passwordReset.*` translation keys,
+each falling back to English and then to a built-in English copy, every text HTML-escaped;
+fallbacks are reported to Missing texts with source `email:customer-password-reset` after sending,
+and a failed report never fails the email. The link `/<country>/reset-password?token=...` is built
+from the first configured `STORE_CORS` origin and carries no email address; notification `data`
+holds `reset_url` and `locale`. The workflow uses core `sendNotificationsStep` on channel `email`
+and the existing Notification provider; provider configuration and mailbox delivery remain
+deployment concerns.
 
 Accepted limits: Medusa's existing proof consumption does not guarantee a single winner for
 simultaneous submissions. Notification data persists the reset URL, and the configured local
