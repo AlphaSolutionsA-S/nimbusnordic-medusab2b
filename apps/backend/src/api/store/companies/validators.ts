@@ -41,6 +41,10 @@ export const StoreCreateEmployee = z
     email: z.string().email().optional(),
     phone: z.string().optional(),
     password: z.string().min(8).optional(),
+    country_code: z
+      .string()
+      .regex(/^[a-z]{2}$/)
+      .optional(),
   })
   .strict()
   .refine(

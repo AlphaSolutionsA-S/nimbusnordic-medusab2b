@@ -51,3 +51,18 @@
   regions via `Modules.REGION` `createRegions`. Missing rows: `listTranslationMissingKeys({ locale })`.
 - HTTP specs can't run locally here: no Postgres on 5432 and `BUSINESS_CENTRAL_DISCOVERY_URL` unset.
 - Import files are CRLF with a trailing CRLF; `JSON.stringify(doc, null, 2)` with CRLF round-trips exactly.
+
+## 04 Invitation trigger and store request country
+
+- `workflows/employee/workflows/create-employee-account.ts` exports `EMPLOYEE_INVITED_EVENT`
+  (`"employee.invited"`) and type `EmployeeInvitedEventData` `{ customer_id, company_id, country_code: string | null }`;
+  the workflow input has `country_code?: string`. Event is staged by `emitEventStep` as the last step.
+- Store `StoreCreateEmployee` accepts `country_code` (`^[a-z]{2}$`, optional, still strict); the store route
+  passes it through on the email+password branch only. Admin route passes none, so Admin events carry `null`.
+- HTTP spec pattern in `integration-tests/http/companies/employee-invitation.spec.ts`: a collector subscribed via
+  `eventBus.subscribe(name, fn, { subscriberId })` (unsubscribe in `afterEach`), `TestEventUtils.waitSubscribersExecution`
+  for positive cases, and a control Admin invitation for "no event" cases. When task 05 adds the real
+  subscriber, `waitSubscribersExecution` will also wait for it (it wraps every listener): its email
+  workflow then runs in these specs, so they need whatever fixtures it requires not to throw (a throw is
+  caught and logged by the local bus, not failed).
+- Not run locally (no Postgres); typechecked only.
