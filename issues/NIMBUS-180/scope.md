@@ -185,3 +185,9 @@ None open. All answered by Klaus on 2026-10-23.
 - No code dependency: NIMBUS-217 and NIMBUS-130/216 are merged; the line map (NIMBUS-183) is in
   place.
 - Related: NIMBUS-129 (order API), NIMBUS-130 (shipment notices), NIMBUS-148 (submission to BC).
+
+## Documentation
+
+- [docs/architecture/business-central-order.md](../../docs/architecture/business-central-order.md) — Business Central order submission, "Item and size resolution" (updated)
+
+AI base files updated: none (the `decisions.md` row was added by task 02)

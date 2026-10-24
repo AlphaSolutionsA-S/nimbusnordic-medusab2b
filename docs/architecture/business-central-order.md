@@ -1,6 +1,6 @@
 # Business Central order submission
 
-**Last updated:** 2026-10-23
+**Last updated:** 2026-10-24
 **Related work:** NIMBUS-158, NIMBUS-180
 
 ## Overview
@@ -71,7 +71,7 @@ The prepare step (`workflows/business-central-order/steps/prepare-bc-order.ts`) 
 
 Values are trimmed, deduplicated and sent in `or` filters of at most 20 values, quote-escaped. Item numbers longer than 20 characters (BC's item number limit) are never sent, because BC rejects the whole request with 400; such a value finds no item. The adapter neither filters by reference type or unit nor decides a match.
 
-**Request budget.** For an order with B distinct barcodes and N distinct item numbers (lines plus reference rows, at most 20 characters each), one submission makes, sequentially: one token request, ceil(B/20) item-card reads, one company read (for the ODataV4 company name) plus ceil(B/20) Item Reference reads when B > 0, and ceil(N/20) item-number reads. A 20-line order therefore needs three reads plus one per 20 item numbers, where the earlier per-line lookup took up to three per line. Any failed read (non-OK status including 429, network failure, malformed JSON, or a response with a next link, which is never treated as complete) fails the whole lookup: the submission is recorded as `bc_item_lookup_failed` and can be retried.
+**Request budget.** For an order with B distinct barcodes and N distinct item numbers (lines plus reference rows, at most 20 characters each), one submission makes, sequentially: one token request, ceil(B/20) item-card reads, one company read (for the ODataV4 company name) plus ceil(B/20) Item Reference reads when B > 0, and ceil(N/20) item-number reads. An order with no usable barcode and no usable item number makes no request at all, not even the token request; every line is then refused by the rule. A 20-line order therefore needs three reads plus one per 20 item numbers, where the earlier per-line lookup took up to three per line. Any failed read (non-OK status including 429, network failure, malformed JSON, or a response with a next link, which is never treated as complete) fails the whole lookup: the submission is recorded as `bc_item_lookup_failed` and can be retried.
 
 **Rule.** `resolveOrderLineItem(line, evidence)` in `workflows/business-central-order/utils/resolve-order-line-item.ts` is the rule's single home (`ai/architecture/decisions.md`). Item numbers, size codes and units are compared trimmed and upper-cased.
 
