@@ -46,3 +46,11 @@
 - **Next owner:** task-dispatcher, started by the coordinator (Klaus said "dispatch").
 - **Handover prompt:** "Run the plan in issues/NIMBUS-162/ (manifest.md, Ready for Dispatch: true) on branch feature/NIMBUS-162 from develop. Tasks 01–03 belong to NIMBUS-162 (NIMBUS-244/245/246), tasks 04–06 to NIMBUS-242 (NIMBUS-247/248/249); use each task's Issue column. Read plan.md section 2 answers first. Do not touch the customer_id branches (NIMBUS-243). Nothing is pushed without the human's go-ahead."
 - **Verification:** Jira writes returned comment ids. No code built, sent or tested.
+
+## 2026-10-25 — Implemented, waiting at the pre-push gate
+- **Owner:** task-dispatcher, on Klaus Petersen's dispatch go-ahead (2026-10-24).
+- **Outcome:** Branch `feature/NIMBUS-162` (from `develop` 13e861e), local only. Tasks 01–06 done and reviewed: c358dc3 (NIMBUS-244), 681e039 (NIMBUS-245), 1c2485d (NIMBUS-246), c5e5ce6 (NIMBUS-247), 5558180 (NIMBUS-248), 4659830 (NIMBUS-249); spec fix 9a2b835 (NIMBUS-248); consolidation 3c9509d. Integration review approved; `deviation-report.md` written with five open questions.
+- **Verification:** backend unit 1030/1030, admin 71/71, lint 0 errors, typecheck 22 (baseline 22), build OK; the two new/changed HTTP specs 35/35 against a throwaway Postgres; full HTTP suite failures (quotes, 3 security-boundaries cases) also fail on `develop`. Storefront tests 3 failing (baseline 3), typecheck 58 (baseline 58); storefront lint and build not run (installed next 16.4.2 vs pinned 15.5). `pnpm ai:check` red (AGENTS.md 33103 > 32768 bytes). Nothing deployed or sent.
+- **Tracker:** sub-tasks NIMBUS-244 to 249 Done with closing comments. NIMBUS-162 (Estimation) and NIMBUS-242 not moved: no direct transition to In Progress (comments 255281, 255282).
+- **Next owner:** Klaus Petersen: answer the open questions in `deviation-report.md`. Then the dispatcher resumes "After the gate" (fixes, docs, PR description, cleanup). Push only on Klaus's explicit instruction.
+- **Handover prompt:** "Resume the task-dispatcher for issues/NIMBUS-162 at 'After the gate' with Klaus's answers to deviation-report.md's open questions. Merge-base 13e861e. Do not push."
