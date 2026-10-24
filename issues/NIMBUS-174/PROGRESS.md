@@ -51,3 +51,15 @@
 - **Outcome:** Implemented the returning promotion action and full add/remove code lists. RED: 11 new cases failed; GREEN: 24/24 cart tests passed. Whole-app typecheck remains at the current 58-error baseline. Lint cannot run with the installed Next/ESLint tooling; failures and an existing shared error-util logging concern are recorded in the task deviations. No live browser or deployed result claimed.
 - **Handover to:** code-reviewer via task-dispatcher
 - **Handover prompt:** Review Task 01's cart.ts/cart.test.ts diff and evidence in `01-promotion-server-action-implementation.md`; then proceed to Task 02 using `branch-notes.md`. Full suite/build and production-browser checks remain finalization work.
+
+- **Date:** 2026-10-23
+- **Updated by:** tdd-worker, Task 02
+- **Outcome:** Wired promotion add/remove to one returning action state with full manual-code form payloads, one translated error area and controlled input retention/clearing. RED: 9 new failures; GREEN: 12/12 component tests passed through real React forms. Installed React reset semantics verified; no fallback required. Whole-app typecheck remains at 58 existing errors, none in touched files. Lint still blocked by installed tooling. Live cart/browser delivery remains unverified.
+- **Handover to:** code-reviewer via task-dispatcher
+- **Handover prompt:** Review Task 02's component/test changes and its Done-when evidence; then proceed to Task 03 automated finalization and production-build browser checks using branch-notes.md.
+
+- **Date:** 2026-10-24
+- **Updated by:** main agent, final review and delivery
+- **Outcome:** User requested another review and authorized commit, push and merge, taking ownership of manual validation. Main agent reviewed the complete product diff with code-review and OWASP checklists; no blocking findings. Prior separate component reviewer stopped on exhausted workspace credits. Full storefront Jest: 175 suites passed, 3 failed; 592 tests passed, 3 failed (main-layout promo banner, profile-page Security heading, money unknown-locale formatting). Both changed suites pass: 24 cart tests and 12 promotion component tests. Final tsc: 58 errors, matching current baseline. Existing lint tooling remains blocked; build attempted but stopped at missing NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY. No production or browser success claimed. Details and residual logging/concurrency limitations are in deviation-report.md; current flow documented in docs/architecture/promotion-codes.md. Pipeline working files removed after transferring evidence to permanent records.
+- **Handover to:** Klaus Petersen for validation after merge to develop
+- **Handover prompt:** Validate on /dk and /gb against the deployed backend: invalid code shows translated error and retains input; successful add clears input; adding two valid manual codes preserves both; removing one preserves the other; removing the last clears manual codes while automatic promotions remain; failed removal shows the translated error. Jira stays in review until validation.
