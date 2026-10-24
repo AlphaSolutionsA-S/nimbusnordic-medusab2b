@@ -42,9 +42,9 @@ explicit `true` enables; a missing company counts as switched off.
 | Business Central company sync | no: it writes only the BC-managed fields |
 | Migration at deploy | every existing company got `false` |
 
-Two store reads with wildcard selections (approvals list `carts.company.*`, store quotes
-`*customer.employee.company`) do show the caller's own company's flag read-only; this was accepted
-(NIMBUS-217 plan decision 5).
+The approvals list wildcard selection (`carts.company.*`) shows the caller's own company's flag
+read-only; this was accepted (NIMBUS-217 plan decision 5). Store quote responses expose only the
+company name, so they do not return the flag (NIMBUS-207).
 
 The setting is read from the database on every request and every job run; there is no cache, so a
 switch takes effect at the next request or the next poll run. Switching a company off does not

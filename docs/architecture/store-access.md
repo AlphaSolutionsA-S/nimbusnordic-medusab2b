@@ -19,6 +19,22 @@ and "Cart and order access rollout". This document describes how the code is put
 
 ## Components
 
+### Store quote response projection
+
+All seven store quote response routes (create, list, retrieve, preview, accept, reject and message)
+share `api/store/quotes/query-config.ts`. Company data contains only `name`, for company employees
+and administrators alike. Message-author records contain only `first_name` and `last_name`;
+message IDs, text, item/customer/admin references and timestamps remain available. The owned
+customer's contact fields, employee spending limit and administrator flag remain available.
+
+Medusa's exact-path allowlist silently strips caller-selected fields outside this projection,
+including parent wildcards, colleague collections and author emails. Unallowed sort fields return
+400. The local relation-depth limit is four to retain draft-order item/variant/product expansion;
+the global limit is unchanged. Existing customer-scoped queries and workflow ownership checks
+still decide which quote may be read or changed. HTTP privacy and ownership cases live in
+`integration-tests/http/security/security-boundaries.spec.ts`; middleware behavior is pinned by
+`src/api/store/quotes/__tests__/query-config.unit.spec.ts`.
+
 ### Public customer password recovery
 
 The country-prefixed `/forgot-password` and `/reset-password` storefront pages are public,

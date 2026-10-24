@@ -1,12 +1,24 @@
 export const quoteFields = [
   "id",
   "status",
-  "*customer",
-  "*customer.employee",
-  "*customer.employee.company",
+  "customer_id",
+  "cart_id",
+  "draft_order_id",
+  "order_change_id",
+  "customer.id",
+  "customer.email",
+  "customer.phone",
+  "customer.first_name",
+  "customer.last_name",
+  "customer.employee.id",
+  "customer.employee.spending_limit",
+  "customer.employee.is_admin",
+  "customer.employee.company.name",
   "*messages",
-  "*messages.admin",
-  "*messages.customer",
+  "messages.admin.first_name",
+  "messages.admin.last_name",
+  "messages.customer.first_name",
+  "messages.customer.last_name",
   "cart.id",
   "draft_order.id",
   "draft_order.currency_code",
@@ -47,12 +59,23 @@ export const quoteFields = [
   "*order_change.actions",
 ];
 
+const allowedQuoteFields = [
+  ...quoteFields.map((field) => field.replace(/^\*/, "")),
+  "created_at",
+  "updated_at",
+  "draft_order.is_draft_order",
+];
+
 export const retrieveQuoteTransformQueryConfig = {
   defaults: quoteFields,
+  allowed: allowedQuoteFields,
+  storeRelationsLimit: 4,
   isList: false,
 };
 
 export const listQuotesTransformQueryConfig = {
   defaults: quoteFields,
+  allowed: allowedQuoteFields,
+  storeRelationsLimit: 4,
   isList: true,
 };
