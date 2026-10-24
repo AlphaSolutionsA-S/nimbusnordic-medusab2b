@@ -1,7 +1,7 @@
 # Multi-lingual transactional emails: password reset and employee invitation
 
 **Date:** 2026-10-24
-**Status:** Scoped (draft; open questions answered by Klaus Petersen, scope approval pending)
+**Status:** Scoped — approved by Klaus Petersen on 2026-10-24
 **Type:** Story
 **Priority:** Medium (Jira)
 **Issue:** [NIMBUS-162](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-162)
@@ -97,7 +97,7 @@ the narrowing is recorded as a comment.
 | R9 | English text itself missing | The built-in English default in code is used. It is an approved fallback copy of the English text, registered as such in the business-rule registry like the cold-outage country map. (Decided, Klaus Petersen, 2026-10-24) |
 | R10 | A fallback was used | The missing key is recorded in the Admin missing-translations report for the language that lacked it, with the email's name as the source instead of a page path. Existing rules apply: only while the key is still missing, dismissed keys stay dismissed, caps apply. A failed report never stops the email. (Decided, Klaus Petersen, 2026-10-24) |
 | R11 | Who edits email text | Nimbus staff with Medusa Admin access, in the translation editor, like any other UI text. Customers cannot. |
-| R12 | Who writes the translations | The delivery team ships English and draft translations for all eight storefront languages; Nimbus reviews and edits them in Admin. English fallback per text is acceptable at go-live. (Proposed by the team, accepted by Klaus Petersen unless he objects, 2026-10-24) |
+| R12 | Who writes the translations | The delivery team ships English and draft translations for all eight storefront languages; Nimbus reviews and edits them in Admin. English fallback per text is acceptable at go-live. (Proposed by the team, approved by Klaus Petersen, 2026-10-24) |
 | R13 | Invitation content | Plain notification: tells the employee they have an account and for which company. No password, no set-password or reset link, no other credential. The employee gets the password from the company admin or uses "Forgot password". (Decided, Klaus Petersen, 2026-10-24; owned by NIMBUS-242) |
 | R14 | Delivery | Medusa Emails on Cloud, already set up; no change in this issue. Delivery of a translated email is confirmed only after deploy, in Cloud's Email Activity page. (Decided, Klaus Petersen, 2026-10-24) |
 | R15 | Who receives | Only the address of the account the email concerns (reset: the account's email; invitation: the invited address). Country and company never change the recipient. |
@@ -177,8 +177,8 @@ missing-text reporting and the company-country fallback in the rule; both reuse 
 
 ## Open questions
 
-No business questions remain open. Klaus Petersen answered all of them on 2026-10-24; the
-translation-ownership proposal (R12) stands unless he objects.
+No business questions remain open. Klaus Petersen answered all of them and approved the scope,
+including R12, on 2026-10-24.
 
 Planner verification items (technical, not business):
 

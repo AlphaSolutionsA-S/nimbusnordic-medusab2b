@@ -20,3 +20,12 @@
 - **Next owner:** Klaus Petersen: approve the scope (and object to R12 if he disagrees). Then the scoper records Scope approved.
 - **Handover prompt:** "Read issues/NIMBUS-162/scope.md and PROGRESS.md. On Klaus's approval, record Scope approved on NIMBUS-162 (comment, fetch transitions, move to the ready state). Do not start implementation planning without a separate go-ahead."
 - **Verification:** Source and Jira reads only. Nothing built, sent or tested. Case folder uncommitted.
+
+## 2026-10-24 — Scope approved
+- **Owner:** scoper, on Klaus Petersen's approval ("All approved", relayed by the coordinator), including R12.
+- **Outcome:** `scope.md` status set to approved; R12 marked approved. No other scope change.
+- **Tracker:** Scope-approved comment 255276 (business rules, key decisions, no open business questions). Fetched transitions and applied `Scope approved` (611); Jira returned status **Estimation**. Assignee still unassigned; description unchanged.
+- **Commit:** case folder committed locally on `develop` (`NIMBUS-162: Record approved scope for translated emails`); not pushed.
+- **Next owner:** implementation-planner, started by the coordinator on Klaus's planning go-ahead.
+- **Handover prompt:** "Plan NIMBUS-162 from issues/NIMBUS-162/scope.md (approved). Verify `company.country` against real data (UNVERIFIED), the missing-text report's page-path field for an email source label, and whether the resolved language is kept in the Notification record. NIMBUS-242 consumes the mechanism; keep its trigger and request contract out of this plan."
+- **Verification:** Jira readback of the transition returned Estimation. No code built, sent or tested.
