@@ -24,7 +24,7 @@ From `ai/AGENTS.md`; run from the repo root, one at a time.
 ## Tasks
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | Email-language rule | `01-email-language-rule.md` | backend | 162 F1, F2 (rule), R2–R4, R6 | None | NIMBUS-244 | TODO |
+| 01 | Email-language rule | `01-email-language-rule.md` | backend | 162 F1, F2 (rule), R2–R4, R6 | None | NIMBUS-244 | DONE |
 | 02 | Email text rule and escaping | `02-email-text-rule.md` | backend | 162 F4, F5, NF escaping, R8–R10 | None | NIMBUS-245 | TODO |
 | 03 | Reset email on the translated mechanism | `03-translated-reset-email.md` | backend, import files | 162 F1, F3, F6–F9, R3, R4, R14, R15 | 01, 02 | NIMBUS-246 | TODO |
 | 04 | Invitation trigger and store request country | `04-invitation-trigger.md` | backend | 242 R5, R7; AC "failed email does not undo" | None | NIMBUS-247 | TODO |

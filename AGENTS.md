@@ -420,6 +420,7 @@ Paths: `B` = `apps/backend/src`, `S` = `apps/storefront/src`.
 | Country-language deploy bootstrap skips countries with an unavailable legacy language (English default) | `B/workflows/storefront-translation/utils/country-language-scope.ts` (`skipUnavailableAssignments`) | `skipped` in the workflow result | `B/migration-scripts/seed-country-languages.ts` | ok |
 | Runtime UI text from the DB, not `S/messages/*.json` | `B/modules/storefront-translation` | `/store/ui-translations/:locale` (300 s cache) | `S/lib/data/ui-translations.ts` | ok |
 | Country language assignment and deactivation guard | `B/modules/storefront-translation/country-languages.ts`, `service.ts` | `/admin/country-languages`, `/store/country-languages` | Admin Translations page; `S/lib/data/country-languages.ts` (request config, layouts, metadata, switcher, text refresh) | ok; `COUNTRY_LANGUAGE_MAP` beside `DEFAULT_LOCALE`: approved cold-outage fallback, not a second rule |
+| Email language and link country (NIMBUS-162) | `B/workflows/transactional-email/utils/email-language.ts` | pure verdict | reset and invitation emails | ok |
 | Formatting tag and hreflang key of a country's language | `S/lib/i18n/formatting-locale.ts`, `S/lib/seo/locale-alternates.ts` | pure helpers | prices, dates; product, collection, category metadata | ok |
 
 Domain types are duplicated in `B/types/` and `S/types/` (no shared package).
