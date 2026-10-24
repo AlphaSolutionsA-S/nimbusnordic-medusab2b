@@ -87,3 +87,10 @@
 - Tests rendering the card must mock `next/navigation` `useParams` (company-page test already does).
 - Pitfall: storefront lint cannot run locally right now: installed `next` is 16.4.2 (package.json 15.5.28), so
   `next lint` is gone and direct `eslint` fails to load the config. Finalization needs a clean `pnpm install` first.
+
+## Fix 01 (invitation spec employee lookup)
+
+- `Employee` has no `customer_id` column; employee and customer are joined by the
+  `src/links/employee-customer.ts` module link. In a spec, check a customer's employee with
+  `query.graph({ entity: "customer", fields: ["employee.id", "employee.company_id"], filters: { email } })`
+  (verified against real data in `employee-invitation.spec.ts`).

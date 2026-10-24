@@ -5,7 +5,7 @@ import type {
   IRegionModuleService,
   MedusaContainer,
 } from "@medusajs/framework/types";
-import { Modules } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, Modules } from "@medusajs/framework/utils";
 
 import { COMPANY_MODULE } from "../../../src/modules/company";
 import { STOREFRONT_TRANSLATION_MODULE } from "../../../src/modules/storefront-translation";
@@ -385,10 +385,17 @@ medusaIntegrationTestRunner({
 
           expect(response.status).toBe(200);
           expect(failed).toHaveBeenCalled();
-          const customerId = await customerIdOf("failed-email@example.test");
-          expect(
-            await companies().listEmployees({ customer_id: customerId, company_id: companyId })
-          ).toHaveLength(1);
+          const { data: customers } = await container
+            .resolve(ContainerRegistrationKeys.QUERY)
+            .graph({
+              entity: "customer",
+              fields: ["id", "employee.id", "employee.company_id"],
+              filters: { email: "failed-email@example.test" },
+            });
+          expect(customers).toHaveLength(1);
+          expect(customers[0].employee).toEqual(
+            expect.objectContaining({ id: expect.any(String), company_id: companyId })
+          );
         } finally {
           failed.mockRestore();
         }
