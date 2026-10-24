@@ -365,7 +365,8 @@ medusaIntegrationTestRunner({
           line(20000, 3, "ITEM-2"),
           line(30000, -3, "ITEM-2"),
         ]);
-        const cancelled = shipment(tracked, [...stale.lines, line(40000, -5)]);
+        // BC now holds the cancelled shipment, so the size read covers every line of the stale one.
+        const cancelled = inBc(tracked, [...stale.lines, line(40000, -5)]);
         getShipmentsByNumbers.mockImplementationOnce(async () => {
           await storeAsAnotherRun(tracked, cancelled, {
             action: "close",
