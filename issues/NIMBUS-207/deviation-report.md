@@ -1,5 +1,7 @@
 # Deviation report: Restrict store quote response fields
 
+> Record of NIMBUS-207, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Reviewed on 2026-10-24 against merge-base `016ec41258802ef833109d25470e44924e6869b2`, through `18b2598` (implementation `59accdc`). The approved plan is implemented; no mechanical wiring changes are requested. This is source review approval, with the HTTP verification gap requiring a decision at the final human gate.
 
 ## Deviations from scope and plan

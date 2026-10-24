@@ -1,5 +1,7 @@
 # Quote responses expose the company's financial details
 
+> Record of NIMBUS-207, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-21
 **Status:** Implemented
 **Type:** Bug

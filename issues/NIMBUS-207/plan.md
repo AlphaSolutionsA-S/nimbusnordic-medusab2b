@@ -1,5 +1,7 @@
 # NIMBUS-207: Restrict store quote response fields
 
+> Record of NIMBUS-207, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 ## Summary [High]
 
 Store quote responses will expose company name only and message-author first and last names only. One backend task narrows the default projection and applies Medusa's native exact-path allowlist to every store quote response. Existing ownership checks, quote actions and storefront displays remain unchanged; no migration or storefront code change is planned.

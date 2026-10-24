@@ -105,3 +105,9 @@
 - Human accepted the HTTP/database verification gap and authorized push and merge to develop. Controlled response and display checks remain required after deployment.
 - Next owner: dispatcher, PR description and cleanup before authorized push/merge.
 
+## 2026-10-24 - cleanup: case records frozen
+
+- Outcome: all cleanup gates passed; scope, plan and deviation report marked frozen. Removed manifest, task brief and branch notes; retained the field-filter probe as durable verification evidence.
+- Next owner: dispatcher, commit final records and complete the authorized push/merge under required checks and branch protections.
+- Handover prompt: "Commit NIMBUS-207 cleanup; preserve the accepted HTTP/database gap and controlled after-deploy verification."
+
