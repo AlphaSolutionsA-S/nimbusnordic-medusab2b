@@ -428,7 +428,7 @@ runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_D
 allowed test environment (`integration-tests/global-setup.ts`).
 
 Local `pnpm test:integration:http` (develop `eea3a01`, 2026-10-23): 7 suites, 77 tests fail with 401
-on admin or customer login (cause unknown), in `integration-tests/http/` (`.spec.ts`):
+on admin or customer login (NIMBUS-236), in `integration-tests/http/` (`.spec.ts`):
 `admin/bc-integration`, `quotes/quotes`, `admin/quotes/quotes`, `security/password-recovery`,
 `translations/translations`, `security/security-boundaries`, `companies/companies`.
 
