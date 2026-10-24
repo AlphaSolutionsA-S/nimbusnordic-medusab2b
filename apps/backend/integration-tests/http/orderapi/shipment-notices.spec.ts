@@ -1,6 +1,9 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import type { MedusaContainer } from "@medusajs/framework/types";
 import {
+  ShipmentNoticeEnvelopeSchema,
+} from "../../../src/modules/order-ingestion/shipment-notice-contract";
+import {
   createApiCustomerCompany,
   EXAMPLE_SHIPMENT_NOTICE_PAYLOAD,
   orderApiSecretHeaders,
@@ -17,7 +20,7 @@ const DECIMAL = /^[1-9]\d*$/;
 
 medusaIntegrationTestRunner({
   inApp: true,
-  testSuite: ({ api, getContainer }) => {
+  testSuite: ({ api, getContainer, dbConnection }) => {
     describe("GET /orderapi/shipment-notices", () => {
       let container: MedusaContainer;
       let headers: { authorization: string };
@@ -89,6 +92,37 @@ medusaIntegrationTestRunner({
         expect(Number.isInteger(first.revision)).toBe(true);
         expect(unmatched).toMatchObject({ line_number: null, ean_no: null, description_2: null });
         expect(first.sell_to).toMatchObject({ address_line_2: null, state: null });
+        expect([matched.variant_code, unmatched.variant_code]).toEqual(["M", null]);
+        for (const notice of response.data.shipment_notices) {
+          for (const line of notice.lines) {
+            expect(line.variant_code === null || typeof line.variant_code === "string").toBe(true);
+          }
+        }
+      });
+
+      it("serves a line stored before the size existed with variant_code null and leaves the row as stored", async () => {
+        const sequence = await storeShipmentNoticeRevision(
+          container, { company_id: companyAId, bc_shipment_id: "ship-a-old", revision: 1 });
+        // The pre-release shape: the key is removed in the database, as rows stored before NIMBUS-231 have it.
+        const linesWithoutKey = `(SELECT jsonb_agg(line - 'variant_code' ORDER BY ord)
+          FROM jsonb_array_elements(payload->'lines') WITH ORDINALITY AS l(line, ord))`;
+        await dbConnection.raw(
+          `UPDATE shipment_notice SET payload = jsonb_set(payload, '{lines}', ${linesWithoutKey})
+           WHERE sequence = ?`, [sequence]);
+
+        const response = await get(`&after=${sequences[2]}`);
+        expect(response.status).toBe(200);
+        expect(ShipmentNoticeEnvelopeSchema.parse(response.data)).toEqual(response.data);
+        const [old] = response.data.shipment_notices;
+        expect(old.cursor).toBe(String(sequence));
+        expect(old.lines).toEqual(
+          EXAMPLE_SHIPMENT_NOTICE_PAYLOAD.lines.map((line) => ({ ...line, variant_code: null })));
+
+        const stored = await dbConnection.raw(
+          `SELECT payload->'lines' AS lines FROM shipment_notice WHERE sequence = ?`, [sequence]);
+        const storedLines: Record<string, unknown>[] = stored.rows[0].lines;
+        expect(storedLines).toHaveLength(EXAMPLE_SHIPMENT_NOTICE_PAYLOAD.lines.length);
+        expect(storedLines.every((line) => !("variant_code" in line))).toBe(true);
       });
 
       it("lists notices recorded at or after since, and none from a future time", async () => {

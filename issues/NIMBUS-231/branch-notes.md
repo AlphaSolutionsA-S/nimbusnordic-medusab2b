@@ -28,3 +28,10 @@
 - `ShipmentCheckErrorCode` gains `variant_missing`; the warn line is `... failed: variant_missing at BC line <n>`.
 - The step reads `getShipmentLineVariants(numbers, deadline)` right after `getShipmentsByNumbers` in the same try, so deadline/throttle/other errors behave exactly as for the shipment read.
 - Integration specs: `check-shipments.spec.ts` has `inBc(tracked, lines, sizes?)` and a `getShipmentLineVariants` spy built from `bcShipments`; any new spec that spies on `getShipmentsByNumbers` must stub the variant read too.
+
+## Task 03 (serve old notices)
+
+- `shipment-notice-storage.ts` exports `StoredShipmentNoticeLine` (`variant_code?: string | null`) and `StoredShipmentNoticePayload`; `ShipmentNoticeRow.payload` uses it. `StoreShipmentNoticeInput.payload` is still the strict `ShipmentNoticePayload`.
+- `toShipmentNotice` in `shipment-notice-page.ts` fills `variant_code: line.variant_code ?? null`; the envelope it returns always carries the key.
+- `payload` is `jsonb`: stored key order is not the wire order, so docs and examples (task 04) should not promise JSON key order.
+- `shipment-notices.spec.ts` uses `dbConnection.raw` (from `medusaIntegrationTestRunner`'s `testSuite` args, typed `any`) to strip the key, and has a test "serves a line stored before the size existed...". Not run yet; runs at finalization.
