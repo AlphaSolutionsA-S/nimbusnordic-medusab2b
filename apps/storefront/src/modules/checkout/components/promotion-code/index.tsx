@@ -1,6 +1,6 @@
 "use client"
 
-import { applyPromotions, submitPromotionForm } from "@/lib/data/cart"
+import { submitPromotionForm, type PromotionFormState } from "@/lib/data/cart"
 import { getCartApprovalStatus } from "@/lib/util/get-cart-approval-status"
 import { convertToLocale } from "@/lib/util/money"
 import Trash from "@/modules/common/icons/trash"
@@ -21,6 +21,7 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
   const t = useTranslations("Checkout.promotionCode")
   const locale = useLocale()
   const [isOpen, setIsOpen] = React.useState(false)
+  const [code, setCode] = React.useState("")
   const pathname = usePathname()
 
   const isCheckout = pathname.includes("/checkout")
@@ -33,41 +34,38 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
   const isPendingApproval =
     isPendingAdminApproval || isPendingSalesManagerApproval
 
-  const removePromotionCode = async (code: string) => {
-    const validPromotions = promotions.filter(
-      (promotion) => promotion.code !== code
-    )
+  const manualCodes = promotions.flatMap((promotion) =>
+    !promotion.is_automatic && promotion.code ? [promotion.code] : []
+  )
 
-    await applyPromotions(
-      validPromotions.filter((p) => p.code === undefined).map((p) => p.code!)
-    )
-  }
+  const [state, formAction] = useActionState(
+    async (currentState: PromotionFormState, formData: FormData) => {
+      const result = await submitPromotionForm(currentState, formData)
+      if (result?.success && !formData.has("remove_code")) {
+        setCode("")
+      }
+      return result
+    },
+    null
+  )
 
-  const addPromotionCode = async (formData: FormData) => {
-    const code = formData.get("code")
-    if (!code) {
-      return
-    }
-    const input = document.getElementById("promotion-input") as HTMLInputElement
-    const codes = promotions
-      .filter((p) => p.code === undefined)
-      .map((p) => p.code!)
-    codes.push(code.toString())
-
-    await applyPromotions(codes)
-
-    if (input) {
-      input.value = ""
-    }
-  }
-
-  const [message, formAction] = useActionState(submitPromotionForm, null)
+  const errorMessage = state?.success === false ? t("applyErrorMessage") : null
+  const isFormOpen = !isCheckout && !isPendingApproval && isOpen
+  const appliedCodeInputs = manualCodes.map((appliedCode) => (
+    <input
+      key={appliedCode}
+      type="hidden"
+      name="applied_code"
+      value={appliedCode}
+    />
+  ))
 
   return (
     <div className="w-full bg-white flex flex-col">
       <div className="txt-medium">
         {!isCheckout && !isPendingApproval && (
-          <form action={(a) => addPromotionCode(a)} className="w-full mb-5">
+          <form action={formAction} className="w-full mb-5">
+            {appliedCodeInputs}
             <button
               onClick={() => setIsOpen(!isOpen)}
               type="button"
@@ -87,6 +85,8 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                     name="code"
                     type="text"
                     autoFocus={false}
+                    value={code}
+                    onChange={(event) => setCode(event.target.value)}
                     data-testid="discount-input"
                   />
                   <SubmitButton
@@ -99,12 +99,19 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                 </div>
 
                 <ErrorMessage
-                  error={message ? t("applyErrorMessage") : null}
+                  error={errorMessage}
                   data-testid="discount-error-message"
                 />
               </>
             )}
           </form>
+        )}
+
+        {!isFormOpen && (
+          <ErrorMessage
+            error={errorMessage}
+            data-testid="discount-error-message"
+          />
         )}
 
         {promotions.length > 0 && (
@@ -151,24 +158,28 @@ const PromotionCode: React.FC<PromotionCodeProps> = ({ cart }) => {
                         )
                       </span>
                     </Text>
-                    {!promotion.is_automatic && !isCheckout && (
-                      <button
-                        className="flex items-center"
-                        onClick={() => {
-                          if (!promotion.code) {
-                            return
-                          }
-
-                          removePromotionCode(promotion.code)
-                        }}
-                        data-testid="remove-discount-button"
-                      >
-                        <Trash size={14} />
-                        <span className="sr-only">
-                          {t("removeDiscountSrLabel")}
-                        </span>
-                      </button>
-                    )}
+                    {!promotion.is_automatic &&
+                      !isCheckout &&
+                      promotion.code && (
+                        <form action={formAction}>
+                          {appliedCodeInputs}
+                          <input
+                            type="hidden"
+                            name="remove_code"
+                            value={promotion.code}
+                          />
+                          <button
+                            type="submit"
+                            className="flex items-center"
+                            data-testid="remove-discount-button"
+                          >
+                            <Trash size={14} />
+                            <span className="sr-only">
+                              {t("removeDiscountSrLabel")}
+                            </span>
+                          </button>
+                        </form>
+                      )}
                   </div>
                 )
               })}
