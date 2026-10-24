@@ -21,3 +21,10 @@
 - **Next owner:** Klaus Petersen for a separate go-ahead to start the scoper.
 - **Handover prompt:** "Run the scoper on issues/NIMBUS-242/ (NIMBUS-242). Translation is NIMBUS-162's; delivery setup is out of scope."
 - **Verification:** Jira returned the key, the component, both links and the comment. Case folder uncommitted; the feature.md link in Jira resolves only after commit.
+
+## 2026-10-24 — Planned under NIMBUS-162
+- **Owner:** implementation-planner, on Klaus Petersen's decision to plan this issue together with NIMBUS-162.
+- **Outcome:** No separate scope or plan here. This issue is planned in `issues/NIMBUS-162/plan.md` (tasks 04–06), on branch `feature/NIMBUS-162`; `feature.md` supplies the rules, acceptance criteria and English text. NIMBUS-243 stays a separate bug, not built on.
+- **Tracker:** Sub-tasks NIMBUS-247 (trigger and store request country), NIMBUS-248 (invitation email), NIMBUS-249 (storefront invite card sends the country); comment 255278. Status left at Scoping.
+- **Next owner:** Klaus Petersen, reviewing the NIMBUS-162 plan. Follow `issues/NIMBUS-162/PROGRESS.md` from here.
+- **Handover prompt:** "This issue's work runs under issues/NIMBUS-162/; read that PROGRESS.md."

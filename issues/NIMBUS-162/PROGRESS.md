@@ -29,3 +29,12 @@
 - **Next owner:** implementation-planner, started by the coordinator on Klaus's planning go-ahead.
 - **Handover prompt:** "Plan NIMBUS-162 from issues/NIMBUS-162/scope.md (approved). Verify `company.country` against real data (UNVERIFIED), the missing-text report's page-path field for an email source label, and whether the resolved language is kept in the Notification record. NIMBUS-242 consumes the mechanism; keep its trigger and request contract out of this plan."
 - **Verification:** Jira readback of the transition returned Estimation. No code built, sent or tested.
+
+## 2026-10-24 — Plan drafted (with NIMBUS-242)
+- **Owner:** implementation-planner, on Klaus Petersen's planning go-ahead; Klaus decided to plan NIMBUS-242 in the same plan (overrides the scope's note that 242's trigger and request contract stay out).
+- **Outcome:** Wrote `plan.md`, `manifest.md` and six task files: 01 email-language rule, 02 email text rule and escaping, 03 reset email on the mechanism (NIMBUS-162); 04 invitation trigger and store request country, 05 invitation email, 06 storefront invite card sends the country (NIMBUS-242). One branch `feature/NIMBUS-162`. `Ready for Dispatch: false`.
+- **Verification items:** report source label in `last_page_path` verified from source (service accepts any string ≤ 512; leading `/` only on the internal HTTP route; Admin shows it as text). Language kept as `notification.data.locale`; Medusa stores `data` but not `content` (verified, notification model 2.21.2). `company.country` real-data format UNVERIFIED (no database access); design fails safe to English, listed under "Needs your decision".
+- **Tracker:** Sub-tasks created (component Customer Portal) at Klaus's request before plan approval: NIMBUS-244, -245, -246 under NIMBUS-162; NIMBUS-247, -248, -249 under NIMBUS-242. Comments 255277 (162) and 255278 (242). The "plan approved" comment waits for approval.
+- **Next owner:** Klaus Petersen: answer plan section 2 and approve the plan (competing-model review recommended: personal data, auth-adjacent reset email). Then the planner sets Ready for Dispatch and records plan approved. Dispatch needs a separate go-ahead.
+- **Handover prompt:** "Read issues/NIMBUS-162/PROGRESS.md and plan.md. Apply Klaus's answers to section 2, set Ready for Dispatch: true in manifest.md, and record plan approved on NIMBUS-162 and NIMBUS-242. Do not dispatch without a separate go-ahead."
+- **Verification:** Source, installed-package and Jira reads; Jira writes as listed. No code built, sent or tested.
