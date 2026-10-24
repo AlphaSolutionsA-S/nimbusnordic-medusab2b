@@ -27,7 +27,7 @@ All tasks are in `apps/backend` (`<f>` = `pnpm --filter @b2b-starter/backend`), 
 | 01 | BC adapter reads shipment line variant codes from `TRCShipmentLine` | `01-bc-variant-read.md` | backend | F2, NFR1, NFR2, NFR3 (adapter part), NFR4 | None | NIMBUS-238 | DONE |
 | 02 | `variant_code` on notice lines: contract, decision rule (B1–B4), check wiring (B5) | `02-notice-line-size.md` | backend | F1, F2, F3, F4, F6 (contract), NFR3, B1–B5 | 01 | NIMBUS-239 | DONE |
 | 03 | Notices stored before the release are served with `variant_code: null` | `03-serve-old-notices.md` | backend | F5 (serving), B6 | 02 | NIMBUS-240 | DONE |
-| 04 | New JSON Schema, XSD, examples and release note; architecture doc | `04-artifacts-and-docs.md` | backend (docs) | F5 (cut-off doc), F6 (artifacts), F7, B7 | 02, 03 | NIMBUS-241 | TODO |
+| 04 | New JSON Schema, XSD, examples and release note; architecture doc | `04-artifacts-and-docs.md` | backend (docs) | F5 (cut-off doc), F6 (artifacts), F7, B7 | 02, 03 | NIMBUS-241 | DONE |
 
 ## Scope items with no task
 

@@ -1,7 +1,7 @@
 # Shipment Notices Architecture
 
-**Last updated:** 2026-10-23
-**Related work:** NIMBUS-130, NIMBUS-191, NIMBUS-216, NIMBUS-217
+**Last updated:** 2026-10-24
+**Related work:** NIMBUS-130, NIMBUS-191, NIMBUS-216, NIMBUS-217, NIMBUS-231
 
 ## Overview
 
@@ -25,6 +25,7 @@ Paths are relative to `apps/backend/src/`.
 | `workflows/shipment-notice/workflows/list-shipment-notices.ts` | The endpoint read: shared company resolve step (404/403), then one page |
 | `workflows/shipment-notice/workflows/reopen-shipment-tracking.ts` | Admin retry of a row that gave up; refuses switched-off companies first |
 | `modules/order-ingestion` | Tables `shipment_tracking`, `shipment_notice`, `shipment_notice_state` (poll cursors, go-live, back-off); wire contract in `shipment-notice-contract.ts` |
+| `modules/business-central` (`service.ts`, `shipment-reads.ts`) | BC reads for the check run: `getShipmentsByNumbers` (API v2.0 shipments and lines) and `getShipmentLineVariants` (ODataV4 `TRCShipmentLine` sizes); shared shipment-read token, timeout, deadline and throttling handling |
 | `api/admin/shipment-tracking/**`, `admin/routes/shipment-tracking/page.tsx` | Admin list of gave-up rows with Retry, and the overview of all tracked shipments with their close reason |
 
 ## Data Flow
@@ -40,7 +41,7 @@ flowchart TD
   E -- no or gone --> X[Close company_not_enabled, no BC read]
   E -- yes --> B{Current BC order number?}
   B -- no --> Y[Close superseded]
-  B -- yes --> R[Read BC shipment, decide, store notice]
+  B -- yes --> R[Read BC shipment and line sizes, decide, store notice]
   R --> N[Reschedule, or close window_ended / cancelled / gave_up]
   N --> G[GET /orderapi/shipment-notices serves stored notices]
 ```
@@ -65,8 +66,14 @@ flowchart TD
 - A row whose company is switched off or no longer exists closes with `company_not_enabled` before
   any BC read and before the superseded check. It counts as checked and sets `last_checked_at`.
 - Other rows: shipments under a replaced BC order number close `superseded`; the rest are read from
-  BC, decided (netting undo corrections) and stored as a `shipped`, `revised` or `cancelled` notice
+  BC (shipments, then their line sizes, see [Line size](#line-size-variant_code)), decided (sizes
+  joined, undo corrections netted) and stored as a `shipped`, `revised` or `cancelled` notice
   against the revision read before the BC read (a newer one makes it a conflict and re-due).
+- A failed check stores a code in `last_error` and logs it with the shipment and BC order number:
+  `bc_error` (a BC read failed), `not_returned` (BC did not return the shipment), `unpairable` (an
+  undo correction matches no line, with the BC line number) or `variant_missing` (an item line has
+  no size row, with the BC line number). All back off as below; a throttled read (429/503) or the
+  run's deadline leaves the rows due and untouched instead.
 - Schedule: first check 15 minutes after the header's last change, then every 15 minutes until 14
   days after posting; failures back off 15 min, 1 h, 4 h, 6 h, and give up 3 days after the later of
   the window's end and an Admin reopen.
@@ -86,6 +93,40 @@ flowchart TD
 
 Close reasons: `cancelled`, `window_ended`, `superseded`, `gave_up`, `company_not_enabled`. Only
 `gave_up` can be reopened.
+
+### Line size (`variant_code`)
+
+Every notice line carries `variant_code`, the size: the BC variant code posted on that shipment
+line, trimmed, null when empty (an item without sizes). BC API v2.0 shipment lines have no variant,
+so the size comes from a second read of the third-party ODataV4 web service `TRCShipmentLine`
+(`documentNumber`, `lineNo`, `variantCode` only), joined to the v2.0 lines on shipment number and
+line number (`lineNo` = v2.0 `sequence` = notice `bc_line_number`).
+
+- **Request budget.** Per batch of up to 20 shipment numbers the check run makes one v2.0 read and,
+  right after it, one `TRCShipmentLine` GET with an `or` filter over the same numbers, plus any
+  next pages (followed only to the configured BC origin). A run checks at most 200 rows, so at most
+  10 size reads. The ODataV4 `company` parameter needs the company name: it is read once per
+  shipment-read token (`GET {discovery}/companies({BUSINESS_CENTRAL_COMPANY_ID})`, through the same
+  timeout, deadline and throttling path) and cached with the token, so a token renewal costs one
+  extra request.
+- **Failures.** The size read sits in the same failure handling as the shipment read: throttled
+  (also on the company-name read) sets the run's back-off; the deadline leaves the batch due; any
+  other failure (status, timeout, malformed body, a next link to another host) fails every row of
+  the batch with `bc_error`. An item line with no size row fails only its own shipment with
+  `variant_missing`; a size is never guessed.
+- **Change detection.** The size is not in the content hash (BC line, item, unit, net quantity), so
+  adding it creates no `revised` notice for a shipment already notified. Undo corrections pair with
+  the line they undo only when the variant code matches too (else `unpairable`).
+- **Cut-off.** Notices recorded before NIMBUS-231 was released were stored without the key; they
+  are never rewritten or back-filled and are served with `variant_code: null` on every line (the
+  page builder fills it), even for sized items. In XML, APIM omits null fields, so those lines have
+  no `<variant_code>`. Production had no shipment notices when the field was added (2026-10-24), so
+  only test data is affected.
+- **Dependency risk.** `TRCShipmentLine` belongs to a third-party BC extension whose owner is
+  unknown. If the service changes or disappears, every check fails (`bc_error`, or
+  `variant_missing` if rows go missing), backs off and gives up after its window; no notice is
+  recorded without sizes. Fallback: Nimbus publishes the standard Posted Sales Shipment Lines page as
+  an ODataV4 web service and the read in `shipment-reads.ts` moves to it.
 
 ### Reading notices
 
@@ -110,8 +151,13 @@ kept and served again once the company is switched back on.
   instances (`ai/architecture/boundaries.md`, Locks).
 - **No personal data in logs.** Job log lines carry shipment and BC order numbers and error codes
   only, never BC response text, company contact data or customer numbers.
-- The wire contract (`shipment-notice-contract.ts`) is mirrored by the customer-facing JSON Schema
-  and the XSD of APIM's XML rendering; change them together.
+- **Where the contract lives.** This doc and the wire contract (`shipment-notice-contract.ts`) are
+  the current contract. The customer-facing JSON Schema, the XSD of APIM's XML rendering and the
+  examples mirror it; change them together. `issues/NIMBUS-231/artifacts/` holds the copies
+  deployed at the NIMBUS-231 release (the error schema and error examples are still those in
+  `issues/NIMBUS-130/artifacts/`); case folders are frozen records, so a later contract change
+  publishes new copies with its own case. The closed schemas reject unknown fields: adding a field
+  replaces them for customers who validate.
 
 ## Extension Points
 

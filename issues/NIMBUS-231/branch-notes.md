@@ -35,3 +35,11 @@
 - `toShipmentNotice` in `shipment-notice-page.ts` fills `variant_code: line.variant_code ?? null`; the envelope it returns always carries the key.
 - `payload` is `jsonb`: stored key order is not the wire order, so docs and examples (task 04) should not promise JSON key order.
 - `shipment-notices.spec.ts` uses `dbConnection.raw` (from `medusaIntegrationTestRunner`'s `testSuite` args, typed `any`) to strip the key, and has a test "serves a line stored before the size existed...". Not run yet; runs at finalization.
+
+## Task 04 (artifacts and docs)
+
+- `issues/NIMBUS-231/artifacts/` holds the four contract files plus `release-note.md`; the error schema and error examples were not copied (unchanged, still `issues/NIMBUS-130/artifacts/`).
+- The JSON example deep-equals `shipmentNoticeEnvelopeExample`: a change to the fixture needs the artifact (and its XML) changed too, or the release copy drifts.
+- Offline harness in the run scratchpad `task04/` (`validate-json-artifacts.cjs <repoRoot>`; `render/gen.ps1 -PolicyDir issues/NIMBUS-130/artifacts` then `dotnet run --project render/render.csproj -- <new artifacts> <NIMBUS-130 artifacts>`); offline, Newtonsoft from the local NuGet cache.
+- `docs/architecture/order-api/shipment-notices.md` now has a "Line size (`variant_code`)" section and lists all `last_error` codes; the consolidation pass and the documentation writer should extend it, not duplicate it.
+- Lint 0 errors (13 pre-existing warnings); typecheck 22 errors = baseline.

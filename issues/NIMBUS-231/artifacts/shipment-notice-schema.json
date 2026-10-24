@@ -1,0 +1,190 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ShipmentNoticeResponse",
+  "description": "Success body of GET /shipment-notices/{token} (JSON, the default). Mirrors ShipmentNoticeEnvelopeSchema in apps/backend/src/modules/order-ingestion/shipment-notice-contract.ts. Notices are ordered oldest first by cursor. Cursors are opaque decimal strings: pass next_cursor back as `after`. Fields without a value are null. The real-calendar check of dates is done by the service.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["shipment_notices", "next_cursor", "has_more"],
+  "properties": {
+    "shipment_notices": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/shipmentNotice" }
+    },
+    "next_cursor": {
+      "description": "Cursor of the last notice on this page; echoes `after` on an empty page, null when none was sent.",
+      "oneOf": [{ "$ref": "#/definitions/cursor" }, { "type": "null" }]
+    },
+    "has_more": {
+      "type": "boolean",
+      "description": "True when more notices follow next_cursor."
+    }
+  },
+  "definitions": {
+    "cursor": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)$"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$",
+      "description": "YYYY-MM-DD."
+    },
+    "nullableString": {
+      "type": ["string", "null"]
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "party": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "customer_number",
+        "name",
+        "address_line_1",
+        "address_line_2",
+        "city",
+        "state",
+        "post_code",
+        "country"
+      ],
+      "properties": {
+        "customer_number": { "$ref": "#/definitions/nullableString" },
+        "name": { "$ref": "#/definitions/nullableString" },
+        "address_line_1": { "$ref": "#/definitions/nullableString" },
+        "address_line_2": { "$ref": "#/definitions/nullableString" },
+        "city": { "$ref": "#/definitions/nullableString" },
+        "state": { "$ref": "#/definitions/nullableString" },
+        "post_code": { "$ref": "#/definitions/nullableString" },
+        "country": { "$ref": "#/definitions/nullableString" }
+      }
+    },
+    "shipTo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "contact",
+        "address_line_1",
+        "address_line_2",
+        "city",
+        "state",
+        "post_code",
+        "country"
+      ],
+      "properties": {
+        "name": { "$ref": "#/definitions/nullableString" },
+        "contact": { "$ref": "#/definitions/nullableString" },
+        "address_line_1": { "$ref": "#/definitions/nullableString" },
+        "address_line_2": { "$ref": "#/definitions/nullableString" },
+        "city": { "$ref": "#/definitions/nullableString" },
+        "state": { "$ref": "#/definitions/nullableString" },
+        "post_code": { "$ref": "#/definitions/nullableString" },
+        "country": { "$ref": "#/definitions/nullableString" }
+      }
+    },
+    "line": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "line_number",
+        "ean_no",
+        "bc_line_number",
+        "item_number",
+        "variant_code",
+        "description",
+        "description_2",
+        "unit_of_measure_code",
+        "quantity",
+        "shipment_date"
+      ],
+      "properties": {
+        "line_number": {
+          "type": ["integer", "null"],
+          "minimum": 0,
+          "description": "Your line number from the order; null when the shipped line could not be matched to an order line."
+        },
+        "ean_no": {
+          "$ref": "#/definitions/nullableString",
+          "description": "Your EAN from the order line; null when the shipped line could not be matched to an order line."
+        },
+        "bc_line_number": { "type": "integer", "minimum": 0 },
+        "item_number": { "$ref": "#/definitions/nonEmptyString" },
+        "variant_code": {
+          "$ref": "#/definitions/nullableString",
+          "description": "Size (Business Central variant code) of the shipped item; null when the item has no sizes, and on every line of notices recorded before sizes were added to shipment notices."
+        },
+        "description": { "$ref": "#/definitions/nullableString" },
+        "description_2": { "$ref": "#/definitions/nullableString" },
+        "unit_of_measure_code": { "$ref": "#/definitions/nullableString" },
+        "quantity": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Quantity shipped, net of undone shipments; 0 when the line was undone."
+        },
+        "shipment_date": { "$ref": "#/definitions/date" }
+      }
+    },
+    "shipmentNotice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "cursor",
+        "previous_cursor",
+        "recorded_at",
+        "revision",
+        "status",
+        "order_id",
+        "external_order_number",
+        "bc_order_number",
+        "shipment_number",
+        "shipment_date",
+        "shipment_method_code",
+        "your_reference",
+        "sell_to",
+        "bill_to",
+        "ship_to",
+        "lines"
+      ],
+      "properties": {
+        "cursor": { "$ref": "#/definitions/cursor" },
+        "previous_cursor": {
+          "description": "Cursor of the revision this one replaces; null for revision 1.",
+          "oneOf": [{ "$ref": "#/definitions/cursor" }, { "type": "null" }]
+        },
+        "recorded_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$",
+          "description": "When the notice was recorded, ISO 8601 in UTC."
+        },
+        "revision": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "1 for the first notice of a shipment; each later revision is a full snapshot that replaces the previous one."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["shipped", "revised", "cancelled"]
+        },
+        "order_id": { "$ref": "#/definitions/nonEmptyString" },
+        "external_order_number": { "$ref": "#/definitions/nonEmptyString" },
+        "bc_order_number": { "$ref": "#/definitions/nonEmptyString" },
+        "shipment_number": { "$ref": "#/definitions/nonEmptyString" },
+        "shipment_date": { "$ref": "#/definitions/date" },
+        "shipment_method_code": { "$ref": "#/definitions/nullableString" },
+        "your_reference": { "$ref": "#/definitions/nullableString" },
+        "sell_to": { "$ref": "#/definitions/party" },
+        "bill_to": { "$ref": "#/definitions/party" },
+        "ship_to": { "$ref": "#/definitions/shipTo" },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/line" }
+        }
+      }
+    }
+  }
+}
