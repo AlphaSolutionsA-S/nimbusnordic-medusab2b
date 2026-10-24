@@ -1,15 +1,12 @@
 import type { ConfigModule } from '@medusajs/framework/types';
 import { ContainerRegistrationKeys } from '@medusajs/framework/utils';
 import { createStep, StepResponse } from '@medusajs/framework/workflows-sdk';
-import {
-  buildPasswordResetNotification,
-  type PasswordResetEvent,
-  type PasswordResetLocalization,
-} from '../utils/password-reset-notification';
+import type { EmailLocalization } from '../../transactional-email/utils/email-notification';
+import { buildPasswordResetNotification, type PasswordResetEvent } from '../utils/password-reset-notification';
 
 export type PreparePasswordResetNotificationInput = {
   event: PasswordResetEvent;
-  localization: PasswordResetLocalization;
+  localization: EmailLocalization;
 };
 
 export const preparePasswordResetNotificationStep = createStep(

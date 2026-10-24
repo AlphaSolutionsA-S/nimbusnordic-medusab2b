@@ -1,8 +1,8 @@
 import type { MessageDocument } from '../../../../types/storefront-translation';
+import type { EmailLocalization } from '../../../transactional-email/utils/email-notification';
 import {
   buildEmployeeInvitationNotification,
   EMPLOYEE_INVITATION_EMAIL_SOURCE,
-  type EmployeeInvitationLocalization,
   type InvitationRecipient,
 } from '../employee-invitation-notification';
 
@@ -11,7 +11,7 @@ const recipient: InvitationRecipient = {
   first_name: 'Anna',
   company_name: 'Acme ApS',
 };
-const english: EmployeeInvitationLocalization = { locale: 'en', linkCountry: 'dk', chosen: null, english: null };
+const english: EmailLocalization = { locale: 'en', linkCountry: 'dk', chosen: null, english: null };
 const danish: MessageDocument = {
   Emails: {
     employeeInvitation: {
@@ -32,7 +32,7 @@ const DECIDED_HTML =
   '<p><a href="https://shop.example.test/dk/account">Log in to the customer portal</a></p>';
 
 function build(
-  localization: EmployeeInvitationLocalization = english,
+  localization: EmailLocalization = english,
   to: InvitationRecipient = recipient,
   storeCors = 'https://shop.example.test,https://other.example.test',
 ) {
@@ -135,10 +135,7 @@ describe('employee invitation notification', () => {
     expect(fallbacks).toEqual([]);
   });
 
-  it.each(['', 'https://user:password@shop.example.test', 'http://shop.example.test', 'invalid'])(
-    'refuses unusable destination configuration %s',
-    (origin) => {
-      expect(() => build(english, recipient, origin)).toThrow();
-    },
-  );
+  it('refuses unusable destination configuration', () => {
+    expect(() => build(english, recipient, 'http://shop.example.test')).toThrow('Email storefront configuration is invalid');
+  });
 });

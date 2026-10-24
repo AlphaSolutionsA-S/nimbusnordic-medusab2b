@@ -2,15 +2,15 @@ import type { ConfigModule } from "@medusajs/framework/types";
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 
+import type { EmailLocalization } from "../../transactional-email/utils/email-notification";
 import {
   buildEmployeeInvitationNotification,
-  type EmployeeInvitationLocalization,
   type InvitationRecipient,
 } from "../utils/employee-invitation-notification";
 
 export type PrepareEmployeeInvitationNotificationInput = {
   recipient: InvitationRecipient;
-  localization: EmployeeInvitationLocalization;
+  localization: EmailLocalization;
 };
 
 export const prepareEmployeeInvitationNotificationStep = createStep(

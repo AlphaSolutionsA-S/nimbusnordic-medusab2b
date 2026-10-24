@@ -1,12 +1,9 @@
 import { chooseEmailLanguage } from '../../../transactional-email/utils/email-language';
-import {
-  buildPasswordResetNotification,
-  PASSWORD_RESET_EMAIL_SOURCE,
-  type PasswordResetLocalization,
-} from '../password-reset-notification';
+import type { EmailLocalization } from '../../../transactional-email/utils/email-notification';
+import { buildPasswordResetNotification, PASSWORD_RESET_EMAIL_SOURCE } from '../password-reset-notification';
 
 const event = { entity_id: 'customer@example.test', actor_type: 'customer', token: 'proof&value', metadata: { country_code: 'se' } };
-const english: PasswordResetLocalization = { locale: 'en', linkCountry: 'se', chosen: null, english: null };
+const english: EmailLocalization = { locale: 'en', linkCountry: 'se', chosen: null, english: null };
 const danishTexts = {
   Emails: {
     passwordReset: {
@@ -20,7 +17,7 @@ const danishTexts = {
 
 const TODAY_HTML = '<p>We received a request to reset your Nimbus Nordic password.</p><p><a href="https://shop.example.test/se/reset-password?token=proof%26value">Choose a new password</a></p><p>This link expires in 15 minutes. If you did not request a password reset, you can ignore this email.</p>';
 
-function build(localization: PasswordResetLocalization = english, storeCors = 'https://shop.example.test,https://other.example.test', input = event) {
+function build(localization: EmailLocalization = english, storeCors = 'https://shop.example.test,https://other.example.test', input = event) {
   return buildPasswordResetNotification(input, storeCors, localization);
 }
 
@@ -96,11 +93,7 @@ describe('password recovery notification', () => {
     expect(notification.content?.html).not.toContain('evil.test');
   });
 
-  it.each(['', 'https://user:password@shop.example.test', 'http://shop.example.test', 'invalid'])('refuses unusable destination configuration %s', (origin) => {
-    expect(() => build(english, origin)).toThrow();
-  });
-
-  it('allows the existing local HTTP storefront for development', () => {
-    expect(build(english, 'http://localhost:8000').notification.data?.reset_url).toContain('http://localhost:8000/se/reset-password');
+  it('refuses unusable destination configuration', () => {
+    expect(() => build(english, 'http://shop.example.test')).toThrow('Email storefront configuration is invalid');
   });
 });

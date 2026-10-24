@@ -4,19 +4,13 @@ import { STOREFRONT_TRANSLATION_MODULE } from "../../../modules/storefront-trans
 import { DEFAULT_COUNTRY_LOCALE } from "../../../modules/storefront-translation/country-languages";
 import type StorefrontTranslationModuleService from "../../../modules/storefront-translation/service";
 import type { MessageDocument } from "../../../types/storefront-translation";
-import { chooseEmailLanguage, type EmailLanguage } from "../utils/email-language";
+import { chooseEmailLanguage } from "../utils/email-language";
+import type { EmailLocalization } from "../utils/email-notification";
 
 export interface LocalizeEmailStepInput {
   requestCountry?: unknown;
   companyCountry?: string | null;
   configuredCountries: string[];
-}
-
-export interface EmailLocalization extends EmailLanguage {
-  /** Active document of the chosen language; null when that language is not active. */
-  chosen: MessageDocument | null;
-  /** Active English document; null when English is not active. */
-  english: MessageDocument | null;
 }
 
 /**

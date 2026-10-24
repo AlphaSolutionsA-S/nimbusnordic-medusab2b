@@ -1,5 +1,4 @@
-import type { SendNotificationsStepInput } from '@medusajs/medusa/core-flows';
-import type { MessageDocument, MissingReport } from '../../../types/storefront-translation';
+import { emailSubject, type EmailLocalization, type PreparedEmail } from '../../transactional-email/utils/email-notification';
 import { resolveEmailTexts } from '../../transactional-email/utils/email-texts';
 import { escapeHtml } from '../../transactional-email/utils/escape-html';
 import { emailStorefrontOrigin } from '../../transactional-email/utils/storefront-origin';
@@ -9,18 +8,6 @@ export type PasswordResetEvent = {
   actor_type: string;
   token: string;
   metadata?: Record<string, unknown>;
-};
-
-export type PasswordResetLocalization = {
-  locale: string;
-  linkCountry: string;
-  chosen: MessageDocument | null;
-  english: MessageDocument | null;
-};
-
-export type PasswordResetNotification = {
-  notification: SendNotificationsStepInput[number];
-  fallbacks: MissingReport[];
 };
 
 export const PASSWORD_RESET_EMAIL_SOURCE = 'email:customer-password-reset';
@@ -36,8 +23,8 @@ const PASSWORD_RESET_TEXTS = {
 export function buildPasswordResetNotification(
   event: PasswordResetEvent,
   storeCors: string,
-  localization: PasswordResetLocalization,
-): PasswordResetNotification {
+  localization: EmailLocalization,
+): PreparedEmail {
   const url = new URL(`/${localization.linkCountry}/reset-password`, emailStorefrontOrigin(storeCors));
   url.searchParams.set('token', event.token);
   const resetUrl = url.toString();
@@ -56,8 +43,7 @@ export function buildPasswordResetNotification(
       channel: 'email',
       template: 'customer-password-reset',
       content: {
-        // A header, not HTML: only line breaks are a risk, so all whitespace collapses to one space.
-        subject: texts['Emails.passwordReset.subject'].replace(/\s+/g, ' ').trim(),
+        subject: emailSubject(texts['Emails.passwordReset.subject']),
         html: `<p>${text('Emails.passwordReset.intro')}</p><p><a href="${escapeHtml(resetUrl)}">${text('Emails.passwordReset.linkLabel')}</a></p><p>${text('Emails.passwordReset.expiry')}</p>`,
       },
       data: { reset_url: resetUrl, locale: localization.locale },
