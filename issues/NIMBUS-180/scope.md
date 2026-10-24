@@ -1,7 +1,9 @@
 # Order API: match size barcodes to the right Business Central item and size
 
+> Record of NIMBUS-180, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-23
-**Status:** Approved (Klaus Petersen, 2026-10-23)
+**Status:** Implemented
 **Type:** Bug
 **Priority:** Medium
 **Issue:** NIMBUS-180 (parent NIMBUS-206 "bugs")

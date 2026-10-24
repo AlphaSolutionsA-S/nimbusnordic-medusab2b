@@ -1,5 +1,7 @@
 # Plan: Order API matches size barcodes to the right Business Central item and size
 
+> Record of NIMBUS-180, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-180 · **Scope:** `scope.md` (approved 2026-10-23) · **Branch:** `feature/NIMBUS-180` from `develop`
 **Apps:** backend only · **Tasks:** 4 · **Skills used:** `medusa-backend`, `medusa-infra-adapter`,
 `medusa-workflow-and-steps`, `medusa-admin` (labels only), `secure-coding-owasp`

@@ -1,5 +1,7 @@
 # Deviation report: Order API matches size barcodes to the right Business Central item and size
 
+> Record of NIMBUS-180, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-180` at `a994408`, merge-base `eea3a01` (`develop`). Commits: `1f91a1e` (plan),
 `3ec103c` (NIMBUS-232, task 01), `7909708` (NIMBUS-233, task 02), `f016624` (NIMBUS-234, task 03),
 `915dfb9` (NIMBUS-235, task 04), `a994408` (consolidation). Tree clean, not pushed.
