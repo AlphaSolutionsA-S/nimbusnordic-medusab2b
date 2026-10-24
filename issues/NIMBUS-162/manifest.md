@@ -29,7 +29,7 @@ From `ai/AGENTS.md`; run from the repo root, one at a time.
 | 03 | Reset email on the translated mechanism | `03-translated-reset-email.md` | backend, import files | 162 F1, F3, F6–F9, R3, R4, R14, R15 | 01, 02 | NIMBUS-246 | DONE |
 | 04 | Invitation trigger and store request country | `04-invitation-trigger.md` | backend | 242 R5, R7; AC "failed email does not undo" | None | NIMBUS-247 | DONE |
 | 05 | Invitation email | `05-invitation-email.md` | backend, import files | 162 F2; 242 R6, R13, R15, all AC | 03, 04 | NIMBUS-248 | DONE |
-| 06 | Storefront invite card sends the page country | `06-storefront-invite-country.md` | storefront | 242 R5; AC "invite form unchanged" | 04 | NIMBUS-249 | TODO |
+| 06 | Storefront invite card sends the page country | `06-storefront-invite-country.md` | storefront | 242 R5; AC "invite form unchanged" | 04 | NIMBUS-249 | DONE |
 
 ## Scope items with no task
 | Scope item | Reason (already done / external / not needed) |

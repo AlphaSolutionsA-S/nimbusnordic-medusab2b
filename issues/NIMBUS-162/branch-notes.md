@@ -79,3 +79,11 @@
 - New shared `transactional-email/utils/storefront-origin.ts` (`emailStorefrontOrigin`), now also used by the reset builder.
 - `employee-invitation.spec.ts` now sets `STORE_CORS` and seeds a se/dk region with en/sv/da in its
   "invitation email" block; the real subscriber runs in every case of that spec. Not run locally.
+
+## 06 Storefront invite card sends the page country
+
+- `InviteEmployeeCard` reads `countryCode` with `useParams` and passes it as `country_code` to `createEmployee`;
+  `StoreCreateEmployee` (storefront `types/company/http.ts`) has `country_code?: string`. `createEmployee` forwards it unchanged.
+- Tests rendering the card must mock `next/navigation` `useParams` (company-page test already does).
+- Pitfall: storefront lint cannot run locally right now: installed `next` is 16.4.2 (package.json 15.5.28), so
+  `next lint` is gone and direct `eslint` fails to load the config. Finalization needs a clean `pnpm install` first.
