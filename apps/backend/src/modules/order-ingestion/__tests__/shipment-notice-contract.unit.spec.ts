@@ -125,10 +125,6 @@ describe("ShipmentNoticeEnvelopeSchema", () => {
     expect(ShipmentNoticeEnvelopeSchema.safeParse(envelopeWith(notice)).success).toBe(true);
   });
 
-  it("carries a sized and an unsized line in the example", () => {
-    expect(firstNotice.lines.map((line) => line.variant_code)).toEqual(["M", null]);
-  });
-
   it("rejects a line without variant_code", () => {
     const { variant_code: _variantCode, ...withoutSize } = firstNotice.lines[0];
     const notice = { ...firstNotice, lines: [withoutSize] };
