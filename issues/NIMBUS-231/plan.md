@@ -1,5 +1,7 @@
 # Plan: Show the size on shipment notice lines
 
+> Record of NIMBUS-231, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-231 · **Scope:** `scope.md` (approved 2026-10-24) · **Branch:** `feature/NIMBUS-231` from `develop`
 **Apps:** backend only, plus customer artifacts in `issues/NIMBUS-231/artifacts/` · **Tasks:** 4 ·
 **Skills used:** `medusa-backend`, `medusa-infra-adapter`, `medusa-workflow-and-steps`

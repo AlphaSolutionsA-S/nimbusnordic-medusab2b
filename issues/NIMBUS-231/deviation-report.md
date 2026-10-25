@@ -1,5 +1,7 @@
 # Deviation report: Show the size on shipment notice lines
 
+> Record of NIMBUS-231, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-231` at f500507, merge-base 93d3c03 (`develop`). 7 commits: plan, tasks 01–04
 (NIMBUS-238 to NIMBUS-241), fix-01 (stale-snapshot spec), consolidation. Backend only; no migration,
 no table or column change. `git status` clean.

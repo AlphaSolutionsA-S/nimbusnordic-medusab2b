@@ -1,7 +1,9 @@
 # Show the size on shipment notice lines
 
+> Record of NIMBUS-231, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-24
-**Status:** Approved (Klaus Petersen, 2026-10-24)
+**Status:** Implemented (2026-10-25; approved by Klaus Petersen, 2026-10-24)
 **Type:** Story
 **Priority:** Must
 **Issue:** NIMBUS-231

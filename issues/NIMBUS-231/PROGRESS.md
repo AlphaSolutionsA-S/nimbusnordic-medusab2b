@@ -84,3 +84,15 @@
 - Next owner: Klaus — answer the deviation report's open questions.
 - Handover prompt: "Resume the NIMBUS-231 dispatch after the gate with these answers: …"
   (`task-dispatcher`, step 4). Push only on Klaus's explicit go-ahead.
+
+## 2026-10-25 — gate answered, branch ready (task-dispatcher)
+
+- Outcome: Klaus's answers (relayed by the main session) recorded in `deviation-report.md` and a gate
+  comment on NIMBUS-231: plan defaults, schemas published at deploy, Klaus checks the deployed APIM
+  policy and Logic App first. No fixes needed. Doc updated (`BUSINESS_CENTRAL_COMPANY_ID`
+  dependency), PR description written (run scratchpad `pr-description.md`), scope set to
+  Implemented, working files removed. All committed on `feature/NIMBUS-231`; not pushed, not merged.
+  NIMBUS-231 not moved in Jira (main session).
+- Next owner: main session — merge into `develop` and push on Klaus's go-ahead, move NIMBUS-231,
+  then the after-deploy checks in `deviation-report.md`.
+- Handover prompt: "Merge feature/NIMBUS-231 into develop and push; move NIMBUS-231 to review."
