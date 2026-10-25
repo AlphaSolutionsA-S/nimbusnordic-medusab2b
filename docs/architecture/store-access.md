@@ -109,6 +109,11 @@ reset link; notification `to` is the customer's email and `data` holds `login_ur
 failed send fails only the email workflow (logged by the event bus); the account and the route's
 200 response stand.
 
+Accepted limit: the configured local Notification provider logs each notification's recipient,
+template and data at info level, so every invitation logs the invited address and the login link
+(no credential). This was accepted for NIMBUS-242 on 2026-10-25, as the logged reset link was for
+NIMBUS-133.
+
 Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/storefront/src/`.
 
 ### Backend: rules (L5)
