@@ -94,3 +94,13 @@
   `src/links/employee-customer.ts` module link. In a spec, check a customer's employee with
   `query.graph({ entity: "customer", fields: ["employee.id", "employee.company_id"], filters: { email } })`
   (verified against real data in `employee-invitation.spec.ts`).
+
+## Fix 03 (invite card country guard)
+
+- `InviteEmployeeCard` spreads `country_code` into the payload only when the `[countryCode]` segment matches
+  `^[a-z]{2}$` (module constant `TWO_LETTER_COUNTRY`); otherwise the key is absent and the backend uses the
+  company country.
+- To assert that a key is absent, check `Object.keys(...)`, because Jest's `toEqual`/`toHaveBeenCalledWith`
+  ignore `undefined` properties.
+- Storefront tests and lint need `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` set (any dummy value). Lint now
+  runs after the reinstall. Storefront typecheck now measures 8 errors, down from the recorded 58.
