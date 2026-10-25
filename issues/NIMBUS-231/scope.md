@@ -157,3 +157,9 @@ artifacts in this case folder, deployed by Klaus.
   shipment notices (every check would fail and back off) until the read is changed. The fallback is
   Nimbus publishing the standard Posted Sales Shipment Lines page as an ODataV4 web service.
 - Klaus publishes the new schemas to customers and APIM at release.
+
+## Documentation
+
+- [docs/architecture/order-api/shipment-notices.md](../../docs/architecture/order-api/shipment-notices.md) — Shipment notices: line size, second BC read, failure codes, cut-off, contract location (updated)
+
+AI base files updated: `ai/architecture/decisions.md` (shipment notice rule row, in task 02)

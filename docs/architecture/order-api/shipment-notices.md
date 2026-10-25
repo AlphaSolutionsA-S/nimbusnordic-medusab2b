@@ -108,7 +108,8 @@ line number (`lineNo` = v2.0 `sequence` = notice `bc_line_number`).
   10 size reads. The ODataV4 `company` parameter needs the company name: it is read once per
   shipment-read token (`GET {discovery}/companies({BUSINESS_CENTRAL_COMPANY_ID})`, through the same
   timeout, deadline and throttling path) and cached with the token, so a token renewal costs one
-  extra request.
+  extra request. The check run therefore needs `BUSINESS_CENTRAL_COMPANY_ID` (a GUID, also required
+  by the return reads); without it every check fails `bc_error` and backs off.
 - **Failures.** The size read sits in the same failure handling as the shipment read: throttled
   (also on the company-name read) sets the run's back-off; the deadline leaves the batch due; any
   other failure (status, timeout, malformed body, a next link to another host) fails every row of
