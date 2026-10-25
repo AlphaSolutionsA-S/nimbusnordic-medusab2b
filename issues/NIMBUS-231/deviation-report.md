@@ -150,6 +150,13 @@ Findings:
 
 No other question needs an answer before push.
 
+**Answers (Klaus Petersen, 2026-10-25, relayed by the main session):** Klaus said "push and merge to
+develop" without choosing between the publishing options, so the plan's defaults are recorded.
+1. (a): deploy and publish the new schemas from `issues/NIMBUS-231/artifacts/` at the same time.
+2. Klaus checks the deployed APIM policy and Logic App against the NIMBUS-130 files before publishing
+   the schemas, as agreed in the plan.
+No answer needs a code change.
+
 ## Verify after deploy
 
 - Task 02 (`variant_code` on notice lines: contract, decision rule, check wiring): `GET
