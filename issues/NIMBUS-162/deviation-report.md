@@ -154,6 +154,19 @@ consolidation). Reviewed 2026-10-25 by the integration reviewer.
    direct move to In Progress, so neither was moved (comments 255281, 255282). Decide the transitions
    to apply before the PR (and whether NIMBUS-242 needs its scope-approved step recorded).
 
+### Answers (Klaus Petersen, 2026-10-25)
+
+1. Merge the two email rows in `decisions.md` into one and trim their wording until the generated
+   `AGENTS.md` is under the limit; other rows keep their meaning. `pnpm ai:check` must pass.
+2. Accepted ("it is ok"). Documented next to the NIMBUS-133 note as an accepted risk; no code
+   change, no new issue.
+3. Fix: the invite card sends `country_code` only when it matches `^[a-z]{2}$` and omits it
+   otherwise, so the backend falls back to the company country. With a test.
+4. Reinstall from the lockfile (`pnpm install --frozen-lockfile`), check the installed `next`
+   matches `package.json`, then run storefront lint and build against the baseline. Stop if the
+   reinstall fails or changes the lockfile.
+5. Move NIMBUS-162 and NIMBUS-242 to "Internal review", taking every step of the transition path.
+
 ## Verify after deploy
 
 - 03 Reset email on the translated mechanism: Cloud Email Activity / `notification.data.locale` for
