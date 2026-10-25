@@ -37,8 +37,8 @@ and storefront (`next build` hides it); one BC module test, 3 storefront and 1 C
 runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_DISCOVERY_URL` is an
 allowed test environment (`integration-tests/global-setup.ts`).
 
-Local `pnpm test:integration:http` (develop `eea3a01`, 2026-10-23): 7 suites, 77 tests fail with 401
-on admin or customer login (NIMBUS-236), in `integration-tests/http/` (`.spec.ts`):
+Local `test:integration:http` (develop `eea3a01`, 2026-10-23): 77 tests fail with 401 on login
+(NIMBUS-236), in `integration-tests/http/*.spec.ts`:
 `admin/bc-integration`, `quotes/quotes`, `admin/quotes/quotes`, `security/password-recovery`,
 `translations/translations`, `security/security-boundaries`, `companies/companies`.
 
