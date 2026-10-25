@@ -80,6 +80,27 @@ describe("shipmentNoticePage", () => {
   it("returns a null cursor on an empty page when no after was sent", () => {
     expect(shipmentNoticePage([], { limit: 50, after: null }).next_cursor).toBeNull();
   });
+
+  it("serves lines stored without variant_code with variant_code null, other fields and the row unchanged", () => {
+    const preReleaseLines = PAYLOAD.lines.map(({ variant_code: _variantCode, ...line }) => line);
+    const stored = row(7, { payload: { ...PAYLOAD, lines: preReleaseLines } });
+
+    const page = shipmentNoticePage([stored], { limit: 50, after: null });
+
+    expect(ShipmentNoticeEnvelopeSchema.parse(page)).toEqual(page);
+    expect(page.shipment_notices[0].lines).toEqual(
+      preReleaseLines.map((line) => ({ ...line, variant_code: null }))
+    );
+    expect(stored.payload.lines.every((line) => !("variant_code" in line))).toBe(true);
+  });
+
+  it("serves stored variant codes as stored, a size and a null alike", () => {
+    expect(PAYLOAD.lines.map((line) => line.variant_code)).toEqual(["M", null]);
+
+    const page = shipmentNoticePage([row(8)], { limit: 50, after: null });
+
+    expect(page.shipment_notices[0].lines).toEqual(PAYLOAD.lines);
+  });
 });
 
 describe("companyShipmentNoticeQuery", () => {

@@ -43,6 +43,8 @@ function toShipmentNotice(row: ShipmentNoticeRow): ShipmentNotice {
     revision: row.revision,
     status: row.status,
     ...row.payload,
+    // Lines stored before NIMBUS-231 lack the key; the contract always carries it.
+    lines: row.payload.lines.map((line) => ({ ...line, variant_code: line.variant_code ?? null })),
   };
 }
 

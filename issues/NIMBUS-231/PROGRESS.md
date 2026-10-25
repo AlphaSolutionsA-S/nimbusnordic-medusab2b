@@ -46,3 +46,53 @@
   open questions) and NIMBUS-231 moved to Estimation via "Scope approved".
 - Next owner: `implementation-planner` (Klaus gave the go-ahead).
 - Handover prompt: "Plan NIMBUS-231 from issues/NIMBUS-231/scope.md."
+
+## 2026-10-24 — planned, waiting at the plan gate (implementation-planner)
+
+- Outcome: `plan.md`, `manifest.md` and task files 01–04 written (backend only, 4 tasks;
+  `Ready for Dispatch: false`). Design: the adapter reads `TRCShipmentLine` rows; the join, undo
+  pairing with variant (B3) and missing-row failure (B4, new code `variant_missing`) are in the L5
+  decision rule; company name cached with the shipment-read token. One UNVERIFIED vendor claim blocks
+  dispatch: that `TRCShipmentLine` next links stay on the BC origin (planner's probe could not reach
+  BC from the sandbox; script saved as `samples/probe-trc-paging.mjs`). No Jira sub-tasks, no
+  commit.
+- Next owner: Klaus — answer plan section 2 (run the paging probe; confirm the deployed APIM policy
+  and Logic App at release) and approve the plan.
+- Handover prompt: "Revise issues/NIMBUS-231/plan.md with Klaus's answers, set Ready for Dispatch,
+  record 'plan approved' and create the sub-tasks per tracker-workflow § F." Dispatch needs a
+  separate go-ahead.
+
+## 2026-10-24 — plan approved
+
+- Outcome: Klaus ran the paging probe (`samples/probe-trc-paging-output.md`): the next link stays on
+  the BC origin, so the blocking item is verified. The main session first changed the probe to
+  follow the next link only on the BC origin. Decision 2 default accepted. Plan approved; Ready for
+  Dispatch set; sub-tasks NIMBUS-238 to NIMBUS-241 created and recorded in the manifest; "plan
+  approved" comment on NIMBUS-231.
+- Next owner: `task-dispatcher` (Klaus gave the go-ahead).
+- Handover prompt: "Dispatch NIMBUS-231 from issues/NIMBUS-231/manifest.md on feature/NIMBUS-231."
+
+## 2026-10-24 — implemented, waiting at the implementation gate (task-dispatcher)
+
+- Outcome: tasks 01–04 done, reviewed and committed on `feature/NIMBUS-231` (local, not pushed);
+  sub-tasks NIMBUS-238 to NIMBUS-241 closed with comments. Finalization: one test-setup failure in
+  `check-shipments.spec.ts` fixed (fix-01); remaining HTTP failures identical to `develop`; module
+  suite only the documented guardrail baseline; typecheck 22 = baseline; build OK. Consolidation
+  removed one duplicate test. `deviation-report.md` written: no blocking deviation, two open
+  questions (schema release timing; deployed APIM policy and Logic App check). NIMBUS-231 left in
+  Estimation for the main session to move.
+- Next owner: Klaus — answer the deviation report's open questions.
+- Handover prompt: "Resume the NIMBUS-231 dispatch after the gate with these answers: …"
+  (`task-dispatcher`, step 4). Push only on Klaus's explicit go-ahead.
+
+## 2026-10-25 — gate answered, branch ready (task-dispatcher)
+
+- Outcome: Klaus's answers (relayed by the main session) recorded in `deviation-report.md` and a gate
+  comment on NIMBUS-231: plan defaults, schemas published at deploy, Klaus checks the deployed APIM
+  policy and Logic App first. No fixes needed. Doc updated (`BUSINESS_CENTRAL_COMPANY_ID`
+  dependency), PR description written (run scratchpad `pr-description.md`), scope set to
+  Implemented, working files removed. All committed on `feature/NIMBUS-231`; not pushed, not merged.
+  NIMBUS-231 not moved in Jira (main session).
+- Next owner: main session — merge into `develop` and push on Klaus's go-ahead, move NIMBUS-231,
+  then the after-deploy checks in `deviation-report.md`.
+- Handover prompt: "Merge feature/NIMBUS-231 into develop and push; move NIMBUS-231 to review."

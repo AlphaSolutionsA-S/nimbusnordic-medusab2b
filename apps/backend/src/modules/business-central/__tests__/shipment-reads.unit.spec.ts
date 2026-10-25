@@ -5,8 +5,18 @@ const originalFetch = global.fetch;
 const DISCOVERY_URL =
   "https://api.businesscentral.dynamics.com/v2.0/tenant-id/Sandbox/api/v2.0";
 const SHIPMENTS_PATH = "/salesShipments";
+const COMPANY_ID = "00000000-0000-0000-0000-0000000000c1";
+const COMPANY_PATH = `/companies(${COMPANY_ID})`;
+const VARIANTS_PATH = "/v2.0/tenant-id/Sandbox/ODataV4/TRCShipmentLine";
+const VARIANTS_URL = `https://api.businesscentral.dynamics.com${VARIANTS_PATH}`;
 
 type FetchHandler = (url: URL, init: RequestInit | undefined) => Promise<Response> | Response;
+
+type BcHandlers = {
+  variants?: FetchHandler;
+  company?: FetchHandler;
+  token?: FetchHandler;
+};
 
 function jsonResponse(body: unknown, status = 200, headers: Record<string, string> = {}): Response {
   return new Response(JSON.stringify(body), { status, headers });
@@ -16,15 +26,23 @@ function tokenResponse(accessToken = "access-token", expiresIn = 3599): Response
   return jsonResponse({ access_token: accessToken, token_type: "Bearer", expires_in: expiresIn });
 }
 
-function mockBc(handleShipments: FetchHandler): jest.Mock {
+function mockBc(handleShipments: FetchHandler, handlers: BcHandlers = {}): jest.Mock {
   const fetchMock = jest.fn(async (input: string | URL, init?: RequestInit) => {
     const url = new URL(String(input));
 
     if (url.hostname === "login.microsoftonline.com") {
-      return tokenResponse();
+      return handlers.token ? handlers.token(url, init) : tokenResponse();
     }
     if (url.pathname.endsWith(SHIPMENTS_PATH)) {
       return handleShipments(url, init);
+    }
+    if (url.pathname.endsWith(COMPANY_PATH)) {
+      return handlers.company
+        ? handlers.company(url, init)
+        : jsonResponse({ id: COMPANY_ID, name: "Nimbus Nordic A/S" });
+    }
+    if (url.pathname === VARIANTS_PATH && handlers.variants) {
+      return handlers.variants(url, init);
     }
 
     throw new Error(`Unexpected Business Central request: ${url.toString()}`);
@@ -38,6 +56,27 @@ function shipmentRequests(fetchMock: jest.Mock): Array<{ url: URL; init: Request
   return fetchMock.mock.calls
     .map(([input, init]) => ({ url: new URL(String(input)), init: init as RequestInit | undefined }))
     .filter(({ url }) => url.pathname.endsWith(SHIPMENTS_PATH));
+}
+
+function requestsTo(
+  fetchMock: jest.Mock,
+  matches: (url: URL) => boolean
+): Array<{ url: URL; init: RequestInit | undefined }> {
+  return fetchMock.mock.calls
+    .map(([input, init]) => ({ url: new URL(String(input)), init: init as RequestInit | undefined }))
+    .filter(({ url }) => matches(url));
+}
+
+function variantRequests(fetchMock: jest.Mock): Array<{ url: URL; init: RequestInit | undefined }> {
+  return requestsTo(fetchMock, (url) => url.pathname === VARIANTS_PATH);
+}
+
+function companyRequests(fetchMock: jest.Mock): Array<{ url: URL; init: RequestInit | undefined }> {
+  return requestsTo(fetchMock, (url) => url.pathname.endsWith(COMPANY_PATH));
+}
+
+function variantRow(documentNumber: unknown, lineNo: unknown, variantCode: unknown) {
+  return { documentNumber, lineNo, variantCode };
 }
 
 function tokenRequestCount(fetchMock: jest.Mock): number {
@@ -70,6 +109,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
     process.env.BUSINESS_CENTRAL_DISCOVERY_URL = DISCOVERY_URL;
     process.env.BUSINESS_CENTRAL_CLIENT_ID = "00000000-0000-0000-0000-000000000001";
     process.env.BUSINESS_CENTRAL_CLIENT_SECRET = "client-secret";
+    process.env.BUSINESS_CENTRAL_COMPANY_ID = COMPANY_ID;
   });
 
   afterEach(() => {
@@ -568,6 +608,301 @@ describe("BusinessCentralModuleService shipment reads", () => {
       expect(tokenRequestCount(fetchMock)).toBe(2);
       const authorizations = shipmentRequests(fetchMock).map(({ init }) => headerValue(init, "authorization"));
       expect(authorizations.every((value) => value === "Bearer access-token")).toBe(true);
+    });
+  });
+
+  describe("getShipmentLineVariants", () => {
+    const noShipments = () => jsonResponse({ value: [] });
+
+    it("reads 45 numbers in 3 OR-filtered GETs of only documentNumber, lineNo and variantCode", async () => {
+      const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
+      const service = new BusinessCentralModuleService();
+      const numbers = Array.from({ length: 45 }, (_, index) => `S-${index + 1}`);
+
+      await service.getShipmentLineVariants(numbers);
+
+      const requests = variantRequests(fetchMock);
+      expect(requests).toHaveLength(3);
+      const filters = requests.map(({ url }) => url.searchParams.get("$filter") ?? "");
+      expect(filters.map((filter) => filter.split(" or ").length)).toEqual([20, 20, 5]);
+      expect(filters[0].startsWith("documentNumber eq 'S-1' or documentNumber eq 'S-2'")).toBe(true);
+      expect(filters[2].endsWith("documentNumber eq 'S-45'")).toBe(true);
+      for (const { url, init } of requests) {
+        expect(url.origin + url.pathname).toBe(VARIANTS_URL);
+        expect(init?.method).toBe("GET");
+        expect(url.searchParams.get("$select")).toBe("documentNumber,lineNo,variantCode");
+        expect(url.searchParams.get("company")).toBe("'Nimbus Nordic A/S'");
+        expect(headerValue(init, "prefer")).toBe("odata.maxpagesize=200");
+      }
+    });
+
+    it("escapes a quote in a shipment number and in the company name", async () => {
+      const fetchMock = mockBc(noShipments, {
+        company: () => jsonResponse({ name: "Nimbus's A/S" }),
+        variants: () => jsonResponse({ value: [] }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await service.getShipmentLineVariants(["O'BRIEN-1"]);
+
+      const [{ url }] = variantRequests(fetchMock);
+      expect(url.searchParams.get("$filter")).toBe("documentNumber eq 'O''BRIEN-1'");
+      expect(url.searchParams.get("company")).toBe("'Nimbus''s A/S'");
+    });
+
+    it("makes no request for an empty list", async () => {
+      const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants([])).resolves.toEqual([]);
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("maps rows to shipment number, line number and a trimmed variant code, empty as null", async () => {
+      mockBc(noShipments, {
+        variants: () =>
+          jsonResponse({
+            value: [
+              variantRow("30947954", 10000, "M"),
+              variantRow("30947954", 20000, ""),
+              variantRow("30947954", 30000, " L "),
+            ],
+          }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["30947954", "UNKNOWN"])).resolves.toEqual([
+        { shipmentNumber: "30947954", lineNumber: 10000, variantCode: "M" },
+        { shipmentNumber: "30947954", lineNumber: 20000, variantCode: null },
+        { shipmentNumber: "30947954", lineNumber: 30000, variantCode: "L" },
+      ]);
+    });
+
+    it.each([
+      ["a non-numeric lineNo", variantRow("S-1", "10000", "M"), "lineNo"],
+      ["a missing documentNumber", { lineNo: 10000, variantCode: "M" }, "documentNumber"],
+      ["a missing variantCode", { documentNumber: "S-1", lineNo: 10000 }, "variantCode"],
+    ])("throws on %s", async (_case, row, field) => {
+      mockBc(noShipments, { variants: () => jsonResponse({ value: [row] }) });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow(field);
+    });
+
+    it("follows next links on the Business Central origin to the end", async () => {
+      const page2 = `${VARIANTS_URL}?$skiptoken=page2`;
+      const page3 = `${VARIANTS_URL}?$skiptoken=page3`;
+      const fetchMock = mockBc(noShipments, {
+        variants: (url) => {
+          const skipToken = url.searchParams.get("$skiptoken");
+          if (skipToken === "page2") {
+            return jsonResponse({ value: [variantRow("S-1", 20000, "L")], "@odata.nextLink": page3 });
+          }
+          if (skipToken === "page3") {
+            return jsonResponse({ value: [variantRow("S-2", 10000, "")] });
+          }
+          return jsonResponse({ value: [variantRow("S-1", 10000, "M")], "@odata.nextLink": page2 });
+        },
+      });
+      const service = new BusinessCentralModuleService();
+
+      const rows = await service.getShipmentLineVariants(["S-1", "S-2"]);
+
+      expect(rows.map((row) => [row.shipmentNumber, row.lineNumber])).toEqual([
+        ["S-1", 10000],
+        ["S-1", 20000],
+        ["S-2", 10000],
+      ]);
+      expect(variantRequests(fetchMock)).toHaveLength(3);
+    });
+
+    it("refuses a next link away from Business Central and never requests it", async () => {
+      const fetchMock = mockBc(noShipments, {
+        variants: () =>
+          jsonResponse({
+            value: [variantRow("S-1", 10000, "M")],
+            "@odata.nextLink": "https://evil.example/ODataV4/TRCShipmentLine?$skiptoken=2",
+          }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow("nextLink");
+      expect(fetchMock.mock.calls.some(([input]) => String(input).includes("evil.example"))).toBe(false);
+    });
+
+    it("throws when a later page fails instead of returning a partial result", async () => {
+      const page2 = `${VARIANTS_URL}?$skiptoken=page2`;
+      mockBc(noShipments, {
+        variants: (url) =>
+          url.searchParams.get("$skiptoken") === "page2"
+            ? jsonResponse({ error: { code: "Internal" } }, 500)
+            : jsonResponse({ value: [variantRow("S-1", 10000, "M")], "@odata.nextLink": page2 }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow("status 500");
+    });
+
+    it.each([
+      ["429 on the variant read", "variants", 429, { "Retry-After": "30" }, 30],
+      ["503 on the variant read", "variants", 503, {}, null],
+      ["429 on the company-name read", "company", 429, { "Retry-After": "45" }, 45],
+      ["503 on the company-name read", "company", 503, {}, null],
+    ] as const)("throws a throttling error on %s", async (_case, target, status, headers, seconds) => {
+      const fetchMock = mockBc(noShipments, {
+        [target]: () => jsonResponse({}, status, headers),
+        ...(target === "company" ? { variants: () => jsonResponse({ value: [] }) } : {}),
+      });
+      const service = new BusinessCentralModuleService();
+
+      const error = await service.getShipmentLineVariants(["S-1"]).catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(BusinessCentralThrottledError);
+      expect((error as BusinessCentralThrottledError).retryAfterSeconds).toBe(seconds);
+      if (target === "company") {
+        expect(variantRequests(fetchMock)).toHaveLength(0);
+      }
+    });
+
+    it.each(["variants", "company"] as const)(
+      "throws a non-throttling error without BC response text on a 400 from the %s read",
+      async (target) => {
+        mockBc(noShipments, {
+          variants: () => jsonResponse({ value: [] }),
+          [target]: () => jsonResponse({ error: { message: "BC-SECRET-DETAIL" } }, 400),
+        });
+        const service = new BusinessCentralModuleService();
+
+        const error = await service.getShipmentLineVariants(["S-1"]).catch((e: unknown) => e);
+
+        expect(error).toBeInstanceOf(Error);
+        expect(error).not.toBeInstanceOf(BusinessCentralThrottledError);
+        expect((error as Error).message).toContain("status 400");
+        expect((error as Error).message).not.toContain("BC-SECRET-DETAIL");
+      }
+    );
+
+    it("gives the token, company-name and variant requests a 20-second timeout", async () => {
+      const timeoutSpy = jest.spyOn(AbortSignal, "timeout");
+      const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
+      const service = new BusinessCentralModuleService();
+
+      await service.getShipmentLineVariants(["S-1"]);
+
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(fetchMock.mock.calls.every(([, init]) => (init as RequestInit | undefined)?.signal)).toBe(true);
+      expect(timeoutSpy).toHaveBeenCalledTimes(3);
+      expect(timeoutSpy.mock.calls.every(([ms]) => ms === 20000)).toBe(true);
+    });
+
+    it("throws when the variant request times out", async () => {
+      const controller = new AbortController();
+      jest.spyOn(AbortSignal, "timeout").mockReturnValue(controller.signal);
+      mockBc(noShipments, {
+        variants: (_url, init) =>
+          new Promise<Response>((_resolve, reject) => {
+            init?.signal?.addEventListener("abort", () => reject(init.signal?.reason));
+            controller.abort(new DOMException("The operation timed out.", "TimeoutError"));
+          }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow("did not complete");
+    });
+
+    it("starts no request when the deadline has passed", async () => {
+      jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["S-1"], 1000)).rejects.toMatchObject({
+        name: "ShipmentReadDeadlineError",
+      });
+      expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it("starts no company-name or variant request past the deadline with a cached token", async () => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
+      const service = new BusinessCentralModuleService();
+      await service.getShipmentsByNumbers(["S-1"]);
+      now.mockReturnValue(2000);
+
+      await expect(service.getShipmentLineVariants(["S-1"], 2000)).rejects.toMatchObject({
+        name: "ShipmentReadDeadlineError",
+      });
+      expect(companyRequests(fetchMock)).toHaveLength(0);
+      expect(variantRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it("starts no variant request when the company-name read ends past the deadline", async () => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(noShipments, {
+        company: () => {
+          now.mockReturnValue(1100);
+          return jsonResponse({ name: "Nimbus Nordic A/S" });
+        },
+        variants: () => jsonResponse({ value: [] }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(service.getShipmentLineVariants(["S-1"], 1100)).rejects.toMatchObject({
+        name: "ShipmentReadDeadlineError",
+      });
+      expect(variantRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it("does not start another chunk after the deadline", async () => {
+      const now = jest.spyOn(Date, "now").mockReturnValue(1000);
+      const fetchMock = mockBc(noShipments, {
+        variants: () => {
+          now.mockReturnValue(1100);
+          return jsonResponse({ value: [] });
+        },
+      });
+      const service = new BusinessCentralModuleService();
+
+      await expect(
+        service.getShipmentLineVariants(Array.from({ length: 21 }, (_, i) => `S-${i}`), 1100)
+      ).rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
+      expect(variantRequests(fetchMock)).toHaveLength(1);
+    });
+
+    it("reads the company name once per shipment-read token and uses that token for every read", async () => {
+      const nowSpy = jest.spyOn(Date, "now").mockReturnValue(1_000_000);
+      let tokenCount = 0;
+      const fetchMock = mockBc(noShipments, {
+        token: () => {
+          tokenCount += 1;
+          return tokenResponse(`token-${tokenCount}`);
+        },
+        variants: () => jsonResponse({ value: [] }),
+      });
+      const service = new BusinessCentralModuleService();
+
+      await service.getShipmentsByNumbers(["S-1"]);
+      await service.getShipmentLineVariants(["S-1"]);
+      await service.getShipmentLineVariants(["S-2"]);
+      expect(tokenRequestCount(fetchMock)).toBe(1);
+      expect(companyRequests(fetchMock)).toHaveLength(1);
+
+      // Renewed 5 minutes before the 3,599 s lifetime ends.
+      nowSpy.mockReturnValue(1_000_000 + (3599 - 300) * 1000);
+      await service.getShipmentsByNumbers(["S-1"]);
+      await service.getShipmentLineVariants(["S-1"]);
+      await service.getShipmentLineVariants(["S-2"]);
+      expect(tokenRequestCount(fetchMock)).toBe(2);
+      expect(companyRequests(fetchMock)).toHaveLength(2);
+
+      const authorization = ({ init }: { init: RequestInit | undefined }) => headerValue(init, "authorization");
+      expect(shipmentRequests(fetchMock).map(authorization)).toEqual(["Bearer token-1", "Bearer token-2"]);
+      expect(companyRequests(fetchMock).map(authorization)).toEqual(["Bearer token-1", "Bearer token-2"]);
+      expect(variantRequests(fetchMock).map(authorization)).toEqual([
+        "Bearer token-1",
+        "Bearer token-1",
+        "Bearer token-2",
+        "Bearer token-2",
+      ]);
     });
   });
 });

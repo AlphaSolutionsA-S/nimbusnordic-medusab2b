@@ -9,6 +9,7 @@ import {
 import type {
   BCShipment,
   BCShipmentLine,
+  BCShipmentLineVariant,
   IBusinessCentralModuleService,
 } from "../../../src/modules/business-central/types";
 import { ORDER_INGESTION_MODULE } from "../../../src/modules/order-ingestion";
@@ -40,6 +41,17 @@ const utcDay = (date: Date): string => date.toISOString().slice(0, 10);
 const RECEIVER_NAME = "Jane Receiver";
 const RECEIVER_STREET = "Secret Street 1";
 
+/** One TRCShipmentLine row per item line; sizes by BC line number, null when not given. */
+function variantsOf(posted: BCShipment, sizes: Record<number, string> = {}): BCShipmentLineVariant[] {
+  return posted.lines
+    .filter((posting) => posting.lineType === "item")
+    .map((posting) => ({
+      shipmentNumber: posted.number,
+      lineNumber: posting.sequence,
+      variantCode: sizes[posting.sequence] ?? null,
+    }));
+}
+
 function line(sequence: number, quantity: number, itemNumber = "ITEM-1"): BCShipmentLine {
   return {
     sequence,
@@ -60,6 +72,9 @@ medusaIntegrationTestRunner({
       /** BC's posted shipments by id, as the next read returns them. */
       let bcShipments: Map<string, BCShipment>;
       let getShipmentsByNumbers: jest.SpyInstance;
+      /** BC's TRCShipmentLine sizes by shipment number; every item line has a row unless dropped. */
+      let bcSizes: Map<string, Record<number, string>>;
+      let getShipmentLineVariants: jest.SpyInstance;
       let counter = 0;
       /** An API company switched on for the order API; rows are tracked under it by default. */
       let companyId: string;
@@ -69,11 +84,20 @@ medusaIntegrationTestRunner({
 
       beforeEach(async () => {
         bcShipments = new Map();
+        bcSizes = new Map();
         const bc = getContainer().resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
         getShipmentsByNumbers = jest
           .spyOn(bc, "getShipmentsByNumbers")
           .mockImplementation(async (numbers: readonly string[]) =>
             [...bcShipments.values()].filter((shipment) => numbers.includes(shipment.number))
+          );
+        // Stubbed too: an unstubbed read would call the configured BC environment.
+        getShipmentLineVariants = jest
+          .spyOn(bc, "getShipmentLineVariants")
+          .mockImplementation(async (numbers: readonly string[]) =>
+            [...bcShipments.values()]
+              .filter((posted) => numbers.includes(posted.number))
+              .flatMap((posted) => variantsOf(posted, bcSizes.get(posted.number)))
           );
         await orderIngestion().initializeShipmentPollState(at(new Date(), -DAY));
         companyId = await createApiCustomerCompany(getContainer(), "C-100");
@@ -169,9 +193,14 @@ medusaIntegrationTestRunner({
         };
       }
 
-      function inBc(tracked: Tracked, lines: BCShipmentLine[]): BCShipment {
+      function inBc(
+        tracked: Tracked,
+        lines: BCShipmentLine[],
+        sizes: Record<number, string> = {}
+      ): BCShipment {
         const posted = shipment(tracked, lines);
         bcShipments.set(tracked.id, posted);
+        bcSizes.set(tracked.number, sizes);
         return posted;
       }
 
@@ -227,6 +256,7 @@ medusaIntegrationTestRunner({
             listed_bc_line_numbers: (latest.payload as { lines: { bc_line_number: number }[] })
               .lines.map((listed) => listed.bc_line_number),
           },
+          variants: variantsOf(snapshot),
         });
         if (decision.kind !== "record") {
           throw new Error("the other run's snapshot must record a revision");
@@ -335,7 +365,8 @@ medusaIntegrationTestRunner({
           line(20000, 3, "ITEM-2"),
           line(30000, -3, "ITEM-2"),
         ]);
-        const cancelled = shipment(tracked, [...stale.lines, line(40000, -5)]);
+        // BC now holds the cancelled shipment, so the size read covers every line of the stale one.
+        const cancelled = inBc(tracked, [...stale.lines, line(40000, -5)]);
         getShipmentsByNumbers.mockImplementationOnce(async () => {
           await storeAsAnotherRun(tracked, cancelled, {
             action: "close",
@@ -573,6 +604,115 @@ medusaIntegrationTestRunner({
         expect(await row(tracked)).toMatchObject({ attempts: 1, last_error: "bc_error" });
         expect(loggedText(warn)).toContain(`${tracked.number} (BC order SO-100) failed: bc_error`);
         expect(loggedText(warn)).not.toContain(RECEIVER_NAME);
+      });
+
+      it("records the posted size of each line", async () => {
+        const order = await seedOrder("SO-100", null);
+        const tracked = await track(order.id);
+        inBc(tracked, [line(10000, 2, "HEND-L-MIDNBLUE"), line(20000, 1, "F2")], { 10000: "M" });
+
+        expect(await run()).toMatchObject({ recorded: 1, errors: 0 });
+
+        const [notice] = await notices(tracked);
+        expect((notice.payload as { lines: unknown[] }).lines).toEqual([
+          expect.objectContaining({
+            bc_line_number: 10000,
+            item_number: "HEND-L-MIDNBLUE",
+            variant_code: "M",
+          }),
+          expect.objectContaining({ bc_line_number: 20000, item_number: "F2", variant_code: null }),
+        ]);
+        expect(getShipmentLineVariants).toHaveBeenCalledWith([tracked.number], expect.any(Number));
+      });
+
+      it("fails only the shipment with an item line that has no size row, storing nothing for it", async () => {
+        const logger = getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER);
+        const warn = jest.spyOn(logger, "warn");
+        const order = await seedOrder("SO-100", null);
+        const missing = await track(order.id);
+        const sized = await track(order.id);
+        const missingPosted = inBc(missing, [line(10000, 2), line(20000, 1, "ITEM-2")]);
+        const sizedPosted = inBc(sized, [line(10000, 1)], { 10000: "L" });
+        getShipmentLineVariants.mockImplementationOnce(async () => [
+          ...variantsOf(missingPosted).filter((variant) => variant.lineNumber !== 20000),
+          ...variantsOf(sizedPosted, { 10000: "L" }),
+        ]);
+
+        const result = await run();
+
+        expect(result).toMatchObject({ checked: 2, recorded: 1, errors: 1 });
+        expect(await notices(missing)).toHaveLength(0);
+        expect(await row(missing)).toMatchObject({
+          state: "open",
+          attempts: 1,
+          last_error: "variant_missing",
+        });
+        expect(await notices(sized)).toHaveLength(1);
+        expect(loggedText(warn)).toContain(
+          `${missing.number} (BC order SO-100) failed: variant_missing at BC line 20000`
+        );
+        expect(loggedText(warn)).not.toContain(RECEIVER_NAME);
+        expect(loggedText(warn)).not.toContain(RECEIVER_STREET);
+      });
+
+      it("backs off every shipment of the batch when the size read fails, without its text", async () => {
+        const logger = getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER);
+        const warn = jest.spyOn(logger, "warn");
+        const order = await seedOrder("SO-100", null);
+        const first = await track(order.id);
+        const second = await track(order.id);
+        inBc(first, [line(10000, 2)]);
+        inBc(second, [line(10000, 1)]);
+        getShipmentLineVariants.mockRejectedValue(
+          new Error(`Business Central returned status 500: ${RECEIVER_NAME}`)
+        );
+
+        const result = await run();
+
+        expect(result).toMatchObject({ checked: 2, recorded: 0, errors: 2 });
+        for (const tracked of [first, second]) {
+          expect(await row(tracked)).toMatchObject({ attempts: 1, last_error: "bc_error" });
+          expect(await notices(tracked)).toHaveLength(0);
+        }
+        expect(loggedText(warn)).not.toContain(RECEIVER_NAME);
+        expect(loggedText(warn)).not.toContain("status 500");
+      });
+
+      it("sets the poll back-off when the size read is throttled and leaves the row due", async () => {
+        const order = await seedOrder("SO-100", null);
+        const tracked = await track(order.id);
+        inBc(tracked, [line(10000, 2)]);
+        const due = (await row(tracked)).next_check_at;
+        getShipmentLineVariants.mockRejectedValue(
+          new BusinessCentralThrottledError("throttled", null)
+        );
+        const before = Date.now();
+
+        const result = await run();
+
+        expect(result).toMatchObject({ checked: 0, errors: 0, backlog_due: 1 });
+        expect(await row(tracked)).toMatchObject({ state: "open", attempts: 0, next_check_at: due });
+        expect(await notices(tracked)).toHaveLength(0);
+        const state = (await orderIngestion().retrieveShipmentPollState())!;
+        expect(state.bc_backoff_until!.getTime()).toBeGreaterThanOrEqual(before + MINUTE);
+      });
+
+      it("leaves the rows due when the deadline passes before the size read", async () => {
+        const order = await seedOrder("SO-100", null);
+        const tracked = await track(order.id);
+        inBc(tracked, [line(10000, 2)]);
+        const before = await row(tracked);
+        getShipmentLineVariants.mockRejectedValueOnce(new ShipmentReadDeadlineError());
+
+        const result = await run();
+
+        expect(result).toMatchObject({ checked: 0, errors: 0, backlog_due: 1 });
+        expect(await row(tracked)).toMatchObject({
+          state: "open",
+          attempts: 0,
+          next_check_at: before.next_check_at,
+        });
+        expect(await notices(tracked)).toHaveLength(0);
       });
 
       it("sets the poll back-off on throttling and leaves the rows due and unchanged", async () => {

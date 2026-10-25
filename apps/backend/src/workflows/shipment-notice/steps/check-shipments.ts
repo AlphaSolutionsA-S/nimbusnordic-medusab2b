@@ -9,6 +9,7 @@ import {
 } from "../../../modules/business-central/shipment-reads";
 import type {
   BCShipment,
+  BCShipmentLineVariant,
   IBusinessCentralModuleService,
 } from "../../../modules/business-central/types";
 import { ORDER_INGESTION_MODULE } from "../../../modules/order-ingestion";
@@ -23,7 +24,11 @@ import {
 import type { DueShipmentCheck } from "./prepare-shipment-checks";
 
 /** The code stored in `last_error` and logged for a failed check; never BC text. */
-export type ShipmentCheckErrorCode = "unpairable" | "not_returned" | "bc_error";
+export type ShipmentCheckErrorCode =
+  | "unpairable"
+  | "variant_missing"
+  | "not_returned"
+  | "bc_error";
 
 export type CheckShipmentsInput = {
   checks: DueShipmentCheck[];
@@ -53,9 +58,9 @@ function scheduleRow(check: DueShipmentCheck): ShipmentScheduleRow {
 }
 
 /**
- * Flow C of NIMBUS-130 for one batch of due rows: reads the shipments from BC 20 numbers per
- * request, decides each against its expected revision, stores a "record" against that revision
- * and reschedules or closes the row.
+ * Flow C of NIMBUS-130 for one batch of due rows: reads the shipments and their line sizes
+ * (NIMBUS-231) from BC 20 numbers per request, decides each against its expected revision, stores
+ * a "record" against that revision and reschedules or closes the row.
  *
  * BC data (names, addresses) stays inside this step and is never a step result. Nothing is
  * compensated: a stored notice may already have been read by a customer, and each row update
@@ -117,7 +122,12 @@ export const checkShipmentsStep = createStep(
       await apply(check, { kind: "failed", error }, now);
     };
 
-    const check = async (item: DueShipmentCheck, shipment: BCShipment, now: Date) => {
+    const check = async (
+      item: DueShipmentCheck,
+      shipment: BCShipment,
+      variants: readonly BCShipmentLineVariant[],
+      now: Date
+    ) => {
       const decision = decideShipmentNotice({
         shipment,
         order: {
@@ -128,10 +138,11 @@ export const checkShipmentsStep = createStep(
           bc_lines: item.bc_lines,
         },
         latest: item.expected,
+        variants,
       });
 
-      if (decision.kind === "unpairable") {
-        await fail(item, "unpairable", now, ` at BC line ${decision.sequence}`);
+      if (decision.kind === "unpairable" || decision.kind === "variant_missing") {
+        await fail(item, decision.kind, now, ` at BC line ${decision.sequence}`);
         return;
       }
       if (decision.kind === "nothing") {
@@ -195,8 +206,10 @@ export const checkShipmentsStep = createStep(
       const items = numbers.flatMap((number) => byNumber.get(number) ?? []);
 
       let shipments: BCShipment[];
+      let variants: BCShipmentLineVariant[];
       try {
         shipments = await bc.getShipmentsByNumbers(numbers, deadline);
+        variants = await bc.getShipmentLineVariants(numbers, deadline);
       } catch (error) {
         if (error instanceof ShipmentReadDeadlineError) {
           break;
@@ -219,7 +232,7 @@ export const checkShipmentsStep = createStep(
       for (const item of items) {
         const shipment = byId.get(item.bc_shipment_id);
         if (shipment) {
-          await check(item, shipment, now);
+          await check(item, shipment, variants, now);
         } else {
           await fail(item, "not_returned", now);
         }

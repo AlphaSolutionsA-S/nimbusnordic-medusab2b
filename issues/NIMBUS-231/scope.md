@@ -1,7 +1,9 @@
 # Show the size on shipment notice lines
 
+> Record of NIMBUS-231, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-24
-**Status:** Approved (Klaus Petersen, 2026-10-24)
+**Status:** Implemented (2026-10-25; approved by Klaus Petersen, 2026-10-24)
 **Type:** Story
 **Priority:** Must
 **Issue:** NIMBUS-231
@@ -157,3 +159,9 @@ artifacts in this case folder, deployed by Klaus.
   shipment notices (every check would fail and back off) until the read is changed. The fallback is
   Nimbus publishing the standard Posted Sales Shipment Lines page as an ODataV4 web service.
 - Klaus publishes the new schemas to customers and APIM at release.
+
+## Documentation
+
+- [docs/architecture/order-api/shipment-notices.md](../../docs/architecture/order-api/shipment-notices.md) — Shipment notices: line size, second BC read, failure codes, cut-off, contract location (updated)
+
+AI base files updated: `ai/architecture/decisions.md` (shipment notice rule row, in task 02)

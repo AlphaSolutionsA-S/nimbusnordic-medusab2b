@@ -3,7 +3,11 @@ import {
   type ShipmentNoticeDecision,
   type ShipmentNoticeDecisionInput,
 } from "../utils/decide-shipment-notice";
-import type { BCShipment, BCShipmentLine } from "../../../modules/business-central/types";
+import type {
+  BCShipment,
+  BCShipmentLine,
+  BCShipmentLineVariant,
+} from "../../../modules/business-central/types";
 import { ShipmentNoticePayloadSchema } from "../../../modules/order-ingestion/shipment-notice-contract";
 
 function line(
@@ -83,15 +87,31 @@ const order: ShipmentNoticeDecisionInput["order"] = {
   ],
 };
 
+// One TRCShipmentLine row per item line, as BC posts them; variantCode null for items without sizes.
+function variantsOf(
+  lines: readonly BCShipmentLine[],
+  sizes: Record<number, string> = {}
+): BCShipmentLineVariant[] {
+  return lines
+    .filter((l) => l.lineType === "item")
+    .map((l) => ({
+      shipmentNumber: "SS-1001",
+      lineNumber: l.sequence,
+      variantCode: sizes[l.sequence] ?? null,
+    }));
+}
+
 function decide(
   lines: BCShipmentLine[],
   latest: ShipmentNoticeDecisionInput["latest"] = null,
-  orderOverride: Partial<ShipmentNoticeDecisionInput["order"]> = {}
+  orderOverride: Partial<ShipmentNoticeDecisionInput["order"]> = {},
+  variants: BCShipmentLineVariant[] = variantsOf(lines)
 ): ShipmentNoticeDecision {
   return decideShipmentNotice({
     shipment: shipment(lines),
     order: { ...order, ...orderOverride },
     latest,
+    variants,
   });
 }
 
@@ -321,7 +341,14 @@ describe("decideShipmentNotice: payload", () => {
       email: "buyer@example.com",
       currencyCode: "DKK",
     };
-    const decision = recorded(decideShipmentNotice({ shipment: fromBc, order, latest: null }));
+    const decision = recorded(
+      decideShipmentNotice({
+        shipment: fromBc,
+        order,
+        latest: null,
+        variants: variantsOf(fromBc.lines, { 10000: "M" }),
+      })
+    );
 
     expect(ShipmentNoticePayloadSchema.parse(decision.payload)).toEqual(decision.payload);
     const serialized = JSON.stringify(decision.payload);
@@ -352,6 +379,7 @@ describe("decideShipmentNotice: payload", () => {
       ean_no: "5701234000011",
       bc_line_number: 10000,
       item_number: "A",
+      variant_code: "M",
       description: "Item A",
       description_2: null,
       unit_of_measure_code: "PCS",
@@ -363,5 +391,144 @@ describe("decideShipmentNotice: payload", () => {
   it("uses the posting date for a line BC sends without a shipment date", () => {
     const lines = recorded(decide([line(10000, "A", 2, { shipmentDate: null })])).payload.lines;
     expect(lines[0].shipment_date).toBe("2026-10-21");
+  });
+});
+
+describe("decideShipmentNotice: size", () => {
+  function variantCodes(decision: ShipmentNoticeDecision): Record<number, string | null> {
+    return Object.fromEntries(
+      recorded(decision).payload.lines.map((l) => [l.bc_line_number, l.variant_code])
+    );
+  }
+
+  it("carries the posted variant code of each line, null for an item without sizes", () => {
+    const lines = [line(10000, "HEND-L-MIDNBLUE", 2), line(20000, "F2", 1)];
+    expect(variantCodes(decide(lines, null, {}, variantsOf(lines, { 10000: "M" })))).toEqual({
+      10000: "M",
+      20000: null,
+    });
+  });
+
+  it("gives null for an empty variant code", () => {
+    const lines = [line(10000, "F2", 1)];
+    expect(variantCodes(decide(lines, null, {}, variantsOf(lines, { 10000: "" })))).toEqual({
+      10000: null,
+    });
+  });
+
+  it("keeps the size on the quantity-0 lines of a revised and a cancelled notice", () => {
+    const sizes = { 10000: "S", 15000: "S", 30000: "M", 35000: "M" };
+    const shipped = [line(10000, "A", 2), line(30000, "A", 1)];
+    const latest = latestOf(decide(shipped, null, {}, variantsOf(shipped, sizes)));
+
+    const partly = [...shipped, line(35000, "A", -1)];
+    const revised = recorded(decide(partly, latest, {}, variantsOf(partly, sizes)));
+    expect(revised.status).toBe("revised");
+    expect(variantCodes(revised)).toEqual({ 10000: "S", 30000: "M" });
+    expect(quantities(revised)).toEqual({ 10000: 2, 30000: 0 });
+
+    const all = [...partly, line(15000, "A", -2)];
+    const cancelled = recorded(decide(all, latest, {}, variantsOf(all, sizes)));
+    expect(cancelled.status).toBe("cancelled");
+    expect(variantCodes(cancelled)).toEqual({ 10000: "S", 30000: "M" });
+  });
+
+  it("gives unpairable for a correction of another size than the line it would undo", () => {
+    const lines = [line(10000, "A", 1), line(20000, "A", 1), line(25000, "A", -1)];
+    const decision = decide(lines, null, {}, variantsOf(lines, { 10000: "S", 20000: "M", 25000: "S" }));
+    expect(decision).toEqual({ kind: "unpairable", sequence: 25000 });
+  });
+
+  it("nets one item in five sizes, each undone, to zero per size (shipment 30947879)", () => {
+    const sizes = {
+      20000: "S", 25000: "S",
+      30000: "M", 35000: "M",
+      40000: "L", 45000: "L",
+      50000: "XL", 55000: "XL",
+      60000: "2XL", 65000: "2XL",
+    };
+    const shipped = [20000, 30000, 40000, 50000, 60000]
+      .map((sequence) => line(sequence, "YOSE-M-BLACK", 1))
+      .concat(line(70000, "F2", 1));
+    const latest = latestOf(decide(shipped, null, {}, variantsOf(shipped, sizes)));
+
+    const undone = [
+      ...shipped,
+      ...[25000, 35000, 45000, 55000, 65000].map((sequence) => line(sequence, "YOSE-M-BLACK", -1)),
+      line(80000, "F2", -1),
+    ];
+    const decision = recorded(decide(undone, latest, {}, variantsOf(undone, sizes)));
+
+    expect(decision.status).toBe("cancelled");
+    expect(decision.payload.lines.map((l) => [l.bc_line_number, l.variant_code, l.quantity])).toEqual([
+      [20000, "S", 0],
+      [30000, "M", 0],
+      [40000, "L", 0],
+      [50000, "XL", 0],
+      [60000, "2XL", 0],
+      [70000, null, 0],
+    ]);
+  });
+});
+
+describe("decideShipmentNotice: missing size row", () => {
+  it("gives variant_missing with the BC line number of an item line that has no row", () => {
+    const lines = [line(10000, "A", 2), line(20000, "B", 1)];
+    const rows = variantsOf(lines).filter((row) => row.lineNumber !== 20000);
+    expect(decide(lines, null, {}, rows)).toEqual({ kind: "variant_missing", sequence: 20000 });
+  });
+
+  it("gives variant_missing when the shipment has no rows at all", () => {
+    expect(decide([line(10000, "A", 2)], null, {}, [])).toEqual({
+      kind: "variant_missing",
+      sequence: 10000,
+    });
+  });
+
+  it("needs no row for a comment or other non-item line", () => {
+    const lines = [
+      line(10000, "A", 2),
+      line(20000, null, 0, { lineType: "comment" }),
+      line(30000, "FREIGHT-GL", 1, { lineType: "other" }),
+    ];
+    expect(quantities(decide(lines, null, {}, variantsOf(lines)))).toEqual({ 10000: 2 });
+  });
+
+  it("ignores rows of other lines and other shipments", () => {
+    const lines = [line(10000, "A", 2)];
+    const rows: BCShipmentLineVariant[] = [
+      { shipmentNumber: "SS-9999", lineNumber: 10000, variantCode: "XL" },
+      { shipmentNumber: "SS-1001", lineNumber: 90000, variantCode: "L" },
+    ];
+    expect(decide(lines, null, {}, rows)).toEqual({ kind: "variant_missing", sequence: 10000 });
+
+    const decision = recorded(decide(lines, null, {}, [...rows, ...variantsOf(lines, { 10000: "S" })]));
+    expect(decision.payload.lines.map((l) => l.variant_code)).toEqual(["S"]);
+  });
+});
+
+describe("decideShipmentNotice: content hash", () => {
+  const lines = [
+    line(10000, "A", 2),
+    line(20000, "A", 3),
+    line(25000, "A", -3),
+    line(30000, "B", 1),
+    line(40000, null, 0, { lineType: "comment" }),
+  ];
+  // Captured from the decision rule before sizes existed: revisions stored before the release
+  // must keep matching, or every open shipment would get a spurious revision.
+  const GOLDEN_HASH = "c4d492f8899f43b710c92a1ddd3e5aa15fc682578c8a2c3a00362bc02409920d";
+
+  it("keeps the hash of a shipment as it was before sizes, with or without sizes", () => {
+    expect(recorded(decide(lines)).content_hash).toBe(GOLDEN_HASH);
+    const sized = decide(lines, null, {}, variantsOf(lines, { 10000: "M", 20000: "L", 25000: "L" }));
+    expect(recorded(sized).content_hash).toBe(GOLDEN_HASH);
+  });
+
+  it("records nothing for a sized shipment whose revision was stored before the release", () => {
+    const preRelease = { revision: 1, content_hash: GOLDEN_HASH, listed_bc_line_numbers: [10000, 30000] };
+    expect(
+      decide(lines, preRelease, {}, variantsOf(lines, { 10000: "M", 20000: "L", 25000: "L" }))
+    ).toEqual({ kind: "nothing" });
   });
 });

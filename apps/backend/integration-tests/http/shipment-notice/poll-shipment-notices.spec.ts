@@ -90,6 +90,14 @@ medusaIntegrationTestRunner({
           .mockImplementation(async (numbers: readonly string[]) =>
             headers.filter((header) => numbers.includes(header.number)).map(postedShipment)
           );
+        // Stubbed too: an unstubbed read would call the configured BC environment.
+        jest
+          .spyOn(bc, "getShipmentLineVariants")
+          .mockImplementation(async (numbers: readonly string[]) =>
+            headers
+              .filter((header) => numbers.includes(header.number))
+              .map((header) => ({ shipmentNumber: header.number, lineNumber: 10000, variantCode: null }))
+          );
         const logger = getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER);
         info = jest.spyOn(logger, "info");
         warn = jest.spyOn(logger, "warn");

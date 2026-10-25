@@ -1,4 +1,8 @@
-import type { ShipmentNoticePayload, ShipmentNoticeStatus } from "./shipment-notice-contract";
+import type {
+  ShipmentNoticeLine,
+  ShipmentNoticePayload,
+  ShipmentNoticeStatus,
+} from "./shipment-notice-contract";
 import {
   SHIPMENT_TRACKING_CLOSE_REASONS,
   SHIPMENT_TRACKING_STATES,
@@ -93,6 +97,16 @@ export interface ShipmentTrackingRow {
   updated_at: Date;
 }
 
+/** A stored notice line: lines stored before NIMBUS-231 have no `variant_code` key. */
+export type StoredShipmentNoticeLine = Omit<ShipmentNoticeLine, "variant_code"> & {
+  variant_code?: string | null;
+};
+
+/** `shipment_notice.payload` as stored; rows are never rewritten, so older lines stay as written. */
+export type StoredShipmentNoticePayload = Omit<ShipmentNoticePayload, "lines"> & {
+  lines: StoredShipmentNoticeLine[];
+};
+
 export interface ShipmentNoticeRow {
   id: string;
   sequence: number;
@@ -108,7 +122,7 @@ export interface ShipmentNoticeRow {
   shipment_number: string;
   shipment_date: string;
   bc_last_modified_at: Date;
-  payload: ShipmentNoticePayload;
+  payload: StoredShipmentNoticePayload;
   /** Serves as the notice's `recorded_at`. */
   created_at: Date;
 }

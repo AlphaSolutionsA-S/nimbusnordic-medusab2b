@@ -31,7 +31,8 @@ export type ShipmentScheduleRow = Pick<
  * - `superseded`: the order has another current BC order number;
  * - `company_not_enabled`: the company is switched off for the order API or gone (NIMBUS-217);
  * - `conflict`: the store found a newer revision than the one decided against;
- * - `failed`: unpairable, or not returned by BC; `error` is a code, never BC text.
+ * - `failed`: unpairable, a missing size row, not returned by BC or a failed BC read; `error` is
+ *   a code, never BC text.
  */
 export type ShipmentCheckOutcome =
   | { kind: "checked" }

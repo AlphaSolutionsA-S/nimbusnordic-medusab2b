@@ -118,10 +118,24 @@ describe("ShipmentNoticeEnvelopeSchema", () => {
         description: null,
         description_2: null,
         unit_of_measure_code: null,
+        variant_code: null,
       })),
     };
 
     expect(ShipmentNoticeEnvelopeSchema.safeParse(envelopeWith(notice)).success).toBe(true);
+  });
+
+  it("rejects a line without variant_code", () => {
+    const { variant_code: _variantCode, ...withoutSize } = firstNotice.lines[0];
+    const notice = { ...firstNotice, lines: [withoutSize] };
+
+    expect(ShipmentNoticeEnvelopeSchema.safeParse(envelopeWith(notice)).success).toBe(false);
+  });
+
+  it("rejects a variant_code that is not a string", () => {
+    const notice = { ...firstNotice, lines: [{ ...firstNotice.lines[0], variant_code: 5 }] };
+
+    expect(ShipmentNoticeEnvelopeSchema.safeParse(envelopeWith(notice)).success).toBe(false);
   });
 
   it.each(["bc_line_number", "item_number", "quantity"])("rejects null in required line field %s", (field) => {

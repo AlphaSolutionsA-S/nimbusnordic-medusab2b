@@ -189,6 +189,8 @@ medusaIntegrationTestRunner({
       const row = await seed();
       const bc = getContainer().resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
       const read = jest.spyOn(bc, "getShipmentsByNumbers").mockResolvedValue([]);
+      // Stubbed too: an unstubbed read would call the configured BC environment.
+      jest.spyOn(bc, "getShipmentLineVariants").mockResolvedValue([]);
       await api.post(`/admin/shipment-tracking/${row.id}/retry`, {}, auth);
       const { result } = await checkShipmentsWorkflow(getContainer()).run({ input: { deadline: new Date(Date.now() + 60_000) } });
       expect(result.checked).toBe(1);

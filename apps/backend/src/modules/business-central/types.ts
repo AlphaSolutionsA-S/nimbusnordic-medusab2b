@@ -250,6 +250,7 @@ export interface IBusinessCentralModuleService {
   countShipments(window: BCShipmentWindow, deadlineMs?: number): Promise<number>;
   listShipmentHeaders(window: BCShipmentWindow, deadlineMs?: number): Promise<BCShipmentHeader[]>;
   getShipmentsByNumbers(numbers: readonly string[], deadlineMs?: number): Promise<BCShipment[]>;
+  getShipmentLineVariants(numbers: readonly string[], deadlineMs?: number): Promise<BCShipmentLineVariant[]>;
 }
 
 // Posted sales shipments modified in (after, until].
@@ -315,6 +316,14 @@ export type BCShipment = BCShipmentHeader & {
   shipTo: BCShipmentShipTo;
   // In BC's response order, not sorted.
   lines: BCShipmentLine[];
+};
+
+// One posted shipment line from the TRCShipmentLine web service. lineNumber equals the v2.0
+// shipment line's sequence; variantCode is trimmed, and null when BC sends an empty string.
+export type BCShipmentLineVariant = {
+  shipmentNumber: string;
+  lineNumber: number;
+  variantCode: string | null;
 };
 
 export type BCItemVariant = {

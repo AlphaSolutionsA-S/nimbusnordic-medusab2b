@@ -4,6 +4,7 @@ import type {
   BCShipment,
   BCShipmentHeader,
   BCShipmentLine,
+  BCShipmentLineVariant,
   BCShipmentLineType,
   BCShipmentWindow,
 } from "./types";
@@ -35,6 +36,9 @@ export const SHIPMENT_DETAIL_FIELDS = [
 ].join(",");
 export const SHIPMENT_LINE_FIELDS =
   "sequence,lineType,lineObjectNumber,description,description2,unitOfMeasureCode,quantity,shipmentDate";
+// API v2.0 shipment lines carry no variant; this third-party ODataV4 web service does (NIMBUS-231).
+export const SHIPMENT_LINE_VARIANT_ENTITY_SET = "TRCShipmentLine";
+export const SHIPMENT_LINE_VARIANT_FIELDS = "documentNumber,lineNo,variantCode";
 
 const BC_ITEM_LINE_TYPE = "Item";
 // BC's blank enum member, XML-encoded.
@@ -85,8 +89,21 @@ function escapeODataString(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+function buildEqualsAnyFilter(field: string, values: readonly string[]): string {
+  return values.map((value) => `${field} eq '${escapeODataString(value)}'`).join(" or ");
+}
+
 export function buildShipmentNumberFilter(numbers: readonly string[]): string {
-  return numbers.map((number) => `number eq '${escapeODataString(number)}'`).join(" or ");
+  return buildEqualsAnyFilter("number", numbers);
+}
+
+export function buildShipmentLineVariantFilter(numbers: readonly string[]): string {
+  return buildEqualsAnyFilter("documentNumber", numbers);
+}
+
+// ODataV4 `company` parameter value: the company name as a quoted OData string literal.
+export function buildODataCompanyParameter(companyName: string): string {
+  return `'${escapeODataString(companyName)}'`;
 }
 
 export function chunkShipmentNumbers(numbers: readonly string[]): string[][] {
@@ -210,6 +227,30 @@ function mapShipmentLine(raw: BCSalesShipmentLineRaw): BCShipmentLine {
     unitOfMeasureCode: nullableString(raw.unitOfMeasureCode),
     quantity: requireNumber(raw.quantity, "quantity"),
     shipmentDate: nullableDate(raw.shipmentDate),
+  };
+}
+
+export type BCShipmentLineVariantRaw = {
+  documentNumber?: unknown;
+  lineNo?: unknown;
+  variantCode?: unknown;
+};
+
+// BC sends "" for a line without a variant; a missing field is a malformed row, never "no size".
+export function mapShipmentLineVariant(raw: BCShipmentLineVariantRaw): BCShipmentLineVariant {
+  if (typeof raw.variantCode !== "string") {
+    throw new MedusaError(
+      MedusaError.Types.UNEXPECTED_STATE,
+      "Business Central shipment field variantCode must be a string"
+    );
+  }
+
+  const variantCode = raw.variantCode.trim();
+
+  return {
+    shipmentNumber: requireString(raw.documentNumber, "documentNumber"),
+    lineNumber: requireNumber(raw.lineNo, "lineNo"),
+    variantCode: variantCode === "" ? null : variantCode,
   };
 }
 
