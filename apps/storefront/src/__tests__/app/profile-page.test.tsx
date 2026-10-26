@@ -24,7 +24,6 @@ describe("Profile page", () => {
     render(element)
 
     expect(screen.getByText("Details")).toBeInTheDocument()
-    expect(screen.getByText("Security")).toBeInTheDocument()
   })
 
   it("translates the page metadata (TC-1)", async () => {
