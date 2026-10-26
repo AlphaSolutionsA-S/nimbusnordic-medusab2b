@@ -3,6 +3,7 @@ import {
   AdminCompaniesResponse,
   AdminCompanyResponse,
   AdminCreateCompany,
+  AdminSyncCompanyBusinessCentralResponse,
   AdminUpdateCompany,
 } from "../../../types";
 import {
@@ -131,6 +132,41 @@ export const useUpdateCompany = (
       options?.onSuccess?.(data, variables, context);
     },
     ...options,
+  });
+};
+
+export const useSyncCompanyFromBusinessCentral = (
+  companyId: string,
+  options?: UseMutationOptions<
+    AdminSyncCompanyBusinessCentralResponse,
+    FetchError,
+    void
+  >
+) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    ...options,
+    mutationFn: () =>
+      sdk.client.fetch<AdminSyncCompanyBusinessCentralResponse>(
+        `/admin/companies/${companyId}/sync-business-central`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: {},
+        }
+      ),
+    onSettled: (...args) => {
+      queryClient.invalidateQueries({
+        queryKey: companyQueryKey.detail(companyId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: companyQueryKey.lists(),
+      });
+      options?.onSettled?.(...args);
+    },
   });
 };
 

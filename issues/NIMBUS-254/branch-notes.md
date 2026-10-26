@@ -26,3 +26,14 @@
   `pnpm ai:check` until the human decides between the limit and a trim.
 - `apps/backend/medusa-config.ts` has an uncommitted notification-local provider change that is
   not from this branch's tasks. Don't stage it.
+
+## Task 03
+- Hook `useSyncCompanyFromBusinessCentral(companyId)` in `admin/hooks/api/companies.tsx`; it
+  invalidates `companyQueryKey.detail(id)` and `.lists()` in `onSettled` (any outcome).
+- `Action.tooltip?: string` on the shared `ActionMenu` (`admin/components/common/action-menu.tsx`);
+  disabled `onClick` actions no longer fire (Radix calls `onClick` on disabled items).
+- Toast text lives in `company-actions-menu.tsx` (`SYNC_OUTCOME_TOASTS`).
+- Tests: `admin/routes/companies/__tests__/company-bc-sync.test.tsx` uses the real `Toaster` from
+  the page (sonner renders in jsdom) and opens the menu via the only button in the
+  `company-information` entry.
+- Pitfall: `sdk.client.fetch` mock calls type `url` as `string | URL | Request`; wrap in `String()`.
