@@ -14,58 +14,58 @@ Nimbus Nordic's B2B customer portal: a Medusa backend (companies, spending limit
 quotes, Business Central sync, an order API, DB-backed UI translations), a Next.js storefront and a
 Payload CMS. pnpm 9.15 workspace (`apps/*`), Turborepo, Node 22+.
 
-| App | Path | Stack |
+|App|Path|Stack|
 |---|---|---|
-| Backend + Admin (`@b2b-starter/backend`) | `apps/backend` | Medusa 2.21.0, TypeScript (only `strictNullChecks`), PostgreSQL |
-| Storefront (`@b2b-starter/storefront`) | `apps/storefront` | Next.js 15.5, React 19, Medusa JS SDK, next-intl 4, TypeScript strict |
-| CMS (`@dtc/cms`) | `apps/cms` | Payload 3.90 on Next.js 16, own PostgreSQL |
+|Backend + Admin (`@b2b-starter/backend`)|`apps/backend`|Medusa 2.21.0, TypeScript (only `strictNullChecks`), PostgreSQL|
+|Storefront (`@b2b-starter/storefront`)|`apps/storefront`|Next.js 15.5, React 19, Medusa JS SDK, next-intl 4, TypeScript strict|
+|CMS (`@dtc/cms`)|`apps/cms`|Payload 3.90 on Next.js 16, own PostgreSQL|
 
 Integrations: Business Central, an Azure Logic App calling `/orderapi/orders`, Stripe and PayPal.
 Hosting: Medusa Cloud (backend, storefront); Azure App Service (CMS).
 
 ### Commands
 
-Run from the repo root, one command at a time. `<path>` is a test file path or pattern; `<f>` is
-`pnpm --filter <package>` with the package from the table.
+Run from the repo root, one command at a time. `<path>` is a test file or pattern; `<f>` is
+`pnpm --filter <package>` (package from the table above).
 
-| App | Scoped tests | Full tests |
+|App|Scoped tests|Full tests|
 |---|---|---|
-| Backend | `<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>` | `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin` |
-| Storefront | `<f> test -- <path>` | `<f> test`; visual: `<f> test:visual` |
-| CMS | `<f> test -- <path>` | `<f> test` |
+|Backend|`<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>`|`pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin`|
+|Storefront|`<f> test -- <path>`|`<f> test`; visual: `<f> test:visual`|
+|CMS|`<f> test -- <path>`|`<f> test`|
 
-Every app: lint `<f> lint`; typecheck `<f> exec tsc --noEmit`; build `<f> build`. Root `pnpm test` skips the backend (no `test` script). Typecheck and some tests fail today
-(baseline: `ai/architecture/verification.md`). Dev servers: `<f> dev` (root `backend:dev` and
-`storefront:dev` filter nonexistent package names).
+Every app: lint `<f> lint`; typecheck `<f> exec tsc --noEmit`; build `<f> build`; dev `<f> dev`.
+Root `pnpm test` skips the backend (no `test` script); root `backend:dev` and `storefront:dev`
+filter nonexistent package names. Typecheck and some tests fail today
+(baseline: `ai/architecture/verification.md`).
 
 Architecture check: none (`medusa lint` covers Medusa's own rules).
 
 ### Tools and vendor documentation
 
 - `atlassian` MCP: Jira. `medusa` MCP: Medusa docs and API signatures (token:
-  `MEDUSA_MCP_TOKEN` user env variable, never a file). `mcloud` CLI: Medusa Cloud.
+  `MEDUSA_MCP_TOKEN` user env variable, never a file). `mcloud` CLI: Medusa Cloud. Check a
+  skill's signature against the vendor docs server before relying on it.
 
-Check a skill's signature against the vendor docs server before relying on it.
-
-Read, search and write files with the file tools, not shell `grep`/`cat`/heredocs (25x slower;
-heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): use
+Use the file tools, not shell `grep`/`cat`/heredocs (25x slower; heredocs mangle backslashes on
+Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): use
 the Commands table's forms.
 
 ### Starting work
 
-Start all work with the `triage` agent ("let's start working on <key>", or paste a new request).
-Triage registers new work and routes it: `quick-fix`, the full pipeline (`scoper` →
+Start all work with the `triage` agent ("let's start working on <key>", or paste a request); it
+registers new work and routes it to `quick-fix`, the full pipeline (`scoper` →
 `implementation-planner` → `task-dispatcher`), or `analyse` when too unclear to route.
 
 Choosing a flow (triage proposes, the first flow step confirms; `quick-fix` escalates up, `scoper` hands down):
 
-| Full pipeline when the work involves any of | Otherwise `quick-fix` |
+|Full pipeline when the work involves any of|Otherwise `quick-fix`|
 |---|---|
-| a data-model change or migration | a bug with a concrete symptom, or a small change with clear rules |
-| auth, personal data, payment or other regulated data | in one app |
-| a contract between apps or with a vendor | no contract change |
-| an unstated business rule, or a decision only the business can make | rules already clear |
-| more than about three tasks' worth, or several apps | about three tasks' worth or less |
+|a data-model change or migration|a bug with a concrete symptom, or a small change with clear rules|
+|auth, personal data, payment or other regulated data|in one app|
+|a contract between apps or with a vendor|no contract change|
+|an unstated business rule, or a decision only the business can make|rules already clear|
+|more than about three tasks' worth, or several apps|about three tasks' worth or less|
 
 Always the full pipeline here: Business Central sync, the order API (`/orderapi`), company
 authorization, spending limits and approvals, and checkout payments.
@@ -80,7 +80,7 @@ Quick-fix confirmation: always
 During a pipeline or quick-fix run, agents act without asking. What needs a human goes into the
 task's `## Deviations`, a review finding, or the deviation report's open questions (quick-fix: its
 report). Nothing is pushed without the human's go-ahead. Run each subagent in the foreground and
-wait for it; a dispatcher that backgrounded one handed back with tasks half-run.
+wait (a backgrounded one once left tasks half-run).
 
 ### Results
 
@@ -99,22 +99,22 @@ Integration branch: `develop`; work branches `feature/NIMBUS-<number>`.
 Each tracked piece of work has one folder, `issues/<key>/` (`NIMBUS-150`; a kebab-case slug until
 the issue exists, then renamed), committed with the work:
 
-| File | Written by | Kept |
+|File|Written by|Kept|
 |---|---|---|
-| `feature.md` / `bug.md` | `feature-requests` / `bug-reporting` | yes |
-| `scope.md`, `plan.md` | `scoper`, `implementation-planner` | yes |
-| `deviation-report.md` | `integration-reviewer`, with the human's answers | yes |
-| `change-report.md`, `analysis.md` | `quick-fix` (`analysis.md` also anyone investigating) | yes |
-| `PROGRESS.md` | every agent or skill finishing a workflow stage | yes |
-| `notes.md`, `samples/`, `logs/`, `mockups/` | anyone | yes |
-| `manifest.md`, `NN-<slug>.md`, fix briefs, `branch-notes.md` | the pipeline | no: `cleanup` deletes them |
-| `task.md` | `quick-fix` | no: the change report replaces it |
+|`feature.md` / `bug.md`|`feature-requests` / `bug-reporting`|yes|
+|`scope.md`, `plan.md`|`scoper`, `implementation-planner`|yes|
+|`deviation-report.md`|`integration-reviewer`, with the human's answers|yes|
+|`change-report.md`, `analysis.md`|`quick-fix` (`analysis.md` also anyone investigating)|yes|
+|`PROGRESS.md`|every agent or skill finishing a workflow stage|yes|
+|`notes.md`, `samples/`, `logs/`, `mockups/`|anyone|yes|
+|`manifest.md`, `NN-<slug>.md`, fix briefs, `branch-notes.md`|the pipeline|no: `cleanup` deletes them|
+|`task.md`|`quick-fix`|no: the change report replaces it|
 
 `PROGRESS.md`: read it first if present; its latest entry is the current state and handover.
-Before finishing a stage, append a dated entry (outcome, next owner, handover prompt), creating the
-file if needed; never replace earlier entries. Folders up to NIMBUS-176 keep v1 upper-case names.
+Before finishing a stage, append a dated entry (outcome, next owner, handover prompt), creating
+the file if needed; never replace earlier ones. Folders up to NIMBUS-176 keep v1 upper-case names.
 
-One folder per unit of work run through a flow, not per tracker issue: an epic run as one
+One folder per unit of work through a flow, not per tracker issue: an epic run as one
 scope has one folder; its plan tasks become sub-tasks without folders.
 
 A shipped case folder is a frozen record of why: never update it or treat it as current behaviour.
@@ -158,28 +158,28 @@ Edit them only there, then run `pnpm ai:check --fix`.
 Load the matching skill before planning or implementing in its domain (a layer skill with its
 technology skill). A skill's `project.md` is read with it and wins on conflict.
 
-| Skill | When to use |
+|Skill|When to use|
 |---|---|
-| `tracker-workflow` | Any tracker step; pipeline change history |
-| `jira-workflow-dev` | How tracker steps are done in Jira (NIMBUS) |
-| `commit-messages` | Committing |
-| `bug-reporting` | Registering a bug |
-| `feature-requests` | Registering a feature request |
-| `secure-coding-owasp` | Any code change or review |
-| `memory-discipline` | Before writing agent memory |
-| `design-interview` | Interviewing about a plan or design |
-| `code-review` | Reviewing a PR or diff outside the pipeline |
-| `medusa-backend` | Any backend work in `apps/backend` |
-| `medusa-module-and-data` | Models, services, links, migrations (L0–L1) |
-| `medusa-infra-adapter` | Vendor API clients, e.g. Business Central (L2) |
-| `medusa-workflow-and-steps` | Workflows, steps, hooks, rule helpers (L3–L5) |
-| `medusa-api-route` | API routes (L6) |
-| `medusa-triggers` | Subscribers and jobs (L7) |
-| `medusa-admin` | Admin UI |
-| `medusa-cloud` | `mcloud` and Medusa Cloud deployments |
-| `medusa-storefront` | Storefront code calling the backend |
-| `nextjs-data-layer` | Storefront data fetching and actions (S0–S2) |
-| `storefront-best-practices` | Storefront UI/UX, cart, checkout, SEO |
+|`tracker-workflow`|Any tracker step; pipeline change history|
+|`jira-workflow-dev`|How tracker steps are done in Jira (NIMBUS)|
+|`commit-messages`|Committing|
+|`bug-reporting`|Registering a bug|
+|`feature-requests`|Registering a feature request|
+|`secure-coding-owasp`|Any code change or review|
+|`memory-discipline`|Before writing agent memory|
+|`design-interview`|Interviewing about a plan or design|
+|`code-review`|Reviewing a PR or diff outside the pipeline|
+|`medusa-backend`|Any backend work in `apps/backend`|
+|`medusa-module-and-data`|Models, services, links, migrations (L0–L1)|
+|`medusa-infra-adapter`|Vendor API clients, e.g. Business Central (L2)|
+|`medusa-workflow-and-steps`|Workflows, steps, hooks, rule helpers (L3–L5)|
+|`medusa-api-route`|API routes (L6)|
+|`medusa-triggers`|Subscribers and jobs (L7)|
+|`medusa-admin`|Admin UI|
+|`medusa-cloud`|`mcloud` and Medusa Cloud deployments|
+|`medusa-storefront`|Storefront code calling the backend|
+|`nextjs-data-layer`|Storefront data fetching and actions (S0–S2)|
+|`storefront-best-practices`|Storefront UI/UX, cart, checkout, SEO|
 
 ## Agents
 
@@ -205,9 +205,9 @@ explicit, separate go-ahead from a human; approving one stage's output does not 
 
 Path-scoped conventions, applied automatically in each tool to matching files.
 
-| Instruction | Applies to |
+|Instruction|Applies to|
 |---|---|
-| `agent-discipline` | everything |
-| `commit-messages` | everything |
-| `typescript-style` | `**/*.{ts,tsx,mts,cts}` |
-| `medusa-backend` | `apps/backend/**` |
+|`agent-discipline`|everything|
+|`commit-messages`|everything|
+|`typescript-style`|`**/*.{ts,tsx,mts,cts}`|
+|`medusa-backend`|`apps/backend/**`|

@@ -32,3 +32,11 @@
 - `Account.bcOrderReturn.sizeLabel` replaced by `Account.bcOrderReturn.size` (`"Size: {size}"`, per
   locale punctuation, fr `"Taille : {size}"`) in all 8 `messages/*.json`; both components render
   `t("size", { size: display.size })`. The DB import before release uses the new key.
+
+## fix-02 Tier 0 headroom
+
+- `AGENTS.md` 32803 bytes before (HEAD d210389), 31225 after: 1543 bytes under the 32768 limit.
+  `.github/copilot-instructions.md` 30832 to 29708. Headroom is thin: budget any Tier 0 addition.
+- Edit `ai/architecture/*.md` / `ai/AGENTS.md` only, then `pnpm ai:check --fix`; the system-prompt
+  copy of Tier 0 can be stale after a merge, so read the files fresh before rewriting them.
+- Tier 0 and context tables now use unpadded cells (`|a|b|`); keep that style when adding rows.
