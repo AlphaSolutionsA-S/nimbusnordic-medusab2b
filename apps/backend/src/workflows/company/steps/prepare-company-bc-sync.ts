@@ -8,9 +8,13 @@ import { BUSINESS_CENTRAL_MODULE } from "../../../modules/business-central";
 import type { IBusinessCentralModuleService } from "../../../modules/business-central/types";
 import type { ModuleUpdateCompany } from "../../../types";
 
-export type PrepareCompanyBcSyncInput = {
-  customerId: string;
-  expectedCompanyId?: string;
+export type PrepareCompanyBcSyncInput =
+  | { customerId: string; expectedCompanyId?: string }
+  | { companyId: string };
+
+type CompanyBcKey = {
+  companyId: string | null;
+  bcCustomerNumber: string | null;
 };
 
 export type PreparedCompanyBcSync =
@@ -19,6 +23,18 @@ export type PreparedCompanyBcSync =
   | { status: "ready"; update: ModuleUpdateCompany };
 
 const DEFAULT_BUSINESS_CENTRAL_LCY_CODE = "DKK";
+
+function toCompanyBcKey(
+  company:
+    | { id?: string; business_central_customer_number?: string | null }
+    | null
+    | undefined
+): CompanyBcKey {
+  return {
+    companyId: company?.id ?? null,
+    bcCustomerNumber: company?.business_central_customer_number ?? null,
+  };
+}
 
 function joinAddressLines(line1: string, line2: string): string {
   return [line1, line2].filter(Boolean).join(", ");
@@ -48,36 +64,52 @@ export const prepareCompanyBcSyncStep = createStep(
     const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
     const query = container.resolve(ContainerRegistrationKeys.QUERY);
 
-    const {
-      data: [customer],
-    } = await query.graph({
-      entity: "customer",
-      fields: [
-        "employee.company.id",
-        "employee.company.business_central_customer_number",
-      ],
-      filters: { id: input.customerId },
-    });
+    let companyId: string | null;
+    let bcCustomerNumber: string | null;
 
-    const company = customer?.employee?.company as
-      | {
-          id?: string;
-          business_central_customer_number?: string | null;
-        }
-      | undefined;
-    const companyId = company?.id ?? null;
-    const bcCustomerNumber =
-      company?.business_central_customer_number ?? null;
+    if ("companyId" in input) {
+      const {
+        data: [company],
+      } = await query.graph({
+        entity: "company",
+        fields: ["id", "business_central_customer_number"],
+        filters: { id: input.companyId },
+      });
 
-    if (
-      companyId &&
-      input.expectedCompanyId &&
-      companyId !== input.expectedCompanyId
-    ) {
-      logger.warn(
-        `Business Central sync skipped: customer company ${companyId} does not match expected company ${input.expectedCompanyId}`
-      );
-      return new StepResponse({ status: "skipped", update: null });
+      if (!company) {
+        throw new MedusaError(
+          MedusaError.Types.NOT_FOUND,
+          `Company with id ${input.companyId} was not found`
+        );
+      }
+
+      ({ companyId, bcCustomerNumber } = toCompanyBcKey(company));
+    } else {
+      const {
+        data: [customer],
+      } = await query.graph({
+        entity: "customer",
+        fields: [
+          "employee.company.id",
+          "employee.company.business_central_customer_number",
+        ],
+        filters: { id: input.customerId },
+      });
+
+      ({ companyId, bcCustomerNumber } = toCompanyBcKey(
+        customer?.employee?.company
+      ));
+
+      if (
+        companyId &&
+        input.expectedCompanyId &&
+        companyId !== input.expectedCompanyId
+      ) {
+        logger.warn(
+          `Business Central sync skipped: customer company ${companyId} does not match expected company ${input.expectedCompanyId}`
+        );
+        return new StepResponse({ status: "skipped", update: null });
+      }
     }
 
     if (!companyId || !bcCustomerNumber) {

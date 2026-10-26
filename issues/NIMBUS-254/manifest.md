@@ -23,7 +23,7 @@ All tasks are in `apps/backend` (`@b2b-starter/backend`). `<f>` = `pnpm --filter
 ## Tasks
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | BC company sync starts from a company id as well as a customer | `01-sync-by-company-id.md` | backend | F2, F4 (outcomes), F7, NF no-employees, NF store triggers unchanged, NF one mapping, NF no PII in logs | None | NIMBUS-258 | TODO |
+| 01 | BC company sync starts from a company id as well as a customer | `01-sync-by-company-id.md` | backend | F2, F4 (outcomes), F7, NF no-employees, NF store triggers unchanged, NF one mapping, NF no PII in logs | None | NIMBUS-258 | DONE |
 | 02 | Admin sync route and last-synced time in the Admin company read | `02-admin-sync-route.md` | backend | F3 (server side), F6 (read), F8, security draft rows | 01 | NIMBUS-259 | TODO |
 | 03 | Admin action, outcome toasts, last-synced row and banner text | `03-admin-sync-ui.md` | backend (Admin UI) | F1, F3 (UI), F4 (messages), F5, F6 (display), F9 | 02 | NIMBUS-260 | TODO |
 

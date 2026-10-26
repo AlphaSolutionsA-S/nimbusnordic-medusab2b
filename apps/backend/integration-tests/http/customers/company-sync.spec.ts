@@ -2,7 +2,10 @@ import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import { MedusaError } from "@medusajs/framework/utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
-import type { IBusinessCentralModuleService } from "../../../src/modules/business-central/types";
+import type {
+  BCCustomer,
+  IBusinessCentralModuleService,
+} from "../../../src/modules/business-central/types";
 import { COMPANY_MODULE } from "../../../src/modules/company";
 import type { ICompanyModuleService } from "../../../src/types";
 import { ModuleCompanySpendingLimitResetFrequency } from "../../../src/types";
@@ -456,6 +459,215 @@ medusaIntegrationTestRunner({
         expect(companyA.business_central_synced_at?.getTime()).toBeGreaterThan(
           staleAt.getTime()
         );
+      });
+    });
+
+    describe("syncCompanyFromBusinessCentralWorkflow - by company id", () => {
+      beforeEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      const staleAt = new Date(Date.now() - 11 * 60 * 1000);
+
+      const bcCustomer: BCCustomer = {
+        number: "00033333",
+        displayName: "Synced By Id",
+        email: "byid@example.com",
+        phoneNumber: "55554444",
+        addressLine1: "Sync Street 3",
+        addressLine2: "Floor 4",
+        city: "Synced city",
+        state: "Synced state",
+        postalCode: "3000",
+        country: "NO",
+        blocked: "Ship",
+        creditLimit: 5000,
+        taxRegistrationNumber: "NO987654321",
+        currencyCode: "NOK",
+      };
+
+      // No employees: the company path must not depend on a customer.
+      async function createCompanyWithoutEmployees(
+        businessCentralCustomerNumber: string | null
+      ): Promise<string> {
+        const companyService =
+          getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const created = await companyService.createCompanies({
+          name: "Lonely Company",
+          email: "lonely@example.com",
+          phone: "11111111",
+          address: "Old address",
+          city: "Old city",
+          state: "Old state",
+          zip: "1000",
+          country: "DK",
+          logo_url: "https://example.com/lonely.png",
+          currency_code: "DKK",
+          business_central_customer_number: businessCentralCustomerNumber,
+          spending_limit_reset_frequency:
+            ModuleCompanySpendingLimitResetFrequency.MONTHLY,
+        });
+        await companyService.updateCompanies({
+          id: created.id,
+          order_api_enabled: true,
+          business_central_synced_at: staleAt,
+        });
+
+        return created.id;
+      }
+
+      async function readCompany(companyId: string) {
+        const companyService =
+          getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+        const [company] = await companyService.listCompanies({ id: companyId });
+
+        return company;
+      }
+
+      function spyOnGetCustomer() {
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+
+        return jest.spyOn(bcService, "getCustomer");
+      }
+
+      const unchangedFields = {
+        name: "Lonely Company",
+        email: "lonely@example.com",
+        phone: "11111111",
+        address: "Old address",
+        city: "Old city",
+        state: "Old state",
+        zip: "1000",
+        country: "DK",
+        currency_code: "DKK",
+      };
+
+      it("updates a company with no employees from Business Central", async () => {
+        const companyId = await createCompanyWithoutEmployees("00033333");
+        const getCustomerSpy = spyOnGetCustomer().mockResolvedValueOnce(
+          bcCustomer
+        );
+
+        const { result } = await syncCompanyFromBusinessCentralWorkflow(
+          getContainer()
+        ).run({ input: { companyId } });
+
+        const company = await readCompany(companyId);
+
+        expect(result).toEqual({ status: "updated" });
+        expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+        expect(getCustomerSpy).toHaveBeenCalledWith("00033333");
+        expect(company).toMatchObject({
+          id: companyId,
+          name: "Synced By Id",
+          email: "byid@example.com",
+          phone: "55554444",
+          address: "Sync Street 3, Floor 4",
+          city: "Synced city",
+          state: "Synced state",
+          zip: "3000",
+          country: "NO",
+          blocked: "Ship",
+          credit_limit: 5000,
+          vat_number: "NO987654321",
+          currency_code: "NOK",
+          order_api_enabled: true,
+          logo_url: "https://example.com/lonely.png",
+          spending_limit_reset_frequency: "monthly",
+          business_central_customer_number: "00033333",
+        });
+        expect(company.business_central_synced_at).toBeInstanceOf(Date);
+        expect(company.business_central_synced_at?.getTime()).toBeGreaterThan(
+          staleAt.getTime()
+        );
+      });
+
+      it("skips without a Business Central call when the company has no BC number", async () => {
+        const companyId = await createCompanyWithoutEmployees(null);
+        const getCustomerSpy = spyOnGetCustomer();
+
+        const { result } = await syncCompanyFromBusinessCentralWorkflow(
+          getContainer()
+        ).run({ input: { companyId } });
+
+        const company = await readCompany(companyId);
+
+        expect(result).toEqual({ status: "skipped" });
+        expect(getCustomerSpy).not.toHaveBeenCalled();
+        expect(company).toMatchObject(unchangedFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("skips when Business Central has no matching customer", async () => {
+        const companyId = await createCompanyWithoutEmployees("00033333");
+        spyOnGetCustomer().mockResolvedValueOnce(null);
+
+        const { result } = await syncCompanyFromBusinessCentralWorkflow(
+          getContainer()
+        ).run({ input: { companyId } });
+
+        const company = await readCompany(companyId);
+
+        expect(result).toEqual({ status: "skipped" });
+        expect(company).toMatchObject(unchangedFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("reports failed and changes nothing on an expected Business Central error", async () => {
+        const companyId = await createCompanyWithoutEmployees("00033333");
+        spyOnGetCustomer().mockRejectedValueOnce(
+          new MedusaError(
+            MedusaError.Types.UNEXPECTED_STATE,
+            "expected BC failure"
+          )
+        );
+
+        const { result } = await syncCompanyFromBusinessCentralWorkflow(
+          getContainer()
+        ).run({ input: { companyId } });
+
+        const company = await readCompany(companyId);
+
+        expect(result).toEqual({ status: "failed" });
+        expect(company).toMatchObject(unchangedFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("rejects on an unexpected Business Central error", async () => {
+        const companyId = await createCompanyWithoutEmployees("00033333");
+        spyOnGetCustomer().mockRejectedValueOnce(
+          new Error("unexpected programming failure")
+        );
+
+        await expect(
+          syncCompanyFromBusinessCentralWorkflow(getContainer()).run({
+            input: { companyId },
+          })
+        ).rejects.toMatchObject({ message: "unexpected programming failure" });
+
+        const company = await readCompany(companyId);
+
+        expect(company).toMatchObject(unchangedFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("rejects an unknown company id as not found without a Business Central call", async () => {
+        const getCustomerSpy = spyOnGetCustomer();
+
+        await expect(
+          syncCompanyFromBusinessCentralWorkflow(getContainer()).run({
+            input: { companyId: "comp_does_not_exist" },
+          })
+        ).rejects.toMatchObject({ type: "not_found" });
+
+        expect(getCustomerSpy).not.toHaveBeenCalled();
       });
     });
   },
