@@ -1,7 +1,7 @@
 # Company admins can add another person's existing account to their company
 
 **Date:** 2026-10-26
-**Status:** Scoped
+**Status:** Implemented
 **Type:** Bug
 **Priority:** Medium (Jira); severity Major in `bug.md`
 **Issue:** NIMBUS-243 (parent epic NIMBUS-206)
@@ -163,3 +163,11 @@ None blocking. For the human, informational:
 - After deploy: a store `POST /store/companies/<own id>/employees` with `customer_id` answers 400,
   and the invite screen still creates an employee (the real-system result); check Medusa Cloud logs
   for unexpected 400s on this route in the following days.
+
+## Documentation
+
+- [docs/architecture/store-access.md](../../docs/architecture/store-access.md) — Employee invitation
+  email: store route refuses `customer_id`, linking an existing customer is Admin-only (updated by
+  task 01 and the wrap fix; no further change)
+
+AI base files updated: none
