@@ -29,6 +29,8 @@ export type BCOrderLine = {
   shippedQuantity: number;
   returnableQuantity: number;
   reservations: BCOrderLineReservation[];
+  // The BC item variant code (the size); present only when non-empty.
+  variantCode?: string;
 };
 
 export type BCOrderLineReservation = {

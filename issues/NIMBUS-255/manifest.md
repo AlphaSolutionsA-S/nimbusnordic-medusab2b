@@ -20,7 +20,7 @@
 
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | Backend: variant code on BC order detail lines | `01-backend-variant-code.md` | backend | F1 (data), F6, NF no extra call | None | NIMBUS-256 | TODO |
+| 01 | Backend: variant code on BC order detail lines | `01-backend-variant-code.md` | backend | F1 (data), F6, NF no extra call | None | NIMBUS-256 | DONE |
 | 02 | Storefront: size field and description rule on order detail and return table | `02-storefront-size-display.md` | storefront | F1 (display), F2, F3, F4, F5, NF translation key | 01 | NIMBUS-257 | TODO |
 
 ## Scope items with no task
