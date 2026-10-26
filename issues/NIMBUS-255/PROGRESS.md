@@ -43,3 +43,16 @@
   only so far); the "Size" label translated in every locale after the UI translation import.
 - Next owner: `implementation-planner` (started by the coordinator).
 - Handover prompt: "Plan NIMBUS-255 from `issues/NIMBUS-255/scope.md`."
+
+## 2026-10-26 — Plan (draft, awaiting approval)
+
+- Outcome: `plan.md`, `manifest.md`, `01-backend-variant-code.md`, `02-storefront-size-display.md`
+  written. Two tasks: backend adds `variantCode` to BC order detail lines (invoice read expands
+  `itemVariant`, no extra call); storefront shows the size and applies the description rule via one
+  pure helper in both tables, adds the size key in 8 locale files and a `decisions.md` row. Jira
+  sub-tasks created: NIMBUS-256 (01), NIMBUS-257 (02). Nothing under "Needs your decision"; no
+  UNVERIFIED framework rows.
+- Not yet: human plan approval, `Ready for Dispatch: true`, the Jira "plan approved" comment on
+  NIMBUS-255 (decisions new in the plan).
+- Next owner: human (review `plan.md`), then `task-dispatcher` on a separate go-ahead.
+- Handover prompt: "Dispatch NIMBUS-255 from `issues/NIMBUS-255/manifest.md`."
