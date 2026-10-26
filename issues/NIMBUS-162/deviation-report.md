@@ -172,8 +172,7 @@ consolidation). Reviewed 2026-10-25 by the integration reviewer.
 1. Fix 02: the two email rows are merged, other rows' wording is trimmed without changing meaning,
    and the cell padding around `|` is removed; `pnpm ai:check` passes (`AGENTS.md` 32663 bytes).
    The extra trims and the reformatting went beyond the literal answer and were accepted as they
-   are by Klaus Petersen on 2026-10-26. The size limit itself is being registered as a separate
-   issue.
+   are by Klaus Petersen on 2026-10-26. The size limit itself is tracked separately in NIMBUS-251.
 2. Fix 04: the accepted provider logging is documented in `docs/architecture/store-access.md`.
 3. Fix 03: the invite card sends `country_code` only for a two-letter code.
 4. The lockfile reinstall succeeded without changing the lockfile (`next` 15.5.28). Storefront lint
@@ -182,7 +181,7 @@ consolidation). Reviewed 2026-10-25 by the integration reviewer.
    test failure, `product-tabs` ("A React Element from an older version of React"), is not caused
    by this branch, which changes nothing it depends on: the storefront imports
    `@radix-ui/react-accordion` without declaring it, and it resolves from the root hoisted copy
-   tied to `react@18.3.1`. A separate bug is being registered for it.
+   tied to `react@18.3.1`. Tracked as bug NIMBUS-250.
 5. NIMBUS-162 and NIMBUS-242 are in Internal review.
 
 ## Verify after deploy

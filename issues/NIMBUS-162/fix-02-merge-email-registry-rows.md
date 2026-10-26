@@ -79,5 +79,4 @@ Use `corepack pnpm` (pnpm is not on PATH).
 ## Acceptance
 
 Accepted as it is by Klaus Petersen on 2026-10-26: the merged email row, the wording trims in other
-rows and the removed padding around `|`. The `AGENTS.md` size limit itself is being registered as a
-separate issue.
+rows and the removed padding around `|`. The `AGENTS.md` size limit itself is tracked in NIMBUS-251.
