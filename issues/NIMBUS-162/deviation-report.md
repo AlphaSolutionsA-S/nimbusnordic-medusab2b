@@ -167,6 +167,24 @@ consolidation). Reviewed 2026-10-25 by the integration reviewer.
    reinstall fails or changes the lockfile.
 5. Move NIMBUS-162 and NIMBUS-242 to "Internal review", taking every step of the transition path.
 
+### Outcome of the answers
+
+1. Fix 02: the two email rows are merged, other rows' wording is trimmed without changing meaning,
+   and the cell padding around `|` is removed; `pnpm ai:check` passes (`AGENTS.md` 32663 bytes).
+   The extra trims and the reformatting went beyond the literal answer and were accepted as they
+   are by Klaus Petersen on 2026-10-26. The size limit itself is being registered as a separate
+   issue.
+2. Fix 04: the accepted provider logging is documented in `docs/architecture/store-access.md`.
+3. Fix 03: the invite card sends `country_code` only for a two-letter code.
+4. The lockfile reinstall succeeded without changing the lockfile (`next` 15.5.28). Storefront lint
+   0 errors; the build compiles and lints, then needs a running backend to collect page data.
+   After the reinstall the storefront typecheck baseline is 8 errors, not 58. A new storefront
+   test failure, `product-tabs` ("A React Element from an older version of React"), is not caused
+   by this branch, which changes nothing it depends on: the storefront imports
+   `@radix-ui/react-accordion` without declaring it, and it resolves from the root hoisted copy
+   tied to `react@18.3.1`. A separate bug is being registered for it.
+5. NIMBUS-162 and NIMBUS-242 are in Internal review.
+
 ## Verify after deploy
 
 - 03 Reset email on the translated mechanism: Cloud Email Activity / `notification.data.locale` for
