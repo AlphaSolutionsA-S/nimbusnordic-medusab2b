@@ -102,3 +102,18 @@
 - Next owner: human (push `feature/NIMBUS-255` and open the PR to `develop` with the prepared
   description).
 - Handover prompt: "Push `feature/NIMBUS-255` and open the PR to `develop`."
+
+## 2026-10-26 — Pushed and merged into develop
+
+- **Owner:** coordinator, on Klaus Petersen's decision to push and merge into `develop`.
+- **Integration:** `feature/NIMBUS-255` pushed to origin and merged into `develop` with a merge
+  commit. `origin/develop` had no commits the branch lacked (develop b009762 already merged in
+  d210389), so the finalization results stand. No pull request opened; the PR description is in
+  the dispatcher's run folder.
+- **Tracker:** NIMBUS-255 in Internal review; NIMBUS-256 and NIMBUS-257 Done.
+- **Not yet verified (after deploy):** production BC returns `itemVariant` on invoice lines
+  (`GET /store/bc-orders/SO330301`, line 20000 `variantCode` "XL"); the storefront shows the name
+  once with "Size: XL" / "Size: M" on SO330301 / SO347954; `Account.bcOrderReturn.size` imported
+  into the DB UI translations for every active locale before the storefront release.
+- **Next owner:** Klaus Petersen: import the translation key, deploy, run the after-deploy checks
+  in `deviation-report.md`, then close NIMBUS-255.
