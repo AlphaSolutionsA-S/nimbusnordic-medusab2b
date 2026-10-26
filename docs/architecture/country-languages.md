@@ -1,7 +1,8 @@
 # Country languages
 
-**Last updated:** 2026-10-21
-**Related work:** NIMBUS-176 (builds on NIMBUS-175, database UI translations)
+**Last updated:** 2026-10-26
+**Related work:** NIMBUS-176 (builds on NIMBUS-175, database UI translations); NIMBUS-162 and
+NIMBUS-242 (transactional emails)
 
 ## Overview
 
