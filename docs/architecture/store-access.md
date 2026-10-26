@@ -98,11 +98,12 @@ Creating an employee account with email and password (`POST /store/companies/:id
 admin, or `POST /admin/companies/:id/employees`) runs `createEmployeeAccountWorkflow`, which stages
 `employee.invited` with `customer_id`, `company_id` and the page `country_code` (null from Admin).
 Medusa releases it only when the account creation succeeds. Linking an existing `customer_id` is
-Admin-only and sends nothing; the store route refuses a body with `customer_id` with 400 (NIMBUS-243)
-and requires `email` and `password`. The store route accepts `country_code` only as a lower-case two-letter code (400
-otherwise); the storefront invite card (`modules/account/components/invite-employee-card`) sends
-the page's `countryCode` only when it has that form and otherwise omits it, so the company country
-decides. The `subscribers/employee-invited.ts` subscriber runs
+Admin-only and sends nothing; the store route refuses a body with `customer_id` with 400
+(NIMBUS-243) and requires `email` and `password`. The store route accepts `country_code` only as a
+lower-case two-letter code (400 otherwise); the storefront invite card
+(`modules/account/components/invite-employee-card`) sends the page's `countryCode` only when it has
+that form and otherwise omits it, so the company country decides. The
+`subscribers/employee-invited.ts` subscriber runs
 `workflows/employee/workflows/send-employee-invitation.ts`: it reads the customer's email and first
 name and the company's name and country by id (the event carries no address), chooses the language
 with the page country first and the company country second, and builds the email in
