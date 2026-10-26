@@ -490,11 +490,17 @@ type BCSalesInvoiceLineRaw = {
   lineType?: string;
   itemId?: string;
   item?: { number?: string; displayName?: string };
+  itemVariant?: { code?: string } | null;
   description?: string;
   quantity?: number;
   unitPrice?: number;
   amountExcludingTax?: number;
 };
+
+function variantCodeOf(line: { itemVariant?: { code?: string } | null }): { variantCode?: string } {
+  const code = line.itemVariant?.code;
+  return typeof code === "string" && code !== "" ? { variantCode: code } : {};
+}
 
 function mapSalesOrderLine(
   line: BCSalesOrderLineRaw,
@@ -517,6 +523,7 @@ function mapSalesOrderLine(
     // Invoiced quantities are returned from their invoice lines, so only shipped-not-invoiced remains here.
     returnableQuantity: Math.max(0, shippedQuantity - (line.invoicedQuantity ?? 0)),
     reservations,
+    ...variantCodeOf(line),
   };
 }
 
@@ -535,6 +542,7 @@ function mapSalesInvoiceLine(line: BCSalesInvoiceLineRaw): BCOrderLine {
     shippedQuantity: line.quantity ?? 0,
     returnableQuantity: line.quantity ?? 0,
     reservations: [],
+    ...variantCodeOf(line),
   };
 }
 
@@ -2440,7 +2448,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     );
     invoicesUrl.searchParams.set("$top", String(MAX_ORDER_DETAIL_INVOICES));
     invoicesUrl.searchParams.set("$orderby", "invoiceDate asc");
-    invoicesUrl.searchParams.set("$expand", "salesInvoiceLines($expand=item)");
+    invoicesUrl.searchParams.set("$expand", "salesInvoiceLines($expand=item,itemVariant)");
 
     const [orderResponse, invoicesResponse, itemReservations] = await Promise.all([
       fetch(orderUrl.toString(), {

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 
 jest.mock("@/lib/data/business-central", () => ({
   createBCReturn: jest.fn(),
@@ -103,6 +103,104 @@ describe("BcOrderReturn", () => {
     )
 
     expect(screen.queryByText("Request a return")).not.toBeInTheDocument()
+  })
+
+  describe("item name, description and size", () => {
+    const sizedOrder = {
+      ...order,
+      lines: [
+        {
+          ...order.lines[0],
+          id: "invoice-line",
+          sequence: 10000,
+          itemDisplayName: "Franklin Unisex - Grey Melange",
+          description: "Franklin Unisex - Grey Melange",
+          variantCode: "XL",
+        },
+        {
+          ...order.lines[0],
+          id: "open-line",
+          sequence: 20000,
+          itemDisplayName: "Camden Men - Midnight Blue",
+          description: "M",
+          variantCode: "M",
+        },
+        {
+          ...order.lines[0],
+          id: "extra-line",
+          sequence: 30000,
+          itemDisplayName: "Widget",
+          description: "Embroidered logo",
+        },
+      ],
+    }
+
+    const openReturnForm = () => {
+      render(
+        <BcOrderReturn order={sizedOrder} reasons={[]}>
+          <div>children</div>
+        </BcOrderReturn>
+      )
+      fireEvent.click(screen.getByText("Request a return"))
+    }
+
+    const rowOf = (text: string) => screen.getByText(text).closest("tr") as HTMLElement
+
+    it("shows each eligible line's name once, an extra description and the size", () => {
+      openReturnForm()
+
+      expect(screen.getAllByText("Franklin Unisex - Grey Melange")).toHaveLength(1)
+      expect(
+        within(rowOf("Franklin Unisex - Grey Melange")).getByText("Size: XL")
+      ).toBeInTheDocument()
+
+      const openRow = rowOf("Camden Men - Midnight Blue")
+      expect(within(openRow).getByText("Size: M")).toBeInTheDocument()
+      expect(within(openRow).queryByText("M")).not.toBeInTheDocument()
+
+      const extraRow = rowOf("Widget")
+      expect(within(extraRow).getByText("Embroidered logo")).toBeInTheDocument()
+      expect(within(extraRow).queryByText(/Size/)).not.toBeInTheDocument()
+    })
+
+    it("names the product, not the size, in the quantity field's accessible label", () => {
+      openReturnForm()
+
+      expect(
+        screen.getByRole("spinbutton", {
+          name: "Return quantity for Camden Men - Midnight Blue",
+        })
+      ).toBeInTheDocument()
+      expect(
+        screen.queryByRole("spinbutton", { name: "Return quantity for M" })
+      ).not.toBeInTheDocument()
+    })
+
+    it("still submits only line number, quantity and reason", async () => {
+      ;(createBCReturn as jest.Mock).mockResolvedValueOnce({
+        id: "R-1",
+        number: "R-1",
+        status: "Open",
+        requestId: "RET-3",
+        sourceOrderNo: "BC-1",
+        lines: [],
+      })
+      openReturnForm()
+
+      fireEvent.change(
+        screen.getByRole("spinbutton", {
+          name: "Return quantity for Camden Men - Midnight Blue",
+        }),
+        { target: { value: "1" } }
+      )
+      const form = screen.getByText("Submit return request").closest("form") as HTMLFormElement
+      fireEvent.submit(form)
+
+      await screen.findByTestId("bc-order-return-view-return-link")
+      expect(createBCReturn).toHaveBeenCalledWith("BC-1", {
+        lines: [{ source_line_no: 20000, quantity: 1, return_reason_code: "NORMAL" }],
+      })
+    })
   })
 
   // TC-5: integration — the return confirmation links to the new return's detail page.

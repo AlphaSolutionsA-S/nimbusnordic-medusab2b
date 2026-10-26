@@ -402,6 +402,231 @@ describe("BusinessCentralModuleService.getOrder", () => {
     });
   });
 
+  describe("variant code on order lines", () => {
+    const orderWithVariants = {
+      id: "order-1",
+      number: "SO-4000",
+      orderDate: "2026-10-01",
+      customerNumber: "10000",
+      customerName: "Nimbus Nordic",
+      status: "Open",
+      currencyCode: "DKK",
+      salesOrderLines: [
+        {
+          id: "open-sized",
+          sequence: 10000,
+          lineType: "Item",
+          item: { number: "CDEN-M-MIDNBLUE", displayName: "Cardigan" },
+          itemVariant: { code: "L" },
+          description: "Cardigan",
+          quantity: 2,
+        },
+        {
+          id: "open-null-variant",
+          sequence: 20000,
+          lineType: "Item",
+          item: { number: "ITEM-2" },
+          itemVariant: null,
+          quantity: 1,
+        },
+        {
+          id: "open-no-variant",
+          sequence: 30000,
+          lineType: "Item",
+          item: { number: "ITEM-3" },
+          quantity: 1,
+        },
+        {
+          id: "open-empty-variant",
+          sequence: 40000,
+          lineType: "Item",
+          item: { number: "ITEM-4" },
+          itemVariant: { code: "" },
+          quantity: 1,
+        },
+        {
+          id: "open-comment",
+          sequence: 50000,
+          lineType: "Comment",
+          description: "Deliver to back door",
+        },
+      ],
+    };
+    const invoiceWithVariants = {
+      id: "invoice-1",
+      number: "SIN29817",
+      orderNumber: "SO-4000",
+      invoiceDate: "2026-10-05",
+      customerNumber: "10000",
+      customerName: "Nimbus Nordic",
+      status: "Paid",
+      currencyCode: "DKK",
+      salesInvoiceLines: [
+        {
+          id: "invoice-sized",
+          sequence: 20000,
+          lineType: "Item",
+          item: { number: "CDEN-M-MIDNBLUE", displayName: "Cardigan" },
+          itemVariant: { code: "XL" },
+          description: "Cardigan",
+          quantity: 3,
+          unitPrice: 10,
+          amountExcludingTax: 30,
+        },
+        {
+          id: "invoice-null-variant",
+          sequence: 30000,
+          lineType: "Item",
+          item: { number: "ITEM-2" },
+          itemVariant: null,
+          quantity: 1,
+        },
+        {
+          id: "invoice-empty-variant",
+          sequence: 40000,
+          lineType: "Item",
+          item: { number: "ITEM-4" },
+          itemVariant: { code: "" },
+          quantity: 1,
+        },
+        {
+          id: "invoice-comment",
+          sequence: 50000,
+          lineType: "Comment",
+          description: "Invoice note",
+        },
+      ],
+    };
+
+    function mockVariantFetch(order: unknown | null): jest.Mock {
+      process.env.BUSINESS_CENTRAL_COMPANY_ID = "00000000-0000-0000-0000-0000000000c1";
+      const fetchMock = jest.fn(async (url: string) => {
+        if (url.includes("oauth2")) {
+          return jsonResponse({ access_token: "access-token" });
+        }
+        if (url.includes("/customers()")) {
+          return jsonResponse({ value: [{ id: "customer-id-1" }] });
+        }
+        if (url.includes("/salesOrders()")) {
+          return jsonResponse({ value: order ? [order] : [] });
+        }
+        if (url.includes("/salesInvoices()")) {
+          return jsonResponse({ value: [invoiceWithVariants] });
+        }
+        return jsonResponse({ value: [] });
+      });
+      global.fetch = fetchMock as unknown as typeof fetch;
+      return fetchMock;
+    }
+
+    function lineById(lines: { id: string }[] | undefined, id: string): Record<string, unknown> {
+      const line = lines?.find((candidate) => candidate.id === id);
+      if (!line) {
+        throw new Error(`line ${id} missing`);
+      }
+      return line as Record<string, unknown>;
+    }
+
+    it("expands the item variant on invoice lines in the existing requests, with no extra request", async () => {
+      const fetchMock = mockVariantFetch(orderWithVariants);
+      const service = new BusinessCentralModuleService();
+
+      await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+
+      const urls = fetchMock.mock.calls.map(([url]) => url as string);
+      const orderUrls = urls.filter((url) => url.includes("/salesOrders()"));
+      const invoiceUrls = urls.filter((url) => url.includes("/salesInvoices()"));
+      expect(orderUrls).toHaveLength(1);
+      expect(invoiceUrls).toHaveLength(1);
+      expect(new URL(orderUrls[0]).searchParams.get("$expand")).toBe(
+        "salesOrderLines($expand=item,itemVariant)"
+      );
+      expect(new URL(invoiceUrls[0]).searchParams.get("$expand")).toBe(
+        "salesInvoiceLines($expand=item,itemVariant)"
+      );
+      // token, customer, order, invoices, reservations: the same five requests as before.
+      expect(urls).toHaveLength(5);
+    });
+
+    it("sets variantCode on open and invoiced item lines that have a variant code", async () => {
+      mockVariantFetch(orderWithVariants);
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+
+      expect(lineById(result?.lines, "open-sized").variantCode).toBe("L");
+      expect(lineById(result?.lines, "invoice-sized").variantCode).toBe("XL");
+    });
+
+    it("sets variantCode on invoice lines of a fully invoiced order", async () => {
+      mockVariantFetch(null);
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+
+      expect(result?.invoiceStatus).toBe("fully_invoiced");
+      expect(lineById(result?.lines, "invoice-sized").variantCode).toBe("XL");
+      expect(lineById(result?.lines, "invoice-null-variant")).not.toHaveProperty("variantCode");
+      expect(lineById(result?.lines, "invoice-empty-variant")).not.toHaveProperty("variantCode");
+    });
+
+    it.each([
+      "open-null-variant",
+      "open-no-variant",
+      "open-empty-variant",
+      "open-comment",
+      "invoice-null-variant",
+      "invoice-empty-variant",
+      "invoice-comment",
+    ])("leaves variantCode out of line %s", async (lineId) => {
+      mockVariantFetch(orderWithVariants);
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+
+      expect(lineById(result?.lines, lineId)).not.toHaveProperty("variantCode");
+    });
+
+    it("keeps the rest of each line's mapping unchanged", async () => {
+      mockVariantFetch(orderWithVariants);
+      const service = new BusinessCentralModuleService();
+
+      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+
+      expect(lineById(result?.lines, "open-comment")).toEqual({
+        id: "open-comment",
+        sequence: 50000,
+        lineType: "Comment",
+        itemId: undefined,
+        itemNumber: undefined,
+        itemDisplayName: undefined,
+        description: "Deliver to back door",
+        quantity: 0,
+        unitPrice: 0,
+        lineAmount: 0,
+        shippedQuantity: 0,
+        returnableQuantity: 0,
+        reservations: [],
+      });
+      expect(lineById(result?.lines, "invoice-sized")).toEqual({
+        id: "invoice-sized",
+        sequence: 20000,
+        lineType: "Item",
+        itemId: undefined,
+        itemNumber: "CDEN-M-MIDNBLUE",
+        itemDisplayName: "Cardigan",
+        description: "Cardigan",
+        quantity: 3,
+        unitPrice: 10,
+        lineAmount: 30,
+        shippedQuantity: 3,
+        returnableQuantity: 3,
+        reservations: [],
+        variantCode: "XL",
+      });
+    });
+  });
+
   // TC-3: partially invoiced — order shell wins the header/totals (D3), lines merge from both sources (D7).
   it("merges salesOrderLines and salesInvoiceLines for a partially invoiced order, keeping the order's own totals", async () => {
     global.fetch = jest

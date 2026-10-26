@@ -1,6 +1,10 @@
 import { Container, Heading } from "@medusajs/ui"
 import { getLocale, getTranslations } from "next-intl/server"
 import { getFormattingLocale } from "@/lib/i18n/formatting-locale"
+import {
+  type BcOrderLineDisplay,
+  getBcOrderLineDisplay,
+} from "@/lib/util/bc-order-line-display"
 import { convertToLocale } from "@/lib/util/money"
 import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
 import BcOrderReturn from "@/modules/account/components/bc-order-return"
@@ -125,17 +129,21 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
                   )
                 }
 
-                const description =
+                const display: BcOrderLineDisplay =
                   line.lineType === "Item"
-                    ? [line.itemDisplayName, line.description].filter(Boolean).join(" ")
-                    : line.description
+                    ? getBcOrderLineDisplay(line)
+                    : { name: line.description || line.itemNumber }
 
                 return (
                   <tr key={line.id} className="border-b border-ui-border-base">
                     <td className="py-3 pr-4 text-ui-fg-base">
-                      {description ||
-                        line.itemNumber ||
-                        tBcOrderReturn("itemFallbackLabel")}
+                      <div>{display.name || tBcOrderReturn("itemFallbackLabel")}</div>
+                      {display.description && <div>{display.description}</div>}
+                      {display.size && (
+                        <div className="text-ui-fg-subtle">
+                          {tBcOrderReturn("size", { size: display.size })}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 pr-4 text-ui-fg-base">{line.quantity}</td>
                     <td className="py-3 pr-4">
