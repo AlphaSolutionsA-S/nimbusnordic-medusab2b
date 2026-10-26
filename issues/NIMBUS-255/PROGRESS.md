@@ -56,3 +56,14 @@
   NIMBUS-255 (decisions new in the plan).
 - Next owner: human (review `plan.md`), then `task-dispatcher` on a separate go-ahead.
 - Handover prompt: "Dispatch NIMBUS-255 from `issues/NIMBUS-255/manifest.md`."
+
+## 2026-10-26 — Plan approved
+
+- Outcome: the user approved the plan as written ("godkendt"), including the new choices (optional
+  `variantCode`, storefront helper for the description rule, return quantity label by product name,
+  the 8 size texts). Manifest set `Ready for Dispatch: true`. Jira: "plan approved" comment on
+  NIMBUS-255; sub-tasks NIMBUS-256 and NIMBUS-257 already exist.
+- Still to verify after deploy: production BC returns `itemVariant.code` on invoice lines; the size
+  key imported into the DB UI translations before the storefront release.
+- Next owner: `task-dispatcher`, on a separate go-ahead from the user.
+- Handover prompt: "Dispatch NIMBUS-255 from `issues/NIMBUS-255/manifest.md`."

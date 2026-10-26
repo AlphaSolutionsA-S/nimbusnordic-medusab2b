@@ -3,7 +3,7 @@
 **Key:** NIMBUS-255
 **Issue:** NIMBUS-255
 **Branch:** feature/NIMBUS-255 (from develop)
-**Ready for Dispatch:** false
+**Ready for Dispatch:** true
 
 ## Conventions and commands
 
