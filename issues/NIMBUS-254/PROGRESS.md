@@ -59,3 +59,18 @@
   files are committed locally on `develop` and not pushed.
 - Next owner: the human (separate go-ahead), then `task-dispatcher`.
 - Handover prompt: as in the previous entry.
+
+## 2026-10-26 — task-dispatcher (stopped at the implementation gate)
+
+- Outcome: branch `feature/NIMBUS-254` from local `develop` (374c670), not pushed. Tasks 01–03 done
+  and reviewed: 8286447 (NIMBUS-258), ec89c92 (NIMBUS-259), e65ed1c (NIMBUS-260); consolidation
+  9e764aa. Backend `test:unit` 1114/1114, `test:admin` 79/79, lint 0 errors, typecheck 22 = baseline,
+  build passes. `test:integration:http` for the three specs aborts in globalSetup (no BC test
+  environment / `.env`): code complete, unverified. `pnpm ai:check` fails (AGENTS.md 162 bytes over
+  its limit after the new `decisions.md` row). Integration review approved, no wiring findings;
+  `deviation-report.md` has three open questions. Jira: sub-tasks Done with closing comments;
+  NIMBUS-254 left in Estimation ("Estimate approved" is a human decision), with a comment.
+  `apps/backend/medusa-config.ts` has an uncommitted change not from this branch.
+- Next owner: Klaus Petersen (answer the deviation report's open questions).
+- Handover prompt: "Resume task-dispatcher on `issues/NIMBUS-254/` at 'After the gate' with these
+  answers to `deviation-report.md` open questions 1–3: <answers>."
