@@ -429,6 +429,7 @@
       "itemFallbackLabel": "Pozycja",
       "returnQuantityAriaLabel": "Ilość do zwrotu dla {item}",
       "itemLowercaseFallbackLabel": "pozycja",
+      "sizeLabel": "Rozmiar",
       "selectReasonPlaceholder": "Wybierz powód",
       "cancelLabel": "Anuluj",
       "submitReturnRequestLabel": "Wyślij żądanie zwrotu"

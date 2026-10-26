@@ -13,3 +13,16 @@
   `test:unit` (which needs `*.unit.spec.ts`). It needs no database.
 - Pre-existing failure in that file: `listOrders › stops filling from salesInvoices after the
   round-trip guardrail…` (fails on unchanged code; verification.md baseline).
+
+## 02 Storefront: size field and description rule
+
+- `getBcOrderLineDisplay(line)` and type `BcOrderLineDisplay` (`{ name?, description?, size? }`,
+  all trimmed, absent when empty) in `apps/storefront/src/lib/util/bc-order-line-display.ts`; used by
+  the order detail template (item lines only) and the return table.
+- Translation key `Account.bcOrderReturn.sizeLabel` in all 8 `messages/*.json`; rendered as
+  `{sizeLabel}: {code}` under the name in the item column.
+- Storefront tests resolve `next-intl` through `apps/storefront/__mocks__/next-intl.tsx` against the
+  real `en.json`, so a new key must exist there or the test shows the key name.
+- Direct `pnpm --filter … exec eslint <files>` crashes on a jiti version; use the `lint` script.
+- `AGENTS.md` (generated from Tier 0) is at the 32768-byte Codex limit; any Tier 0 addition makes
+  `ai:check` fail until something is trimmed.

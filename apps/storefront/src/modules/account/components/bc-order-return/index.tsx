@@ -5,6 +5,7 @@ import { FetchError } from "@medusajs/js-sdk"
 import { Button, Container, Heading, Input, Select, Text } from "@medusajs/ui"
 import { useLocale, useTranslations } from "next-intl"
 import { createBCReturn } from "@/lib/data/business-central"
+import { getBcOrderLineDisplay } from "@/lib/util/bc-order-line-display"
 import { convertToLocale } from "@/lib/util/money"
 import BcOrderLineFulfillment from "@/modules/account/components/bc-order-line-fulfillment"
 import LocalizedClientLink from "@/modules/common/components/localized-client-link"
@@ -204,6 +205,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
               {eligibleLines.map((line) => {
                 const lineDraft = draft[line.sequence]
                 const isReturnable = line.returnableQuantity > 0
+                const display = getBcOrderLineDisplay(line)
 
                 return (
                   <tr
@@ -215,10 +217,13 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                     }
                   >
                     <td className="py-3 pr-4">
-                      {line.itemDisplayName ||
-                        line.description ||
-                        line.itemNumber ||
-                        t("itemFallbackLabel")}
+                      <div>{display.name || t("itemFallbackLabel")}</div>
+                      {display.description && <div>{display.description}</div>}
+                      {display.size && (
+                        <div className="text-ui-fg-subtle">
+                          {t("sizeLabel")}: {display.size}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 pr-4">{line.quantity}</td>
                     <td className="py-3 pr-4">
@@ -241,10 +246,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                           )
                         }
                         aria-label={t("returnQuantityAriaLabel", {
-                          item:
-                            line.description ||
-                            line.itemNumber ||
-                            t("itemLowercaseFallbackLabel"),
+                          item: display.name || t("itemLowercaseFallbackLabel"),
                         })}
                       />
                     </td>

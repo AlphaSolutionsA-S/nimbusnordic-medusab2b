@@ -32,6 +32,7 @@ export type BCOrderLine = {
   itemNumber?: string
   itemDisplayName?: string
   description: string
+  variantCode?: string
   quantity: number
   unitPrice: number
   lineAmount: number

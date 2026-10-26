@@ -429,6 +429,7 @@
       "itemFallbackLabel": "Artikel",
       "returnQuantityAriaLabel": "Returkvantitet för {item}",
       "itemLowercaseFallbackLabel": "artikel",
+      "sizeLabel": "Storlek",
       "selectReasonPlaceholder": "Välj en orsak",
       "cancelLabel": "Avbryt",
       "submitReturnRequestLabel": "Skicka returförfrågan"

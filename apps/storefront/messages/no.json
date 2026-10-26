@@ -429,6 +429,7 @@
       "itemFallbackLabel": "Vare",
       "returnQuantityAriaLabel": "Returantall for {item}",
       "itemLowercaseFallbackLabel": "vare",
+      "sizeLabel": "Størrelse",
       "selectReasonPlaceholder": "Velg en årsak",
       "cancelLabel": "Avbryt",
       "submitReturnRequestLabel": "Send returforespørsel"
