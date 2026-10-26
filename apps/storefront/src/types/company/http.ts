@@ -29,7 +29,6 @@ export type StoreCreateCompany = {
 
 export type StoreCreateEmployee = {
   company_id: string
-  customer_id?: string
   spending_limit?: number | null
   is_admin?: boolean | null
   first_name?: string
