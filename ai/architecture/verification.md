@@ -14,21 +14,20 @@ What a test must prove and at which layer. Commands are in `ai/AGENTS.md` (Comma
 - Assert at the depth the caller consumes: the type of each field it uses, not that its container
   exists.
 - Security work carries negative cases per property (membership, role, cross-company access) in
-  `integration-tests/http/security/security-boundaries.spec.ts`; a property that depends on vendor
-  behaviour is tested once against the real library.
+  `integration-tests/http/security/security-boundaries.spec.ts`; a vendor-dependent property is
+  tested once against the real library.
 - Never mock framework-resolved services to assert call order: test the extracted pure decision or
   move the case to integration. Dependency resolution and I/O stay where the framework puts them;
   extract only pure logic, never a `*Logic(input, deps)` mocking seam.
 - Never read source files as text in a test (fixtures are fine); prefer a behaviour assertion, then
-  asserting on the module's exports, then a lint rule for absence claims.
-- Per task: only the tests created or changed, lint and whole-app typecheck (at or below the
-  baseline). The full suite, integration tests and build run once, at finalization.
+  the module's exports, then a lint rule for absence claims.
+- Per task: only new or changed tests, lint and whole-app typecheck (at or below the baseline). The full suite, integration tests and build run once, at finalization.
 - Test volume is a signal, not a target.
 - "Also update" (a task file's or quick-fix `task.md`'s list): every existing test (incl. contract
   and end-to-end specs), `docs/` section, `ai/` file (business-rule registry, Tier 0 rows, a skill's
-  `project.md`) and user-facing doc that asserts or describes the behaviour being changed, or "none
+  `project.md`) and user-facing doc that asserts or describes the changed behaviour, or "none
   found". Search its names, routes, fields, messages and rule wording; fix a stale test's
-  assertion, never delete it to make it pass.
+  assertion, never delete it to pass.
 
 ## Baseline (not green today)
 

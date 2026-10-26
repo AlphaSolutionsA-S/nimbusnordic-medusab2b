@@ -3,9 +3,9 @@
 Every table has one owning module (core tables: their Medusa module). The CMS (`apps/cms`) has its
 own Postgres database (`DATABASE_URI`), owned by Payload; no other app touches it.
 
-- Only the owner's L1 service reads or writes its tables; other modules read them through
+- Only the owner's L1 service reads or writes its tables; other modules read them via
   `query.graph()` (or `query.index()` to filter by linked-module fields).
-- Relationships across modules are module links in `apps/backend/src/links/`, never foreign keys.
+- Cross-module relationships are module links in `apps/backend/src/links/`, never foreign keys.
 - Migrations are generated (`medusa db:generate <module>`, then `medusa db:migrate`; CMS:
   `payload migrate:create`), never hand-written; a hand-written one is a blocking deviation.
 - No raw SQL outside the owning module's service, and never against another module's tables.

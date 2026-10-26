@@ -1,4 +1,7 @@
-/** Company fields overwritten from Business Central when a company customer logs in. */
+/**
+ * Company fields overwritten from Business Central when a company customer logs in or opens the
+ * company page, or when an administrator runs "Sync from Business Central".
+ */
 export const BC_MANAGED_COMPANY_FIELDS = [
   "name",
   "email",
@@ -23,7 +26,8 @@ export const BC_MANAGED_WARNING_TITLE =
 
 export const BC_MANAGED_WARNING_DESCRIPTION =
   "Fields marked Business Central-managed are overwritten with Business Central " +
-  "values when a customer from this company logs in. Changes made to those fields " +
+  "values when a customer from this company logs in or opens the company page, or " +
+  "when an administrator runs Sync from Business Central. Changes made to those fields " +
   "in Medusa are replaced. Medusa-only fields are preserved.";
 
 export const BLOCKED_STATE_LABELS: Record<string, string> = {

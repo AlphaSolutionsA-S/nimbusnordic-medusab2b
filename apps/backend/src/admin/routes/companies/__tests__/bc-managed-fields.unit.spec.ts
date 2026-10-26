@@ -25,10 +25,15 @@ describe("Business Central-managed company fields", () => {
     );
   });
 
-  it("warns that Business Central is authoritative and overwrites on login", () => {
+  it("warns that Business Central is authoritative and names every sync trigger", () => {
     expect(BC_MANAGED_WARNING_TITLE).toMatch(/Business Central is authoritative/);
     expect(BC_MANAGED_WARNING_DESCRIPTION).toMatch(/overwritten/);
-    expect(BC_MANAGED_WARNING_DESCRIPTION).toMatch(/customer from this company logs in/);
+    expect(BC_MANAGED_WARNING_DESCRIPTION).toMatch(
+      /customer from this company logs in or opens the company page/
+    );
+    expect(BC_MANAGED_WARNING_DESCRIPTION).toMatch(
+      /administrator runs Sync from Business Central/
+    );
     expect(BC_MANAGED_WARNING_DESCRIPTION).toMatch(/Medusa-only fields are preserved/);
     expect(BC_MANAGED_WARNING_DESCRIPTION).toContain(BC_MANAGED_INDICATOR_LABEL);
   });

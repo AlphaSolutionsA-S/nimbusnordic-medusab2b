@@ -46,6 +46,10 @@ export type AdminUpdateCompany = Partial<AdminCreateCompany> & {
   order_api_enabled?: boolean;
 };
 
+export type AdminSyncCompanyBusinessCentralResponse = {
+  status: "updated" | "skipped" | "failed";
+};
+
 /* Employee */
 
 export type AdminEmployeeResponse = {

@@ -19,14 +19,14 @@ Paths are relative to `apps/backend/src/`, `apps/storefront/src/` and `apps/cms/
 L5 names a business rule, never a mocking seam. Admin UI (`admin/**`) calls the backend only over
 HTTP through `admin/lib/client.ts`.
 
-Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
+Limits: an L6 route body is at most 40 lines, no `if` on a domain value
 (`limit-route-body`); no L1 method touches more than one module's data (`limit-service-one-module`).
 
 ## Storefront (Next.js App Router, Medusa JS SDK)
 
 | # | Layer | Location | Must never |
 |---|---|---|---|
-| S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` (the Edge runtime cannot load the SDK) | map, validate, decide |
+| S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` (Edge runtime can't load the SDK) | map, validate, decide |
 | S1 | Mapper | `lib/util/*.ts` (pure helpers; no dedicated mapper files yet, UNVERIFIED as a layer) | fetch |
 | S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions and `server-only` loaders (`bound-sf-server-only`) | hold a domain rule |
 | S3 | Route / server component | `app/[countryCode]/**`, `app/api/**`, `i18n/request.ts` | fetch vendor APIs directly |
@@ -37,5 +37,5 @@ Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
 `collections/*.ts` and `blocks/*.ts` define the schema, registered in `payload.config.ts`; migrations
 in `migrations/`. The storefront reads the CMS only through `lib/data/cms.ts`.
 
-Not retrofitted: legacy files that break these rows are listed under "Do not copy" in each layer
-skill's `project.md`; new code never copies them.
+Not retrofitted: legacy files breaking these rows are under "Do not copy" in each layer skill's
+`project.md`; new code never copies them.

@@ -1,20 +1,20 @@
 # Medusa boundary
 
 Where our code meets Medusa (2.21.0, every `@medusajs/*` package in `apps/backend`) and vendor
-packages. Code examples and detail: the `medusa-backend` skill (`reference/medusa-boundary.md`,
+packages. Examples and detail: the `medusa-backend` skill (`reference/medusa-boundary.md`,
 `reference/querying-data.md`).
 
 ## Verify, don't assume
 
 - Verify a framework or vendor behaviour a design relies on before use, from installed source or
-  the `medusa` MCP (else the Medusa docs). Record the primitive, the evidence and
-  the behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
+  the `medusa` MCP (else the Medusa docs). Record the primitive, evidence and
+  behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
   unverified claim is marked UNVERIFIED in the plan and blocks dispatch.
 - Security-relevant vendor claims are verified from dist code or a runnable probe, never docs.
 - A wrong `query.graph` path fails silently: verify the shape once against real data and
   mock only that shape.
 - Installed source: `apps/backend/node_modules/@medusajs/<pkg>/dist/...` (`node-linker=hoisted`,
-  `apps/backend/.npmrc`); if missing there, grep the store
+  `apps/backend/.npmrc`); else grep the store
   `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is evidence
   only once it provably searched a real path.
 
