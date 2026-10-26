@@ -1,5 +1,7 @@
 # Deviation report: Order detail shows the size of every item line
 
+> Record of NIMBUS-255, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-255`, merge-base `0e0231c`, tasks 01 (NIMBUS-256, `d22c39c`) and 02
 (NIMBUS-257, `03b83e9`). Reviewed 2026-10-26.
 

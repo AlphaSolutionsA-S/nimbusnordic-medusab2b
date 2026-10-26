@@ -84,3 +84,21 @@
   message per locale.
 - Next owner: human (answer the open questions), then `task-dispatcher` resumes "After the gate".
 - Handover prompt: "Resume NIMBUS-255 dispatch after the gate with these answers: <answers>."
+
+## 2026-10-26 — After the gate (ready for push, not pushed)
+
+- Answers recorded in `deviation-report.md`: (1) keep the new `decisions.md` row and trim Tier 0
+  wording thoroughly; (2) the size text becomes one ICU message per locale.
+- Fixes: 855d8ca (size message `Account.bcOrderReturn.size`, e.g. en "Size: {size}", fr
+  "Taille : {size}"); merged `origin/develop` (d210389, NIMBUS-254, which had its own Tier 0
+  trim); 161bc25 (Tier 0 trim on top of develop: generated `AGENTS.md` 32803 to 31225 bytes, 1543
+  headroom; no rule ID or path lost; review restored four meaning changes). Docs: ca78eb7
+  (`docs/architecture/business-central-order-detail.md`). Cleanup removed the working files.
+- Checks after the merge: backend unit 1114/1114; modules 594 pass, 2 baseline fails; storefront
+  611/611; typecheck 22 / 8 (= baseline); lint 0 errors; both builds pass; `pnpm ai:check` passes.
+- Still to verify after deploy: production BC returns `itemVariant` on invoice lines (SO330301 line
+  20000 "XL"); storefront shows "Size: XL" / "Size: M" on SO330301 / SO347954; key
+  `Account.bcOrderReturn.size` imported into the DB UI translations before the storefront release.
+- Next owner: human (push `feature/NIMBUS-255` and open the PR to `develop` with the prepared
+  description).
+- Handover prompt: "Push `feature/NIMBUS-255` and open the PR to `develop`."

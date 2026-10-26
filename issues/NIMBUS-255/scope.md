@@ -1,7 +1,9 @@
 # Order detail: size is missing on invoiced order lines
 
+> Record of NIMBUS-255, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-26
-**Status:** Scoped (approved 2026-10-26)
+**Status:** Implemented
 **Type:** Bug
 **Priority:** Medium
 **Issue:** NIMBUS-255

@@ -1,5 +1,7 @@
 # Plan: Order detail shows the size of every item line
 
+> Record of NIMBUS-255, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-255 · **Scope:** `scope.md` · **Branch:** `feature/NIMBUS-255` (from `develop`)
 
 ## 1. Summary [High]
