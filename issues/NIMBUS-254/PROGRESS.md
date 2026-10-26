@@ -27,3 +27,35 @@
   BC customer number) plus a last-synced row. Do not change the login or freshness triggers; keep
   `integration-tests/http/customers/company-sync.spec.ts` green. Apply the human's answers to the
   scope's open questions first."
+
+## 2026-10-26 — implementation-planner
+
+- Outcome: the human's answers (2026-10-26: 120 s storefront cache accepted; blocked and credit
+  limit display-only, checkout enforcement out of scope; no audit) are recorded in `scope.md`. Jira
+  NIMBUS-254 moved with "Scope approved" to Estimation, with an approval comment. Case folder
+  registration and scope committed locally on `develop` (509c986, not pushed). Wrote `plan.md`,
+  `manifest.md` and three task files: 01 sync by company id (workflow and step), 02 Admin route
+  plus last-synced in the Admin read, 03 Admin UI. All framework assumptions verified from installed
+  source. One item in Needs your decision: how the integration cases get verified, since they can't
+  run in this checkout. The default is the NIMBUS-243 rule. Ready for Dispatch: false. Jira
+  sub-tasks and the plan-approved comment wait for plan approval.
+- Next owner: Klaus Petersen (review `plan.md` and answer section 2). Then implementation-planner
+  sets Ready for Dispatch, creates the sub-tasks and records "plan approved". After that,
+  `task-dispatcher` runs on a separate go-ahead.
+- Handover prompt: "Run task-dispatcher on `issues/NIMBUS-254/` (manifest `manifest.md`, branch
+  `feature/NIMBUS-254` from `develop`). Tasks 01 → 02 → 03 in order. Contract and integration cases
+  can't run locally (no `apps/backend/.env`, BC test-environment guard, NIMBUS-236). Apply the
+  verification rule in plan section 2: per task run lint, typecheck and the Admin or unit tests. At
+  finalization, try `company-sync.spec.ts`, `companies.spec.ts` and `security-boundaries.spec.ts`,
+  and record environment or 401-only failures of touched cases as 'code complete, unverified'."
+
+## 2026-10-26 — implementation-planner (plan approved)
+
+- Outcome: Klaus Petersen approved the plan on 2026-10-26, including the section 2 verification
+  rule and every decision new in the plan, and asked for no competing-model review. The approval is
+  recorded in `plan.md`. Jira sub-tasks were created with component Customer Portal: NIMBUS-258
+  (task 01), NIMBUS-259 (task 02), NIMBUS-260 (task 03). They are in the manifest's Issue column.
+  The "plan approved" comment is on NIMBUS-254. The manifest says Ready for Dispatch: true. The plan
+  files are committed locally on `develop` and not pushed.
+- Next owner: the human (separate go-ahead), then `task-dispatcher`.
+- Handover prompt: as in the previous entry.
