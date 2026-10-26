@@ -1,7 +1,7 @@
 # Multi-lingual transactional emails: password reset and employee invitation
 
 **Date:** 2026-10-24
-**Status:** Scoped — approved by Klaus Petersen on 2026-10-24
+**Status:** Implemented (scope approved by Klaus Petersen on 2026-10-24)
 **Type:** Story
 **Priority:** Medium (Jira)
 **Issue:** [NIMBUS-162](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-162)
@@ -197,3 +197,15 @@ Planner verification items (technical, not business):
 - Release: email keys imported in every environment (as for NIMBUS-133's recovery keys).
 - NIMBUS-243 (registered separately): whether the store employee route's `customer_id` must belong
   to the caller. Not part of this scope.
+
+## Documentation
+
+- [docs/architecture/store-access.md](../../docs/architecture/store-access.md) — Translated reset
+  email and employee invitation email (updated)
+- [docs/architecture/country-languages.md](../../docs/architecture/country-languages.md) — Emails
+  read the stored assignments (updated)
+- [apps/storefront/src/lib/i18n/README.md](../../apps/storefront/src/lib/i18n/README.md) — Import
+  of the `Emails` keys per environment (updated)
+
+AI base files updated: `ai/architecture/decisions.md` (email language rule row, committed by the
+pipeline)
