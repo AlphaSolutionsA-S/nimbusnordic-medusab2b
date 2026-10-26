@@ -67,3 +67,20 @@
   key imported into the DB UI translations before the storefront release.
 - Next owner: `task-dispatcher`, on a separate go-ahead from the user.
 - Handover prompt: "Dispatch NIMBUS-255 from `issues/NIMBUS-255/manifest.md`."
+
+## 2026-10-26 — Implementation (at the final gate, not pushed)
+
+- Outcome: both tasks done, reviewed and committed locally: d22c39c (NIMBUS-256, backend
+  `variantCode`), 03b83e9 (NIMBUS-257, storefront size and description rule). Consolidation: no
+  changes. Cross-task review: no wiring findings; `deviation-report.md` written. Jira: NIMBUS-255
+  In Progress; NIMBUS-256 and NIMBUS-257 Done with closing comments.
+- Finalization: backend unit 1016/1016; backend modules 584 pass, 2 fail (the baseline BC
+  `listOrders` guardrail test, src and compiled copy); storefront 611/611; typecheck backend 22 and
+  storefront 8 (both = baseline); both builds pass. `test:integration:http` not run (no HTTP test
+  added; NIMBUS-236 baseline).
+- Open for the human (`deviation-report.md`, Open questions): (1, blocking) `pnpm ai:check` fails:
+  the new `decisions.md` row makes generated `AGENTS.md` 32891 bytes, over 32768; trim other Tier 0
+  text, drop the row, or raise the limit. (2) Keep the hard-coded "Size: XL" separator or use an ICU
+  message per locale.
+- Next owner: human (answer the open questions), then `task-dispatcher` resumes "After the gate".
+- Handover prompt: "Resume NIMBUS-255 dispatch after the gate with these answers: <answers>."
