@@ -13,6 +13,7 @@ import {
 import { ApiKeyType, ContainerRegistrationKeys, Modules } from '@medusajs/framework/utils';
 import type {
   IApiKeyModuleService,
+  IAuthModuleService,
   ICartModuleService,
   ICustomerModuleService,
   IFulfillmentModuleService,
@@ -202,6 +203,20 @@ medusaIntegrationTestRunner({
         customer_id: customerId, is_admin: true,
       }, { ...headers, validateStatus: () => true });
       expect(response.status).toBe(403);
+    });
+
+    it('refuses an own-company admin attaching an existing companyless customer as admin', async () => {
+      const email = 'companyless@example.test';
+      const { customer } = await createStoreUser({ api, storeHeaders: publicHeaders, email });
+      const response = await api.post(`/store/companies/${companyId}/employees`, {
+        customer_id: customer.id, is_admin: true,
+      }, { ...headers, validateStatus: () => true });
+      expect(response.status).toBe(400);
+      expect(await companyService.listEmployees({ customer_id: customer.id })).toHaveLength(0);
+      const identities = await container.resolve<IAuthModuleService>(Modules.AUTH)
+        .listProviderIdentities({ provider: 'emailpass', entity_id: email });
+      expect(identities).toHaveLength(1);
+      expect(identities[0].user_metadata?.role).not.toBe('company_admin');
     });
 
     it('ignores a stale global admin role after the employee is demoted', async () => {

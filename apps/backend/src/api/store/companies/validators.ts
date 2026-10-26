@@ -35,25 +35,17 @@ export const StoreCreateEmployee = z
   .object({
     spending_limit: z.number().optional().nullable(),
     is_admin: z.boolean().optional().nullable().default(false),
-    customer_id: z.string().optional(),
     first_name: z.string().optional(),
     last_name: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.string().email(),
     phone: z.string().optional(),
-    password: z.string().min(8).optional(),
+    password: z.string().min(8),
     country_code: z
       .string()
       .regex(/^[a-z]{2}$/)
       .optional(),
   })
-  .strict()
-  .refine(
-    (data) => Boolean(data.customer_id) || Boolean(data.email && data.password),
-    {
-      message:
-        "Provide either an existing customer_id or an email and password to create a new employee account.",
-    }
-  );
+  .strict();
 
 export type StoreUpdateEmployeeType = z.infer<typeof StoreUpdateEmployee>;
 export const StoreUpdateEmployee = z

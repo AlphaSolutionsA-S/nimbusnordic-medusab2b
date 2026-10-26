@@ -127,7 +127,6 @@ export type StoreEmployeesResponse = {
 };
 
 export type StoreCreateEmployee = {
-  customer_id?: string;
   spending_limit: number;
   is_admin: boolean;
   company_id: string;

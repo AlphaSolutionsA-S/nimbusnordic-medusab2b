@@ -24,7 +24,7 @@
 
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
-| 01 | Store employee creation accepts only a new account | `01-store-employee-new-account-only.md` | backend | F1, F2, F3; BR 1-3; Also update (backend type, docs) | None | NIMBUS-252 | TODO |
+| 01 | Store employee creation accepts only a new account | `01-store-employee-new-account-only.md` | backend | F1, F2, F3; BR 1-3; Also update (backend type, docs) | None | NIMBUS-252 | DONE |
 | 02 | Storefront request type drops `customer_id` | `02-storefront-employee-type.md` | storefront | Also update (storefront type) | None | NIMBUS-253 | TODO |
 
 ## Scope items with no task

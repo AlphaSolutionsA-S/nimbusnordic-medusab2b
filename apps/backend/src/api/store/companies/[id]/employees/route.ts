@@ -9,10 +9,7 @@ import {
   storeEmployeeProfileQueryFields,
   toStoreEmployee,
 } from "../../company-projection";
-import {
-  createEmployeeAccountWorkflow,
-  createEmployeesWorkflow,
-} from "../../../../../workflows/employee/workflows";
+import { createEmployeeAccountWorkflow } from "../../../../../workflows/employee/workflows";
 import {
   StoreCreateEmployeeType,
   StoreGetEmployeeParamsType,
@@ -45,43 +42,24 @@ export const POST = async (
   const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
   const body = req.validatedBody;
 
-  let createdEmployeeId: string;
-
-  if (body.customer_id) {
-    const { result } = await createEmployeesWorkflow.run({
-      input: {
-        employeeData: {
-          spending_limit: body.spending_limit ?? 0,
-          is_admin: body.is_admin ?? false,
-          company_id: id,
-          customer_id: body.customer_id,
-        },
-        customerId: body.customer_id,
+  const { result } = await createEmployeeAccountWorkflow.run({
+    input: {
+      customerData: {
+        email: body.email,
+        first_name: body.first_name,
+        last_name: body.last_name,
+        phone: body.phone,
       },
-      container: req.scope,
-    });
-    createdEmployeeId = result.id;
-  } else {
-    const { result } = await createEmployeeAccountWorkflow.run({
-      input: {
-        customerData: {
-          email: body.email!,
-          first_name: body.first_name,
-          last_name: body.last_name,
-          phone: body.phone,
-        },
-        password: body.password!,
-        country_code: body.country_code,
-        employeeData: {
-          company_id: id,
-          spending_limit: body.spending_limit ?? 0,
-          is_admin: body.is_admin ?? false,
-        },
+      password: body.password,
+      country_code: body.country_code,
+      employeeData: {
+        company_id: id,
+        spending_limit: body.spending_limit ?? 0,
+        is_admin: body.is_admin ?? false,
       },
-      container: req.scope,
-    });
-    createdEmployeeId = result.employee.id;
-  }
+    },
+    container: req.scope,
+  });
 
   const {
     data: [employee],
@@ -91,7 +69,7 @@ export const POST = async (
       fields: req.queryConfig.fields,
       filters: {
         ...req.filterableFields,
-        id: createdEmployeeId,
+        id: result.employee.id,
       },
     },
     { throwIfKeyNotFound: true }
