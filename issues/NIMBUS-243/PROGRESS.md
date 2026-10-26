@@ -68,3 +68,29 @@
 - Next owner: the human (answer the three open questions in `deviation-report.md`).
 - Handover prompt: "Resume task-dispatcher for NIMBUS-243 at 'After the gate' with these answers to
   deviation-report.md open questions: 1. <a/b/c>, 2. <...>, 3. <...>."
+
+## 2026-10-26 — Gate answered, integrated with develop and merged
+
+- **Owner:** task-dispatcher, on Klaus Petersen's gate answers and his decision to push and merge
+  into `develop` (relayed by the coordinator).
+- **Gate answers:** (1) the two contract cases ship as "code complete, unverified because the local
+  integration environment is not set up"; (2) estimate accepted, NIMBUS-243 to In Progress; (3)
+  wrap-width nit fixed. Recorded in `deviation-report.md`.
+- **After the gate:** gate answers d6412cb; doc re-flow 2e904be (reviewed); documentation writer:
+  no further docs; scope marked Implemented f86bcb4; working files removed b206be0. Branch pushed
+  to `origin/feature/NIMBUS-243`. No pull request opened: the GitHub CLI is not installed on this
+  machine; the PR description is in the dispatcher's run folder. Merged into `develop` with a merge
+  commit (develop had gained only a NIMBUS-209 case-folder entry; no conflicts, no code change, so
+  the finalization results stand).
+- **Verification:** backend unit 83 suites / 1110 tests pass; lint 0 errors; typecheck 22 =
+  baseline; build OK. Storefront lint 0 errors; typecheck 8 = baseline; 3 baseline test failures
+  (`money`, two `product-tabs`); build compiles, page data needs a running backend. HTTP specs
+  `employee-invitation` and `security-boundaries` did not start locally (no `apps/backend/.env`).
+- **Tracker:** NIMBUS-252 and NIMBUS-253 Done. NIMBUS-243 still at Estimation: the transition
+  through "Estimate approved" was refused by the permission system for the agent; gate comment
+  added.
+- **Not yet verified (after deploy):** store `POST /store/companies/<own id>/employees` with
+  `customer_id` answers 400; the portal invite card still creates an employee; Medusa Cloud logs
+  show no unexpected 400s on that route.
+- **Next owner:** Klaus Petersen: move NIMBUS-243 through "Estimate approved" (and on to review),
+  deploy, run the after-deploy checks, then close NIMBUS-243.
