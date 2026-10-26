@@ -6,9 +6,13 @@ import {
 } from "@medusajs/framework/utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
-import type { IBusinessCentralModuleService } from "../../../src/modules/business-central/types";
+import type {
+  BCCustomer,
+  IBusinessCentralModuleService,
+} from "../../../src/modules/business-central/types";
 import { COMPANY_MODULE } from "../../../src/modules/company";
 import type { ICompanyModuleService } from "../../../src/types";
+import { ModuleCompanySpendingLimitResetFrequency } from "../../../src/types";
 import {
   adminHeaders,
   createAdminUser,
@@ -810,6 +814,232 @@ medusaIntegrationTestRunner({
           vat_number: "DK87654321",
         });
         expect(Number(company.credit_limit)).toBe(9876.54);
+      });
+    });
+
+    describe("POST /admin/companies/:id/sync-business-central", () => {
+      beforeEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      const staleAt = new Date(Date.now() - 11 * 60 * 1000);
+
+      const bcCustomer: BCCustomer = {
+        number: "00044444",
+        displayName: "Admin Synced Company",
+        email: "admin-synced@example.com",
+        phoneNumber: "44443333",
+        addressLine1: "Admin Street 4",
+        addressLine2: "",
+        city: "Admin city",
+        state: "",
+        postalCode: "4000",
+        country: "SE",
+        blocked: "Invoice",
+        creditLimit: 2500,
+        taxRegistrationNumber: "SE44444444",
+        currencyCode: "SEK",
+      };
+
+      const originalFields = {
+        name: "Admin Sync Company",
+        email: "admin-sync@example.com",
+        phone: "22223333",
+        address: "Original admin address",
+        city: "Original admin city",
+        zip: "1000",
+        country: "DK",
+        currency_code: "DKK",
+      };
+
+      // Created without employees: the Admin sync starts from the company id alone.
+      async function createCompany(
+        businessCentralCustomerNumber: string | null,
+        name = originalFields.name
+      ): Promise<string> {
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const created = await companyService.createCompanies({
+          ...originalFields,
+          name,
+          state: null,
+          logo_url: "https://example.com/admin-sync.png",
+          business_central_customer_number: businessCentralCustomerNumber,
+          spending_limit_reset_frequency:
+            ModuleCompanySpendingLimitResetFrequency.MONTHLY,
+        });
+        await companyService.updateCompanies({
+          id: created.id,
+          order_api_enabled: true,
+          business_central_synced_at: staleAt,
+        });
+
+        return created.id;
+      }
+
+      async function readCompany(companyId: string) {
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const [company] = await companyService.listCompanies({ id: companyId });
+
+        return company;
+      }
+
+      function spyOnGetCustomer() {
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+
+        return jest.spyOn(bcService, "getCustomer");
+      }
+
+      function syncUrl(companyId: string): string {
+        return `/admin/companies/${companyId}/sync-business-central`;
+      }
+
+      it("updates the company from Business Central and leaves other companies alone", async () => {
+        const companyId = await createCompany("00044444");
+        const otherCompanyId = await createCompany("00055555", "Other Admin Company");
+        const getCustomerSpy = spyOnGetCustomer().mockResolvedValueOnce(
+          bcCustomer
+        );
+
+        const response = await api.post(syncUrl(companyId), {}, adminHeaders);
+
+        expect(response.status).toBe(200);
+        expect(response.data).toEqual({ status: "updated" });
+        expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+        expect(getCustomerSpy).toHaveBeenCalledWith("00044444");
+
+        const read = await api.get(`/admin/companies/${companyId}`, adminHeaders);
+        expect(read.data.company.name).toBe("Admin Synced Company");
+        expect(typeof read.data.company.business_central_synced_at).toBe(
+          "string"
+        );
+        expect(
+          new Date(read.data.company.business_central_synced_at).getTime()
+        ).toBeGreaterThan(staleAt.getTime());
+
+        const company = await readCompany(companyId);
+        expect(company).toMatchObject({
+          order_api_enabled: true,
+          logo_url: "https://example.com/admin-sync.png",
+          spending_limit_reset_frequency: "monthly",
+          business_central_customer_number: "00044444",
+        });
+
+        const otherCompany = await readCompany(otherCompanyId);
+        expect(otherCompany).toMatchObject({
+          ...originalFields,
+          name: "Other Admin Company",
+        });
+        expect(otherCompany.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("returns skipped without a Business Central call for a company with no BC number", async () => {
+        const companyId = await createCompany(null);
+        const getCustomerSpy = spyOnGetCustomer();
+
+        const response = await api.post(syncUrl(companyId), {}, adminHeaders);
+
+        expect(response.status).toBe(200);
+        expect(response.data).toEqual({ status: "skipped" });
+        expect(getCustomerSpy).not.toHaveBeenCalled();
+        const company = await readCompany(companyId);
+        expect(company).toMatchObject(originalFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("returns failed and changes nothing on an expected Business Central error", async () => {
+        const companyId = await createCompany("00044444");
+        spyOnGetCustomer().mockRejectedValueOnce(
+          new MedusaError(
+            MedusaError.Types.UNEXPECTED_STATE,
+            "expected BC failure"
+          )
+        );
+
+        const response = await api.post(syncUrl(companyId), {}, adminHeaders);
+
+        expect(response.status).toBe(200);
+        expect(response.data).toEqual({ status: "failed" });
+        const company = await readCompany(companyId);
+        expect(company).toMatchObject(originalFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("returns 404 without a Business Central call for an unknown company", async () => {
+        const getCustomerSpy = spyOnGetCustomer();
+
+        const response = await api.post(
+          syncUrl("comp_does_not_exist"),
+          {},
+          { ...adminHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toBe(404);
+        expect(getCustomerSpy).not.toHaveBeenCalled();
+      });
+
+      it.each([
+        [{ name: "Injected Name" }],
+        [{ business_central_customer_number: "00099999" }],
+      ])("refuses a body of %j and leaves the company unchanged", async (body) => {
+        const companyId = await createCompany("00044444");
+        const getCustomerSpy = spyOnGetCustomer();
+
+        const response = await api.post(syncUrl(companyId), body, {
+          ...adminHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(400);
+        expect(getCustomerSpy).not.toHaveBeenCalled();
+        const company = await readCompany(companyId);
+        expect(company).toMatchObject({
+          ...originalFields,
+          business_central_customer_number: "00044444",
+        });
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+    });
+
+    describe("GET /admin/companies - Business Central last-synced time", () => {
+      it("returns null for a company that was never synced", async () => {
+        const response = await api.post(
+          "/admin/companies",
+          {
+            name: "Never Synced",
+            email: "never-synced@example.com",
+            currency_code: "DKK",
+          },
+          adminHeaders
+        );
+        const companyId = response.data.companies[0].id as string;
+
+        const single = await api.get(
+          `/admin/companies/${companyId}`,
+          adminHeaders
+        );
+        const list = await api.get("/admin/companies", adminHeaders);
+
+        expect(single.status).toBe(200);
+        expect(single.data.company).toHaveProperty(
+          "business_central_synced_at",
+          null
+        );
+        expect(
+          list.data.companies.find(
+            (company: { id: string }) => company.id === companyId
+          )
+        ).toHaveProperty("business_central_synced_at", null);
       });
     });
 

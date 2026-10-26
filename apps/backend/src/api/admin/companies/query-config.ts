@@ -16,6 +16,7 @@ export const adminCompanyFields = [
   "credit_limit",
   "vat_number",
   "order_api_enabled",
+  "business_central_synced_at",
   "*employees",
 ];
 

@@ -34,9 +34,12 @@ export const syncCompanyFromBusinessCentralWorkflow = createWorkflow(
       }
     );
 
-    const result = transform({ prepared }, ({ prepared }) => ({
-      status: prepared.status === "ready" ? "updated" : prepared.status,
-    }));
+    const result = transform(
+      { prepared },
+      ({ prepared }): SyncCompanyFromBusinessCentralResult => ({
+        status: prepared.status === "ready" ? "updated" : prepared.status,
+      })
+    );
 
     return new WorkflowResponse(result);
   }

@@ -13,3 +13,16 @@
 - Pitfall: a `getCustomer` mock value must be typed `BCCustomer` (`blocked` is a literal union), or
   tsc rejects it.
 - Pitfall: `pnpm` is not on PATH in PowerShell here; `corepack pnpm --filter @b2b-starter/backend lint` works from Git Bash.
+
+## Task 02
+- Route: `apps/backend/src/api/admin/companies/[id]/sync-business-central/route.ts` (`POST`, body `{}` only).
+- Response type `AdminSyncCompanyBusinessCentralResponse` (`{ status: "updated" | "skipped" | "failed" }`)
+  is exported from `apps/backend/src/types/company/http.ts`, and through `src/types`, for the Admin hook.
+- `adminCompanyFields` (`api/admin/companies/query-config.ts`) now includes `business_central_synced_at`.
+  Over HTTP it is an ISO string or `null`; `QueryCompany` still types it as `Date` (plan section 8).
+- The workflow's result transform is now typed `SyncCompanyFromBusinessCentralResult`. Before that,
+  `status` was inferred as `string`.
+- Pitfall: root `AGENTS.md` is at the 32 KB Codex limit. Any `ai/architecture/*.md` growth fails
+  `pnpm ai:check` until the human decides between the limit and a trim.
+- `apps/backend/medusa-config.ts` has an uncommitted notification-local provider change that is
+  not from this branch's tasks. Don't stage it.
