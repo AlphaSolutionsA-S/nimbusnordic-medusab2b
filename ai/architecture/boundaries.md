@@ -35,7 +35,7 @@ No Redis: locks are in memory and don't hold across instances (unverified for pr
 - `lock-single-run`: a lock keeping a sync or batch to one run at a time is acquired in the L7
   trigger starting the workflow: try once, skip if held, release in `finally`.
 - `lock-critical-section`: a lock around changing specific data is acquired by a step whose
-  compensation releases it and released by a later step (or try/finally within one step).
+  compensation releases it and released by a later step (or try/finally in one step).
   `acquireLockStep` skips itself under `runAsStep` unless `executeOnSubWorkflow: true`.
 - `lock-ttl`: every lock sets a TTL longer than the worst-case run, and an `ownerId` where a release
   could free another run's lock.

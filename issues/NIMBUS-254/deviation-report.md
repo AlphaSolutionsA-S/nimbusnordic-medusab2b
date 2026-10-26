@@ -165,6 +165,31 @@ overlap is deliberate.
    before push? Even then, NIMBUS-236 limits what `companies.spec.ts` and
    `security-boundaries.spec.ts` can show.
 
+### Answers (Klaus Petersen, 2026-10-26, relayed by the main session)
+
+1. Option (a): raise `limits.agents_md_bytes` in `ai/harness.json` with sensible headroom, but
+   only after checking whether Codex really truncates at 32 KiB; if it does, stop and report
+   instead of raising.
+   **Result (task-dispatcher, 2026-10-26): it does, so the limit was not raised.** OpenAI's Codex
+   AGENTS.md guide (https://learn.chatgpt.com/docs/agent-configuration/agents-md.md, redirected from
+   developers.openai.com/codex/guides/agents-md) says Codex "stops adding files once the combined
+   size reaches the limit defined by `project_doc_max_bytes` (32 KiB by default)" and "The larger
+   byte limit allows more combined guidance before truncation". The documented way to raise it is
+   `project_doc_max_bytes` in the user's `~/.codex/config.toml`; the page does not mention the
+   project `.codex/config.toml`, and this repo's `.codex/config.toml` does not set it. So every
+   Codex user would read a truncated `AGENTS.md` (the last 162+ bytes, the end of Tier 0) unless
+   each raises it locally.
+   **Corrected answer (Klaus Petersen, 2026-10-26): option (b).** Do not raise the limit. Trim at
+   least 162 bytes, plus headroom, of Tier 0 text in `ai/architecture/*.md` or `ai/AGENTS.md` by
+   tightening wording, without losing any rule, rule ID or meaning; keep the new `decisions.md` row
+   intact; `pnpm ai:check` must pass. Done by fix brief `fix-ai-check-budget.md`.
+2. Commit the uncommitted `apps/backend/medusa-config.ts` change on this branch as its own commit,
+   restoring the local notification provider removed in 0e0231c.
+3. Accepted: the integration and contract cases are "code complete, unverified", proven after
+   deploy.
+4. Jira: the main session moves NIMBUS-254 to Internal review; the dispatcher does not transition
+   it.
+
 ## Verify after deploy
 
 - 01, BC company sync starts from a company id as well as a customer: "see task 02."
