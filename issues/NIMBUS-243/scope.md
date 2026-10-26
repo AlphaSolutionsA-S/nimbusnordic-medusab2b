@@ -1,5 +1,7 @@
 # Company admins can add another person's existing account to their company
 
+> Record of NIMBUS-243, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-26
 **Status:** Implemented
 **Type:** Bug

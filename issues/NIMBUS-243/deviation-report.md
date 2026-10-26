@@ -1,5 +1,7 @@
 # Deviation report: Company admins can add another person's existing account to their company
 
+> Record of NIMBUS-243, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-243`, merge-base `6187799`, commits `4123659` (NIMBUS-252, task 01) and
 `222905a` (NIMBUS-253, task 02). Working tree clean.
 
