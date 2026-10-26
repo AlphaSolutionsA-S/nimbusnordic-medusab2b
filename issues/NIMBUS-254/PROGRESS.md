@@ -91,3 +91,18 @@
 - Handover prompt: "Push `feature/NIMBUS-254` (and the two unpushed `develop` commits 509c986 and
   374c670 it builds on), open the PR to `develop` from the saved description, then run the
   'Verify after deploy' checks in `issues/NIMBUS-254/deviation-report.md`."
+
+## 2026-10-26 — Pushed and merged into develop
+
+- **Owner:** coordinator, on Klaus Petersen's decision to push and merge into `develop`.
+- **Integration:** `feature/NIMBUS-254` pushed to origin (with the scope and plan commits 509c986
+  and 374c670 it builds on) and merged into `develop` with a merge commit. `origin/develop` had no
+  commits the branch lacked, so the finalization results stand. No pull request opened: the GitHub
+  CLI is not installed on this machine; the PR description is in the dispatcher's run folder.
+- **Tracker:** NIMBUS-254 in Internal review; NIMBUS-258, NIMBUS-259 and NIMBUS-260 Done.
+- **Not yet verified (after deploy):** an Admin sync of a company with a BC customer number updates
+  its "Last synced from Business Central" time; the action is disabled without a BC number; the
+  storefront company card shows the new values within about 120 s; the restored
+  `notification-local` provider works on Medusa Cloud.
+- **Next owner:** Klaus Petersen: deploy, run the after-deploy checks in `deviation-report.md`, then
+  close NIMBUS-254.
