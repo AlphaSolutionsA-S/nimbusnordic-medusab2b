@@ -53,3 +53,18 @@
 - Next owner: the human (separate go-ahead to start task-dispatcher).
 - Handover prompt: "Dispatch NIMBUS-243 (issues/NIMBUS-243/manifest.md) on feature/NIMBUS-243 from
   develop. Integration specs fail locally with 401 on login (NIMBUS-236): follow plan.md section 10."
+
+## 2026-10-26 — Implemented, at the gate before push
+
+- Outcome: task-dispatcher ran both tasks on `feature/NIMBUS-243` (from develop 6187799). Task 01
+  (NIMBUS-252) committed 4123659, task 02 (NIMBUS-253) committed 222905a; both reviewed and
+  approved, sub-tasks Done in Jira. Consolidation: no changes. Integration review approved;
+  `deviation-report.md` written, no design findings. Backend unit 1110/1110, lint 0 errors,
+  typecheck 22 = baseline, build ok. Storefront 3 baseline test failures only, typecheck 8 =
+  baseline, build compiles but needs a running backend for page data. The two touched contract
+  specs did not start (no `apps/backend/.env`; BC test-environment guard refused): code complete,
+  unverified. NIMBUS-243 left at Estimation (only path to In Progress is "Estimate approved").
+  Not pushed.
+- Next owner: the human (answer the three open questions in `deviation-report.md`).
+- Handover prompt: "Resume task-dispatcher for NIMBUS-243 at 'After the gate' with these answers to
+  deviation-report.md open questions: 1. <a/b/c>, 2. <...>, 3. <...>."
