@@ -19,6 +19,11 @@ import {
   useDeleteCompany,
   useSyncCompanyFromBusinessCentral,
 } from "../../../hooks/api";
+import {
+  CompanyApprovalSettingsDrawer,
+  CompanyCustomerGroupDrawer,
+  CompanyUpdateDrawer,
+} from "./";
 
 const SYNC_OUTCOME_TOASTS: Record<
   AdminSyncCompanyBusinessCentralResponse["status"],
@@ -36,11 +41,6 @@ const SYNC_OUTCOME_TOASTS: Record<
         "Business Central could not be reached or returned an error, so nothing was changed.",
     }),
 };
-import {
-  CompanyApprovalSettingsDrawer,
-  CompanyCustomerGroupDrawer,
-  CompanyUpdateDrawer,
-} from "./";
 
 export const CompanyActionsMenu = ({
   company,

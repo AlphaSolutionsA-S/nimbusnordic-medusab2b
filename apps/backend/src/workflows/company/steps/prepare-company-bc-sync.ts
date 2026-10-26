@@ -9,8 +9,8 @@ import type { IBusinessCentralModuleService } from "../../../modules/business-ce
 import type { ModuleUpdateCompany } from "../../../types";
 
 export type PrepareCompanyBcSyncInput =
-  | { customerId: string; expectedCompanyId?: string }
-  | { companyId: string };
+  | { customerId: string; expectedCompanyId?: string; companyId?: never }
+  | { companyId: string; customerId?: never; expectedCompanyId?: never };
 
 type CompanyBcKey = {
   companyId: string | null;
@@ -67,7 +67,7 @@ export const prepareCompanyBcSyncStep = createStep(
     let companyId: string | null;
     let bcCustomerNumber: string | null;
 
-    if ("companyId" in input) {
+    if (input.companyId !== undefined) {
       const {
         data: [company],
       } = await query.graph({
