@@ -180,7 +180,7 @@ medusaIntegrationTestRunner({
       ]);
     });
 
-    it("stages no invitation when the store links an existing customer", async () => {
+    it("refuses with 400 when the store tries to link an existing customer", async () => {
       const { customer } = await createStoreUser({
         api,
         storeHeaders: publicHeaders,
@@ -188,7 +188,12 @@ medusaIntegrationTestRunner({
       });
       const response = await storeCreate({ customer_id: customer.id });
 
-      expect(response.status).toBe(200);
+      expect(response.status).toBe(400);
+      expect(
+        await container
+          .resolve<ICompanyModuleService>(COMPANY_MODULE)
+          .listEmployees({ customer_id: customer.id })
+      ).toHaveLength(0);
       expect(await receivedBeforeControl()).toEqual([]);
     });
 

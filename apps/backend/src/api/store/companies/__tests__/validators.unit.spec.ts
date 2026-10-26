@@ -20,4 +20,18 @@ describe("StoreCreateEmployee", () => {
   it.each([["to"], ["company_country"]])("rejects the unknown field %s", (field) => {
     expect(StoreCreateEmployee.safeParse({ ...account, [field]: "se" }).success).toBe(false);
   });
+
+  it.each([
+    ["alone", { customer_id: "cus_existing" }],
+    ["with a new account", { ...account, customer_id: "cus_existing" }],
+  ])("refuses linking an existing customer %s", (_label, body) => {
+    expect(StoreCreateEmployee.safeParse(body).success).toBe(false);
+  });
+
+  it.each([
+    ["email", { password: account.password }],
+    ["password", { email: account.email }],
+  ])("requires %s for the new account", (_field, body) => {
+    expect(StoreCreateEmployee.safeParse(body).success).toBe(false);
+  });
 });
