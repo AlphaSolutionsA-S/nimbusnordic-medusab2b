@@ -120,3 +120,9 @@ None. Production Business Central behaviour is a deploy-time check (Dependencies
 - UI translation import through the Admin before the storefront release.
 - Related: NIMBUS-170 (BC sales orders and invoices merged in order history), NIMBUS-137 (order
   detail).
+
+## Documentation
+
+- [docs/architecture/business-central-order-detail.md](../../docs/architecture/business-central-order-detail.md) — BC order detail read and line display (created)
+
+AI base files updated: none (the `decisions.md` row and the Tier 0 trim were made by the tasks and the gate fix, not by this step)
