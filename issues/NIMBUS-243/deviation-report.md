@@ -123,6 +123,15 @@ database (contract cases did not run), and the deployed behaviour (below).
 3. Fix the wrap-width nit in `docs/architecture/store-access.md:102` in the committer's fix commit,
    or leave it?
 
+Answers (Klaus Petersen, 2026-10-26, relayed by the coordinator):
+
+1. **Answer:** option (b). The two contract cases are recorded as "code complete, unverified
+   because the local integration environment is not set up"; the unit tests and the after-deploy
+   check carry the verification.
+2. **Answer:** transition NIMBUS-243 through "Estimate approved" to In Progress; the estimate is
+   accepted.
+3. **Answer:** fix the nit.
+
 ## Verify after deploy
 
 - 01 Store employee creation accepts only a new account: store `POST /store/companies/<own company id>/employees` with `customer_id` answers 400, and the portal invite card on one test company still creates an employee (new row in `employee`).
