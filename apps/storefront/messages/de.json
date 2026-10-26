@@ -429,7 +429,7 @@
       "itemFallbackLabel": "Artikel",
       "returnQuantityAriaLabel": "Rücksendemenge für {item}",
       "itemLowercaseFallbackLabel": "Artikel",
-      "sizeLabel": "Größe",
+      "size": "Größe: {size}",
       "selectReasonPlaceholder": "Grund auswählen",
       "cancelLabel": "Abbrechen",
       "submitReturnRequestLabel": "Rücksendeanfrage senden"

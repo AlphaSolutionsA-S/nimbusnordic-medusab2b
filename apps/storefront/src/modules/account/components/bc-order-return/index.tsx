@@ -221,7 +221,7 @@ const BcOrderReturn = ({ order, reasons, children }: BcOrderReturnProps) => {
                       {display.description && <div>{display.description}</div>}
                       {display.size && (
                         <div className="text-ui-fg-subtle">
-                          {t("sizeLabel")}: {display.size}
+                          {t("size", { size: display.size })}
                         </div>
                       )}
                     </td>

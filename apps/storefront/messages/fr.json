@@ -429,7 +429,7 @@
       "itemFallbackLabel": "Article",
       "returnQuantityAriaLabel": "Quantité à retourner pour {item}",
       "itemLowercaseFallbackLabel": "article",
-      "sizeLabel": "Taille",
+      "size": "Taille : {size}",
       "selectReasonPlaceholder": "Sélectionner un motif",
       "cancelLabel": "Annuler",
       "submitReturnRequestLabel": "Envoyer la demande de retour"

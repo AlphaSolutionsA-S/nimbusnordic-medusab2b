@@ -429,7 +429,7 @@
       "itemFallbackLabel": "Item",
       "returnQuantityAriaLabel": "Return quantity for {item}",
       "itemLowercaseFallbackLabel": "item",
-      "sizeLabel": "Size",
+      "size": "Size: {size}",
       "selectReasonPlaceholder": "Select a reason",
       "cancelLabel": "Cancel",
       "submitReturnRequestLabel": "Submit return request"

@@ -141,7 +141,7 @@ const BcOrderDetailTemplate = async ({ order }: BcOrderDetailTemplateProps) => {
                       {display.description && <div>{display.description}</div>}
                       {display.size && (
                         <div className="text-ui-fg-subtle">
-                          {tBcOrderReturn("sizeLabel")}: {display.size}
+                          {tBcOrderReturn("size", { size: display.size })}
                         </div>
                       )}
                     </td>

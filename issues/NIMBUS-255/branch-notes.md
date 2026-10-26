@@ -26,3 +26,9 @@
 - Direct `pnpm --filter … exec eslint <files>` crashes on a jiti version; use the `lint` script.
 - `AGENTS.md` (generated from Tier 0) is at the 32768-byte Codex limit; any Tier 0 addition makes
   `ai:check` fail until something is trimmed.
+
+## fix-01 Size label as one ICU message
+
+- `Account.bcOrderReturn.sizeLabel` replaced by `Account.bcOrderReturn.size` (`"Size: {size}"`, per
+  locale punctuation, fr `"Taille : {size}"`) in all 8 `messages/*.json`; both components render
+  `t("size", { size: display.size })`. The DB import before release uses the new key.
