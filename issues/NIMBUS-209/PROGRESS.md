@@ -49,3 +49,27 @@
 - Next owner: `implementation-planner` (Klaus starts it).
 - Handover prompt: "Plan NIMBUS-209 from issues/NIMBUS-209/scope.md; the open questions are answered
   in PROGRESS.md."
+
+## 2026-10-26 — implemented, merged, reverted and parked (recorded afterwards)
+
+- Outcome: recorded on 2026-10-26 by the main session at Klaus's request, from git history; the
+  entries below "open questions answered" were removed from this file by the revert.
+  - The full pipeline ran on 2026-10-22: plan approved (154c4e1), tasks NIMBUS-211..214 committed
+    (ed3cf4b, 137a02f, a0d9438, 2d8147d), consolidation ba0226c, gate passed, docs updated, branch
+    pushed. The pre-revert records (`plan.md`, `deviation-report.md` and the full progress log) can
+    be read at commit 51c1d6d (`git show 51c1d6d:issues/NIMBUS-209/plan.md`).
+  - Merged as PR #3 (eb41388, 2026-10-22 18:43). On Medusa Cloud the storefront then failed: Cloud
+    builds it with `@opennextjs/cloudflare` 1.19.8, which cannot serve Next.js 16.4 (every request
+    fails loading `server/preview-props.json`). An adapter pin to 1.20.12 or later (08ffb45) was
+    tried and reverted with the upgrade; the revert message says main stays on Next.js 15 "until
+    Cloud ships adapter 1.20.12 or later".
+  - Reverted the same evening (e3cfc50 reverts the merge; 2ad09f8 reverts the pin). `develop` and
+    `main` are back on Next.js 15.5.28. The revert also removed this upgrade's changes to
+    `docs/architecture/store-access.md` and `country-languages.md` and set `scope.md` back.
+  - Jira: NIMBUS-209 is Parked; its sub-tasks NIMBUS-211..214 stay Done although their work is
+    reverted. NIMBUS-210 (proxy.ts) is Parked for the same reason.
+- Next owner: none until Medusa Cloud ships `@opennextjs/cloudflare` 1.20.12 or later for the
+  storefront build.
+- Handover prompt: "Unpark NIMBUS-209: confirm Medusa Cloud's storefront adapter is 1.20.12 or
+  later, then re-apply the reverted merge eb41388 (revert e3cfc50) on a new branch and re-verify on
+  a Medusa Cloud preview before merging."
