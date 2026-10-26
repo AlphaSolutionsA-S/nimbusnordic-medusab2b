@@ -1,5 +1,7 @@
 # Deviation report: Translated password-reset and employee-invitation emails (NIMBUS-162 + NIMBUS-242)
 
+> Record of NIMBUS-162, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-162`, merge-base `13e861e`, HEAD `3c9509d` (8 commits: tasks 01–06, fix 01,
 consolidation). Reviewed 2026-10-25 by the integration reviewer.
 

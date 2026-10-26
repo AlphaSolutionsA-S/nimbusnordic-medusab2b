@@ -1,5 +1,7 @@
 # Multi-lingual transactional emails: password reset and employee invitation
 
+> Record of NIMBUS-162, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-24
 **Status:** Implemented (scope approved by Klaus Petersen on 2026-10-24)
 **Type:** Story

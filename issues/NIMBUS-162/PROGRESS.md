@@ -62,3 +62,11 @@
 - **Tracker:** NIMBUS-162 (Estimate approved, Start work, Finish work) and NIMBUS-242 (Scope approved, Estimate approved, Start work, Finish work) are in Internal review; gate comments 255294 and 255295.
 - **Next owner:** Klaus Petersen: confirm or reject fix 02's extra trims and table reformatting. Then the dispatcher reviews and commits fix 02 and continues with docs, PR description, `scope.md` Implemented and cleanup.
 - **Handover prompt:** "Resume the task-dispatcher for issues/NIMBUS-162 after the gate with Klaus's decision on fix 02 (fix-02-merge-email-registry-rows.md, uncommitted). Then documentation-writer, committer PR description, scope Implemented, cleanup. Merge-base 13e861e. Do not push."
+
+## 2026-10-26 — Branch ready for review (not pushed)
+- **Owner:** task-dispatcher, after Klaus Petersen accepted fix 02 as it is (2026-10-26).
+- **Outcome:** Fix 02 reviewed and committed (bf4d168); docs (afbf2ae); NIMBUS-250 and NIMBUS-251 referenced (09a09f5); scope marked Implemented (4ca8a68); working files removed by cleanup. PR description written to the run scratchpad (not opened). `develop` was rebased and pushed by the coordinator: the merge-base is now 2ea3f79 (was 13e861e, same content), and `develop` gained NIMBUS-231 commits including a Tier 0 trim (5b6efac), so integrating this branch is expected to conflict in `ai/architecture/*.md`, `AGENTS.md` and `.github/copilot-instructions.md`.
+- **Verification:** `pnpm ai:check` passes on the branch (AGENTS.md 32663 bytes). Earlier results stand (see the 2026-10-24/25 entries). Nothing deployed or sent.
+- **Tracker:** NIMBUS-162 and NIMBUS-242 in Internal review; "branch ready for review" comments added.
+- **Next owner:** Klaus Petersen: decide on integrating the branch with `develop` (rebase or merge, resolving the Tier 0 conflicts and re-running `pnpm ai:check`), then give the push and PR go-ahead.
+- **Handover prompt:** "Integrate feature/NIMBUS-162 with develop (merge-base 2ea3f79), resolve conflicts in ai/architecture/*.md, AGENTS.md and .github/copilot-instructions.md, re-run pnpm ai:check --fix and the finalization checks, then push and open the PR only on Klaus's go-ahead."
