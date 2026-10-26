@@ -71,6 +71,7 @@ export const POST = async (
           phone: body.phone,
         },
         password: body.password!,
+        country_code: body.country_code,
         employeeData: {
           company_id: id,
           spending_limit: body.spending_limit ?? 0,

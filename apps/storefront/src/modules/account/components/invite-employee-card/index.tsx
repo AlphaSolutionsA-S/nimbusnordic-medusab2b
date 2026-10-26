@@ -6,10 +6,14 @@ import Input from "@/modules/common/components/input"
 import { QueryCompany } from "@/types"
 import { Container, Text, toast } from "@medusajs/ui"
 import { useTranslations } from "next-intl"
+import { useParams } from "next/navigation"
 import { useState } from "react"
+
+const TWO_LETTER_COUNTRY = /^[a-z]{2}$/
 
 const InviteEmployeeCard = ({ company }: { company: QueryCompany }) => {
   const t = useTranslations("Account.inviteEmployeeCard")
+  const { countryCode } = useParams<{ countryCode: string }>()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -28,6 +32,12 @@ const InviteEmployeeCard = ({ company }: { company: QueryCompany }) => {
         password: formData.get("password") as string,
         spending_limit: 0,
         is_admin: false,
+        // The middleware lets through segments that only contain a region code
+        // (e.g. "dkx"); the backend rejects those, so omit them and let it use
+        // the company country (NIMBUS-249).
+        ...(TWO_LETTER_COUNTRY.test(countryCode)
+          ? { country_code: countryCode }
+          : {}),
       })
 
       toast.success(t("employeeInvitedToast"))

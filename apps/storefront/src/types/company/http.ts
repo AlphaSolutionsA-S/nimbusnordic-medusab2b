@@ -37,6 +37,7 @@ export type StoreCreateEmployee = {
   email?: string
   phone?: string
   password?: string
+  country_code?: string
 }
 
 export type StoreUpdateEmployee = {

@@ -1,7 +1,8 @@
 # Store cart and order access
 
-**Last updated:** 2026-10-24
-**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204), NIMBUS-133, NIMBUS-207
+**Last updated:** 2026-10-26
+**Related work:** NIMBUS-177 (with the gate fixes NIMBUS-202 and NIMBUS-204), NIMBUS-133, NIMBUS-207,
+NIMBUS-162 (translated reset email), NIMBUS-242 (employee invitation email)
 
 ## Overview
 
@@ -56,11 +57,17 @@ Recovery uses Medusa's Auth endpoints and proof storage:
   one; successful use refuses sequential replay. Company membership and roles are preserved.
 
 The `auth.password_reset` subscriber starts
-`workflows/customer/workflows/send-password-reset.ts` for customer events. Its preparation step
-builds an English email and a `/<country>/reset-password?token=...` link from the first configured
-`STORE_CORS` origin, defaulting the country to `dk`. The URL carries no email address. The workflow
-uses core `sendNotificationsStep` on channel `email` and the existing Notification provider;
-provider configuration and mailbox delivery remain deployment concerns.
+`workflows/customer/workflows/send-password-reset.ts` for customer events. The request country
+chooses the email language and link country (`workflows/transactional-email/utils/email-language.ts`):
+a country in a region gets its assigned language (English when unassigned) and its own link;
+anything else gets English and `dk`. The texts are the `Emails.passwordReset.*` translation keys,
+each falling back to English and then to a built-in English copy, every text HTML-escaped;
+fallbacks are reported to Missing texts with source `email:customer-password-reset` after sending,
+and a failed report never fails the email. The link `/<country>/reset-password?token=...` is built
+from the first configured `STORE_CORS` origin and carries no email address; notification `data`
+holds `reset_url` and `locale`. The workflow uses core `sendNotificationsStep` on channel `email`
+and the existing Notification provider; provider configuration and mailbox delivery remain
+deployment concerns.
 
 Accepted limits: Medusa's existing proof consumption does not guarantee a single winner for
 simultaneous submissions. Notification data persists the reset URL, and the configured local
@@ -74,12 +81,42 @@ has not been verified for direct backend calls or across instances. Repeated req
 the latest proof and trigger further notifications. This unmet abuse-protection requirement and
 its residual risk were explicitly accepted/deferred for NIMBUS-133 on 2026-10-23.
 
+The link origin check is shared by both emails in
+`workflows/transactional-email/utils/storefront-origin.ts` (https, or http on a local host; no
+credentials).
+
 Runtime UI translations come from the database. Before release, import the recovery keys using
 the checklist in `apps/storefront/src/lib/i18n/README.md`; editing message JSON alone does not
 publish them. After deployment, use a controlled account and mailbox to verify receipt, trusted
 country link, expired/used-link guidance, successful reset, sequential replay refusal, refusal of
 the old password, ordinary login with the new password, and published UI keys. Local HTTP and
 component tests do not prove mailbox delivery or deployed browser behaviour.
+
+### Employee invitation email
+
+Creating an employee account with email and password (`POST /store/companies/:id/employees`, company
+admin, or `POST /admin/companies/:id/employees`) runs `createEmployeeAccountWorkflow`, which stages
+`employee.invited` with `customer_id`, `company_id` and the page `country_code` (null from Admin).
+Medusa releases it only when the account creation succeeds. Linking an existing `customer_id` sends
+nothing. The store route accepts `country_code` only as a lower-case two-letter code (400
+otherwise); the storefront invite card (`modules/account/components/invite-employee-card`) sends
+the page's `countryCode` only when it has that form and otherwise omits it, so the company country
+decides. The `subscribers/employee-invited.ts` subscriber runs
+`workflows/employee/workflows/send-employee-invitation.ts`: it reads the customer's email and first
+name and the company's name and country by id (the event carries no address), chooses the language
+with the page country first and the company country second, and builds the email in
+`workflows/employee/utils/employee-invitation-notification.ts` from the
+`Emails.employeeInvitation.*` keys (`greetingWithoutName` when the first name is empty), with the
+same fallback, escaping and reporting as the reset email under source `email:employee-invitation`.
+The email has one link, `/<country>/account` on the `STORE_CORS` origin, and no password, token or
+reset link; notification `to` is the customer's email and `data` holds `login_url` and `locale`. A
+failed send fails only the email workflow (logged by the event bus); the account and the route's
+200 response stand.
+
+Accepted limit: the configured local Notification provider logs each notification's recipient,
+template and data at info level, so every invitation logs the invited address and the login link
+(no credential). This was accepted for NIMBUS-242 on 2026-10-25, as the logged reset link was for
+NIMBUS-133.
 
 Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/storefront/src/`.
 

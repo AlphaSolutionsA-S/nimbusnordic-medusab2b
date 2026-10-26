@@ -1,10 +1,13 @@
 import jwt from 'jsonwebtoken';
 import { medusaIntegrationTestRunner, TestEventUtils } from '@medusajs/test-utils';
 import { generateResetPasswordTokenWorkflow } from '@medusajs/core-flows';
-import type { IAuthModuleService, IEventBusModuleService, INotificationModuleService, MedusaContainer } from '@medusajs/framework/types';
+import type { IAuthModuleService, IEventBusModuleService, INotificationModuleService, IRegionModuleService, MedusaContainer } from '@medusajs/framework/types';
 import { AuthWorkflowEvents, Modules } from '@medusajs/framework/utils';
 import { createStoreUser } from '../../utils/admin';
 import { generatePublishableKey, generateStoreHeaders } from '../../utils/store';
+import { STOREFRONT_TRANSLATION_MODULE } from '../../../src/modules/storefront-translation';
+import type StorefrontTranslationModuleService from '../../../src/modules/storefront-translation/service';
+import type { MessageDocument } from '../../../src/types/storefront-translation';
 import { sendCustomerPasswordResetWorkflow } from '../../../src/workflows/customer/workflows/send-password-reset';
 
 jest.setTimeout(120_000);
@@ -115,7 +118,82 @@ medusaIntegrationTestRunner({
       expect((await api.post('/auth/customer/emailpass', { email, password })).status).toBe(200);
     });
 
+    const translations = () => container.resolve<StorefrontTranslationModuleService>(STOREFRONT_TRANSLATION_MODULE);
+
+    async function activeLanguage(locale: string, messages: MessageDocument) {
+      await translations().mutateDocument({
+        operation: 'import',
+        input: { locale, expected_version: null, mode: 'replace', messages, confirm_removed: false },
+      });
+      await translations().mutateDocument({ operation: 'activate', locale, expected_version: 1, is_active: true });
+    }
+
+    // Region with se and dk; se is assigned Swedish, whose document lacks the link label.
+    async function swedishForSweden() {
+      await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+        name: 'Nordics', currency_code: 'dkk', countries: ['se', 'dk'],
+      });
+      await activeLanguage('en', { Emails: { passwordReset: { subject: 'Reset your password (en)' } } });
+      await activeLanguage('sv', { Emails: { passwordReset: {
+        subject: 'Återställ ditt lösenord', intro: 'Vi har fått en begäran.', expiry: 'Länken går ut om 15 minuter.',
+      } } });
+      await translations().bootstrapCountryLanguages({ se: 'sv' });
+    }
+
+    async function runReset(country: string) {
+      const token = await proof();
+      const input = { entity_id: email, actor_type: 'customer', token, metadata: { country_code: country } };
+      const { result } = await sendCustomerPasswordResetWorkflow(container).run({ input });
+      const notifications = container.resolve<INotificationModuleService>(Modules.NOTIFICATION);
+      return notifications.retrieveNotification(result[0].id);
+    }
+
+    it('sends the reset email in the language assigned to the request country', async () => {
+      await swedishForSweden();
+      const stored = await runReset('se');
+      expect(stored).toMatchObject({ channel: 'email', status: 'success', to: email });
+      expect(stored.data?.locale).toBe('sv');
+      expect(new URL(String(stored.data?.reset_url)).pathname).toBe('/se/reset-password');
+    });
+
+    it('sends English with the dk link for a country outside every region', async () => {
+      await swedishForSweden();
+      const stored = await runReset('no');
+      expect(stored.data?.locale).toBe('en');
+      expect(new URL(String(stored.data?.reset_url)).pathname).toBe('/dk/reset-password');
+    });
+
+    it('reports a text missing in the chosen language under the email source, without personal data', async () => {
+      await swedishForSweden();
+      const stored = await runReset('se');
+      const token = new URL(String(stored.data?.reset_url)).searchParams.get('token');
+      const rows = await translations().listTranslationMissingKeys({ locale: 'sv' });
+      expect(rows).toEqual([expect.objectContaining({
+        locale: 'sv', key: 'Emails.passwordReset.linkLabel', last_page_path: 'email:customer-password-reset',
+      })]);
+      const serialized = JSON.stringify(await translations().listTranslationMissingKeys({}));
+      expect(serialized).not.toContain(email);
+      expect(serialized).not.toContain(String(token));
+      expect(serialized).not.toContain('reset-password');
+    });
+
+    it('still sends the email when reporting the fallbacks fails', async () => {
+      await swedishForSweden();
+      const failed = jest.spyOn(translations(), 'reportMissing').mockRejectedValue(new Error('report store down'));
+      try {
+        const stored = await runReset('se');
+        expect(failed).toHaveBeenCalled();
+        expect(stored).toMatchObject({ channel: 'email', status: 'success' });
+        expect(stored.data?.locale).toBe('sv');
+      } finally {
+        failed.mockRestore();
+      }
+    });
+
     it('dispatches a usable reset link through the registered subscriber after a public request', async () => {
+      await container.resolve<IRegionModuleService>(Modules.REGION).createRegions({
+        name: 'Nordics', currency_code: 'dkk', countries: ['se', 'dk'],
+      });
       const eventBus = container.resolve<IEventBusModuleService>(Modules.EVENT_BUS);
       const notifications = container.resolve<INotificationModuleService>(Modules.NOTIFICATION);
       await Promise.all([
@@ -148,6 +226,7 @@ medusaIntegrationTestRunner({
       expect(resetUrl.origin).toBe('https://shop.example.test');
       expect(resetUrl.pathname).toBe('/dk/reset-password');
       expect(resetUrl.searchParams.get('token')).toBe(token);
+      expect(stored.data?.locale).toBe('en');
       const skipped = await sendCustomerPasswordResetWorkflow(container).run({ input: { ...input, actor_type: 'user' } });
       expect(skipped.result).toEqual([]);
     });

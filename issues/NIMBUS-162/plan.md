@@ -1,5 +1,7 @@
 # Plan: Translated password-reset and employee-invitation emails (NIMBUS-162 + NIMBUS-242)
 
+> Record of NIMBUS-162, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Scope:** `issues/NIMBUS-162/scope.md` (approved 2026-10-24) and `issues/NIMBUS-242/feature.md`
 (decided rules, acceptance criteria and English text). Planned together on Klaus Petersen's
 instruction (2026-10-24); one branch, `feature/NIMBUS-162` from `develop`. Backend, plus one

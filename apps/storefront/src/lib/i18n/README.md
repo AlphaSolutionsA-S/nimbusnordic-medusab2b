@@ -74,7 +74,11 @@ environment's database on **Translations → Import**. Import all eight supplied
 and translate the same keys for any additional active language. Confirm the country's
 assigned language is active, refresh the portal, and check the login link, request
 acknowledgement, password validation, invalid-link message and reset success. JSON files
-remain import material; they are never a runtime fallback. Mail content stays English.
+remain import material; they are never a runtime fallback. Translated emails (NIMBUS-162) need
+the `Emails` namespace (`passwordReset` and, for the employee invitation of NIMBUS-242,
+`employeeInvitation`) merged the same way in every environment (draft translations, reviewed by
+Nimbus in the editor); until then emails use the built-in English copy and the keys appear in
+Missing texts with an `email:` source.
 
 No code change or deployment is needed (NIMBUS-176):
 
