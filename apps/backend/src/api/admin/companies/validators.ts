@@ -54,6 +54,12 @@ export const AdminUpdateCompany = z
   })
   .strict();
 
+// Every synced value comes from Business Central; the client may send nothing (NIMBUS-254).
+export type AdminSyncCompanyBusinessCentralType = z.infer<
+  typeof AdminSyncCompanyBusinessCentral
+>;
+export const AdminSyncCompanyBusinessCentral = z.object({}).strict();
+
 export type AdminGetCustomerGroupParamsType = z.infer<
   typeof AdminGetCustomerGroupParams
 >;

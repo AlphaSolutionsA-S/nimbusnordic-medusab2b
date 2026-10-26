@@ -59,3 +59,50 @@
   files are committed locally on `develop` and not pushed.
 - Next owner: the human (separate go-ahead), then `task-dispatcher`.
 - Handover prompt: as in the previous entry.
+
+## 2026-10-26 — task-dispatcher (stopped at the implementation gate)
+
+- Outcome: branch `feature/NIMBUS-254` from local `develop` (374c670), not pushed. Tasks 01–03 done
+  and reviewed: 8286447 (NIMBUS-258), ec89c92 (NIMBUS-259), e65ed1c (NIMBUS-260); consolidation
+  9e764aa. Backend `test:unit` 1114/1114, `test:admin` 79/79, lint 0 errors, typecheck 22 = baseline,
+  build passes. `test:integration:http` for the three specs aborts in globalSetup (no BC test
+  environment / `.env`): code complete, unverified. `pnpm ai:check` fails (AGENTS.md 162 bytes over
+  its limit after the new `decisions.md` row). Integration review approved, no wiring findings;
+  `deviation-report.md` has three open questions. Jira: sub-tasks Done with closing comments;
+  NIMBUS-254 left in Estimation ("Estimate approved" is a human decision), with a comment.
+  `apps/backend/medusa-config.ts` has an uncommitted change not from this branch.
+- Next owner: Klaus Petersen (answer the deviation report's open questions).
+- Handover prompt: "Resume task-dispatcher on `issues/NIMBUS-254/` at 'After the gate' with these
+  answers to `deviation-report.md` open questions 1–3: <answers>."
+
+## 2026-10-26 — task-dispatcher (after the gate; branch ready for push)
+
+- Outcome: the human's answers are recorded in `deviation-report.md`. 1: option (b). Codex truncates
+  at 32 KiB, per OpenAI's docs, so the limit was not raised. Tier 0 wording was trimmed instead
+  (98cf6f7). Root `AGENTS.md` went from 32930 to 32661 bytes, and `pnpm ai:check` passes. 2: the
+  `notification-local` provider was restored in its own commit (5b0d6a8). 3: integration cases are
+  accepted as code complete and unverified, with proof after deploy. Docs:
+  `docs/architecture/business-central-company-sync.md` (f4e042f). After the fixes, the build
+  passes and typecheck is 22, the same as the baseline. A PR description is in the run scratchpad.
+  `scope.md` is marked Implemented, and the pipeline working files were removed. Jira: the
+  implementation gate comment is on NIMBUS-254. The main session handles the transition to Internal
+  review.
+- Next owner: Klaus Petersen (push go-ahead; then the after-deploy checks in `deviation-report.md`).
+- Handover prompt: "Push `feature/NIMBUS-254` (and the two unpushed `develop` commits 509c986 and
+  374c670 it builds on), open the PR to `develop` from the saved description, then run the
+  'Verify after deploy' checks in `issues/NIMBUS-254/deviation-report.md`."
+
+## 2026-10-26 — Pushed and merged into develop
+
+- **Owner:** coordinator, on Klaus Petersen's decision to push and merge into `develop`.
+- **Integration:** `feature/NIMBUS-254` pushed to origin (with the scope and plan commits 509c986
+  and 374c670 it builds on) and merged into `develop` with a merge commit. `origin/develop` had no
+  commits the branch lacked, so the finalization results stand. No pull request opened: the GitHub
+  CLI is not installed on this machine; the PR description is in the dispatcher's run folder.
+- **Tracker:** NIMBUS-254 in Internal review; NIMBUS-258, NIMBUS-259 and NIMBUS-260 Done.
+- **Not yet verified (after deploy):** an Admin sync of a company with a BC customer number updates
+  its "Last synced from Business Central" time; the action is disabled without a BC number; the
+  storefront company card shows the new values within about 120 s; the restored
+  `notification-local` provider works on Medusa Cloud.
+- **Next owner:** Klaus Petersen: deploy, run the after-deploy checks in `deviation-report.md`, then
+  close NIMBUS-254.

@@ -13,7 +13,7 @@ quotes, Business Central sync, an order API, DB-backed UI translations), a Next.
 Payload CMS. pnpm 9.15 workspace (`apps/*`), Turborepo, Node 22+.
 
 | App | Path | Stack |
-|-----|------|-------|
+|---|---|---|
 | Backend + Admin (`@b2b-starter/backend`) | `apps/backend` | Medusa 2.21.0, TypeScript (only `strictNullChecks`), PostgreSQL |
 | Storefront (`@b2b-starter/storefront`) | `apps/storefront` | Next.js 15.5, React 19, Medusa JS SDK, next-intl 4, TypeScript strict |
 | CMS (`@dtc/cms`) | `apps/cms` | Payload 3.90 on Next.js 16, own PostgreSQL |
@@ -24,10 +24,10 @@ Hosting: Medusa Cloud (backend, storefront); Azure App Service (CMS).
 ### Commands
 
 Run from the repo root, one command at a time. `<path>` is a test file path or pattern; `<f>` is
-`pnpm --filter <package>` with the package from the table above.
+`pnpm --filter <package>` with the package from the table.
 
 | App | Scoped tests | Full tests |
-|-----|--------------|------------|
+|---|---|---|
 | Backend | `<f> test:unit -- <path>`; admin: `<f> test:admin -- <path>` | `pnpm test:unit`, `pnpm test:integration:modules`, `pnpm test:integration:http` (local Postgres), `<f> test:admin` |
 | Storefront | `<f> test -- <path>` | `<f> test`; visual: `<f> test:visual` |
 | CMS | `<f> test -- <path>` | `<f> test` |
@@ -40,10 +40,10 @@ Architecture check: none (`medusa lint` covers Medusa's own rules).
 
 ### Tools and vendor documentation
 
-- `atlassian` MCP: Jira. `medusa` MCP: Medusa docs and API signatures (token in the
+- `atlassian` MCP: Jira. `medusa` MCP: Medusa docs and API signatures (token:
   `MEDUSA_MCP_TOKEN` user env variable, never a file). `mcloud` CLI: Medusa Cloud.
 
-Check a signature a skill shows against the vendor docs server before relying on it.
+Check a skill's signature against the vendor docs server before relying on it.
 
 Read, search and write files with the file tools, not shell `grep`/`cat`/heredocs (25x slower;
 heredocs mangle backslashes on Windows). The shell may be PowerShell 5.1 (no `grep`, no `&&`): use
@@ -51,9 +51,9 @@ the Commands table's forms.
 
 ### Starting work
 
-Start every piece of work with the `triage` agent ("let's start working on <key>", or paste a new
-request). Triage registers new work and routes it: `quick-fix`, the full pipeline (`scoper` →
-`implementation-planner` → `task-dispatcher`), or `analyse` when it is too unclear to route.
+Start all work with the `triage` agent ("let's start working on <key>", or paste a new request).
+Triage registers new work and routes it: `quick-fix`, the full pipeline (`scoper` →
+`implementation-planner` → `task-dispatcher`), or `analyse` when too unclear to route.
 
 Choosing a flow (triage proposes, the first flow step confirms; `quick-fix` escalates up, `scoper` hands down):
 
@@ -62,8 +62,8 @@ Choosing a flow (triage proposes, the first flow step confirms; `quick-fix` esca
 | a data-model change or migration | a bug with a concrete symptom, or a small change with clear rules |
 | auth, personal data, payment or other regulated data | in one app |
 | a contract between apps or with a vendor | no contract change |
-| a business rule nobody has stated, or a decision only the business can make | rules already clear |
-| more than about three tasks' worth of work, or several apps | about three tasks' worth or less |
+| an unstated business rule, or a decision only the business can make | rules already clear |
+| more than about three tasks' worth, or several apps | about three tasks' worth or less |
 
 Always the full pipeline here: Business Central sync, the order API (`/orderapi`), company
 authorization, spending limits and approvals, and checkout payments.
@@ -77,8 +77,8 @@ Quick-fix confirmation: always
 
 During a pipeline or quick-fix run, agents act without asking. What needs a human goes into the
 task's `## Deviations`, a review finding, or the deviation report's open questions (quick-fix: its
-report). Nothing is pushed without the human's go-ahead. An agent runs each subagent in the
-foreground and waits for it; a dispatcher that backgrounded one handed back with tasks half-run.
+report). Nothing is pushed without the human's go-ahead. Run each subagent in the foreground and
+wait for it; a dispatcher that backgrounded one handed back with tasks half-run.
 
 ### Results
 
@@ -103,22 +103,21 @@ the issue exists, then renamed), committed with the work:
 | `scope.md`, `plan.md` | `scoper`, `implementation-planner` | yes |
 | `deviation-report.md` | `integration-reviewer`, with the human's answers | yes |
 | `change-report.md`, `analysis.md` | `quick-fix` (`analysis.md` also anyone investigating) | yes |
-| `PROGRESS.md` | every agent or skill that finishes a workflow stage | yes |
+| `PROGRESS.md` | every agent or skill finishing a workflow stage | yes |
 | `notes.md`, `samples/`, `logs/`, `mockups/` | anyone | yes |
 | `manifest.md`, `NN-<slug>.md`, fix briefs, `branch-notes.md` | the pipeline | no: `cleanup` deletes them |
 | `task.md` | `quick-fix` | no: the change report replaces it |
 
-`PROGRESS.md`: read it first when it exists; its latest entry is the current state and handover.
+`PROGRESS.md`: read it first if present; its latest entry is the current state and handover.
 Before finishing a stage, append a dated entry (outcome, next owner, handover prompt), creating the
 file if needed; never replace earlier entries. Folders up to NIMBUS-176 keep v1 upper-case names.
 
-One folder per unit of work that goes through a flow, not per tracker issue: an epic run as one
+One folder per unit of work run through a flow, not per tracker issue: an epic run as one
 scope has one folder; its plan tasks become sub-tasks without folders.
 
-A shipped case folder is a frozen record of why: never update it later or treat it as current
-behaviour. The code and `docs/architecture/` describe the system (read the doc for the area you
-change); what must stay current goes there, in the tracker, commits or the PR, never in a case
-folder or a code comment.
+A shipped case folder is a frozen record of why: never update it or treat it as current behaviour.
+The code and `docs/architecture/` describe the system (read the doc for the area you change); what
+must stay current goes there, in the tracker, commits or the PR, never a case folder or code comment.
 
 ### Shared skill catalog
 
@@ -142,10 +141,10 @@ Known gaps (no skill yet): Payload CMS, Business Central API, Stripe and PayPal 
 ## Skills
 
 Load the matching skill before planning or implementing in its domain (a layer skill with its
-technology skill). A skill's `project.md` is read with it and wins where they differ.
+technology skill). A skill's `project.md` is read with it and wins on conflict.
 
 | Skill | When to use |
-|-------|-------------|
+|---|---|
 | `tracker-workflow` | Any tracker step; pipeline change history |
 | `jira-workflow-dev` | How tracker steps are done in Jira (NIMBUS) |
 | `commit-messages` | Committing |
@@ -169,10 +168,10 @@ technology skill). A skill's `project.md` is read with it and wins where they di
 
 ## Instructions
 
-Path-scoped conventions, applied automatically in each tool to the matching files.
+Path-scoped conventions, applied automatically in each tool to matching files.
 
 | Instruction | Applies to |
-|-------------|------------|
+|---|---|
 | `agent-discipline` | everything |
 | `commit-messages` | everything |
 | `typescript-style` | `**/*.{ts,tsx,mts,cts}` |
@@ -203,14 +202,14 @@ Paths are relative to `apps/backend/src/`, `apps/storefront/src/` and `apps/cms/
 L5 names a business rule, never a mocking seam. Admin UI (`admin/**`) calls the backend only over
 HTTP through `admin/lib/client.ts`.
 
-Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
+Limits: an L6 route body is at most 40 lines, no `if` on a domain value
 (`limit-route-body`); no L1 method touches more than one module's data (`limit-service-one-module`).
 
 ### Storefront (Next.js App Router, Medusa JS SDK)
 
 | # | Layer | Location | Must never |
 |---|---|---|---|
-| S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` (the Edge runtime cannot load the SDK) | map, validate, decide |
+| S0 | Transport client | `lib/config.ts` (the single `sdk`); `middleware.ts` uses raw `fetch` (Edge runtime can't load the SDK) | map, validate, decide |
 | S1 | Mapper | `lib/util/*.ts` (pure helpers; no dedicated mapper files yet, UNVERIFIED as a layer) | fetch |
 | S2 | Data fn / action | `lib/data/*.ts`: `"use server"` actions and `server-only` loaders (`bound-sf-server-only`) | hold a domain rule |
 | S3 | Route / server component | `app/[countryCode]/**`, `app/api/**`, `i18n/request.ts` | fetch vendor APIs directly |
@@ -221,8 +220,8 @@ Limits: an L6 route body is at most 40 lines, with no `if` on a domain value
 `collections/*.ts` and `blocks/*.ts` define the schema, registered in `payload.config.ts`; migrations
 in `migrations/`. The storefront reads the CMS only through `lib/data/cms.ts`.
 
-Not retrofitted: legacy files that break these rows are listed under "Do not copy" in each layer
-skill's `project.md`; new code never copies them.
+Not retrofitted: legacy files breaking these rows are under "Do not copy" in each layer skill's
+`project.md`; new code never copies them.
 
 ## Boundaries (`ai/architecture/boundaries.md`)
 
@@ -261,7 +260,7 @@ No Redis: locks are in memory and don't hold across instances (unverified for pr
 - `lock-single-run`: a lock keeping a sync or batch to one run at a time is acquired in the L7
   trigger starting the workflow: try once, skip if held, release in `finally`.
 - `lock-critical-section`: a lock around changing specific data is acquired by a step whose
-  compensation releases it and released by a later step (or try/finally within one step).
+  compensation releases it and released by a later step (or try/finally in one step).
   `acquireLockStep` skips itself under `runAsStep` unless `executeOnSubWorkflow: true`.
 - `lock-ttl`: every lock sets a TTL longer than the worst-case run, and an `ownerId` where a release
   could free another run's lock.
@@ -270,20 +269,20 @@ No Redis: locks are in memory and don't hold across instances (unverified for pr
 ## Medusa boundary (`ai/architecture/medusa-boundary.md`)
 
 Where our code meets Medusa (2.21.0, every `@medusajs/*` package in `apps/backend`) and vendor
-packages. Code examples and detail: the `medusa-backend` skill (`reference/medusa-boundary.md`,
+packages. Examples and detail: the `medusa-backend` skill (`reference/medusa-boundary.md`,
 `reference/querying-data.md`).
 
 ### Verify, don't assume
 
 - Verify a framework or vendor behaviour a design relies on before use, from installed source or
-  the `medusa` MCP (else the Medusa docs). Record the primitive, the evidence and
-  the behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
+  the `medusa` MCP (else the Medusa docs). Record the primitive, evidence and
+  behaviours checked (repeated invocation, invalid or missing input, concurrent races). An
   unverified claim is marked UNVERIFIED in the plan and blocks dispatch.
 - Security-relevant vendor claims are verified from dist code or a runnable probe, never docs.
 - A wrong `query.graph` path fails silently: verify the shape once against real data and
   mock only that shape.
 - Installed source: `apps/backend/node_modules/@medusajs/<pkg>/dist/...` (`node-linker=hoisted`,
-  `apps/backend/.npmrc`); if missing there, grep the store
+  `apps/backend/.npmrc`); else grep the store
   `node_modules/.pnpm/@medusajs+<pkg>@*/node_modules/@medusajs/<pkg>`. A no-match grep is evidence
   only once it provably searched a real path.
 
@@ -333,9 +332,9 @@ A failed workflow rejects with a serialised object, not an `Error`. In a test, a
 Every table has one owning module (core tables: their Medusa module). The CMS (`apps/cms`) has its
 own Postgres database (`DATABASE_URI`), owned by Payload; no other app touches it.
 
-- Only the owner's L1 service reads or writes its tables; other modules read them through
+- Only the owner's L1 service reads or writes its tables; other modules read them via
   `query.graph()` (or `query.index()` to filter by linked-module fields).
-- Relationships across modules are module links in `apps/backend/src/links/`, never foreign keys.
+- Cross-module relationships are module links in `apps/backend/src/links/`, never foreign keys.
 - Migrations are generated (`medusa db:generate <module>`, then `medusa db:migrate`; CMS:
   `payload migrate:create`), never hand-written; a hand-written one is a blocking deviation.
 - No raw SQL outside the owning module's service, and never against another module's tables.
@@ -373,6 +372,7 @@ Paths: `B` = `apps/backend/src`, `S` = `apps/storefront/src`.
 |Store order read and return: owner, or company admin of the approved source cart (NIMBUS-177)|`B/workflows/order/utils/order-access.ts`|404 (`B/api/middlewares/ensure-order-access.ts`)|`GET /store/orders/:id`, `POST /store/returns`|ok|
 |Order API enabled per company (NIMBUS-217)|`B/utils/order-api-access.ts`|403|order API; shipment jobs; Admin retry|ok|
 |Order transfer only without an account owner (NIMBUS-177)|`B/workflows/order/utils/order-transfer.ts`|400|`POST /store/orders/:id/transfer/request`|ok|
+|BC company sync: fields written; updated/skipped/failed|`B/workflows/company/steps/prepare-company-bc-sync.ts`|workflow status|login sync, store company read, Admin sync route|ok|
 |BC-managed company fields are read-only|`B/admin/routes/companies/bc-managed-fields.ts`|admin form; BC sync|storefront company card|ok|
 |Company credit/blocked/reset fields and colleague spending limits: admin-only|`B/api/store/companies/company-projection.ts`|store profiles|storefront|ok; quotes: name only (`B/api/store/quotes/query-config.ts`)|
 |Sent or recorded BC orders: duplicate protection and a force warning|`B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`)|pure verdict|Admin widget; submission guard|ok|
@@ -405,21 +405,20 @@ What a test must prove and at which layer. Commands are in `ai/AGENTS.md` (Comma
 - Assert at the depth the caller consumes: the type of each field it uses, not that its container
   exists.
 - Security work carries negative cases per property (membership, role, cross-company access) in
-  `integration-tests/http/security/security-boundaries.spec.ts`; a property that depends on vendor
-  behaviour is tested once against the real library.
+  `integration-tests/http/security/security-boundaries.spec.ts`; a vendor-dependent property is
+  tested once against the real library.
 - Never mock framework-resolved services to assert call order: test the extracted pure decision or
   move the case to integration. Dependency resolution and I/O stay where the framework puts them;
   extract only pure logic, never a `*Logic(input, deps)` mocking seam.
 - Never read source files as text in a test (fixtures are fine); prefer a behaviour assertion, then
-  asserting on the module's exports, then a lint rule for absence claims.
-- Per task: only the tests created or changed, lint and whole-app typecheck (at or below the
-  baseline). The full suite, integration tests and build run once, at finalization.
+  the module's exports, then a lint rule for absence claims.
+- Per task: only new or changed tests, lint and whole-app typecheck (at or below the baseline). The full suite, integration tests and build run once, at finalization.
 - Test volume is a signal, not a target.
 - "Also update" (a task file's or quick-fix `task.md`'s list): every existing test (incl. contract
   and end-to-end specs), `docs/` section, `ai/` file (business-rule registry, Tier 0 rows, a skill's
-  `project.md`) and user-facing doc that asserts or describes the behaviour being changed, or "none
+  `project.md`) and user-facing doc that asserts or describes the changed behaviour, or "none
   found". Search its names, routes, fields, messages and rule wording; fix a stale test's
-  assertion, never delete it to make it pass.
+  assertion, never delete it to pass.
 
 ### Baseline (not green today)
 

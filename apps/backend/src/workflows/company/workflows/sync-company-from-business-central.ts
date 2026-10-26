@@ -6,13 +6,13 @@ import {
 } from "@medusajs/framework/workflows-sdk";
 
 import type { ModuleUpdateCompany } from "../../../types";
-import { prepareCompanyBcSyncStep } from "../steps/prepare-company-bc-sync";
+import {
+  prepareCompanyBcSyncStep,
+  type PrepareCompanyBcSyncInput,
+} from "../steps/prepare-company-bc-sync";
 import { updateCompaniesStep } from "../steps/update-companies";
 
-export type SyncCompanyFromBusinessCentralInput = {
-  customerId: string;
-  expectedCompanyId?: string;
-};
+export type SyncCompanyFromBusinessCentralInput = PrepareCompanyBcSyncInput;
 
 export type SyncCompanyFromBusinessCentralResult = {
   status: "updated" | "skipped" | "failed";
@@ -21,10 +21,7 @@ export type SyncCompanyFromBusinessCentralResult = {
 export const syncCompanyFromBusinessCentralWorkflow = createWorkflow(
   "sync-company-from-business-central",
   function (input: SyncCompanyFromBusinessCentralInput) {
-    const prepared = prepareCompanyBcSyncStep({
-      customerId: input.customerId,
-      expectedCompanyId: input.expectedCompanyId,
-    });
+    const prepared = prepareCompanyBcSyncStep(input);
 
     when({ prepared }, ({ prepared }) => prepared.status === "ready").then(
       () => {
@@ -37,9 +34,12 @@ export const syncCompanyFromBusinessCentralWorkflow = createWorkflow(
       }
     );
 
-    const result = transform({ prepared }, ({ prepared }) => ({
-      status: prepared.status === "ready" ? "updated" : prepared.status,
-    }));
+    const result = transform(
+      { prepared },
+      ({ prepared }): SyncCompanyFromBusinessCentralResult => ({
+        status: prepared.status === "ready" ? "updated" : prepared.status,
+      })
+    );
 
     return new WorkflowResponse(result);
   }

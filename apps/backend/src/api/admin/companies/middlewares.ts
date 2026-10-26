@@ -15,6 +15,7 @@ import {
   AdminGetApprovalSettingsParams,
   AdminGetCompanyParams,
   AdminGetEmployeeParams,
+  AdminSyncCompanyBusinessCentral,
   AdminUpdateApprovalSettings,
   AdminUpdateCompany,
   AdminUpdateEmployee,
@@ -63,6 +64,11 @@ export const adminCompaniesMiddlewares: MiddlewareRoute[] = [
         adminCompanyQueryConfig.retrieve
       ),
     ],
+  },
+  {
+    method: ["POST"],
+    matcher: "/admin/companies/:id/sync-business-central",
+    middlewares: [validateAndTransformBody(AdminSyncCompanyBusinessCentral)],
   },
 
   /* Employees Middlewares */

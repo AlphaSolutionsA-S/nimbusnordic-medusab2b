@@ -133,6 +133,17 @@ const CompanyDetails = () => {
                           </Table.Row>
                           <Table.Row>
                             <Table.Cell className="font-medium font-sans txt-compact-small">
+                              Last synced from Business Central
+                            </Table.Cell>
+                            <Table.Cell>
+                              {/* An ISO string over HTTP, although QueryCompany declares Date. */}
+                              {company.business_central_synced_at
+                                ? new Date(company.business_central_synced_at).toLocaleString()
+                                : "Never"}
+                            </Table.Cell>
+                          </Table.Row>
+                          <Table.Row>
+                            <Table.Cell className="font-medium font-sans txt-compact-small">
                               Order API
                             </Table.Cell>
                             <Table.Cell>

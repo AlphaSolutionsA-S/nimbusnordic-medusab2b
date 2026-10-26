@@ -24,6 +24,8 @@ import type {
   IUserModuleService,
   MedusaContainer,
 } from '@medusajs/framework/types';
+import { BUSINESS_CENTRAL_MODULE } from '../../../src/modules/business-central';
+import type { IBusinessCentralModuleService } from '../../../src/modules/business-central/types';
 import CompanyModuleService from '../../../src/modules/company/service';
 import QuoteModuleService from '../../../src/modules/quote/service';
 import ApprovalModuleService from '../../../src/modules/approval/service';
@@ -145,6 +147,30 @@ medusaIntegrationTestRunner({
         ]) {
           const response = await api.request({ method, url, ...selected, data: method === 'POST' ? {} : undefined, validateStatus: () => true });
           expect({ method, status: response.status }).toEqual({ method, status: 401 });
+        }
+      },
+    );
+
+    it.each(['none', 'customer'] as const)(
+      'denies %s credentials on the Admin company Business Central sync', async (credentials) => {
+        await companyService.updateCompanies({ id: companyId, business_central_customer_number: '00011551' });
+        const getCustomerSpy = jest.spyOn(
+          container.resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE), 'getCustomer',
+        );
+        const before = await companyService.retrieveCompany(companyId);
+        try {
+          const response = await api.post(`/admin/companies/${companyId}/sync-business-central`, {}, {
+            ...(credentials === 'customer' ? headers : { headers: {} }), validateStatus: () => true,
+          });
+          expect(response.status).toBe(401);
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+          const after = await companyService.retrieveCompany(companyId);
+          expect(after).toMatchObject({
+            name: before.name, email: before.email,
+            business_central_synced_at: before.business_central_synced_at,
+          });
+        } finally {
+          getCustomerSpy.mockRestore();
         }
       },
     );
