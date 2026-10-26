@@ -161,3 +161,9 @@ Scope approved by Klaus Petersen on 2026-10-26.
 - Business Central customer API (existing client, `businessCentral` module).
 - NIMBUS-156 (login sync), NIMBUS-160 (freshness sync), NIMBUS-161 (wrong-company guard): behaviour
   must not regress. The NIMBUS-161 guard (expected company id) is already on `develop`.
+
+## Documentation
+
+- [docs/architecture/business-central-company-sync.md](../../docs/architecture/business-central-company-sync.md) — BC company sync: login, freshness and Admin triggers (created)
+
+AI base files updated: none (the `decisions.md` row was added by the branch itself; no Tier 0 budget for a link)
