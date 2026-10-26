@@ -100,6 +100,17 @@ Mechanical wiring: no issues.
    into an ICU message (`"Size: {size}"`) in all 8 locales so French can use "Taille : XL"? The
    latter is a small fix on this branch; the former can ship as is.
 
+**Answers (human, 2026-10-26):**
+
+1. Option (a): keep the new row and trim Tier 0 text thoroughly, since the limit keeps being hit.
+   Tighten wording across the Tier 0 files that feed the generated `AGENTS.md` (long
+   `decisions.md` rows such as the shipment-notice row, redundant phrasing in
+   `ai/architecture/*.md`) without dropping any rule, ID, path or verdict; aim for at least
+   1.5–2 KB of headroom under 32768, then `pnpm ai:check --fix` and a passing `pnpm ai:check`.
+2. Move the separator into the translation: an ICU message such as `"Size: {size}"` in all 8
+   locales with locale-correct punctuation (fr `"Taille : {size}"`), used by both components,
+   tests updated.
+
 ## Verify after deploy
 
 - 01 Backend: variant code on BC order detail lines — `GET /store/bc-orders/SO330301` as a customer
