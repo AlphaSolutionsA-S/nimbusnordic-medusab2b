@@ -175,6 +175,9 @@ consolidation). Reviewed 2026-10-25 by the integration reviewer.
    and the cell padding around `|` is removed; `pnpm ai:check` passes (`AGENTS.md` 32663 bytes).
    The extra trims and the reformatting went beyond the literal answer and were accepted as they
    are by Klaus Petersen on 2026-10-26. The size limit itself is tracked separately in NIMBUS-251.
+   On integration with `develop` (2026-10-26), `develop` already carried NIMBUS-231's own trims of
+   the same rows, so the branch's wording trims were dropped: `decisions.md` is `develop`'s text plus
+   the merged email row, with cell padding removed (`AGENTS.md` 32749 bytes, `ai:check` passes).
 2. Fix 04: the accepted provider logging is documented in `docs/architecture/store-access.md`.
 3. Fix 03: the invite card sends `country_code` only for a two-letter code.
 4. The lockfile reinstall succeeded without changing the lockfile (`next` 15.5.28). Storefront lint

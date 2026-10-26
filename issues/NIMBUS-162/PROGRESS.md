@@ -70,3 +70,10 @@
 - **Tracker:** NIMBUS-162 and NIMBUS-242 in Internal review; "branch ready for review" comments added.
 - **Next owner:** Klaus Petersen: decide on integrating the branch with `develop` (rebase or merge, resolving the Tier 0 conflicts and re-running `pnpm ai:check`), then give the push and PR go-ahead.
 - **Handover prompt:** "Integrate feature/NIMBUS-162 with develop (merge-base 2ea3f79), resolve conflicts in ai/architecture/*.md, AGENTS.md and .github/copilot-instructions.md, re-run pnpm ai:check --fix and the finalization checks, then push and open the PR only on Klaus's go-ahead."
+
+## 2026-10-26 — Integrated with develop and merged
+- **Owner:** coordinator (main session), on Klaus Petersen's decision to merge into `develop` without a pull request.
+- **Outcome:** the branch's 17 commits were rebased onto `develop` (1dcbfb5, which carries the NIMBUS-231 Tier 0 trim). Conflicts in `ai/architecture/decisions.md` were resolved as `develop`'s text plus the merged email row, with cell padding removed; the branch's other wording trims were dropped as no longer needed. Every non-AI change is identical to the pre-rebase branch. Then merged into `develop` with a merge commit.
+- **Verification (rebased branch):** `pnpm ai:check` passes (`AGENTS.md` 32749 bytes). Backend unit 83 suites / 1068 tests pass; lint 0 errors (13 warnings, as before); typecheck 22 errors (baseline 22); build OK. Storefront lint 0 errors; typecheck 8 errors (baseline 8); tests: 4 suites / 5 tests fail (`main-layout`, `profile-page`, `money` as before, `product-tabs` NIMBUS-250). HTTP specs not re-run after the rebase (email code unchanged; they passed 35/35 before).
+- **Not yet verified (after deploy):** see the deviation report: Email Activity for reset and invitation, the `Emails` key import in every environment, production `company.country` values.
+- **Next owner:** Klaus Petersen: deploy, import the `Emails` keys, run the after-deploy checks; then close NIMBUS-162 and NIMBUS-242.
