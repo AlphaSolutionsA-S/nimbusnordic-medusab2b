@@ -74,3 +74,20 @@
 - Next owner: Klaus Petersen (answer the deviation report's open questions).
 - Handover prompt: "Resume task-dispatcher on `issues/NIMBUS-254/` at 'After the gate' with these
   answers to `deviation-report.md` open questions 1–3: <answers>."
+
+## 2026-10-26 — task-dispatcher (after the gate; branch ready for push)
+
+- Outcome: the human's answers are recorded in `deviation-report.md`. 1: option (b). Codex truncates
+  at 32 KiB, per OpenAI's docs, so the limit was not raised. Tier 0 wording was trimmed instead
+  (98cf6f7). Root `AGENTS.md` went from 32930 to 32661 bytes, and `pnpm ai:check` passes. 2: the
+  `notification-local` provider was restored in its own commit (5b0d6a8). 3: integration cases are
+  accepted as code complete and unverified, with proof after deploy. Docs:
+  `docs/architecture/business-central-company-sync.md` (f4e042f). After the fixes, the build
+  passes and typecheck is 22, the same as the baseline. A PR description is in the run scratchpad.
+  `scope.md` is marked Implemented, and the pipeline working files were removed. Jira: the
+  implementation gate comment is on NIMBUS-254. The main session handles the transition to Internal
+  review.
+- Next owner: Klaus Petersen (push go-ahead; then the after-deploy checks in `deviation-report.md`).
+- Handover prompt: "Push `feature/NIMBUS-254` (and the two unpushed `develop` commits 509c986 and
+  374c670 it builds on), open the PR to `develop` from the saved description, then run the
+  'Verify after deploy' checks in `issues/NIMBUS-254/deviation-report.md`."

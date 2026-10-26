@@ -1,5 +1,7 @@
 # Plan: Sync a company from Business Central now, from the Admin company page
 
+> Record of NIMBUS-254, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-254 · **Branch:** `feature/NIMBUS-254` from `develop` · **Date:** 2026-10-26
 **Scope:** [scope.md](./scope.md) (approved by Klaus Petersen, 2026-10-26, with the three defaults)
 

@@ -1,5 +1,7 @@
 # Deviation report: Sync a company from Business Central now, from the Admin company page
 
+> Record of NIMBUS-254, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 Branch `feature/NIMBUS-254`, merge-base `374c670`, commits 8286447 (NIMBUS-258, task 01), ec89c92
 (NIMBUS-259, task 02), e65ed1c (NIMBUS-260, task 03), 9e764aa (consolidation). Reviewed 2026-10-26.
 

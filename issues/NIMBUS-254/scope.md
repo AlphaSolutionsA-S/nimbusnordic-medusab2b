@@ -1,7 +1,9 @@
 # Sync a company from Business Central now, from the Admin company page
 
+> Record of NIMBUS-254, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-26
-**Status:** Scope approved (2026-10-26)
+**Status:** Implemented (2026-10-26)
 **Type:** Story
 **Priority:** Medium (MoSCoW: Should)
 **Issue:** [NIMBUS-254](https://alphasolutionsdk.atlassian.net/browse/NIMBUS-254) (parent epic NIMBUS-128, Customer Login)
