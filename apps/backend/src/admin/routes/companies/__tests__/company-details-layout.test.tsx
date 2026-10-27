@@ -73,6 +73,15 @@ function company(patch: Partial<QueryCompany> = {}): QueryCompany {
   } as QueryCompany;
 }
 
+// The company read and the Business Central customer section's status read.
+function serve(read: QueryCompany) {
+  fetchMock.mockImplementation(async (url: string) =>
+    url === "/admin/companies/comp_1/business-central-customer"
+      ? { routed_environment: "DK", customer_number: "C100", not_found: null }
+      : { company: read }
+  );
+}
+
 function renderPage() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -93,8 +102,8 @@ beforeEach(() => {
 });
 
 describe("Company details page layout", () => {
-  it("renders the warning, company information and employees as entries, in that order, under company.details", async () => {
-    fetchMock.mockResolvedValue({ company: company() });
+  it("renders the warning, company information, Business Central customer and employees as entries, in that order, under company.details", async () => {
+    serve(company());
     renderPage();
 
     const layout = await screen.findByTestId("layout-composer");
@@ -103,12 +112,13 @@ describe("Company details page layout", () => {
     expect(layoutEntryIds(layout)).toEqual([
       "business-central-warning",
       "company-information",
+      "business-central-customer",
       "employees",
     ]);
   });
 
   it("keeps the Business Central warning text, the Order API row and the employees table in their sections", async () => {
-    fetchMock.mockResolvedValue({ company: company({ employees: [employee()] }) });
+    serve(company({ employees: [employee()] }));
     renderPage();
     await screen.findByTestId("layout-composer");
 
@@ -128,7 +138,7 @@ describe("Company details page layout", () => {
   });
 
   it("shows the employees empty state when the company has no employees", async () => {
-    fetchMock.mockResolvedValue({ company: company({ employees: [] }) });
+    serve(company({ employees: [] }));
     renderPage();
     await screen.findByTestId("layout-composer");
 

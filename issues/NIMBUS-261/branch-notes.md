@@ -60,3 +60,12 @@
 - Workflows: `lookupBusinessCentralCustomerWorkflow`, `useBusinessCentralCustomerWorkflow` (re-exported from `workflows/company/workflows/index.ts`). The use workflow keeps the written country when the nested sync reports `failed` (unit-tested).
 - Verified: Admin contract cases in `companies.spec.ts` fail locally only with 401 on the Admin request (NIMBUS-236), the same as the existing NIMBUS-254 sync cases (8/8). Admin-free security cases run and pass.
 - Runner for integration specs against the scratch Postgres: `run-http-06.sh <path fragment> [-t pattern]` in the run scratchpad.
+
+## Task 07
+
+- Section: `admin/routes/companies/components/company-business-central-customer.tsx` (`CompanyBusinessCentralCustomer`, prop `company`), entry id `business-central-customer` after `company-information` on the company page.
+- Hooks: `admin/hooks/api/business-central-customer.tsx` (re-exported from `hooks/api`): `useBusinessCentralCustomer(companyId)`, `useBusinessCentralCustomerLookup(companyId, customerNumber)` (disabled query, run with `refetch()`), `useUseBusinessCentralCustomer(companyId)` (invalidates the company detail and lists on settle).
+- The status query key is nested under `companyQueryKey.detail(id)`, so any company invalidation (menu sync, edit drawer, "Use this customer") reloads the section.
+- Pitfall: Admin page tests that answer every GET under `/admin/companies/comp_1` with `{ company }` now also hit `…/business-central-customer`; serve that URL a status object (see `company-details-layout.test.tsx`, `company-bc-sync.test.tsx`).
+- Pitfall: importing a value from `@medusajs/js-sdk` (e.g. `FetchError`) in an Admin test fails under jsdom (`TransformStream is not defined`); build `Object.assign(new Error(m), { status })` instead and keep production imports type-only.
+- Medusa UI `Prompt` renders as `alertdialog` in jsdom; `Prompt.Cancel` closes it without calling the action.
