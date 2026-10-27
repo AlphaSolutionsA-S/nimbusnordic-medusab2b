@@ -20,3 +20,10 @@
 - Probe: `query.graph` rows here are typed as the full generated `Company`, so a wrong row type fails typecheck (verified by temporarily breaking `country`'s type).
 - Pitfall: PowerShell 5.1 `Set-Content -Encoding utf8` writes a BOM; use the file tools for edits.
 - Integration cases are in `integration-tests/http/customers/business-central-account.spec.ts` (not run locally).
+
+## Task 03
+
+- The five store BC read routes call `resolveBusinessCentralAccountWorkflow(req.scope).run({ input: { customerId: customer_id } })` (customer id from `req.auth_context.app_metadata`) and pass `account.environment` / `account.customerNumber` to the BC module. Task 04 can copy this shape for `bc-orders/[id]/returns/route.ts`.
+- Unit-testing a route that runs the workflow: `jest.mock` the workflow module and `jest.mocked(resolveBusinessCentralAccountWorkflow).mockReturnValue({ run } as never)`, `run` resolving `{ result: account }` (see `api/store/bc-returns/__tests__/return-detail-route.unit.spec.ts`).
+- Integration pattern for routed BC calls: `integration-tests/http/business-central/store-bc-reads.spec.ts` (company via `POST /store/companies`, then `updateCompanies` sets `country` and number; spy on the resolved BC module; stub unexpected calls with `mockRejectedValue` so nothing reaches BC).
+- Verified: `validateAndTransformQuery` passes the whole normalised query to the zod schema (`@medusajs/framework/dist/http/utils/validate-query.js`), so a `.strict()` query validator answers an unknown `environment` param with 400.
