@@ -37,3 +37,17 @@
 - The return route no longer imports `modules/business-central/service.ts`; its `bound-route-no-service` baseline entry is gone.
 - Return-create integration cases live in `integration-tests/http/business-central/store-bc-reads.spec.ts` ("creating a return").
 - `jest --testPathPattern <x>` is needed when running jest directly in Git Bash; a bare positional path ran every suite.
+
+## Task 05
+
+- Company columns `business_central_not_found_at` (dateTime), `business_central_not_found_environment` (enum `DK`/`NO`), `business_central_not_found_customer_number` (text), all nullable; also on `ModuleCompany`. Migration `modules/company/migrations/Migration20261027225750.ts` (generated).
+- **Seam change for tasks 06 and 07:** `BusinessCentralNotFoundRecord.at` is now an ISO 8601 `string`, not a `Date`, and the account step's row carries it as a string. Workflow results are serialised: a `Date` never comes out of `workflow.run()`, even when built in `transform` (probe). Send it to the Admin UI as is, and parse it there for display.
+- Running integration specs against a scratch Postgres: use `DB_HOST=localhost`. With any other host, `@medusajs/test-utils` (`configLoaderOverride`) turns on SSL and `beforeAll` hangs until the 60 s timeout with no connection to the test DB. Shell values win over `.env` (`loadEnv` does not override).
+- `integration-tests/http/admin/shipment-tracking.spec.ts` still expects the BC shipment read without the environment argument (received `"DK", [...]`); this was missed by task 01's "Also update" and is not fixed here.
+- The sync workflow writes the not-found record and still reports `skipped`; a found card clears it in the same single `updateCompaniesStep` call. Task 06's "Use this customer" gets this by nesting `syncCompanyFromBusinessCentralWorkflow`.
+- `resolveBusinessCentralAccountWorkflow` now returns `notFound: { at: Date, environment, customerNumber } | null` (null unless all three columns are set). The account step converts `business_central_not_found_at` to a `Date`; the generated `query.graph` type is `Date | string`.
+- LCY rule: `resolveCurrencyCode(environment, code)` in `workflows/company/utils/resolve-currency-code.ts` (delegates to `getBusinessCentralLocalCurrency`). Order submission calls it with `"DK"`.
+- Verified by a unit run: a step's output is serialised before the next step reads it, so a `new Date()` set in the prepare step reaches `updateCompaniesStep` as an ISO string (MikroORM accepts it). Assert step-to-step timestamps as strings in workflow unit specs.
+- `.medusa/types` (gitignored) goes stale after a model change, and typecheck then fails on `query.graph` rows. Without a database, regenerate it with `generate-types.js` in the run scratchpad (`node <script> .` from `apps/backend`), the same `generateTypes` call `medusa build` makes with `skipDbConnection`.
+- Running a real workflow in a unit spec with Query and a module replaced: `src/workflows/company/__tests__/sync-company-from-business-central.unit.spec.ts` (register `ContainerRegistrationKeys.QUERY` as `{ graph }` and `COMPANY_MODULE` as `{ listCompanies, updateCompanies }`).
+- `--testPathPattern` with an escaped separator (`workflows[\\/]company`) ran every unit suite; use a file-name fragment.

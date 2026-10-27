@@ -34,7 +34,7 @@ Plan approved by Klaus Petersen, 2026-10-27. The TestNO probe ran (`samples/prob
 | 02 | Country → environment rule and the BC account workflow | `02-environment-rule-and-account-workflow.md` | backend | R1, rule "NO → Norway", rule "environment from the stored company" | 01 | NIMBUS-263 | DONE |
 | 03 | Store BC order and return reads routed per company | `03-store-bc-reads-routed.md` | backend | R2 (order history, returns, receipts, return reasons), NF store shapes unchanged | 02 | NIMBUS-264 | DONE |
 | 04 | Return creation routed per company | `04-return-creation-routed.md` | backend | R2 (creating a return) | 02 | NIMBUS-265 | DONE |
-| 05 | Company sync routed, NOK, and the not-found record | `05-company-sync-routed-not-found.md` | backend | R2 (company sync, every trigger), R3, R8, R9, R10, D2 | 02 | NIMBUS-266 | TODO |
+| 05 | Company sync routed, NOK, and the not-found record | `05-company-sync-routed-not-found.md` | backend | R2 (company sync, every trigger), R3, R8, R9, R10, D2 | 02 | NIMBUS-266 | DONE |
 | 06 | Admin routes: status, two-environment check, "Use this customer" | `06-admin-bc-customer-routes.md` | backend | R11 (data), R12, R13, R14 (server), R15 (verdict), D1, NF check errors, security rows | 05 | NIMBUS-267 | TODO |
 | 07 | Admin "Business Central customer" section | `07-admin-bc-customer-section.md` | backend (Admin UI) | R11, R12, R13, R14, R15 (display and confirmation) | 06 | NIMBUS-268 | TODO |
 

@@ -157,6 +157,41 @@ medusaIntegrationTestRunner({
         });
       });
 
+      it.each(["company id", "customer"] as const)(
+        "returns the stored not-found record when resolving by %s",
+        async (trigger) => {
+          const companyId =
+            trigger === "customer"
+              ? await createCustomerCompany("NO", "00088888")
+              : await createCompanyWithoutEmployees("NO", "00088888");
+          const at = new Date("2026-10-27T10:00:00.000Z");
+          await companyService().updateCompanies({
+            id: companyId,
+            business_central_not_found_at: at,
+            business_central_not_found_environment: "NO",
+            business_central_not_found_customer_number: "00011111",
+          });
+
+          const { result } = await resolveBusinessCentralAccountWorkflow(
+            getContainer()
+          ).run({
+            input:
+              trigger === "customer" ? { customerId: customer.id } : { companyId },
+          });
+
+          expect(result).toEqual({
+            companyId,
+            customerNumber: "00088888",
+            environment: "NO",
+            notFound: {
+              at: at.toISOString(),
+              environment: "NO",
+              customerNumber: "00011111",
+            },
+          });
+        }
+      );
+
       it("rejects an unknown company id as not found", async () => {
         await expect(
           resolveBusinessCentralAccountWorkflow(getContainer()).run({

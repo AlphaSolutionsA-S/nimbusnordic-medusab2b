@@ -607,7 +607,7 @@ function roundCurrencyAmount(value: number): number {
 }
 
 // A blank BC currency code means the environment's local currency (LCY). Same rule as
-// resolveCurrencyCode in workflows/company/steps/prepare-company-bc-sync.ts.
+// resolveCurrencyCode in workflows/company/utils/resolve-currency-code.ts.
 function resolveBCCurrencyCode(
   value: unknown,
   environment: BusinessCentralEnvironment

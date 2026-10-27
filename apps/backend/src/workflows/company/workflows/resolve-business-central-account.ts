@@ -14,7 +14,8 @@ import {
 export type { ResolveBusinessCentralAccountInput };
 
 export type BusinessCentralNotFoundRecord = {
-  at: Date;
+  // ISO 8601: Medusa serialises a workflow's result, so it never returns a Date.
+  at: string;
   environment: BusinessCentralEnvironment;
   customerNumber: string;
 };
@@ -37,7 +38,17 @@ export const resolveBusinessCentralAccountWorkflow = createWorkflow(
         companyId: company?.id ?? null,
         customerNumber: company?.business_central_customer_number ?? null,
         environment: getBusinessCentralEnvironmentForCountry(company?.country),
-        notFound: null,
+        // The sync writes and clears the three columns together.
+        notFound:
+          company?.business_central_not_found_at &&
+          company.business_central_not_found_environment &&
+          company.business_central_not_found_customer_number
+            ? {
+                at: company.business_central_not_found_at,
+                environment: company.business_central_not_found_environment,
+                customerNumber: company.business_central_not_found_customer_number,
+              }
+            : null,
       })
     );
 

@@ -1,6 +1,8 @@
 import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils";
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 
+import type { BusinessCentralEnvironment } from "../../../modules/business-central/types";
+
 export type ResolveBusinessCentralAccountInput =
   | { customerId: string; companyId?: never }
   | { companyId: string; customerId?: never };
@@ -9,9 +11,43 @@ export type BusinessCentralAccountCompanyRow = {
   id: string;
   business_central_customer_number: string | null;
   country: string | null;
+  // ISO 8601: a step's output is serialised, so a Date would reach the workflow as a string anyway.
+  business_central_not_found_at: string | null;
+  business_central_not_found_environment: BusinessCentralEnvironment | null;
+  business_central_not_found_customer_number: string | null;
 };
 
-const ACCOUNT_COMPANY_FIELDS = ["id", "business_central_customer_number", "country"] as const;
+// The company row as `query.graph` returns it: a dateTime column may be a Date or a string.
+type RawAccountCompanyRow = Omit<
+  BusinessCentralAccountCompanyRow,
+  "business_central_not_found_at"
+> & {
+  business_central_not_found_at: Date | string | null;
+};
+
+const ACCOUNT_COMPANY_FIELDS = [
+  "id",
+  "business_central_customer_number",
+  "country",
+  "business_central_not_found_at",
+  "business_central_not_found_environment",
+  "business_central_not_found_customer_number",
+] as const;
+
+function toAccountCompanyRow(
+  company: RawAccountCompanyRow | null | undefined
+): BusinessCentralAccountCompanyRow | null {
+  if (!company) {
+    return null;
+  }
+
+  const notFoundAt = company.business_central_not_found_at;
+
+  return {
+    ...company,
+    business_central_not_found_at: notFoundAt ? new Date(notFoundAt).toISOString() : null,
+  };
+}
 
 export const loadBusinessCentralAccountCompanyStep = createStep(
   "load-business-central-account-company",
@@ -37,7 +73,7 @@ export const loadBusinessCentralAccountCompanyStep = createStep(
         );
       }
 
-      return new StepResponse(company);
+      return new StepResponse(toAccountCompanyRow(company));
     }
 
     const {
@@ -48,6 +84,6 @@ export const loadBusinessCentralAccountCompanyStep = createStep(
       filters: { id: input.customerId },
     });
 
-    return new StepResponse(customer?.employee?.company ?? null);
+    return new StepResponse(toAccountCompanyRow(customer?.employee?.company));
   }
 );

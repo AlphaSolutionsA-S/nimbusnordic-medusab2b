@@ -670,5 +670,274 @@ medusaIntegrationTestRunner({
         expect(getCustomerSpy).not.toHaveBeenCalled();
       });
     });
+
+    describe("syncCompanyFromBusinessCentralWorkflow - environment routing and the not-found record", () => {
+      beforeEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      const staleAt = new Date(Date.now() - 11 * 60 * 1000);
+
+      const originalFields = {
+        name: "Routed Company",
+        email: "routed@example.com",
+        phone: "11112222",
+        address: "Old address",
+        city: "Old city",
+        state: "Old state",
+        zip: "1000",
+        currency_code: "DKK",
+        blocked: "not_blocked",
+        vat_number: null,
+      } as const;
+
+      const norwegianCard: BCCustomer = {
+        number: "00088888",
+        displayName: "Norsk Kunde AS",
+        email: "norsk@example.com",
+        phoneNumber: "22334455",
+        addressLine1: "Storgata 1",
+        addressLine2: "",
+        city: "Oslo",
+        state: "",
+        postalCode: "0155",
+        country: "NO",
+        blocked: "not_blocked",
+        creditLimit: 1000,
+        taxRegistrationNumber: "NO123456789",
+        currencyCode: "NOK",
+      };
+
+      type Trigger = "company id" | "customer";
+
+      function companyService(): ICompanyModuleService {
+        return getContainer().resolve<ICompanyModuleService>(COMPANY_MODULE);
+      }
+
+      // "customer": the store-registered company of the test customer; "company id": a company
+      // without employees, as the Admin sync starts.
+      async function createCompany(
+        trigger: Trigger,
+        country: string | null,
+        businessCentralCustomerNumber: string | null
+      ): Promise<string> {
+        const companyId =
+          trigger === "customer"
+            ? await createLinkedCompany(null)
+            : (
+                await companyService().createCompanies({
+                  name: originalFields.name,
+                  email: originalFields.email,
+                  phone: originalFields.phone,
+                  address: null,
+                  city: null,
+                  state: null,
+                  zip: null,
+                  country,
+                  logo_url: null,
+                  currency_code: originalFields.currency_code,
+                  spending_limit_reset_frequency:
+                    ModuleCompanySpendingLimitResetFrequency.MONTHLY,
+                })
+              ).id;
+
+        await companyService().updateCompanies({
+          id: companyId,
+          ...originalFields,
+          country,
+          business_central_customer_number: businessCentralCustomerNumber,
+          business_central_synced_at: staleAt,
+        });
+
+        return companyId;
+      }
+
+      function runSync(trigger: Trigger, companyId: string) {
+        return syncCompanyFromBusinessCentralWorkflow(getContainer()).run({
+          input:
+            trigger === "customer"
+              ? { customerId: customer.id }
+              : { companyId },
+        });
+      }
+
+      async function readCompany(companyId: string) {
+        const [company] = await companyService().listCompanies({
+          id: companyId,
+        });
+
+        return company;
+      }
+
+      function spyOnGetCustomer() {
+        const bcService =
+          getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+
+        return jest.spyOn(bcService, "getCustomer");
+      }
+
+      describe.each<Trigger>(["company id", "customer"])("by %s", (trigger) => {
+        it.each([
+          ["NO", "NO"],
+          [" no ", "NO"],
+          ["DK", "DK"],
+          ["SE", "DK"],
+          [null, "DK"],
+        ])(
+          "reads the customer card of a company with country %j in %s",
+          async (country, environment) => {
+            const companyId = await createCompany(trigger, country, "00088888");
+            const getCustomerSpy = spyOnGetCustomer().mockResolvedValueOnce(
+              norwegianCard
+            );
+
+            const { result } = await runSync(trigger, companyId);
+
+            expect(result).toEqual({ status: "updated" });
+            expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+            expect(getCustomerSpy).toHaveBeenCalledWith(environment, "00088888");
+          }
+        );
+
+        it("records the not-found record and leaves the BC-managed fields alone when the routed environment has no such customer", async () => {
+          const companyId = await createCompany(trigger, "NO", "00088888");
+          spyOnGetCustomer().mockResolvedValueOnce(null);
+          const before = Date.now();
+
+          const { result } = await runSync(trigger, companyId);
+
+          const company = await readCompany(companyId);
+          expect(result).toEqual({ status: "skipped" });
+          expect(company).toMatchObject({
+            ...originalFields,
+            country: "NO",
+            business_central_customer_number: "00088888",
+            business_central_not_found_environment: "NO",
+            business_central_not_found_customer_number: "00088888",
+          });
+          expect(company.credit_limit).toBeNull();
+          expect(company.business_central_synced_at).toEqual(staleAt);
+          expect(company.business_central_not_found_at).toBeInstanceOf(Date);
+          expect(
+            company.business_central_not_found_at?.getTime()
+          ).toBeGreaterThanOrEqual(before - 1000);
+        });
+
+        it("overwrites an earlier not-found record with the latest attempt", async () => {
+          const companyId = await createCompany(trigger, "DK", "00099999");
+          const earlier = new Date(Date.now() - 60 * 60 * 1000);
+          await companyService().updateCompanies({
+            id: companyId,
+            business_central_not_found_at: earlier,
+            business_central_not_found_environment: "NO",
+            business_central_not_found_customer_number: "00011111",
+          });
+          spyOnGetCustomer().mockResolvedValueOnce(null);
+
+          const { result } = await runSync(trigger, companyId);
+
+          const company = await readCompany(companyId);
+          expect(result).toEqual({ status: "skipped" });
+          expect(company).toMatchObject({
+            business_central_not_found_environment: "DK",
+            business_central_not_found_customer_number: "00099999",
+          });
+          expect(
+            company.business_central_not_found_at?.getTime()
+          ).toBeGreaterThan(earlier.getTime());
+        });
+
+        it("clears the not-found record when a later sync finds the customer", async () => {
+          const companyId = await createCompany(trigger, "NO", "00088888");
+          spyOnGetCustomer()
+            .mockResolvedValueOnce(null)
+            .mockResolvedValueOnce(norwegianCard);
+
+          await runSync(trigger, companyId);
+          const { result } = await runSync(trigger, companyId);
+
+          const company = await readCompany(companyId);
+          expect(result).toEqual({ status: "updated" });
+          expect(company).toMatchObject({
+            name: "Norsk Kunde AS",
+            country: "NO",
+            currency_code: "NOK",
+            business_central_not_found_at: null,
+            business_central_not_found_environment: null,
+            business_central_not_found_customer_number: null,
+          });
+          expect(company.business_central_synced_at?.getTime()).toBeGreaterThan(
+            staleAt.getTime()
+          );
+        });
+
+        it("resolves a blank card currency in Norway to NOK", async () => {
+          const companyId = await createCompany(trigger, "NO", "00088888");
+          spyOnGetCustomer().mockResolvedValueOnce({
+            ...norwegianCard,
+            currencyCode: null,
+          });
+
+          const { result } = await runSync(trigger, companyId);
+
+          const company = await readCompany(companyId);
+          expect(result).toEqual({ status: "updated" });
+          expect(company.currency_code).toBe("NOK");
+        });
+
+        it("writes nothing and calls no environment without a customer number", async () => {
+          const companyId = await createCompany(trigger, "NO", null);
+          const getCustomerSpy = spyOnGetCustomer();
+
+          const { result } = await runSync(trigger, companyId);
+
+          const company = await readCompany(companyId);
+          expect(result).toEqual({ status: "skipped" });
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+          expect(company).toMatchObject({
+            ...originalFields,
+            business_central_not_found_at: null,
+            business_central_not_found_environment: null,
+            business_central_not_found_customer_number: null,
+          });
+          expect(company.business_central_synced_at).toEqual(staleAt);
+        });
+
+        it("reports failed and keeps an existing not-found record on a Business Central error", async () => {
+          const companyId = await createCompany(trigger, "NO", "00088888");
+          const earlier = new Date(Date.now() - 60 * 60 * 1000);
+          await companyService().updateCompanies({
+            id: companyId,
+            business_central_not_found_at: earlier,
+            business_central_not_found_environment: "NO",
+            business_central_not_found_customer_number: "00088888",
+          });
+          spyOnGetCustomer().mockRejectedValueOnce(
+            new MedusaError(
+              MedusaError.Types.INVALID_DATA,
+              "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)"
+            )
+          );
+
+          const { result } = await runSync(trigger, companyId);
+
+          const company = await readCompany(companyId);
+          expect(result).toEqual({ status: "failed" });
+          expect(company).toMatchObject({
+            ...originalFields,
+            business_central_not_found_at: earlier,
+            business_central_not_found_environment: "NO",
+            business_central_not_found_customer_number: "00088888",
+          });
+          expect(company.business_central_synced_at).toEqual(staleAt);
+        });
+      });
+    });
   },
 });

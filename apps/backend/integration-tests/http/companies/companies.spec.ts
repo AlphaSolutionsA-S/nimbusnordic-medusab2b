@@ -771,6 +771,31 @@ medusaIntegrationTestRunner({
         expectNoRestrictedKeys(storefrontFields.data.cart.company);
       });
 
+      it("returns no Business Central not-found field to a company admin or a regular employee", async () => {
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        await companyService.updateCompanies({
+          id: companyId,
+          business_central_not_found_at: new Date(),
+          business_central_not_found_environment: "NO",
+          business_central_not_found_customer_number: "00011551",
+        });
+
+        for (const headers of [storeHeaders, employeeHeaders]) {
+          const response = await api.get(
+            `/store/companies/${companyId}?fields=+business_central_not_found_at,+business_central_not_found_environment,+business_central_not_found_customer_number`,
+            headers
+          );
+
+          expect(response.status).toBe(200);
+          expect(response.data.company.id).toBe(companyId);
+          expect(JSON.stringify(response.data)).not.toMatch(
+            /business_central_not_found/
+          );
+        }
+      });
+
       it("TC-6: the customer profile cannot select the linked company", async () => {
         for (const fields of [
           "*employee.company",
@@ -954,6 +979,41 @@ medusaIntegrationTestRunner({
         expect(getCustomerSpy).not.toHaveBeenCalled();
         const company = await readCompany(companyId);
         expect(company).toMatchObject(originalFields);
+        expect(company.business_central_synced_at).toEqual(staleAt);
+      });
+
+      it("routes a Norwegian company to the Norwegian Business Central", async () => {
+        const companyId = await createCompany("00044444");
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        await companyService.updateCompanies({ id: companyId, country: "NO" });
+        const getCustomerSpy = spyOnGetCustomer().mockResolvedValueOnce(
+          bcCustomer
+        );
+
+        const response = await api.post(syncUrl(companyId), {}, adminHeaders);
+
+        expect(response.status).toBe(200);
+        expect(response.data).toEqual({ status: "updated" });
+        expect(getCustomerSpy).toHaveBeenCalledWith("NO", "00044444");
+      });
+
+      it("returns skipped and records the not-found record when Business Central has no such customer", async () => {
+        const companyId = await createCompany("00044444");
+        spyOnGetCustomer().mockResolvedValueOnce(null);
+
+        const response = await api.post(syncUrl(companyId), {}, adminHeaders);
+
+        expect(response.status).toBe(200);
+        expect(response.data).toEqual({ status: "skipped" });
+        const company = await readCompany(companyId);
+        expect(company).toMatchObject({
+          ...originalFields,
+          business_central_not_found_environment: "DK",
+          business_central_not_found_customer_number: "00044444",
+        });
+        expect(company.business_central_not_found_at).toBeInstanceOf(Date);
         expect(company.business_central_synced_at).toEqual(staleAt);
       });
 
