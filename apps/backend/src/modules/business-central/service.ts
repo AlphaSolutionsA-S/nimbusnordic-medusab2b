@@ -35,8 +35,15 @@ import type {
   BCShipmentHeader,
   BCShipmentLineVariant,
   BCShipmentWindow,
+  BusinessCentralEnvironment,
   IBusinessCentralModuleService,
 } from "./types";
+import {
+  getBusinessCentralCompanyId,
+  getBusinessCentralEndpoint,
+  getBusinessCentralLocalCurrency,
+} from "./environment-config";
+import type { BusinessCentralEndpoint } from "./environment-config";
 import {
   ShipmentReadDeadlineError,
   BusinessCentralThrottledError,
@@ -84,8 +91,6 @@ import {
 } from "./item-lookup-evidence";
 import type { BCItemLookupItemRaw, BCItemReferenceRaw } from "./item-lookup-evidence";
 
-const DEFAULT_BUSINESS_CENTRAL_DISCOVERY_URL =
-  "https://api.businesscentral.dynamics.com/v2.0/f44eef10-122f-4a63-9f5c-bd9fbd87a364/TestDK/api/v2.0";
 const BUSINESS_CENTRAL_SCOPE =
   "https://api.businesscentral.dynamics.com/.default";
 const AZURE_GUID_PATTERN =
@@ -106,7 +111,6 @@ const ENABLED_REASON_CODES_ENTITY_SET = "CS_EnabledReasonCodes";
 const CREATE_RETURN_TIMEOUT_MS = 30000;
 const CUSTOMER_PORTAL_API_PATH = "api/abakion/customerPortal/v2.0";
 const BC_EMPTY_DATE = "0001-01-01";
-const DEFAULT_BUSINESS_CENTRAL_LCY_CODE = "DKK";
 const RETURN_ORDER_DETAIL_FIELDS =
   "id,number,documentDate,status,currencyCode,pricesIncludingVAT";
 const RETURN_ORDER_DETAIL_LINE_FIELDS =
@@ -602,16 +606,19 @@ function roundCurrencyAmount(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-// A blank BC currency code means the company's local currency (LCY). Same rule and env var as
+// A blank BC currency code means the environment's local currency (LCY). Same rule as
 // resolveCurrencyCode in workflows/company/steps/prepare-company-bc-sync.ts.
-function resolveBCCurrencyCode(value: unknown): string {
+function resolveBCCurrencyCode(
+  value: unknown,
+  environment: BusinessCentralEnvironment
+): string {
   const currencyCode = optionalString(value).trim();
 
   if (currencyCode) {
     return currencyCode;
   }
 
-  return process.env.BUSINESS_CENTRAL_LCY_CODE?.trim() || DEFAULT_BUSINESS_CENTRAL_LCY_CODE;
+  return getBusinessCentralLocalCurrency(environment);
 }
 
 type BCPostedReturnReceiptRaw = {
@@ -715,7 +722,10 @@ function mapSalesReturnOrderDetailLine(
   };
 }
 
-function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturnDetail {
+function mapSalesReturnOrderToDetail(
+  raw: BCSalesReturnOrderDetailRaw,
+  environment: BusinessCentralEnvironment
+): BCReturnDetail {
   const rawLines = [...(raw.salesReturnOrderLines ?? [])].sort(
     (left, right) => optionalNumber(left.sequence) - optionalNumber(right.sequence)
   );
@@ -740,7 +750,7 @@ function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturn
       .filter((line) => decodeBCEnumValue(line.lineType).trim() !== "")
       .map(mapSalesReturnOrderDetailLine),
     expectedCredit: {
-      currencyCode: resolveBCCurrencyCode(raw.currencyCode),
+      currencyCode: resolveBCCurrencyCode(raw.currencyCode, environment),
       amountIncludingTax: roundCurrencyAmount(amountIncludingTax),
       // lineAmount already includes VAT when prices include VAT, so no net figure can be derived.
       amountExcludingTax:
@@ -753,69 +763,14 @@ function mapSalesReturnOrderToDetail(raw: BCSalesReturnOrderDetailRaw): BCReturn
 class BusinessCentralModuleService implements IBusinessCentralModuleService {
   private readonly logger?: Logger;
   // The company name for ODataV4 shipment reads is kept with the token, so it is read once per
-  // token lifetime.
-  private shipmentReadToken: {
-    accessToken: string;
-    renewAtMs: number;
-    companyName: string | null;
-  } | null = null;
+  // token lifetime. Kept per environment, so a token or company name never crosses environments.
+  private readonly shipmentReadTokens = new Map<
+    BusinessCentralEnvironment,
+    { accessToken: string; renewAtMs: number; companyName: string | null }
+  >();
 
   constructor({ logger }: { logger?: Logger } = {}) {
     this.logger = logger;
-  }
-
-  private getDiscoveryUrl(): URL {
-    const configuredUrl =
-      process.env.BUSINESS_CENTRAL_DISCOVERY_URL ??
-      DEFAULT_BUSINESS_CENTRAL_DISCOVERY_URL;
-    let discoveryUrl: URL;
-
-    try {
-      discoveryUrl = new URL(configuredUrl);
-    } catch {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_DISCOVERY_URL must be a valid URL"
-      );
-    }
-
-    if (discoveryUrl.protocol !== "https:") {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_DISCOVERY_URL must use https"
-      );
-    }
-
-    if (discoveryUrl.hostname !== "api.businesscentral.dynamics.com") {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_DISCOVERY_URL must target api.businesscentral.dynamics.com"
-      );
-    }
-
-    return discoveryUrl;
-  }
-
-  private getTenantId(discoveryUrl: URL): string {
-    const pathSegments = discoveryUrl.pathname.split("/").filter(Boolean);
-    const apiVersion = pathSegments[0];
-    const tenantId = pathSegments[1];
-
-    if (apiVersion !== "v2.0") {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_DISCOVERY_URL must start with /v2.0/{tenant}/..."
-      );
-    }
-
-    if (!tenantId) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_DISCOVERY_URL must include tenant id in /v2.0/{tenant}/..."
-      );
-    }
-
-    return tenantId;
   }
 
   private getClientCredentials(): { clientId: string; clientSecret: string } {
@@ -848,19 +803,6 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     }
 
     return { clientId, clientSecret };
-  }
-
-  private getCompanyId(): string {
-    const companyId = process.env.BUSINESS_CENTRAL_COMPANY_ID;
-
-    if (!companyId || !AZURE_GUID_PATTERN.test(companyId)) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_COMPANY_ID must be the Business Central company ID GUID"
-      );
-    }
-
-    return companyId;
   }
 
   private async getCompanyName(
@@ -900,26 +842,13 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return requireBusinessCentralString(companyBody.name, "name");
   }
 
-  private getEnvironmentBaseUrl(discoveryUrl: URL): string {
-    const [, tenantId, environment] = discoveryUrl.pathname.split("/").filter(Boolean);
-
-    if (!environment) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_DISCOVERY_URL must include environment in /v2.0/{tenant}/{environment}/..."
-      );
-    }
-
-    return `https://${discoveryUrl.hostname}/v2.0/${tenantId}/${environment}`;
-  }
-
   private async listOrderReservations(
-    discoveryUrl: URL,
+    endpoint: BusinessCentralEndpoint,
     accessToken: string,
     orderNumber: string
   ): Promise<BCItemReservation[]> {
     const reservationsUrl = new URL(
-      `${this.getEnvironmentBaseUrl(discoveryUrl)}/${CUSTOMER_PORTAL_API_PATH}/companies(${this.getCompanyId()})/salesOrderReservationEntries`
+      `${endpoint.environmentBaseUrl}/${CUSTOMER_PORTAL_API_PATH}/companies(${getBusinessCentralCompanyId(endpoint.environment)})/salesOrderReservationEntries`
     );
     reservationsUrl.searchParams.set(
       "$filter",
@@ -976,17 +905,16 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   private async getODataV4Url(
-    discoveryUrl: URL,
+    endpoint: BusinessCentralEndpoint,
     accessToken: string,
     resource: string
   ): Promise<URL> {
-    const environmentBaseUrl = this.getEnvironmentBaseUrl(discoveryUrl);
     const companyName = await this.getCompanyName(
-      discoveryUrl,
+      endpoint.discoveryUrl,
       accessToken,
-      this.getCompanyId()
+      getBusinessCentralCompanyId(endpoint.environment)
     );
-    const url = new URL(`${environmentBaseUrl}/ODataV4/${resource}`);
+    const url = new URL(`${endpoint.environmentBaseUrl}/ODataV4/${resource}`);
     url.searchParams.set("company", `'${escapeODataString(companyName)}'`);
 
     return url;
@@ -1091,8 +1019,11 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   // Shared by the shipment reads only, so a polling run asks for one token, not one per call.
-  private async getShipmentReadToken(discoveryUrl: URL, deadlineMs?: number): Promise<string> {
-    const cached = this.shipmentReadToken;
+  private async getShipmentReadToken(
+    endpoint: BusinessCentralEndpoint,
+    deadlineMs?: number
+  ): Promise<string> {
+    const cached = this.shipmentReadTokens.get(endpoint.environment);
 
     if (cached && Date.now() < cached.renewAtMs) {
       return cached.accessToken;
@@ -1100,7 +1031,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
 
     const { clientId, clientSecret } = this.getClientCredentials();
     const { accessToken, expiresInSeconds } = await this.requestTokenWithLifetime(
-      this.getTenantId(discoveryUrl),
+      endpoint.tenantId,
       clientId,
       clientSecret,
       AbortSignal.timeout(SHIPMENT_REQUEST_TIMEOUT_MS),
@@ -1108,14 +1039,15 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     );
 
     // Without a lifetime the token is used for this call only.
-    this.shipmentReadToken =
-      expiresInSeconds === null
-        ? null
-        : {
-            accessToken,
-            renewAtMs: Date.now() + expiresInSeconds * 1000 - SHIPMENT_TOKEN_RENEW_BEFORE_MS,
-            companyName: null,
-          };
+    if (expiresInSeconds === null) {
+      this.shipmentReadTokens.delete(endpoint.environment);
+    } else {
+      this.shipmentReadTokens.set(endpoint.environment, {
+        accessToken,
+        renewAtMs: Date.now() + expiresInSeconds * 1000 - SHIPMENT_TOKEN_RENEW_BEFORE_MS,
+        companyName: null,
+      });
+    }
 
     return accessToken;
   }
@@ -1215,9 +1147,14 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return url.toString();
   }
 
-  async countShipments(window: BCShipmentWindow, deadlineMs?: number): Promise<number> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
+  async countShipments(
+    environment: BusinessCentralEnvironment,
+    window: BCShipmentWindow,
+    deadlineMs?: number
+  ): Promise<number> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl } = endpoint;
+    const accessToken = await this.getShipmentReadToken(endpoint, deadlineMs);
     const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
     url.searchParams.set("$filter", buildShipmentWindowFilter(window));
     url.searchParams.set("$count", "true");
@@ -1236,9 +1173,14 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return count;
   }
 
-  async listShipmentHeaders(window: BCShipmentWindow, deadlineMs?: number): Promise<BCShipmentHeader[]> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
+  async listShipmentHeaders(
+    environment: BusinessCentralEnvironment,
+    window: BCShipmentWindow,
+    deadlineMs?: number
+  ): Promise<BCShipmentHeader[]> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl } = endpoint;
+    const accessToken = await this.getShipmentReadToken(endpoint, deadlineMs);
     const url = new URL(`${discoveryUrl.toString()}/salesShipments`);
     url.searchParams.set("$filter", buildShipmentWindowFilter(window));
     url.searchParams.set("$orderby", "lastModifiedDateTime asc");
@@ -1249,15 +1191,20 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return rows.map(mapShipmentHeader);
   }
 
-  async getShipmentsByNumbers(numbers: readonly string[], deadlineMs?: number): Promise<BCShipment[]> {
+  async getShipmentsByNumbers(
+    environment: BusinessCentralEnvironment,
+    numbers: readonly string[],
+    deadlineMs?: number
+  ): Promise<BCShipment[]> {
     const chunks = chunkShipmentNumbers(numbers);
 
     if (chunks.length === 0) {
       return [];
     }
 
-    const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl } = endpoint;
+    const accessToken = await this.getShipmentReadToken(endpoint, deadlineMs);
     const shipments: BCShipment[] = [];
 
     // One request at a time keeps the polling run's load on BC predictable.
@@ -1276,31 +1223,33 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
 
   // Read through the shipment request path (timeout, deadline, throttling), unlike getCompanyName.
   private async getShipmentReadCompanyName(
-    discoveryUrl: URL,
+    endpoint: BusinessCentralEndpoint,
     accessToken: string,
     deadlineMs?: number
   ): Promise<string> {
-    const cached = this.shipmentReadToken;
+    const cached = this.shipmentReadTokens.get(endpoint.environment);
 
     if (cached?.accessToken === accessToken && cached.companyName !== null) {
       return cached.companyName;
     }
 
     const body = await this.getShipmentJson<{ name?: unknown }>(
-      `${discoveryUrl.toString()}/companies(${this.getCompanyId()})`,
+      `${endpoint.discoveryUrl.toString()}/companies(${getBusinessCentralCompanyId(endpoint.environment)})`,
       accessToken,
       deadlineMs
     );
     const companyName = requireBusinessCentralString(body.name, "name");
+    const current = this.shipmentReadTokens.get(endpoint.environment);
 
-    if (this.shipmentReadToken?.accessToken === accessToken) {
-      this.shipmentReadToken.companyName = companyName;
+    if (current?.accessToken === accessToken) {
+      current.companyName = companyName;
     }
 
     return companyName;
   }
 
   async getShipmentLineVariants(
+    environment: BusinessCentralEnvironment,
     numbers: readonly string[],
     deadlineMs?: number
   ): Promise<BCShipmentLineVariant[]> {
@@ -1310,14 +1259,15 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       return [];
     }
 
-    const discoveryUrl = this.getDiscoveryUrl();
-    const accessToken = await this.getShipmentReadToken(discoveryUrl, deadlineMs);
-    const companyName = await this.getShipmentReadCompanyName(discoveryUrl, accessToken, deadlineMs);
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl } = endpoint;
+    const accessToken = await this.getShipmentReadToken(endpoint, deadlineMs);
+    const companyName = await this.getShipmentReadCompanyName(endpoint, accessToken, deadlineMs);
     const variants: BCShipmentLineVariant[] = [];
 
     for (const chunk of chunks) {
       const url = new URL(
-        `${this.getEnvironmentBaseUrl(discoveryUrl)}/ODataV4/${SHIPMENT_LINE_VARIANT_ENTITY_SET}`
+        `${endpoint.environmentBaseUrl}/ODataV4/${SHIPMENT_LINE_VARIANT_ENTITY_SET}`
       );
       url.searchParams.set("company", buildODataCompanyParameter(companyName));
       url.searchParams.set("$filter", buildShipmentLineVariantFilter(chunk));
@@ -1335,9 +1285,9 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return variants;
   }
 
+  // Only the disabled /store/business-central/operations route used this; it stays on DK.
   async getOperations(): Promise<unknown> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+    const { discoveryUrl, tenantId } = getBusinessCentralEndpoint("DK");
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
 
@@ -1359,9 +1309,12 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return operationsResponse.json();
   }
 
-  async getCustomer(customerNumber: string): Promise<BCCustomer | null> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+  async getCustomer(
+    environment: BusinessCentralEnvironment,
+    customerNumber: string
+  ): Promise<BCCustomer | null> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
 
@@ -1519,7 +1472,10 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return rows;
   }
 
-  async getItemLookupEvidence(lines: BCItemLookupInput[]): Promise<BCItemLookupEvidence> {
+  async getItemLookupEvidence(
+    environment: BusinessCentralEnvironment,
+    lines: BCItemLookupInput[]
+  ): Promise<BCItemLookupEvidence> {
     const barcodes = collectLineBarcodes(lines);
     const lineItemNumbers = collectItemNumbers(lines, []);
 
@@ -1527,8 +1483,8 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       return { itemsByBarcode: [], barcodeReferences: [], itemsByNumber: [] };
     }
 
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
     const itemsUrl = new URL(`${discoveryUrl.toString()}/items()`);
@@ -1553,7 +1509,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       ).map(mapLookupItem);
 
       const referencesUrl = await this.getODataV4Url(
-        discoveryUrl,
+        endpoint,
         accessToken,
         ITEM_REFERENCE_ENTITY_SET
       );
@@ -1646,6 +1602,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   async createSalesOrder(
+    environment: BusinessCentralEnvironment,
     params: BCCreateSalesOrderParams
   ): Promise<BCCreatedSalesOrder> {
     if (params.lines.length === 0) {
@@ -1669,8 +1626,8 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       );
     }
 
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
     const salesOrdersUrl = `${discoveryUrl.toString()}/salesOrders`;
@@ -1762,6 +1719,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   async createReturnFromSalesOrder(
+    environment: BusinessCentralEnvironment,
     params: BCCreateReturnParams
   ): Promise<BCReturnOrder> {
     if (!params.requestId || !params.sourceOrderNo || params.lines.length === 0) {
@@ -1780,12 +1738,12 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       }
     }
 
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
     const actionUrl = await this.getODataV4Url(
-      discoveryUrl,
+      endpoint,
       accessToken,
       CREATE_RETURN_ORDER_ACTION
     );
@@ -1869,13 +1827,13 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
   }
 
-  async listReturnReasons(): Promise<BCReturnReason[]> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+  async listReturnReasons(environment: BusinessCentralEnvironment): Promise<BCReturnReason[]> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
     const reasonsUrl = await this.getODataV4Url(
-      discoveryUrl,
+      endpoint,
       accessToken,
       ENABLED_REASON_CODES_ENTITY_SET
     );
@@ -1931,14 +1889,17 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   // no customerId, so no customer-GUID lookup is needed (contrast with listOrders). BC cannot
   // page across two sources, so both are read up to a cap and merged, filtered, sorted and
   // paged in memory (NIMBUS-172).
-  async listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+  async listReturns(
+    environment: BusinessCentralEnvironment,
+    params: BCListReturnsParams
+  ): Promise<BCListReturnsResult> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
 
     const receiptsUrlPromise = this.getODataV4Url(
-      discoveryUrl,
+      endpoint,
       accessToken,
       POSTED_RETURN_RECEIPT_ENTITY_SET
     );
@@ -2236,9 +2197,12 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     return body.value ?? [];
   }
 
-  async listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+  async listOrders(
+    environment: BusinessCentralEnvironment,
+    params: BCListOrdersParams
+  ): Promise<BCListOrdersResult> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
     const customerId = await this.getCustomerId(
@@ -2412,9 +2376,12 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
   }
 
-  async getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+  async getOrder(
+    environment: BusinessCentralEnvironment,
+    params: BCGetOrderParams
+  ): Promise<BCOrderDetail | null> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
     const customerId = await this.getCustomerId(
@@ -2466,7 +2433,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
         },
       }),
       // Reservations are supplementary; the order must still load when they cannot be fetched.
-      this.listOrderReservations(discoveryUrl, accessToken, params.orderNumber).catch(
+      this.listOrderReservations(endpoint, accessToken, params.orderNumber).catch(
         (error: unknown) => {
           this.logger?.warn(
             `Business Central reservations could not be loaded: ${
@@ -2568,21 +2535,24 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   // Open return orders come from the Abakion customer-portal API (unlike v2.0, its lines expose
   // variantCode and returnReasonCode). Posted return receipts come from the ODataV4
   // PostedReturnReceipt web service. Every query is filtered on the session's customer number.
-  async getReturn(params: BCGetReturnParams): Promise<BCReturnDetail | null> {
-    const discoveryUrl = this.getDiscoveryUrl();
-    const tenantId = this.getTenantId(discoveryUrl);
+  async getReturn(
+    environment: BusinessCentralEnvironment,
+    params: BCGetReturnParams
+  ): Promise<BCReturnDetail | null> {
+    const endpoint = getBusinessCentralEndpoint(environment);
+    const { discoveryUrl, tenantId } = endpoint;
     const { clientId, clientSecret } = this.getClientCredentials();
     const accessToken = await this.requestToken(tenantId, clientId, clientSecret);
 
     const customerFilter = `Sell_to_Customer_No eq '${escapeODataString(params.customerNumber)}'`;
     const numberLiteral = `'${escapeODataString(params.returnNumber)}'`;
     const receiptsUrlPromise = this.getODataV4Url(
-      discoveryUrl,
+      endpoint,
       accessToken,
       POSTED_RETURN_RECEIPT_ENTITY_SET
     );
     const [openReturn, [returnOrderReceipts, numberedReceipts]] = await Promise.all([
-      this.fetchOpenReturnOrderDetail(discoveryUrl, accessToken, params),
+      this.fetchOpenReturnOrderDetail(endpoint, accessToken, params),
       receiptsUrlPromise.then((receiptsUrl) =>
         Promise.all([
           this.fetchPostedReturnReceiptHeaders(
@@ -2655,12 +2625,12 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
   }
 
   private async fetchOpenReturnOrderDetail(
-    discoveryUrl: URL,
+    endpoint: BusinessCentralEndpoint,
     accessToken: string,
     params: BCGetReturnParams
   ): Promise<BCReturnDetail | null> {
     const returnUrl = new URL(
-      `${this.getEnvironmentBaseUrl(discoveryUrl)}/${CUSTOMER_PORTAL_API_PATH}/companies(${this.getCompanyId()})/salesReturnOrders`
+      `${endpoint.environmentBaseUrl}/${CUSTOMER_PORTAL_API_PATH}/companies(${getBusinessCentralCompanyId(endpoint.environment)})/salesReturnOrders`
     );
     returnUrl.searchParams.set(
       "$filter",
@@ -2696,7 +2666,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     };
     const raw = returnBody.value?.[0];
 
-    return raw ? mapSalesReturnOrderToDetail(raw) : null;
+    return raw ? mapSalesReturnOrderToDetail(raw, endpoint.environment) : null;
   }
 }
 

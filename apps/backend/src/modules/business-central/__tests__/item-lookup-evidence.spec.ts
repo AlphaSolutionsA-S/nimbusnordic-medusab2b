@@ -142,7 +142,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const evidence = await service.getItemLookupEvidence([
+    const evidence = await service.getItemLookupEvidence("DK", [
       { lineNumber: 1, eanNo: "5712094132141" },
     ]);
 
@@ -208,7 +208,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const evidence = await service.getItemLookupEvidence([
+    const evidence = await service.getItemLookupEvidence("DK", [
       { lineNumber: 1, eanNo: "5712094132141" },
     ]);
 
@@ -230,7 +230,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const evidence = await service.getItemLookupEvidence([
+    const evidence = await service.getItemLookupEvidence("DK", [
       { lineNumber: 1, eanNo: "5712094132141" },
     ]);
 
@@ -247,7 +247,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const evidence = await service.getItemLookupEvidence([
+    const evidence = await service.getItemLookupEvidence("DK", [
       { lineNumber: 1, eanNo: "5712094145752" },
     ]);
 
@@ -275,7 +275,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
       eanNo: barcode(index),
     }));
 
-    await service.getItemLookupEvidence([
+    await service.getItemLookupEvidence("DK", [
       ...lines,
       { lineNumber: 46, eanNo: barcode(0) },
       { lineNumber: 47, eanNo: "  " },
@@ -297,7 +297,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const evidence = await service.getItemLookupEvidence([
+    const evidence = await service.getItemLookupEvidence("DK", [
       {
         lineNumber: 1,
         eanNo: "5712094132141",
@@ -332,7 +332,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const fetchMock = mockBc();
     const service = new BusinessCentralModuleService();
 
-    await service.getItemLookupEvidence([
+    await service.getItemLookupEvidence("DK", [
       { lineNumber: 1, eanNo: "5712094132141", itemNumber: "A' or number eq 'B" },
     ]);
 
@@ -350,7 +350,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const evidence = await service.getItemLookupEvidence([
+    const evidence = await service.getItemLookupEvidence("DK", [
       {
         lineNumber: 1,
         eanNo: "5712094143628",
@@ -372,7 +372,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getItemLookupEvidence([
+      service.getItemLookupEvidence("DK", [
         { lineNumber: 1, eanNo: "", itemNumber: "NKT-NIM-TELLURIDENA-S" },
       ])
     ).resolves.toEqual({ itemsByBarcode: [], barcodeReferences: [], itemsByNumber: [] });
@@ -383,7 +383,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const fetchMock = mockBc();
     const service = new BusinessCentralModuleService();
 
-    await service.getItemLookupEvidence([{ lineNumber: 1, eanNo: "5712094132141" }]);
+    await service.getItemLookupEvidence("DK", [{ lineNumber: 1, eanNo: "5712094132141" }]);
 
     expect(itemRequests(fetchMock, "number")).toHaveLength(0);
   });
@@ -400,7 +400,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const service = new BusinessCentralModuleService();
 
     const error = await service
-      .getItemLookupEvidence([{ lineNumber: 1, eanNo: "5712094132141" }])
+      .getItemLookupEvidence("DK", [{ lineNumber: 1, eanNo: "5712094132141" }])
       .catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(Error);
@@ -423,7 +423,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
       const service = new BusinessCentralModuleService();
 
       await expect(
-        service.getItemLookupEvidence([{ lineNumber: 1, eanNo: "5712094132141" }])
+        service.getItemLookupEvidence("DK", [{ lineNumber: 1, eanNo: "5712094132141" }])
       ).rejects.toThrow("incomplete");
     }
   );
@@ -437,7 +437,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const service = new BusinessCentralModuleService();
 
     const error = await service
-      .getItemLookupEvidence([{ lineNumber: 1, eanNo: "5712094132141" }])
+      .getItemLookupEvidence("DK", [{ lineNumber: 1, eanNo: "5712094132141" }])
       .catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(Error);
@@ -451,6 +451,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const service = new BusinessCentralModuleService();
 
     await service.getItemLookupEvidence(
+      "DK",
       Array.from({ length: 25 }, (_, index) => ({
         lineNumber: index + 1,
         eanNo: barcode(index),
@@ -473,7 +474,7 @@ describe("BusinessCentralModuleService.getItemLookupEvidence", () => {
     const fetchMock = mockBc();
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getItemLookupEvidence([])).resolves.toEqual({
+    await expect(service.getItemLookupEvidence("DK", [])).resolves.toEqual({
       itemsByBarcode: [],
       barcodeReferences: [],
       itemsByNumber: [],

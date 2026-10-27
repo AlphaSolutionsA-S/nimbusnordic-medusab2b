@@ -62,7 +62,8 @@ export const submitBcOrderStep = createStep(
     );
 
     try {
-      const created = await bcService.createSalesOrder(input.params);
+      // Order submission always goes to the Danish Business Central (NIMBUS-261).
+      const created = await bcService.createSalesOrder("DK", input.params);
 
       // Logged immediately so the real BC order id is recoverable from logs even if the
       // outcome-recording step fails to persist it (PLAN.md Decision 7).

@@ -916,7 +916,7 @@ medusaIntegrationTestRunner({
         expect(response.status).toBe(200);
         expect(response.data).toEqual({ status: "updated" });
         expect(getCustomerSpy).toHaveBeenCalledTimes(1);
-        expect(getCustomerSpy).toHaveBeenCalledWith("00044444");
+        expect(getCustomerSpy).toHaveBeenCalledWith("DK", "00044444");
 
         const read = await api.get(`/admin/companies/${companyId}`, adminHeaders);
         expect(read.data.company.name).toBe("Admin Synced Company");

@@ -77,7 +77,7 @@ describe("GET /store/bc-returns/:number", () => {
       fields: ["employee.company.business_central_customer_number"],
       filters: { id: "cus_1" },
     });
-    expect(getReturn).toHaveBeenCalledWith({
+    expect(getReturn).toHaveBeenCalledWith("DK", {
       customerNumber: "10000",
       returnNumber: "31502910",
     });

@@ -12,7 +12,7 @@ export const GET = async (
   const bcService = req.scope.resolve<IBusinessCentralModuleService>(
     BUSINESS_CENTRAL_MODULE
   );
-  const returnReasons = await bcService.listReturnReasons();
+  const returnReasons = await bcService.listReturnReasons("DK");
 
   res.json({ return_reasons: returnReasons });
 };

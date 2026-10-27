@@ -454,7 +454,7 @@ medusaIntegrationTestRunner({
 
         expect(result).toEqual({ status: "updated" });
         expect(getCustomerSpy).toHaveBeenCalledTimes(1);
-        expect(getCustomerSpy).toHaveBeenCalledWith("00011551");
+        expect(getCustomerSpy).toHaveBeenCalledWith("DK", "00011551");
         expect(companyA.name).toBe("Matched Company");
         expect(companyA.business_central_synced_at?.getTime()).toBeGreaterThan(
           staleAt.getTime()
@@ -563,7 +563,7 @@ medusaIntegrationTestRunner({
 
         expect(result).toEqual({ status: "updated" });
         expect(getCustomerSpy).toHaveBeenCalledTimes(1);
-        expect(getCustomerSpy).toHaveBeenCalledWith("00033333");
+        expect(getCustomerSpy).toHaveBeenCalledWith("DK", "00033333");
         expect(company).toMatchObject({
           id: companyId,
           name: "Synced By Id",

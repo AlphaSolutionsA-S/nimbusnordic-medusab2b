@@ -50,7 +50,7 @@ export const GET = async (
 
   const bcService =
     req.scope.resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
-  const bcReturn = await bcService.getReturn({
+  const bcReturn = await bcService.getReturn("DK", {
     customerNumber: bcCustomerNumber,
     returnNumber,
   });

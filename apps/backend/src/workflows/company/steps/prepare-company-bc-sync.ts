@@ -123,7 +123,7 @@ export const prepareCompanyBcSyncStep = createStep(
     let bcCustomer;
 
     try {
-      bcCustomer = await bcService.getCustomer(bcCustomerNumber);
+      bcCustomer = await bcService.getCustomer("DK", bcCustomerNumber);
     } catch (error: unknown) {
       if (!(error instanceof MedusaError)) {
         throw error;

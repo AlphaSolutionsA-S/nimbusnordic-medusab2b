@@ -21,7 +21,7 @@ export const submitBcReturnStep = createStep(
     const bcService = container.resolve<IBusinessCentralModuleService>(
       BUSINESS_CENTRAL_MODULE
     );
-    const returnOrder = await bcService.createReturnFromSalesOrder({
+    const returnOrder = await bcService.createReturnFromSalesOrder("DK", {
       requestId: input.requestId,
       sourceOrderNo: input.sourceOrderNo,
       lines: input.verifiedLines,

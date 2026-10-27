@@ -234,25 +234,64 @@ export type BCReturnDetail = {
   receipts: BCPostedReturnReceipt[];
 };
 
+// The Business Central environment a call goes to: the Danish or the Norwegian one.
+export type BusinessCentralEnvironment = "DK" | "NO";
+
 export interface IBusinessCentralModuleService {
   getOperations(): Promise<unknown>;
-  listOrders(params: BCListOrdersParams): Promise<BCListOrdersResult>;
-  getOrder(params: BCGetOrderParams): Promise<BCOrderDetail | null>;
-  getReturn(params: BCGetReturnParams): Promise<BCReturnDetail | null>;
-  getCustomer(customerNumber: string): Promise<BCCustomer | null>;
-  getItemLookupEvidence(lines: BCItemLookupInput[]): Promise<BCItemLookupEvidence>;
+  listOrders(
+    environment: BusinessCentralEnvironment,
+    params: BCListOrdersParams
+  ): Promise<BCListOrdersResult>;
+  getOrder(
+    environment: BusinessCentralEnvironment,
+    params: BCGetOrderParams
+  ): Promise<BCOrderDetail | null>;
+  getReturn(
+    environment: BusinessCentralEnvironment,
+    params: BCGetReturnParams
+  ): Promise<BCReturnDetail | null>;
+  getCustomer(
+    environment: BusinessCentralEnvironment,
+    customerNumber: string
+  ): Promise<BCCustomer | null>;
+  getItemLookupEvidence(
+    environment: BusinessCentralEnvironment,
+    lines: BCItemLookupInput[]
+  ): Promise<BCItemLookupEvidence>;
   createSalesOrder(
+    environment: BusinessCentralEnvironment,
     params: BCCreateSalesOrderParams
   ): Promise<BCCreatedSalesOrder>;
   createReturnFromSalesOrder(
+    environment: BusinessCentralEnvironment,
     params: BCCreateReturnParams
   ): Promise<BCReturnOrder>;
-  listReturnReasons(): Promise<BCReturnReason[]>;
-  listReturns(params: BCListReturnsParams): Promise<BCListReturnsResult>;
-  countShipments(window: BCShipmentWindow, deadlineMs?: number): Promise<number>;
-  listShipmentHeaders(window: BCShipmentWindow, deadlineMs?: number): Promise<BCShipmentHeader[]>;
-  getShipmentsByNumbers(numbers: readonly string[], deadlineMs?: number): Promise<BCShipment[]>;
-  getShipmentLineVariants(numbers: readonly string[], deadlineMs?: number): Promise<BCShipmentLineVariant[]>;
+  listReturnReasons(environment: BusinessCentralEnvironment): Promise<BCReturnReason[]>;
+  listReturns(
+    environment: BusinessCentralEnvironment,
+    params: BCListReturnsParams
+  ): Promise<BCListReturnsResult>;
+  countShipments(
+    environment: BusinessCentralEnvironment,
+    window: BCShipmentWindow,
+    deadlineMs?: number
+  ): Promise<number>;
+  listShipmentHeaders(
+    environment: BusinessCentralEnvironment,
+    window: BCShipmentWindow,
+    deadlineMs?: number
+  ): Promise<BCShipmentHeader[]>;
+  getShipmentsByNumbers(
+    environment: BusinessCentralEnvironment,
+    numbers: readonly string[],
+    deadlineMs?: number
+  ): Promise<BCShipment[]>;
+  getShipmentLineVariants(
+    environment: BusinessCentralEnvironment,
+    numbers: readonly string[],
+    deadlineMs?: number
+  ): Promise<BCShipmentLineVariant[]>;
 }
 
 // Posted sales shipments modified in (after, until].

@@ -61,7 +61,7 @@ export const GET = async (
     search,
   };
 
-  const result = await bcService.listOrders(bcParams);
+  const result = await bcService.listOrders("DK", bcParams);
 
   res.json(result);
 };

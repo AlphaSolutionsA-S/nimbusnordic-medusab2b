@@ -53,7 +53,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).resolves.toEqual({
+    await expect(service.getCustomer("DK", "00011551")).resolves.toEqual({
       number: "00011551",
       displayName: "Nimbus Nordic",
       email: "customer@example.com",
@@ -82,7 +82,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).resolves.toBeNull();
+    await expect(service.getCustomer("DK", "00011551")).resolves.toBeNull();
   });
 
   it("throws when the customer request fails", async () => {
@@ -90,7 +90,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).rejects.toThrow(
+    await expect(service.getCustomer("DK", "00011551")).rejects.toThrow(
       "Business Central customer request failed with status 500"
     );
   });
@@ -100,7 +100,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).resolves.toMatchObject({
+    await expect(service.getCustomer("DK", "00011551")).resolves.toMatchObject({
       blocked: "not_blocked",
     });
   });
@@ -110,7 +110,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).rejects.toThrow(
+    await expect(service.getCustomer("DK", "00011551")).rejects.toThrow(
       "Unsupported Business Central blocked value"
     );
   });
@@ -120,7 +120,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).resolves.toMatchObject({
+    await expect(service.getCustomer("DK", "00011551")).resolves.toMatchObject({
       currencyCode: null,
       blocked: "not_blocked",
     });
@@ -131,7 +131,7 @@ describe("BusinessCentralModuleService.getCustomer", () => {
 
     const service = new BusinessCentralModuleService();
 
-    await expect(service.getCustomer("00011551")).resolves.toMatchObject({
+    await expect(service.getCustomer("DK", "00011551")).resolves.toMatchObject({
       creditLimit: 12345.67,
     });
   });
@@ -166,7 +166,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getOrder({ customerNumber: "10000", orderNumber: "SO-9999" })
+      service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-9999" })
     ).resolves.toBeNull();
 
     const orderRequest = (global.fetch as jest.Mock).mock.calls[2][0] as string;
@@ -220,7 +220,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" })
+      service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-1000" })
     ).resolves.toEqual(
       expect.objectContaining({
         id: "order-1",
@@ -315,7 +315,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       mockOrderFetch(jsonResponse({ value: [] }));
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-1000" });
 
       expect(result?.lines).toEqual([
         expect.objectContaining({ id: "line-1", shippedQuantity: 3, returnableQuantity: 2 }),
@@ -363,7 +363,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-1000" });
 
       expect(result?.lines[1].reservations).toEqual([]);
       expect(result?.lines[2].reservations).toEqual([]);
@@ -395,7 +395,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       mockOrderFetch(new Error("network down"));
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-1000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-1000" });
 
       expect(result?.number).toBe("SO-1000");
       expect(result?.lines.every((line) => line.reservations.length === 0)).toBe(true);
@@ -531,7 +531,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       const fetchMock = mockVariantFetch(orderWithVariants);
       const service = new BusinessCentralModuleService();
 
-      await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+      await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-4000" });
 
       const urls = fetchMock.mock.calls.map(([url]) => url as string);
       const orderUrls = urls.filter((url) => url.includes("/salesOrders()"));
@@ -552,7 +552,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       mockVariantFetch(orderWithVariants);
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-4000" });
 
       expect(lineById(result?.lines, "open-sized").variantCode).toBe("L");
       expect(lineById(result?.lines, "invoice-sized").variantCode).toBe("XL");
@@ -562,7 +562,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       mockVariantFetch(null);
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-4000" });
 
       expect(result?.invoiceStatus).toBe("fully_invoiced");
       expect(lineById(result?.lines, "invoice-sized").variantCode).toBe("XL");
@@ -582,7 +582,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       mockVariantFetch(orderWithVariants);
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-4000" });
 
       expect(lineById(result?.lines, lineId)).not.toHaveProperty("variantCode");
     });
@@ -591,7 +591,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
       mockVariantFetch(orderWithVariants);
       const service = new BusinessCentralModuleService();
 
-      const result = await service.getOrder({ customerNumber: "10000", orderNumber: "SO-4000" });
+      const result = await service.getOrder("DK", { customerNumber: "10000", orderNumber: "SO-4000" });
 
       expect(lineById(result?.lines, "open-comment")).toEqual({
         id: "open-comment",
@@ -695,7 +695,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
 
     const service = new BusinessCentralModuleService();
 
-    const result = await service.getOrder({
+    const result = await service.getOrder("DK", {
       customerNumber: "10000",
       orderNumber: "SO-2000",
     });
@@ -789,7 +789,7 @@ describe("BusinessCentralModuleService.getOrder", () => {
 
     const service = new BusinessCentralModuleService();
 
-    const result = await service.getOrder({
+    const result = await service.getOrder("DK", {
       customerNumber: "10000",
       orderNumber: "SO-3000",
     });
@@ -846,7 +846,7 @@ describe("BusinessCentralModuleService.listOrders", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.listOrders({ customerNumber: "10000", limit: 20, offset: 0 })
+      service.listOrders("DK", { customerNumber: "10000", limit: 20, offset: 0 })
     ).resolves.toEqual({ orders: [], count: 0, offset: 0, limit: 20 });
 
     const customerRequest = (global.fetch as jest.Mock).mock.calls[1][0] as string;
@@ -889,7 +889,7 @@ describe("BusinessCentralModuleService.listOrders", () => {
 
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listOrders({
+    const result = await service.listOrders("DK", {
       customerNumber: "10000",
       limit: 1,
       offset: 0,
@@ -968,7 +968,7 @@ describe("BusinessCentralModuleService.listOrders", () => {
 
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listOrders({
+    const result = await service.listOrders("DK", {
       customerNumber: "10000",
       limit: 2,
       offset: 0,
@@ -1040,7 +1040,7 @@ describe("BusinessCentralModuleService.listOrders", () => {
 
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listOrders({
+    const result = await service.listOrders("DK", {
       customerNumber: "10000",
       limit: 2,
       offset: 0,
@@ -1084,7 +1084,7 @@ describe("BusinessCentralModuleService.listOrders", () => {
 
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listOrders({
+    const result = await service.listOrders("DK", {
       customerNumber: "10000",
       limit: 5,
       offset: 0,

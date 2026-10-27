@@ -207,9 +207,10 @@ export const checkShipmentsStep = createStep(
 
       let shipments: BCShipment[];
       let variants: BCShipmentLineVariant[];
+      // Shipment notices always come from the Danish Business Central (NIMBUS-261).
       try {
-        shipments = await bc.getShipmentsByNumbers(numbers, deadline);
-        variants = await bc.getShipmentLineVariants(numbers, deadline);
+        shipments = await bc.getShipmentsByNumbers("DK", numbers, deadline);
+        variants = await bc.getShipmentLineVariants("DK", numbers, deadline);
       } catch (error) {
         if (error instanceof ShipmentReadDeadlineError) {
           break;

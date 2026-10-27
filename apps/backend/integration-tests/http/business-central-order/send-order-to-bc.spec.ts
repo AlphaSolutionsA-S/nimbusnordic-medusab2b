@@ -268,7 +268,9 @@ medusaIntegrationTestRunner({
         await run(order.id);
 
         expect(createSalesOrder).toHaveBeenCalledTimes(1);
-        const params = createSalesOrder.mock.calls[0][0];
+        // Order submission always goes to the Danish Business Central.
+        expect(createSalesOrder.mock.calls[0][0]).toBe("DK");
+        const params = createSalesOrder.mock.calls[0][1];
         expect(params.customerNumber).toEqual("579000283084");
         expect(params.externalDocumentNumber).toMatch(/^BC-ORDER-/);
         expect(params.orderDate).toEqual("2026-08-26");
@@ -305,7 +307,7 @@ medusaIntegrationTestRunner({
 
         await run(order.id);
 
-        expect(createSalesOrder.mock.calls[0][0].lines).toHaveLength(1);
+        expect(createSalesOrder.mock.calls[0][1].lines).toHaveLength(1);
 
         const state = await readIntegrationState(order.id);
         expect(state.status).toEqual("sent");
@@ -352,7 +354,7 @@ medusaIntegrationTestRunner({
         await run(order.id);
 
         expect(findItems).toHaveBeenCalledTimes(1);
-        expect(createSalesOrder.mock.calls[0][0].lines).toEqual([
+        expect(createSalesOrder.mock.calls[0][1].lines).toEqual([
           {
             lineNumber: 1,
             itemId: SIZED_ITEM.id,
@@ -390,7 +392,7 @@ medusaIntegrationTestRunner({
 
         await run(order.id);
 
-        expect(createSalesOrder.mock.calls[0][0].lines).toEqual([
+        expect(createSalesOrder.mock.calls[0][1].lines).toEqual([
           expect.objectContaining({ lineNumber: 1, itemVariantId: SIZED_ITEM.variants[1].id }),
         ]);
 
@@ -630,7 +632,7 @@ medusaIntegrationTestRunner({
 
         await run(order.id);
 
-        expect(createSalesOrder.mock.calls[0][0].currencyCode).toEqual("DKK");
+        expect(createSalesOrder.mock.calls[0][1].currencyCode).toEqual("DKK");
       });
 
       it("TC-15: treats a blank BC customer currency as local currency", async () => {
@@ -646,12 +648,12 @@ medusaIntegrationTestRunner({
           );
 
           await run(dkkOrder.id);
-          expect(createSalesOrder.mock.calls[0][0].currencyCode).toBeUndefined();
+          expect(createSalesOrder.mock.calls[0][1].currencyCode).toBeUndefined();
 
           const { order: eurOrder } = await seedOrder({ currencyCode: "EUR" });
 
           await run(eurOrder.id);
-          expect(createSalesOrder.mock.calls[1][0].currencyCode).toEqual("EUR");
+          expect(createSalesOrder.mock.calls[1][1].currencyCode).toEqual("EUR");
         } finally {
           if (originalLcy === undefined) {
             delete process.env.BUSINESS_CENTRAL_LCY_CODE;
