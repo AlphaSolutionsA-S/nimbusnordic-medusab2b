@@ -58,3 +58,88 @@
 - Next owner: the human (scope approval), then `implementation-planner` on a separate go-ahead.
 - Handover prompt: "Plan NIMBUS-261 from `issues/NIMBUS-261/scope.md`. Start with the read-only
   TestNO probe; dispatch is blocked until it passes."
+
+## 2026-10-27 — implementation-planner (draft, awaiting approval)
+
+- Outcome: `plan.md`, `manifest.md` and seven task files (`01`–`07`) written; Jira sub-tasks
+  NIMBUS-262 to NIMBUS-268 created (component Customer Portal) and a "plan drafted" comment added
+  to NIMBUS-261 (comment 255698). Design: the environment (`DK`/`NO`) becomes a required first
+  argument of every BC module method (task 01 passes `DK` everywhere; order API, submission and
+  shipment notices stay `DK`); one pure country rule plus an account workflow resolve customer
+  number and environment for store routes, return creation and the Admin section; the not-found
+  record is three columns written by the sync, which still reports `skipped`.
+- Not done: the TestNO probe. No BC credentials, `.env` or `mcloud` in this checkout, so it is
+  `UNVERIFIED` and blocks dispatch. Read-only script: `samples/probe-bc-environment.mjs` (needs
+  `BUSINESS_CENTRAL_CLIENT_ID/SECRET`, `PROBE_DISCOVERY_URL` for TestNO, `PROBE_COMPANY_ID`,
+  `PROBE_CUSTOMER_NUMBER`). Stored `company.country` case also `UNVERIFIED` (no database
+  reachable); non-blocking, the rule ignores case.
+- New finding: standard BC API calls carry no `companies(...)` segment and rely on BC's default
+  company; the probe must confirm that TestNO's default is the Nimbus Nordic NO company. The return
+  step accepts only reason `NORMAL` (NIMBUS-138), so NO must have it enabled.
+- Needs the human: run the probe; answer plan section 2 items 2 (new columns visible to company
+  admins through two existing wildcard store responses; default accept) and 3 (integration tests
+  verification rule; default as NIMBUS-254); approve the plan. `Ready for Dispatch` stays false.
+  Nothing committed or pushed.
+- Next owner: the human, then `implementation-planner` to fold in the probe output and set ready,
+  then `task-dispatcher` on a separate go-ahead.
+- Handover prompt: "Continue planning NIMBUS-261: here is the TestNO probe output <paste>. Fold it
+  into `issues/NIMBUS-261/plan.md` sections 2 and 9, apply my answers to section 2, and mark the
+  plan ready if every framework row is verified."
+
+## 2026-10-27 — implementation-planner (probe folded in, awaiting approval)
+
+- Outcome: probe and production counts recorded in `samples/probe-results-2026-10-27.md` (counts,
+  status codes and company names/GUIDs only). `plan.md` updated: section 2 item 1 is now answered
+  (Klaus: build now; the customer-portal extension is missing in TestNO and gates only the
+  verification of the parts that need it and production go-live); flows A8 and B6 describe
+  behaviour until the extension is deployed; section 9 rows verified (default company in TestNO, NO
+  GUIDs and names, standard API and posted receipts, card country `NO`, NOK, shared credentials);
+  section 10 gates: extension in TestNO for verification, extension and probe in ProductionNO plus
+  a ProductionDK probe (two companies there: CRONUS and Nimbus) for go-live, TestNO test data
+  (205 of 207 cards with blank country), 4 ProductionDK `NO` customers missing in ProductionNO.
+  "Numbers unique" replaced by the business rule "same number = same customer; found in both is
+  normal; no uniqueness warning" (Klaus, 2026-10-27) in plan sections 3, 4, 5, 8 and task 07.
+  Manifest and tasks 01, 03, 04 adjusted. Jira untouched (no new event; the plan-approved comment
+  will carry the changes).
+- Still open for the human: plan section 2 items 2 (new columns reaching company admins through
+  approvals and employee responses; default accept) and 3 (integration-test verification; default
+  as NIMBUS-254); plan approval. Two non-blocking `UNVERIFIED` rows remain (extension in NO, stored
+  `company.country` case). `Ready for Dispatch` false. Nothing committed.
+- Proposed `scope.md` amendment (not applied; the scope is approved and committed, the scoper or the
+  human decides):
+  - Requirement 14: "Found in both environments (the normal case for a Norwegian customer, who is
+    registered in both): both matches are shown, without a warning, and each offers "Use this
+    customer". The admin picks one, and the action behaves exactly as in requirement 13."
+  - Business rule (line 124): "The BC customer number is used unchanged in either environment. The
+    same number always means the same customer; Norwegian customers are normally registered in both
+    environments (Klaus Petersen, 2026-10-27)."
+  - Security table, "No cross-company read" row: "…unchanged; the same number is the same customer
+    in both environments".
+  - Resolved list: replace "Customer numbers are unique across DK and NO." with "The same customer
+    number is the same customer in DK and NO."
+  - Open questions: replace the probe item with "The customer-portal extension is not deployed in
+    TestNO/ProductionNO (probe 2026-10-27). Build proceeds; the parts that need it are verified
+    after deployment to TestNO, and production go-live of NO routing waits for it in
+    ProductionNO."
+- Next owner: the human (answer items 2 and 3, approve), then `implementation-planner` to set ready
+  and record "plan approved", then `task-dispatcher` on a separate go-ahead.
+- Handover prompt: "NIMBUS-261 plan: my answers to section 2 items 2 and 3 are <…>; the plan is
+  approved. Record it and mark the manifest ready."
+
+## 2026-10-27 — implementation-planner (plan approved)
+
+- Outcome: Klaus Petersen approved the plan on 2026-10-27 and answered plan section 2: item 2
+  accepted (new company columns may reach the company's own admins via the approvals and employee
+  responses), item 3 accepted (integration and contract cases written now, run at finalization,
+  unrunnable ones reported unverified, as NIMBUS-254). Section 2 marked answered in `plan.md`;
+  `manifest.md` set to `Ready for Dispatch: true`. The two remaining `UNVERIFIED` framework rows
+  (customer-portal extension in NO, stored `company.country` case) are non-blocking by the human's
+  decision; the extension gates verification of the parts that need it and production go-live.
+- Scope: the proposed amendment (same number = same customer, "found in both" is normal with no
+  warning, extension status) was approved by Klaus and applied to `scope.md` by the scoper.
+- Jira: "plan approved" comment on NIMBUS-261 (comment 255699) with the new decisions and each
+  open question with its answer; sub-tasks NIMBUS-262 to NIMBUS-268 already exist and are in the
+  manifest. Nothing committed or pushed.
+- Next owner: `task-dispatcher`, on a separate explicit go-ahead from the human.
+- Handover prompt: "Dispatch NIMBUS-261 from `issues/NIMBUS-261/manifest.md` (branch
+  `feature/NIMBUS-261` from `develop`)."

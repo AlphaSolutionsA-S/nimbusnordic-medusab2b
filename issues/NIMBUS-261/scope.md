@@ -88,9 +88,9 @@ company.
     - then runs the company sync, which routes on the new country, fetches the card and clears the
       "customer not found" record;
     - and reports the sync result.
-14. Found in both environments: both matches are shown, with a warning that customer numbers
-    should be unique, and each offers "Use this customer". The admin picks one, and the action
-    behaves exactly as in requirement 13. Found in neither: the section says so and offers no
+14. Found in both environments (the normal case for a Norwegian customer, who is registered in
+    both): both matches are shown, without a warning, and each offers "Use this customer". The
+    admin picks one, and the action behaves exactly as in requirement 13. Found in neither: the section says so and offers no
     action, because the customer number itself is the likely error.
 15. If the card's country would route to a different environment than the one where the customer
     was found (for example a customer held in NO whose card says SE), the section warns before the
@@ -121,8 +121,9 @@ company.
 - The environment is derived from the company stored in Medusa, which is looked up from the
   authenticated customer, or from the company id for Admin actions. It is never taken from a value
   the client sends.
-- The BC customer number is used unchanged in either environment. Numbers are unique across DK and
-  NO (human's answer), so a number cannot match a different customer in the other environment.
+- The BC customer number is used unchanged in either environment. The same number always means the
+  same customer; Norwegian customers are normally registered in both environments (Klaus Petersen,
+  2026-10-27).
 - Existing access rules are unchanged. A user sees and returns only their own company's BC orders
   and returns, within the company's environment.
 - After the switch, a Norwegian company's orders and returns that exist only in the Danish
@@ -202,7 +203,7 @@ data (company contact, VAT and credit data).
 | Property | Intended control | Trust root | Failure behaviour |
 |---|---|---|---|
 | A company's BC data is read only from its own environment | The pure decision function picks the environment from the stored company's `country` | Company record in Medusa, with the customer looked up from the authenticated session | Unknown or blank country → Danish environment (existing behaviour) |
-| No cross-company read across environments | Existing customer-number scoping of every BC query, unchanged; numbers are unique across DK and NO | BC customer number on the stored company | A document that does not belong to the customer → 404 as today |
+| No cross-company read across environments | Existing customer-number scoping of every BC query, unchanged; the same number is the same customer in both environments | BC customer number on the stored company | A document that does not belong to the customer → 404 as today |
 | The client cannot pick the environment | No store request parameter, header or metadata selects it | Server-side company lookup | — |
 | The two-environment check and "Use this customer" are Admin-only | Admin routes under `/admin/companies/:id/...` with Admin user authentication (as the NIMBUS-254 sync route) | Medusa Admin session or token | Unauthenticated → 401; unknown company → 404 |
 | The check reveals only what is needed | Response per environment: found flag, customer name, country; no address, email, VAT or credit data | — | BC error → "could not check" for that environment only |
@@ -258,23 +259,23 @@ High-level task breakdown. The planner decides the final split.
 
 ## Open questions
 
-- Custom `abakion/customerPortal/v2.0` API and `PostedReturnReceipt*` web services in TestNO and
-  ProductionNO: confirmed by the human, still to be verified by the read-only probe in planning
-  (task 1). Dispatch is blocked if the probe fails.
+- The customer-portal extension is not deployed in TestNO/ProductionNO (probe 2026-10-27). Build
+  proceeds; the parts that need it are verified after deployment to TestNO, and production go-live
+  of NO routing waits for it in ProductionNO (Klaus Petersen, 2026-10-27).
 
 Resolved (human's answers):
 - Norwegian companies' DK-only orders and returns disappearing from the portal is acceptable.
 - The Norwegian currency is NOK.
 - Both countries use the same Entra tenant and app registration.
-- Customer numbers are unique across DK and NO.
+- The same customer number is the same customer in DK and NO.
 - Routing uses `company.country`; no new routing field.
 - Klaus checks which companies move to NO, and that their numbers exist there, before go-live.
 - An Admin edit of `country` moving a company between environments until the next sync is
   accepted, and is a way to fix a company on the wrong environment.
 - With the NO settings missing in production, only Norwegian calls fail.
 - D1 and D2 as recorded under Decisions.
-- A customer number found in both environments can still be used from either; only "found in
-  neither" has no action.
+- A customer number found in both environments (normal for a Norwegian customer) can be used from
+  either; only "found in neither" has no action.
 
 ## Dependencies
 
