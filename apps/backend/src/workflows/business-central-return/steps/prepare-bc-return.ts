@@ -5,12 +5,14 @@ import { MedusaError } from "@medusajs/framework/utils";
 import { BUSINESS_CENTRAL_MODULE } from "../../../modules/business-central";
 import type {
   BCReturnLineInput,
+  BusinessCentralEnvironment,
   IBusinessCentralModuleService,
 } from "../../../modules/business-central/types";
 
 export type PrepareBcReturnInput = {
   customerId: string;
   bcCustomerNumber: string;
+  environment: BusinessCentralEnvironment;
   sourceOrderNumber: string;
   lines: BCReturnLineInput[];
 };
@@ -21,6 +23,17 @@ export type PreparedBcReturn = {
   verifiedLines: BCReturnLineInput[];
 };
 
+// Names the shopper-facing line validation errors. A failed workflow rejects with the serialised
+// error, so the route recognises them by this name; every other invalid-data error (e.g. Business
+// Central configuration) stays a generic 500.
+export const BC_RETURN_VALIDATION_ERROR = "BcReturnValidationError";
+
+function returnValidationError(message: string): MedusaError {
+  const error = new MedusaError(MedusaError.Types.INVALID_DATA, message);
+  error.name = BC_RETURN_VALIDATION_ERROR;
+  return error;
+}
+
 export const prepareBcReturnStep = createStep(
   "prepare-bc-return",
   async (
@@ -30,7 +43,7 @@ export const prepareBcReturnStep = createStep(
     const bcService = container.resolve<IBusinessCentralModuleService>(
       BUSINESS_CENTRAL_MODULE
     );
-    const order = await bcService.getOrder("DK", {
+    const order = await bcService.getOrder(input.environment, {
       customerNumber: input.bcCustomerNumber,
       orderNumber: input.sourceOrderNumber,
     });
@@ -45,8 +58,7 @@ export const prepareBcReturnStep = createStep(
     const verifiedLines = input.lines
       .map((inputLine) => {
         if (sourceLineNumbers.has(inputLine.sourceLineNo)) {
-          throw new MedusaError(
-            MedusaError.Types.INVALID_DATA,
+          throw returnValidationError(
             "Each order line can only be returned once per request."
           );
         }
@@ -58,8 +70,7 @@ export const prepareBcReturnStep = createStep(
         );
 
         if (matchingLines.length === 0) {
-          throw new MedusaError(
-            MedusaError.Types.INVALID_DATA,
+          throw returnValidationError(
             "One or more selected lines cannot be returned."
           );
         }
@@ -71,17 +82,13 @@ export const prepareBcReturnStep = createStep(
         );
 
         if (inputLine.quantityToReturn > returnableQuantity) {
-          throw new MedusaError(
-            MedusaError.Types.INVALID_DATA,
+          throw returnValidationError(
             "The requested return quantity exceeds the available quantity."
           );
         }
 
         if (!reasonIds.has(inputLine.returnReasonCode)) {
-          throw new MedusaError(
-            MedusaError.Types.INVALID_DATA,
-            "One or more return reasons are invalid."
-          );
+          throw returnValidationError("One or more return reasons are invalid.");
         }
 
         return inputLine;

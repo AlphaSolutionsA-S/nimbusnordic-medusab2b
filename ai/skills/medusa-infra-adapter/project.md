@@ -7,4 +7,6 @@
 - No clean canonical adapter exists yet (a gap). Notifications go through Medusa's
   `notification-local` provider, configured in `apps/backend/medusa-config.ts`.
 - BC errors are typed in the business-central module; callers import the error class, not the
-  service (baseline exception: `apps/backend/src/api/store/bc-orders/[id]/returns/route.ts`).
+  service. A route behind a workflow gets the serialised error, so it matches the error's `name`
+  instead (`apps/backend/src/api/store/bc-orders/[id]/returns/route.ts`; Tier 0
+  `medusa-boundary.md`, "Workflow failures").

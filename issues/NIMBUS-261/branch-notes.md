@@ -27,3 +27,13 @@
 - Unit-testing a route that runs the workflow: `jest.mock` the workflow module and `jest.mocked(resolveBusinessCentralAccountWorkflow).mockReturnValue({ run } as never)`, `run` resolving `{ result: account }` (see `api/store/bc-returns/__tests__/return-detail-route.unit.spec.ts`).
 - Integration pattern for routed BC calls: `integration-tests/http/business-central/store-bc-reads.spec.ts` (company via `POST /store/companies`, then `updateCompanies` sets `country` and number; spy on the resolved BC module; stub unexpected calls with `mockRejectedValue` so nothing reaches BC).
 - Verified: `validateAndTransformQuery` passes the whole normalised query to the zod schema (`@medusajs/framework/dist/http/utils/validate-query.js`), so a `.strict()` query validator answers an unknown `environment` param with 400.
+
+## Task 04
+
+- `PrepareBcReturnInput` and `SubmitBcReturnInput` both carry `environment: BusinessCentralEnvironment`; `createBcReturnWorkflow` passes `input.environment` to submit through `transform`.
+- Verified by probe: a failed workflow `run()` rejects with a plain serialised object (`message`, `name`, `stack`, plus own fields such as `type`, `__isMedusaError`, `idempotencyKey`), never the thrown instance; `instanceof` is false. Routes must read `name` / `MedusaError.isMedusaError(e)` + `type`. The return route now does (`getReturnFailureAnswer` in `[id]/returns/route.ts`). Any route mapping workflow errors with `instanceof` (task 06's Admin routes) has the same trap.
+- Don't answer every `INVALID_DATA` with its message: BC configuration errors (`environment-config.ts`, `getClientCredentials`) are `INVALID_DATA` and name settings. Give shopper-facing errors a distinct `name` and match that (the return route's `BC_RETURN_VALIDATION_ERROR`, exported from `create-bc-return.ts`); everything else is the generic 500.
+- Running a real workflow in a unit spec works: `createMedusaContainer()` from `@medusajs/framework/utils`, register the BC module key and `ContainerRegistrationKeys.LOGGER` with `asValue` (`@medusajs/framework/awilix`), pass it as `req.scope` (`api/store/bc-orders/__tests__/create-return-route.unit.spec.ts`).
+- The return route no longer imports `modules/business-central/service.ts`; its `bound-route-no-service` baseline entry is gone.
+- Return-create integration cases live in `integration-tests/http/business-central/store-bc-reads.spec.ts` ("creating a return").
+- `jest --testPathPattern <x>` is needed when running jest directly in Git Bash; a bare positional path ran every suite.

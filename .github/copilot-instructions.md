@@ -244,8 +244,8 @@ excludes `import type`. Review enforces every row (no import-boundary lint); `me
 |`bound-sf-transport-private`|`S/**` outside `S/lib/config.ts`, `S/lib/data/**`, `S/middleware.ts`|`@medusajs/js-sdk`, `S/lib/config.ts`|
 |`bound-sf-server-only`|`S/lib/data/cms.ts`, `S/lib/data/ui-translations.ts`, `S/lib/data/country-languages.ts`|`server-only` required|
 
-Baseline: `bound-route-no-service` in `B/api/store/bc-orders/[id]/returns/route.ts`,
-`B/api/store/ui-translations/[locale]/route.ts`, `B/api/admin/ui-translations/*`;
+Baseline: `bound-route-no-service` in `B/api/store/ui-translations/[locale]/route.ts`,
+`B/api/admin/ui-translations/*`;
 `bound-sf-transport-private` in `S/app/[countryCode]/(main)/products/[handle]/page.tsx`.
 
 ### Locks

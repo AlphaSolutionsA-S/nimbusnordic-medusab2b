@@ -3,9 +3,48 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework";
 import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils";
-import { BusinessCentralAmbiguousOutcomeError } from "../../../../../modules/business-central/service";
-import { createBcReturnWorkflow } from "../../../../../workflows/business-central-return/workflows/create-bc-return";
+import {
+  BC_RETURN_VALIDATION_ERROR,
+  createBcReturnWorkflow,
+} from "../../../../../workflows/business-central-return/workflows/create-bc-return";
+import { resolveBusinessCentralAccountWorkflow } from "../../../../../workflows/company/workflows/resolve-business-central-account";
 import type { StoreCreateBCReturnType } from "./validators";
+
+type ReturnFailureAnswer = { status: number; message: string };
+
+const UNEXPECTED_FAILURE_ANSWER: ReturnFailureAnswer = {
+  status: 500,
+  message: "The return request could not be completed. Please try again later.",
+};
+
+// A failed workflow rejects with the serialised error (its name, message and own fields), not the
+// thrown instance, so the answer is read from those fields rather than with `instanceof`.
+function getReturnFailureAnswer(error: unknown): ReturnFailureAnswer | null {
+  if (typeof error !== "object" || error === null) {
+    return null;
+  }
+
+  const failure: { name?: unknown; type?: unknown; message?: unknown } = error;
+
+  if (failure.name === "BusinessCentralAmbiguousOutcomeError") {
+    return {
+      status: 503,
+      message: "We could not confirm the return request. Please try again shortly.",
+    };
+  }
+
+  // Only the return's own line validation is shopper-facing; other invalid-data errors (Business
+  // Central configuration or rejection) stay the logged generic 500.
+  if (failure.name === BC_RETURN_VALIDATION_ERROR && typeof failure.message === "string") {
+    return { status: 400, message: failure.message };
+  }
+
+  if (MedusaError.isMedusaError(error) && failure.type === MedusaError.Types.NOT_FOUND) {
+    return { status: 404, message: "Order not found." };
+  }
+
+  return null;
+}
 
 export const POST = async (
   req: AuthenticatedMedusaRequest<StoreCreateBCReturnType>,
@@ -14,21 +53,11 @@ export const POST = async (
   const { customer_id } = req.auth_context.app_metadata as {
     customer_id: string;
   };
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
-  const {
-    data: [customer],
-  } = await query.graph({
-    entity: "customer",
-    fields: ["employee.company.business_central_customer_number"],
-    filters: { id: customer_id },
-  });
-  const bcCustomerNumber =
-    customer?.employee?.company?.business_central_customer_number as
-      | string
-      | undefined
-      | null;
+  const { result: account } = await resolveBusinessCentralAccountWorkflow(
+    req.scope
+  ).run({ input: { customerId: customer_id } });
 
-  if (!bcCustomerNumber) {
+  if (!account.customerNumber) {
     res.status(400).json({
       message: "No Business Central customer number configured for this company.",
     });
@@ -39,7 +68,8 @@ export const POST = async (
     const { result } = await createBcReturnWorkflow(req.scope).run({
       input: {
         customerId: customer_id,
-        bcCustomerNumber,
+        bcCustomerNumber: account.customerNumber,
+        environment: account.environment,
         sourceOrderNumber: req.params.id,
         lines: req.validatedBody.lines.map((line) => ({
           sourceLineNo: line.source_line_no,
@@ -51,32 +81,15 @@ export const POST = async (
 
     res.json({ return: result });
   } catch (error) {
-    if (error instanceof BusinessCentralAmbiguousOutcomeError) {
-      res.status(503).json({
-        message:
-          "We could not confirm the return request. Please try again shortly.",
-      });
-      return;
+    const answer = getReturnFailureAnswer(error);
+
+    if (!answer) {
+      req.scope
+        .resolve(ContainerRegistrationKeys.LOGGER)
+        .error("BC return request failed");
     }
 
-    if (error instanceof MedusaError) {
-      if (error.type === MedusaError.Types.NOT_FOUND) {
-        res.status(404).json({ message: "Order not found." });
-        return;
-      }
-
-      if (error.type === MedusaError.Types.INVALID_DATA) {
-        res.status(400).json({ message: error.message });
-        return;
-      }
-    }
-
-    req.scope
-      .resolve(ContainerRegistrationKeys.LOGGER)
-      .error("BC return request failed");
-
-    res.status(500).json({
-      message: "The return request could not be completed. Please try again later.",
-    });
+    const { status, message } = answer ?? UNEXPECTED_FAILURE_ANSWER;
+    res.status(status).json({ message });
   }
 };

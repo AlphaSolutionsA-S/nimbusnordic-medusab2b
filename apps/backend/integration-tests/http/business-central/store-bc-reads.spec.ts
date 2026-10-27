@@ -1,11 +1,14 @@
+import { MedusaError } from "@medusajs/framework/utils";
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
+import { BusinessCentralAmbiguousOutcomeError } from "../../../src/modules/business-central/service";
 import type {
   BCListOrdersResult,
   BCListReturnsResult,
   BCOrderDetail,
   BCReturnDetail,
+  BCReturnOrder,
   BCReturnReason,
   BusinessCentralEnvironment,
   IBusinessCentralModuleService,
@@ -245,6 +248,190 @@ medusaIntegrationTestRunner({
         expect(response.status).toBe(200);
         expect(listReturnReasons).toHaveBeenCalledWith(environment);
         expect(response.data).toEqual({ return_reasons: returnReasons });
+      });
+    });
+
+    describe("creating a return", () => {
+      const sourceOrder: BCOrderDetail = {
+        ...orderDetail,
+        lines: [
+          {
+            id: "line-1",
+            sequence: 10000,
+            lineType: "Item",
+            itemNumber: "ITEM-1",
+            description: "Item 1",
+            quantity: 2,
+            unitPrice: 50,
+            lineAmount: 100,
+            shippedQuantity: 2,
+            returnableQuantity: 2,
+            reservations: [],
+          },
+        ],
+      };
+      const createdReturn: BCReturnOrder = {
+        id: "RO-3001",
+        number: "RO-3001",
+        status: "Open",
+        requestId: "RET-000000000000",
+        sourceOrderNo: "SO-1001",
+        lines: [{ sourceLineNo: 10000, quantityToReturn: 1, returnReasonCode: "NORMAL" }],
+      };
+      const body = {
+        lines: [{ source_line_no: 10000, quantity: 1, return_reason_code: "NORMAL" }],
+      };
+
+      it.each<[string, BusinessCentralEnvironment]>([
+        ["NO", "NO"],
+        ["DK", "DK"],
+      ])(
+        "reads the order and creates the return in %s for a company with that country",
+        async (country, environment) => {
+          await createCustomerCompany(country, CUSTOMER_NUMBER);
+          const getOrder = jest
+            .spyOn(bcService(), "getOrder")
+            .mockResolvedValueOnce(sourceOrder);
+          const createReturn = jest
+            .spyOn(bcService(), "createReturnFromSalesOrder")
+            .mockResolvedValueOnce(createdReturn);
+
+          const response = await api.post(
+            "/store/bc-orders/SO-1001/returns",
+            body,
+            authenticatedStoreHeaders
+          );
+
+          expect(response.status).toBe(200);
+          expect(getOrder).toHaveBeenCalledWith(environment, {
+            customerNumber: CUSTOMER_NUMBER,
+            orderNumber: "SO-1001",
+          });
+          expect(createReturn).toHaveBeenCalledWith(environment, {
+            requestId: expect.stringMatching(/^RET-[0-9A-F]{12}$/),
+            sourceOrderNo: "SO-1001",
+            lines: [{ sourceLineNo: 10000, quantityToReturn: 1, returnReasonCode: "NORMAL" }],
+          });
+          expect(response.data).toEqual({ return: createdReturn });
+          expect(typeof response.data.return.number).toBe("string");
+        }
+      );
+
+      it("answers 404 without creating a return when the order is not in the company's environment", async () => {
+        await createCustomerCompany("NO", CUSTOMER_NUMBER);
+        const getOrder = jest.spyOn(bcService(), "getOrder").mockResolvedValueOnce(null);
+        const createReturn = jest
+          .spyOn(bcService(), "createReturnFromSalesOrder")
+          .mockRejectedValue(unexpectedCall);
+
+        const response = await api.post("/store/bc-orders/SO-1001/returns", body, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(404);
+        expect(response.data).toEqual({ message: "Order not found." });
+        expect(getOrder).toHaveBeenCalledWith("NO", expect.anything());
+        expect(createReturn).not.toHaveBeenCalled();
+      });
+
+      it("answers 400 for a line that cannot be returned", async () => {
+        await createCustomerCompany("NO", CUSTOMER_NUMBER);
+        jest.spyOn(bcService(), "getOrder").mockResolvedValueOnce(sourceOrder);
+        const createReturn = jest
+          .spyOn(bcService(), "createReturnFromSalesOrder")
+          .mockRejectedValue(unexpectedCall);
+
+        const response = await api.post(
+          "/store/bc-orders/SO-1001/returns",
+          { lines: [{ source_line_no: 99999, quantity: 1, return_reason_code: "NORMAL" }] },
+          { ...authenticatedStoreHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toBe(400);
+        expect(response.data).toEqual({
+          message: "One or more selected lines cannot be returned.",
+        });
+        expect(createReturn).not.toHaveBeenCalled();
+      });
+
+      it("answers 503 when Business Central's outcome is unknown", async () => {
+        await createCustomerCompany("NO", CUSTOMER_NUMBER);
+        jest.spyOn(bcService(), "getOrder").mockResolvedValueOnce(sourceOrder);
+        jest
+          .spyOn(bcService(), "createReturnFromSalesOrder")
+          .mockRejectedValueOnce(
+            new BusinessCentralAmbiguousOutcomeError(
+              "Business Central return request did not complete",
+              "RET-000000000000"
+            )
+          );
+
+        const response = await api.post("/store/bc-orders/SO-1001/returns", body, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(503);
+        expect(response.data).toEqual({
+          message: "We could not confirm the return request. Please try again shortly.",
+        });
+      });
+
+      it("answers the generic 500 without the setting's name for a Business Central configuration error", async () => {
+        await createCustomerCompany("NO", CUSTOMER_NUMBER);
+        jest
+          .spyOn(bcService(), "getOrder")
+          .mockRejectedValueOnce(
+            new MedusaError(
+              MedusaError.Types.INVALID_DATA,
+              "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)"
+            )
+          );
+
+        const response = await api.post("/store/bc-orders/SO-1001/returns", body, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(500);
+        expect(response.data).toEqual({
+          message: "The return request could not be completed. Please try again later.",
+        });
+      });
+
+      it("rejects an environment field in the body without calling Business Central", async () => {
+        await createCustomerCompany("DK", CUSTOMER_NUMBER);
+        const getOrder = jest.spyOn(bcService(), "getOrder").mockRejectedValue(unexpectedCall);
+        const createReturn = jest
+          .spyOn(bcService(), "createReturnFromSalesOrder")
+          .mockRejectedValue(unexpectedCall);
+
+        const response = await api.post(
+          "/store/bc-orders/SO-1001/returns",
+          { ...body, environment: "NO" },
+          { ...authenticatedStoreHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toBe(400);
+        expect(getOrder).not.toHaveBeenCalled();
+        expect(createReturn).not.toHaveBeenCalled();
+      });
+
+      it("answers 400 without calling Business Central when the company has no customer number", async () => {
+        await createCustomerCompany("NO", null);
+        const getOrder = jest.spyOn(bcService(), "getOrder").mockRejectedValue(unexpectedCall);
+
+        const response = await api.post("/store/bc-orders/SO-1001/returns", body, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(400);
+        expect(response.data).toEqual({
+          message: "No Business Central customer number configured for this company.",
+        });
+        expect(getOrder).not.toHaveBeenCalled();
       });
     });
 
