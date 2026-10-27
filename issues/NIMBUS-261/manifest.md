@@ -31,7 +31,7 @@ Plan approved by Klaus Petersen, 2026-10-27. The TestNO probe ran (`samples/prob
 | # | Title | File | App | Implements | Depends on | Issue | Status |
 |---|-------|------|-----|------------|------------|-------|--------|
 | 01 | BC connection per environment; every caller names its environment | `01-bc-connection-per-environment.md` | backend | R4, R6, R7, NF tokens per environment, NF config errors, NF NO-only failure | None | NIMBUS-262 | DONE |
-| 02 | Country → environment rule and the BC account workflow | `02-environment-rule-and-account-workflow.md` | backend | R1, rule "NO → Norway", rule "environment from the stored company" | 01 | NIMBUS-263 | TODO |
+| 02 | Country → environment rule and the BC account workflow | `02-environment-rule-and-account-workflow.md` | backend | R1, rule "NO → Norway", rule "environment from the stored company" | 01 | NIMBUS-263 | DONE |
 | 03 | Store BC order and return reads routed per company | `03-store-bc-reads-routed.md` | backend | R2 (order history, returns, receipts, return reasons), NF store shapes unchanged | 02 | NIMBUS-264 | TODO |
 | 04 | Return creation routed per company | `04-return-creation-routed.md` | backend | R2 (creating a return) | 02 | NIMBUS-265 | TODO |
 | 05 | Company sync routed, NOK, and the not-found record | `05-company-sync-routed-not-found.md` | backend | R2 (company sync, every trigger), R3, R8, R9, R10, D2 | 02 | NIMBUS-266 | TODO |

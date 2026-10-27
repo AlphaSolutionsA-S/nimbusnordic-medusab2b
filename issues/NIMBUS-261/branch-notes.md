@@ -10,3 +10,13 @@
 - Pitfall: BC module specs run with `test:integration:modules`, and a bare path pattern also picks up stale compiled copies under `apps/backend/.medusa/server`. Run jest directly from `apps/backend` with `--testPathIgnorePatterns '[\\/]\.medusa[\\/]'` (a plain `.medusa` regex matches the repo folder name `nimbusnordic-medusab2b` and skips every test). `pnpm` is not on PATH here; use `corepack pnpm`.
 - Baseline failure, not ours: `service.spec.ts` "listOrders › stops filling from salesInvoices after the round-trip guardrail even if the page stays short" fails before and after task 01.
 - `environments.spec.ts` has a fetch router keyed on tenant and company path that later module-level NO tests can reuse.
+
+## Task 02
+
+- Rule: `getBusinessCentralEnvironmentForCountry(country)` in `utils/business-central-environment.ts` (single `=== 'NO'` in the backend; registry row in `decisions.md`). Use it in `transform()` or a step, never re-compare a country.
+- Workflow: `resolveBusinessCentralAccountWorkflow` (`workflows/company/workflows/resolve-business-central-account.ts`), input `{ customerId } | { companyId }`, result type `BusinessCentralAccount` `{ companyId, customerNumber, environment, notFound }` (also exported: `BusinessCentralNotFoundRecord`, `ResolveBusinessCentralAccountInput`). Both are re-exported from the company `workflows/index.ts`.
+- Step: `loadBusinessCentralAccountCompanyStep` (`steps/load-business-central-account-company.ts`) returns the raw company row or null; field list `ACCOUNT_COMPANY_FIELDS` and row type `BusinessCentralAccountCompanyRow` live there. Task 05: add the three not-found columns to both, then map them to `notFound` in the workflow's transform (currently hard `null`).
+- Unknown company id rejects with `type: "not_found"` (`MedusaError.NOT_FOUND` → 404 in a route). Unknown customer id or customer without company → `{ companyId: null, customerNumber: null, environment: "DK", notFound: null }`.
+- Probe: `query.graph` rows here are typed as the full generated `Company`, so a wrong row type fails typecheck (verified by temporarily breaking `country`'s type).
+- Pitfall: PowerShell 5.1 `Set-Content -Encoding utf8` writes a BOM; use the file tools for edits.
+- Integration cases are in `integration-tests/http/customers/business-central-account.spec.ts` (not run locally).
