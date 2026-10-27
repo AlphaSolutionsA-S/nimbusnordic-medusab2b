@@ -51,3 +51,12 @@
 - `.medusa/types` (gitignored) goes stale after a model change, and typecheck then fails on `query.graph` rows. Without a database, regenerate it with `generate-types.js` in the run scratchpad (`node <script> .` from `apps/backend`), the same `generateTypes` call `medusa build` makes with `skipDbConnection`.
 - Running a real workflow in a unit spec with Query and a module replaced: `src/workflows/company/__tests__/sync-company-from-business-central.unit.spec.ts` (register `ContainerRegistrationKeys.QUERY` as `{ graph }` and `COMPANY_MODULE` as `{ listCompanies, updateCompanies }`).
 - `--testPathPattern` with an escaped separator (`workflows[\\/]company`) ran every unit suite; use a file-name fragment.
+
+## Task 06
+
+- Routes: `GET /admin/companies/:id/business-central-customer` (status), `GET …/lookup`, `POST …/use` (strict body `{ environment }`, validator `AdminUseBusinessCentralCustomer` in `api/admin/companies/validators.ts`). Response types for the Admin UI in `types/company/http.ts`: `AdminBusinessCentralCustomerResponse`, `AdminBusinessCentralCustomerLookupResponse` (results always `[DK, NO]` in that order), `AdminBusinessCentralCustomerLookupResult`, `AdminUseBusinessCentralCustomer`, `AdminUseBusinessCentralCustomerResponse`; all exported from `types` like `AdminSyncCompanyBusinessCentralResponse`.
+- Error answers task 07 must show: lookup and use → 400 when the company has no customer number, 404 unknown company; use → 404 when the card is not in that environment. A BC failure in the use re-read is 500 (or 400 for missing NO configuration); in the lookup it is a per-environment `could_not_check`, never an HTTP error.
+- `not_found.at` arrives as an ISO 8601 string; `customer` is null unless `status` is `found`.
+- Workflows: `lookupBusinessCentralCustomerWorkflow`, `useBusinessCentralCustomerWorkflow` (re-exported from `workflows/company/workflows/index.ts`). The use workflow keeps the written country when the nested sync reports `failed` (unit-tested).
+- Verified: Admin contract cases in `companies.spec.ts` fail locally only with 401 on the Admin request (NIMBUS-236), the same as the existing NIMBUS-254 sync cases (8/8). Admin-free security cases run and pass.
+- Runner for integration specs against the scratch Postgres: `run-http-06.sh <path fragment> [-t pattern]` in the run scratchpad.

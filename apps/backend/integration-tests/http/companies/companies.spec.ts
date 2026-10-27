@@ -1071,6 +1071,377 @@ medusaIntegrationTestRunner({
       });
     });
 
+    describe("Admin Business Central customer routes", () => {
+      beforeEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      afterEach(() => {
+        jest.restoreAllMocks();
+      });
+
+      function card(country: string, displayName: string): BCCustomer {
+        return {
+          number: "00066666",
+          displayName,
+          email: "card@example.com",
+          phoneNumber: "66665555",
+          addressLine1: "Card Street 6",
+          addressLine2: "Floor 2",
+          city: "Card city",
+          state: "",
+          postalCode: "6000",
+          country,
+          blocked: "Invoice",
+          creditLimit: 6000,
+          taxRegistrationNumber: "VAT66666666",
+          currencyCode: "NOK",
+        };
+      }
+
+      async function createCompany(
+        businessCentralCustomerNumber: string | null,
+        country = "DK"
+      ): Promise<string> {
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const created = await companyService.createCompanies({
+          name: "BC Customer Company",
+          email: "bc-customer@example.com",
+          phone: "11112222",
+          address: "Original address",
+          city: "Original city",
+          state: null,
+          zip: "1000",
+          country,
+          logo_url: null,
+          currency_code: "DKK",
+          business_central_customer_number: businessCentralCustomerNumber,
+          spending_limit_reset_frequency:
+            ModuleCompanySpendingLimitResetFrequency.MONTHLY,
+        });
+
+        return created.id;
+      }
+
+      async function readCompany(companyId: string) {
+        const companyService = getContainer().resolve<ICompanyModuleService>(
+          COMPANY_MODULE
+        );
+        const [company] = await companyService.listCompanies({ id: companyId });
+
+        return company;
+      }
+
+      // Answers per environment; anything not listed is "no such customer".
+      function stubGetCustomer(
+        answers: Partial<Record<"DK" | "NO", BCCustomer | Error>>
+      ) {
+        const bcService = getContainer().resolve<IBusinessCentralModuleService>(
+          BUSINESS_CENTRAL_MODULE
+        );
+
+        return jest
+          .spyOn(bcService, "getCustomer")
+          .mockImplementation(async (environment) => {
+            const answer = answers[environment];
+            if (answer instanceof Error) {
+              throw answer;
+            }
+            return answer ?? null;
+          });
+      }
+
+      function url(companyId: string, suffix = ""): string {
+        return `/admin/companies/${companyId}/business-central-customer${suffix}`;
+      }
+
+      const allowStatus = { ...adminHeaders, validateStatus: () => true };
+
+      describe("GET status", () => {
+        it("returns the routed environment, customer number and not-found record", async () => {
+          const companyId = await createCompany("00066666", " no ");
+          const companyService = getContainer().resolve<ICompanyModuleService>(
+            COMPANY_MODULE
+          );
+          await companyService.updateCompanies({
+            id: companyId,
+            business_central_not_found_at: new Date("2026-10-01T10:00:00.000Z"),
+            business_central_not_found_environment: "NO",
+            business_central_not_found_customer_number: "00066666",
+          });
+          const getCustomerSpy = stubGetCustomer({});
+
+          const response = await api.get(url(companyId), adminHeaders);
+
+          expect(response.status).toBe(200);
+          expect(response.data).toEqual({
+            routed_environment: "NO",
+            customer_number: "00066666",
+            not_found: {
+              at: "2026-10-01T10:00:00.000Z",
+              environment: "NO",
+              customer_number: "00066666",
+            },
+          });
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+        });
+
+        it("returns DK and no record for a company without a customer number", async () => {
+          const companyId = await createCompany(null, "SE");
+
+          const response = await api.get(url(companyId), adminHeaders);
+
+          expect(response.data).toEqual({
+            routed_environment: "DK",
+            customer_number: null,
+            not_found: null,
+          });
+        });
+
+        it("answers 404 for an unknown company", async () => {
+          const response = await api.get(url("comp_does_not_exist"), allowStatus);
+
+          expect(response.status).toBe(404);
+        });
+      });
+
+      describe("GET lookup", () => {
+        const dkResult = {
+          environment: "DK",
+          status: "found",
+          customer: {
+            name: "Dansk Kort",
+            country: "DK",
+            routes_to: "DK",
+            routes_elsewhere: false,
+          },
+        };
+        const noResult = {
+          environment: "NO",
+          status: "found",
+          customer: {
+            name: "Norsk Kort",
+            country: "NO",
+            routes_to: "NO",
+            routes_elsewhere: false,
+          },
+        };
+
+        it.each([
+          ["DK only", { DK: card("DK", "Dansk Kort") }, [dkResult, { environment: "NO", status: "not_found", customer: null }]],
+          ["NO only", { NO: card("NO", "Norsk Kort") }, [{ environment: "DK", status: "not_found", customer: null }, noResult]],
+          ["both", { DK: card("DK", "Dansk Kort"), NO: card("NO", "Norsk Kort") }, [dkResult, noResult]],
+          [
+            "neither",
+            {},
+            [
+              { environment: "DK", status: "not_found", customer: null },
+              { environment: "NO", status: "not_found", customer: null },
+            ],
+          ],
+        ] as const)(
+          "reports a card found in %s and writes nothing",
+          async (_case, answers, results) => {
+            const companyId = await createCompany("00066666");
+            const before = await readCompany(companyId);
+            const getCustomerSpy = stubGetCustomer(answers);
+
+            const response = await api.get(url(companyId, "/lookup"), adminHeaders);
+
+            expect(response.status).toBe(200);
+            expect(response.data).toEqual({ customer_number: "00066666", results });
+            expect(getCustomerSpy).toHaveBeenCalledWith("DK", "00066666");
+            expect(getCustomerSpy).toHaveBeenCalledWith("NO", "00066666");
+            expect(await readCompany(companyId)).toEqual(before);
+          }
+        );
+
+        it("flags a card in NO whose country routes to DK", async () => {
+          const companyId = await createCompany("00066666");
+          stubGetCustomer({ NO: card("SE", "Svensk Kort") });
+
+          const response = await api.get(url(companyId, "/lookup"), adminHeaders);
+
+          expect(response.data.results[1]).toEqual({
+            environment: "NO",
+            status: "found",
+            customer: {
+              name: "Svensk Kort",
+              country: "SE",
+              routes_to: "DK",
+              routes_elsewhere: true,
+            },
+          });
+        });
+
+        it("returns no address, contact, VAT or credit data", async () => {
+          const companyId = await createCompany("00066666");
+          stubGetCustomer({ DK: card("DK", "Dansk Kort"), NO: card("NO", "Norsk Kort") });
+
+          const response = await api.get(url(companyId, "/lookup"), adminHeaders);
+
+          for (const result of response.data.results) {
+            expect(Object.keys(result.customer).sort()).toEqual([
+              "country",
+              "name",
+              "routes_elsewhere",
+              "routes_to",
+            ]);
+          }
+          const body = JSON.stringify(response.data);
+          for (const value of ["card@example.com", "66665555", "Card Street 6", "Card city", "VAT66666666", "6000"]) {
+            expect(body).not.toContain(value);
+          }
+        });
+
+        it("reports could_not_check for the failing environment, keeps the other result and logs ids only", async () => {
+          const companyId = await createCompany("00066666");
+          stubGetCustomer({
+            DK: card("DK", "Dansk Kort"),
+            NO: new MedusaError(
+              MedusaError.Types.UNEXPECTED_STATE,
+              "Business Central customer request failed with status 503"
+            ),
+          });
+          const logger = getContainer().resolve(ContainerRegistrationKeys.LOGGER);
+          const warnSpy = jest.spyOn(logger, "warn");
+
+          const response = await api.get(url(companyId, "/lookup"), adminHeaders);
+
+          expect(response.status).toBe(200);
+          expect(response.data.results).toEqual([
+            dkResult,
+            { environment: "NO", status: "could_not_check", customer: null },
+          ]);
+          const lookupLogs = warnSpy.mock.calls
+            .map(([message]) => String(message))
+            .filter((message) => message.includes(companyId));
+          expect(lookupLogs).toHaveLength(1);
+          expect(lookupLogs[0]).toContain("environment NO");
+          expect(lookupLogs[0]).not.toContain("00066666");
+          expect(lookupLogs[0]).not.toContain("503");
+        });
+
+        it("answers 400 without a Business Central call for a company with no customer number", async () => {
+          const companyId = await createCompany(null);
+          const getCustomerSpy = stubGetCustomer({});
+
+          const response = await api.get(url(companyId, "/lookup"), allowStatus);
+
+          expect(response.status).toBe(400);
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+        });
+
+        it("answers 404 without a Business Central call for an unknown company", async () => {
+          const getCustomerSpy = stubGetCustomer({});
+
+          const response = await api.get(url("comp_does_not_exist", "/lookup"), allowStatus);
+
+          expect(response.status).toBe(404);
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+        });
+      });
+
+      describe("POST use", () => {
+        it("sets the country from the NO card, syncs against NO and clears the not-found record", async () => {
+          const companyId = await createCompany("00066666", "DK");
+          const companyService = getContainer().resolve<ICompanyModuleService>(
+            COMPANY_MODULE
+          );
+          await companyService.updateCompanies({
+            id: companyId,
+            business_central_not_found_at: new Date("2026-10-01T10:00:00.000Z"),
+            business_central_not_found_environment: "DK",
+            business_central_not_found_customer_number: "00066666",
+          });
+          const getCustomerSpy = stubGetCustomer({ NO: card("NO", "Norsk Kort") });
+
+          const response = await api.post(
+            url(companyId, "/use"),
+            { environment: "NO" },
+            adminHeaders
+          );
+
+          expect(response.status).toBe(200);
+          expect(response.data).toEqual({ status: "updated", country: "NO" });
+          expect(getCustomerSpy.mock.calls).toEqual([
+            ["NO", "00066666"],
+            ["NO", "00066666"],
+          ]);
+          const company = await readCompany(companyId);
+          expect(company).toMatchObject({
+            name: "Norsk Kort",
+            country: "NO",
+            currency_code: "NOK",
+            business_central_not_found_at: null,
+            business_central_not_found_environment: null,
+            business_central_not_found_customer_number: null,
+          });
+        });
+
+        it("answers 404 and leaves the company unchanged when the card is gone", async () => {
+          const companyId = await createCompany("00066666", "DK");
+          const before = await readCompany(companyId);
+          const getCustomerSpy = stubGetCustomer({ DK: card("NO", "Dansk Kort") });
+
+          const response = await api.post(
+            url(companyId, "/use"),
+            { environment: "NO" },
+            allowStatus
+          );
+
+          expect(response.status).toBe(404);
+          expect(getCustomerSpy).toHaveBeenCalledTimes(1);
+          expect(await readCompany(companyId)).toEqual(before);
+        });
+
+        it("answers 400 without a Business Central call for a company with no customer number", async () => {
+          const companyId = await createCompany(null);
+          const getCustomerSpy = stubGetCustomer({ NO: card("NO", "Norsk Kort") });
+
+          const response = await api.post(
+            url(companyId, "/use"),
+            { environment: "NO" },
+            allowStatus
+          );
+
+          expect(response.status).toBe(400);
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+        });
+
+        it("answers 404 without a Business Central call for an unknown company", async () => {
+          const getCustomerSpy = stubGetCustomer({ NO: card("NO", "Norsk Kort") });
+
+          const response = await api.post(
+            url("comp_does_not_exist", "/use"),
+            { environment: "NO" },
+            allowStatus
+          );
+
+          expect(response.status).toBe(404);
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+        });
+
+        it.each([
+          [{ environment: "NO", country: "NO" }],
+          [{ environment: "SE" }],
+          [{}],
+        ])("refuses a body of %j and leaves the company unchanged", async (body) => {
+          const companyId = await createCompany("00066666", "DK");
+          const before = await readCompany(companyId);
+          const getCustomerSpy = stubGetCustomer({ NO: card("NO", "Norsk Kort") });
+
+          const response = await api.post(url(companyId, "/use"), body, allowStatus);
+
+          expect(response.status).toBe(400);
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+          expect(await readCompany(companyId)).toEqual(before);
+        });
+      });
+    });
+
     describe("GET /admin/companies - Business Central last-synced time", () => {
       it("returns null for a company that was never synced", async () => {
         const response = await api.post(

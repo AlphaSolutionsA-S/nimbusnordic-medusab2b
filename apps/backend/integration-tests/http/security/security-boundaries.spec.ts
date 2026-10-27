@@ -175,6 +175,32 @@ medusaIntegrationTestRunner({
       },
     );
 
+    it.each(['none', 'customer', 'publishable'] as const)(
+      'denies %s credentials on the Admin Business Central customer routes', async (credentials) => {
+        await companyService.updateCompanies({
+          id: companyId, business_central_customer_number: '00011551', country: 'DK',
+        });
+        const getCustomerSpy = jest.spyOn(
+          container.resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE), 'getCustomer',
+        ).mockRejectedValue(new Error('Business Central must not be called'));
+        const selected = credentials === 'customer' ? headers : credentials === 'publishable' ? publicHeaders : { headers: {} };
+        const base = `/admin/companies/${companyId}/business-central-customer`;
+        const before = await companyService.retrieveCompany(companyId);
+        try {
+          for (const [method, url] of [['GET', base], ['GET', `${base}/lookup`], ['POST', `${base}/use`]]) {
+            const response = await api.request({
+              method, url, ...selected, data: method === 'POST' ? { environment: 'NO' } : undefined, validateStatus: () => true,
+            });
+            expect({ method, url, status: response.status }).toEqual({ method, url, status: 401 });
+          }
+          expect(getCustomerSpy).not.toHaveBeenCalled();
+          expect(await companyService.retrieveCompany(companyId)).toEqual(before);
+        } finally {
+          getCustomerSpy.mockRestore();
+        }
+      },
+    );
+
     async function attachAdminApproval(cartId: string, status: ApprovalStatusType, createdBy: string) {
       const service = container.resolve<ApprovalModuleService>('approval');
       const approval = await service.createApprovals({

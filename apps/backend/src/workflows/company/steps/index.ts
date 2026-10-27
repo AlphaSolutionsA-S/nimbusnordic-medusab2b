@@ -5,3 +5,5 @@ export * from "./add-company-employees-to-customer-group";
 export * from "./remove-company-employees-from-customer-group";
 export * from "./prepare-company-bc-sync";
 export * from "./load-business-central-account-company";
+export * from "./lookup-business-central-customer";
+export * from "./read-business-central-customer-country";

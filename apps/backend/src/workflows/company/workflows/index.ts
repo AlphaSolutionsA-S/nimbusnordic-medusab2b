@@ -5,3 +5,5 @@ export * from "./add-company-to-customer-group";
 export * from "./remove-company-from-customer-group";
 export * from "./sync-company-from-business-central";
 export * from "./resolve-business-central-account";
+export * from "./lookup-business-central-customer";
+export * from "./use-business-central-customer";
