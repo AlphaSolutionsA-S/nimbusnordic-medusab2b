@@ -1,7 +1,7 @@
 # Shipment Notices Architecture
 
-**Last updated:** 2026-10-24
-**Related work:** NIMBUS-130, NIMBUS-191, NIMBUS-216, NIMBUS-217, NIMBUS-231
+**Last updated:** 2026-10-28
+**Related work:** NIMBUS-130, NIMBUS-191, NIMBUS-216, NIMBUS-217, NIMBUS-231, NIMBUS-261
 
 ## Overview
 
@@ -109,7 +109,9 @@ line number (`lineNo` = v2.0 `sequence` = notice `bc_line_number`).
   shipment-read token (`GET {discovery}/companies({BUSINESS_CENTRAL_COMPANY_ID})`, through the same
   timeout, deadline and throttling path) and cached with the token, so a token renewal costs one
   extra request. The check run therefore needs `BUSINESS_CENTRAL_COMPANY_ID` (a GUID, also required
-  by the return reads); without it every check fails `bc_error` and backs off.
+  by the return reads); without it every check fails `bc_error` and backs off. Shipment discovery
+  and checks always read the Danish BC environment (NIMBUS-261); the token and company-name cache is
+  keyed per environment ([Business Central environments](../business-central-environments.md)).
 - **Failures.** The size read sits in the same failure handling as the shipment read: throttled
   (also on the company-name read) sets the run's back-off; the deadline leaves the batch due; any
   other failure (status, timeout, malformed body, a next link to another host) fails every row of

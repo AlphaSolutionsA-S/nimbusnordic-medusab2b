@@ -284,3 +284,14 @@ Resolved (human's answers):
 - NIMBUS-254 (Admin "Sync from Business Central") is on `develop`. The new section and routes build
   on its company page, actions menu and sync route.
 - Medusa Cloud environment variables for the Norwegian connection, per stage.
+
+## Documentation
+
+- [docs/architecture/business-central-environments.md](../../docs/architecture/business-central-environments.md) — BC environments: configuration, routing rule, account workflow, callers per environment, configuration-error answers (created)
+- [docs/architecture/business-central-company-sync.md](../../docs/architecture/business-central-company-sync.md) — Company sync per environment, NOK fallback, "customer not found" record, Admin "Business Central customer" section and routes (updated)
+- [docs/architecture/business-central-order-detail.md](../../docs/architecture/business-central-order-detail.md) — Order detail and returns read and created in the company's environment; error answers (updated)
+- [docs/architecture/business-central-order.md](../../docs/architecture/business-central-order.md) — Order submission always on DK (updated)
+- [docs/architecture/order-api/shipment-notices.md](../../docs/architecture/order-api/shipment-notices.md) — Shipment notices always on DK; per-environment token cache (updated)
+- [docs/architecture/admin-page-layout.md](../../docs/architecture/admin-page-layout.md) — `business-central-customer` entry (updated in task 07)
+
+AI base files updated: `ai/skills/medusa-infra-adapter/project.md` (environment argument convention, link to the environments doc). `ai/architecture/decisions.md` and `verification.md` were updated earlier on the branch.
