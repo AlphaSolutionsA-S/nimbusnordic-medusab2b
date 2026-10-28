@@ -1,7 +1,7 @@
 # Norwegian companies use the Norwegian Business Central for returns, order history and company sync
 
 **Date:** 2026-10-27
-**Status:** Scoped
+**Status:** Implemented
 **Type:** Story
 **Priority:** Medium (Jira: Should)
 **Issue:** NIMBUS-261

@@ -160,3 +160,26 @@
   `task-dispatcher` resumes at "After the gate".
 - Handover prompt: "Resume the NIMBUS-261 dispatch after the gate: my answers to the deviation
   report's open questions are <…>."
+
+## 2026-10-28 — task-dispatcher (after the gate; branch ready for review)
+
+- Outcome: Klaus Petersen answered the deviation report's open questions on 2026-10-28 (recorded
+  there): return-route error answers accepted; configuration and credential errors fixed on this
+  branch (fix 02, 26354f1: a logged generic 500 on every store BC route, DK and NO, including a
+  token request Azure AD rejects); Jira moved by Klaus to Internal review; overlapping unit specs
+  kept until NIMBUS-236; `verification.md` wording fixed (b021fdd). TestNO recheck (2026-10-28):
+  customer-portal extension deployed, `CS_EnabledReasonCodes` still 404, 205 of 207 cards without a
+  country. Docs written (0916a7a: new `docs/architecture/business-central-environments.md`, four BC
+  docs updated). Scope status set to Implemented. PR description (for a merge into `develop`) is in
+  the dispatcher's run folder and the final report. Pipeline working files removed by `cleanup`.
+- Verified at 0916a7a: unit 619/619, module integration 312/313 (baseline failure), Admin UI
+  96/96, lint 0 errors, typecheck 22 = baseline, build passes; full HTTP suite against a throwaway
+  Postgres: 120 failing cases, identical to the consolidation run and all pre-existing on develop
+  except 21 new Admin contract cases failing only with 401 (NIMBUS-236). No run reached Business
+  Central.
+- Not verified until after deploy: the TestNO checks in `deviation-report.md` ("Verify after
+  deploy"); production go-live gates (Medusa Cloud NO variables, ProductionNO extension and probe,
+  ProductionDK default-company probe, rollout country check).
+- Next owner: Klaus Petersen (push and merge into `develop`, then the after-deploy checks).
+- Handover prompt: "Push `feature/NIMBUS-261` and open the PR into `develop` with the prepared
+  description; then run the NIMBUS-261 after-deploy checks in TestNO."
