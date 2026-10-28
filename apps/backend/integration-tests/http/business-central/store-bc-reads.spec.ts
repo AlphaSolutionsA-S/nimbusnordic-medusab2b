@@ -1,7 +1,9 @@
-import { MedusaError } from "@medusajs/framework/utils";
+import type { Logger } from "@medusajs/framework/types";
+import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
+import { businessCentralConfigurationError } from "../../../src/modules/business-central/environment-config";
 import { BusinessCentralAmbiguousOutcomeError } from "../../../src/modules/business-central/service";
 import type {
   BCListOrdersResult,
@@ -383,8 +385,7 @@ medusaIntegrationTestRunner({
         jest
           .spyOn(bcService(), "getOrder")
           .mockRejectedValueOnce(
-            new MedusaError(
-              MedusaError.Types.INVALID_DATA,
+            businessCentralConfigurationError(
               "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)"
             )
           );
@@ -432,6 +433,177 @@ medusaIntegrationTestRunner({
           message: "No Business Central customer number configured for this company.",
         });
         expect(getOrder).not.toHaveBeenCalled();
+      });
+    });
+
+    // Security (NIMBUS-261): a missing or invalid Business Central setting is the operator's
+    // problem; the shopper gets a generic 500 that names no setting, and the reason is logged. The
+    // real module runs, so the error is the one it throws; fetch is stubbed so nothing reaches BC.
+    describe.each<[string, string, string, Record<string, string | undefined>]>([
+      [
+        "a Norwegian company with no NO discovery URL",
+        "NO",
+        "BUSINESS_CENTRAL_NO_DISCOVERY_URL",
+        { BUSINESS_CENTRAL_NO_DISCOVERY_URL: undefined },
+      ],
+      [
+        "a Danish company with an invalid client id",
+        "DK",
+        "BUSINESS_CENTRAL_CLIENT_ID",
+        {
+          BUSINESS_CENTRAL_CLIENT_ID: "not-a-guid",
+          BUSINESS_CENTRAL_CLIENT_SECRET: "synthetic-test-secret",
+        },
+      ],
+    ])("for %s", (_label, country, variable, settings) => {
+      const originals = Object.fromEntries(
+        Object.keys(settings).map((name) => [name, process.env[name]])
+      );
+      let fetchSpy: jest.SpyInstance;
+      let loggerError: jest.SpyInstance;
+
+      function applySettings(values: Record<string, string | undefined>): void {
+        for (const [name, value] of Object.entries(values)) {
+          if (value === undefined) {
+            delete process.env[name];
+          } else {
+            process.env[name] = value;
+          }
+        }
+      }
+
+      beforeEach(async () => {
+        await createCustomerCompany(country, CUSTOMER_NUMBER);
+        applySettings(settings);
+        fetchSpy = jest.spyOn(global, "fetch").mockRejectedValue(unexpectedCall);
+        loggerError = jest.spyOn(
+          getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER),
+          "error"
+        );
+      });
+
+      afterEach(() => {
+        applySettings(originals);
+      });
+
+      it.each([
+        "/store/bc-orders",
+        "/store/bc-orders/SO-1001",
+        "/store/bc-orders/return-reasons",
+        "/store/bc-returns",
+        "/store/bc-returns/RO-2001",
+      ])("answers %s with a logged generic 500", async (path) => {
+        const response = await api.get(path, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(500);
+        expect(response.data).toEqual({
+          code: "unknown_error",
+          type: "unknown_error",
+          message: "An unknown error occurred.",
+        });
+        expect(JSON.stringify(response.data)).not.toContain("BUSINESS_CENTRAL_");
+        expect(loggerError).toHaveBeenCalledWith(
+          expect.objectContaining({ message: expect.stringContaining(variable) })
+        );
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+
+      it("answers a return request with the logged generic 500", async () => {
+        const response = await api.post(
+          "/store/bc-orders/SO-1001/returns",
+          { lines: [{ source_line_no: 10000, quantity: 1, return_reason_code: "NORMAL" }] },
+          { ...authenticatedStoreHeaders, validateStatus: () => true }
+        );
+
+        expect(response.status).toBe(500);
+        expect(response.data).toEqual({
+          message: "The return request could not be completed. Please try again later.",
+        });
+        expect(JSON.stringify(response.data)).not.toContain("BUSINESS_CENTRAL_");
+        expect(loggerError).toHaveBeenCalledWith("BC return request failed");
+        expect(fetchSpy).not.toHaveBeenCalled();
+      });
+    });
+
+    // Security (NIMBUS-261): Azure AD's rejection names the app and the tenant; the shopper gets the
+    // generic 500 and only the log keeps Azure's reason.
+    describe("when Azure AD rejects the Business Central credentials", () => {
+      const appId = "11111111-2222-3333-4444-555555555555";
+      const tenantId = "99999999-8888-7777-6666-555555555555";
+      const credentials = {
+        BUSINESS_CENTRAL_CLIENT_ID: appId,
+        BUSINESS_CENTRAL_CLIENT_SECRET: "synthetic-test-secret",
+      };
+      const originals = Object.fromEntries(
+        Object.keys(credentials).map((name) => [name, process.env[name]])
+      );
+      let fetchSpy: jest.SpyInstance;
+      let loggerError: jest.SpyInstance;
+
+      function applySettings(values: Record<string, string | undefined>): void {
+        for (const [name, value] of Object.entries(values)) {
+          if (value === undefined) {
+            delete process.env[name];
+          } else {
+            process.env[name] = value;
+          }
+        }
+      }
+
+      beforeEach(async () => {
+        await createCustomerCompany("DK", CUSTOMER_NUMBER);
+        applySettings(credentials);
+        fetchSpy = jest.spyOn(global, "fetch").mockImplementation(async (input) => {
+          if (!String(input).startsWith("https://login.microsoftonline.com/")) {
+            throw unexpectedCall;
+          }
+          return new Response(
+            JSON.stringify({
+              error: "invalid_client",
+              error_description: `AADSTS7000215: Invalid client secret provided for app '${appId}' in tenant '${tenantId}'.`,
+            }),
+            { status: 401, headers: { "content-type": "application/json" } }
+          );
+        });
+        loggerError = jest.spyOn(
+          getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER),
+          "error"
+        );
+      });
+
+      afterEach(() => {
+        applySettings(originals);
+      });
+
+      it.each([
+        "/store/bc-orders",
+        "/store/bc-orders/SO-1001",
+        "/store/bc-orders/return-reasons",
+        "/store/bc-returns",
+        "/store/bc-returns/RO-2001",
+      ])("answers %s with a logged generic 500 that names neither app nor tenant", async (path) => {
+        const response = await api.get(path, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(500);
+        expect(response.data).toEqual({
+          code: "unknown_error",
+          type: "unknown_error",
+          message: "An unknown error occurred.",
+        });
+        const body = JSON.stringify(response.data);
+        expect(body).not.toContain(appId);
+        expect(body).not.toContain(tenantId);
+        expect(body).not.toContain("AADSTS");
+        expect(loggerError).toHaveBeenCalledWith(
+          expect.objectContaining({ message: expect.stringContaining("AADSTS7000215") })
+        );
+        expect(fetchSpy).toHaveBeenCalledTimes(1);
       });
     });
 

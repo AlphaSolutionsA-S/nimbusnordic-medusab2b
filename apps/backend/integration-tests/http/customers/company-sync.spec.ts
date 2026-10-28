@@ -2,6 +2,7 @@ import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 import { MedusaError } from "@medusajs/framework/utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
+import { businessCentralConfigurationError } from "../../../src/modules/business-central/environment-config";
 import type {
   BCCustomer,
   IBusinessCentralModuleService,
@@ -919,8 +920,7 @@ medusaIntegrationTestRunner({
             business_central_not_found_customer_number: "00088888",
           });
           spyOnGetCustomer().mockRejectedValueOnce(
-            new MedusaError(
-              MedusaError.Types.INVALID_DATA,
+            businessCentralConfigurationError(
               "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)"
             )
           );

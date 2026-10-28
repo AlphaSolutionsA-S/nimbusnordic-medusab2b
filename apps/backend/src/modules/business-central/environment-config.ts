@@ -43,6 +43,15 @@ export type BusinessCentralEndpoint = {
   environmentBaseUrl: string;
 };
 
+// A missing or invalid setting is the operator's problem, not the caller's (NIMBUS-261). The type is
+// outside Medusa's HTTP error map, so the error handler logs the message and answers the generic
+// 500 without it; it stays a MedusaError, so a sync still reports the call as failed.
+const BUSINESS_CENTRAL_CONFIGURATION_ERROR = "business_central_configuration";
+
+export function businessCentralConfigurationError(message: string): MedusaError {
+  return new MedusaError(BUSINESS_CENTRAL_CONFIGURATION_ERROR, message);
+}
+
 // Messages name the variable and the environment only, never the configured value (it holds the
 // tenant).
 function configurationError(
@@ -50,8 +59,7 @@ function configurationError(
   environment: BusinessCentralEnvironment,
   requirement: string
 ): MedusaError {
-  return new MedusaError(
-    MedusaError.Types.INVALID_DATA,
+  return businessCentralConfigurationError(
     `${variable} ${requirement} (Business Central environment ${environment})`
   );
 }

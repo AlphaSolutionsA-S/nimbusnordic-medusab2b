@@ -6,6 +6,7 @@ import {
 } from "@medusajs/framework/utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../../modules/business-central";
+import { businessCentralConfigurationError } from "../../../../modules/business-central/environment-config";
 import { BusinessCentralAmbiguousOutcomeError } from "../../../../modules/business-central/service";
 import type {
   BCOrderDetail,
@@ -238,24 +239,29 @@ describe("POST /store/bc-orders/:id/returns", () => {
     [
       "a missing environment setting",
       "getOrder",
-      "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)",
+      businessCentralConfigurationError(
+        "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)"
+      ),
     ],
     [
       "invalid client credentials",
       "createReturnFromSalesOrder",
-      "BUSINESS_CENTRAL_CLIENT_ID must be the Azure app registration GUID",
+      businessCentralConfigurationError(
+        "BUSINESS_CENTRAL_CLIENT_ID must be the Azure application client ID GUID."
+      ),
     ],
     [
       "Business Central rejecting the return",
       "createReturnFromSalesOrder",
-      "The return request could not be accepted. Please check the selected lines and try again.",
+      new MedusaError(
+        MedusaError.Types.INVALID_DATA,
+        "The return request could not be accepted. Please check the selected lines and try again."
+      ),
     ],
   ] as const)(
-    "answers the generic 500 for an invalid-data error from %s",
-    async (_label, failingMethod, message) => {
-      const failing = jest
-        .fn()
-        .mockRejectedValue(new MedusaError(MedusaError.Types.INVALID_DATA, message));
+    "answers the generic 500 for a configuration or rejection error from %s",
+    async (_label, failingMethod, thrown) => {
+      const failing = jest.fn().mockRejectedValue(thrown);
       const { req, logger } = createRequest({
         environment: "NO",
         [failingMethod]: failing,

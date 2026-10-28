@@ -33,8 +33,8 @@ function getReturnFailureAnswer(error: unknown): ReturnFailureAnswer | null {
     };
   }
 
-  // Only the return's own line validation is shopper-facing; other invalid-data errors (Business
-  // Central configuration or rejection) stay the logged generic 500.
+  // Only the return's own line validation is shopper-facing; Business Central configuration errors
+  // and rejections stay the logged generic 500.
   if (failure.name === BC_RETURN_VALIDATION_ERROR && typeof failure.message === "string") {
     return { status: 400, message: failure.message };
   }

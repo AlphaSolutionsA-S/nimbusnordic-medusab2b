@@ -1,3 +1,6 @@
+import { getHttpResponseFromError } from "@medusajs/framework/http";
+import { MedusaError } from "@medusajs/framework/utils";
+
 import BusinessCentralModuleService from "../service";
 import { getBusinessCentralLocalCurrency } from "../environment-config";
 
@@ -105,6 +108,21 @@ function tokenTenants(fetchMock: jest.Mock): string[] {
   return requests(fetchMock)
     .filter(({ url }) => url.hostname === "login.microsoftonline.com")
     .map(({ url }) => url.pathname.split("/").filter(Boolean)[0]);
+}
+
+// A configuration error is the operator's problem (NIMBUS-261): Medusa's own error mapping answers
+// it with the generic 500, and it stays a MedusaError so a sync still reports it as `failed`.
+function expectGenericServerError(error: unknown): void {
+  expect(error).toBeInstanceOf(MedusaError);
+
+  const { statusCode, body } = getHttpResponseFromError(error as MedusaError);
+
+  expect(statusCode).toBe(500);
+  expect(body).toEqual({
+    code: "unknown_error",
+    type: "unknown_error",
+    message: "An unknown error occurred.",
+  });
 }
 
 beforeEach(() => {
@@ -219,10 +237,34 @@ describe("Business Central environments", () => {
         expect(message).not.toContain(secret);
       }
       expect(requests(fetchMock).some(({ url }) => url.hostname === "evil.example")).toBe(false);
+      expectGenericServerError(error);
 
       await expect(service.listReturnReasons("DK")).resolves.toEqual([
         { id: "NORMAL", description: "Normal return" },
       ]);
+    }
+  );
+
+  it.each([
+    ["the client id is unset", "BUSINESS_CENTRAL_CLIENT_ID", undefined],
+    ["the client secret is unset", "BUSINESS_CENTRAL_CLIENT_SECRET", undefined],
+    ["the client id is not a GUID", "BUSINESS_CENTRAL_CLIENT_ID", "not-a-guid"],
+  ])(
+    "fails before any request when %s, naming the variable only for the log",
+    async (_case, variable, value) => {
+      if (value === undefined) {
+        delete process.env[variable];
+      } else {
+        process.env[variable] = value;
+      }
+      const fetchMock = mockBc();
+      const service = new BusinessCentralModuleService();
+
+      const error = await service.listReturnReasons("DK").catch((e: unknown) => e);
+
+      expect((error as Error).message).toContain(variable);
+      expect(fetchMock).not.toHaveBeenCalled();
+      expectGenericServerError(error);
     }
   );
 

@@ -6,7 +6,8 @@
 - `modules/business-central/environment-config.ts` exports `getBusinessCentralLocalCurrency(environment)` (DK: `BUSINESS_CENTRAL_LCY_CODE` or `DKK`; NO: `BUSINESS_CENTRAL_NO_LCY_CODE` or `NOK`; trimmed, blank falls back) for task 05, plus `getBusinessCentralEndpoint` and `getBusinessCentralCompanyId` used by the service.
 - Callers still on `"DK"` that tasks 03 to 05 switch: the five store BC routes (`api/store/bc-orders/route.ts`, `[id]/route.ts`, `return-reasons/route.ts`, `api/store/bc-returns/route.ts`, `[number]/route.ts`), `business-central-return/steps/{prepare,submit}-bc-return.ts`, `company/steps/prepare-company-bc-sync.ts`. Order submission and shipment-notice steps stay `"DK"` (commented).
 - Integration specs asserting `getCustomer` arguments now expect `("DK", number)`: `customers/company-sync.spec.ts:457,566`, `companies/companies.spec.ts:919` (task 05 changes them to the routed environment).
-- A missing or invalid NO setting throws `MedusaError` `INVALID_DATA` from the NO call only, message `<VARIABLE> <requirement> (Business Central environment NO)`; the configured value never appears in it.
+- A missing or invalid NO setting throws a BC configuration error (type
+  `business_central_configuration` since Fix 02, was `INVALID_DATA`) from the NO call only, message `<VARIABLE> <requirement> (Business Central environment NO)`; the configured value never appears in it.
 - Pitfall: BC module specs run with `test:integration:modules`, and a bare path pattern also picks up stale compiled copies under `apps/backend/.medusa/server`. Run jest directly from `apps/backend` with `--testPathIgnorePatterns '[\\/]\.medusa[\\/]'` (a plain `.medusa` regex matches the repo folder name `nimbusnordic-medusab2b` and skips every test). `pnpm` is not on PATH here; use `corepack pnpm`.
 - Baseline failure, not ours: `service.spec.ts` "listOrders › stops filling from salesInvoices after the round-trip guardrail even if the page stays short" fails before and after task 01.
 - `environments.spec.ts` has a fetch router keyed on tenant and company path that later module-level NO tests can reuse.
@@ -32,7 +33,7 @@
 
 - `PrepareBcReturnInput` and `SubmitBcReturnInput` both carry `environment: BusinessCentralEnvironment`; `createBcReturnWorkflow` passes `input.environment` to submit through `transform`.
 - Verified by probe: a failed workflow `run()` rejects with a plain serialised object (`message`, `name`, `stack`, plus own fields such as `type`, `__isMedusaError`, `idempotencyKey`), never the thrown instance; `instanceof` is false. Routes must read `name` / `MedusaError.isMedusaError(e)` + `type`. The return route now does (`getReturnFailureAnswer` in `[id]/returns/route.ts`). Any route mapping workflow errors with `instanceof` (task 06's Admin routes) has the same trap.
-- Don't answer every `INVALID_DATA` with its message: BC configuration errors (`environment-config.ts`, `getClientCredentials`) are `INVALID_DATA` and name settings. Give shopper-facing errors a distinct `name` and match that (the return route's `BC_RETURN_VALIDATION_ERROR`, exported from `create-bc-return.ts`); everything else is the generic 500.
+- Don't answer every `INVALID_DATA` with its message: BC rejections are `INVALID_DATA` too (BC configuration errors were until Fix 02; now type `business_central_configuration`, see Fix 02). Give shopper-facing errors a distinct `name` and match that (the return route's `BC_RETURN_VALIDATION_ERROR`, exported from `create-bc-return.ts`); everything else is the generic 500.
 - Running a real workflow in a unit spec works: `createMedusaContainer()` from `@medusajs/framework/utils`, register the BC module key and `ContainerRegistrationKeys.LOGGER` with `asValue` (`@medusajs/framework/awilix`), pass it as `req.scope` (`api/store/bc-orders/__tests__/create-return-route.unit.spec.ts`).
 - The return route no longer imports `modules/business-central/service.ts`; its `bound-route-no-service` baseline entry is gone.
 - Return-create integration cases live in `integration-tests/http/business-central/store-bc-reads.spec.ts` ("creating a return").
@@ -55,7 +56,7 @@
 ## Task 06
 
 - Routes: `GET /admin/companies/:id/business-central-customer` (status), `GET …/lookup`, `POST …/use` (strict body `{ environment }`, validator `AdminUseBusinessCentralCustomer` in `api/admin/companies/validators.ts`). Response types for the Admin UI in `types/company/http.ts`: `AdminBusinessCentralCustomerResponse`, `AdminBusinessCentralCustomerLookupResponse` (results always `[DK, NO]` in that order), `AdminBusinessCentralCustomerLookupResult`, `AdminUseBusinessCentralCustomer`, `AdminUseBusinessCentralCustomerResponse`; all exported from `types` like `AdminSyncCompanyBusinessCentralResponse`.
-- Error answers task 07 must show: lookup and use → 400 when the company has no customer number, 404 unknown company; use → 404 when the card is not in that environment. A BC failure in the use re-read is 500 (or 400 for missing NO configuration); in the lookup it is a per-environment `could_not_check`, never an HTTP error.
+- Error answers task 07 must show: lookup and use → 400 when the company has no customer number, 404 unknown company; use → 404 when the card is not in that environment. A BC failure in the use re-read is 500 (a BC configuration error too, since Fix 02: the generic 500); in the lookup it is a per-environment `could_not_check`, never an HTTP error.
 - `not_found.at` arrives as an ISO 8601 string; `customer` is null unless `status` is `found`.
 - Workflows: `lookupBusinessCentralCustomerWorkflow`, `useBusinessCentralCustomerWorkflow` (re-exported from `workflows/company/workflows/index.ts`). The use workflow keeps the written country when the nested sync reports `failed` (unit-tested).
 - Verified: Admin contract cases in `companies.spec.ts` fail locally only with 401 on the Admin request (NIMBUS-236), the same as the existing NIMBUS-254 sync cases (8/8). Admin-free security cases run and pass.
@@ -79,3 +80,26 @@
 - Comparing against develop: `git -c core.longpaths=true worktree add` (path too long otherwise), junction
   `node_modules` and `apps/backend/node_modules` from the main checkout, copy `.env`; remove the junctions
   with `rmdir` (never `rm -rf`, which follows them) before `git worktree remove`.
+
+## Fix 02 (BC configuration errors answer a generic 500)
+
+- BC configuration and credential errors are `MedusaError`s of the custom type
+  `business_central_configuration`, built with `businessCentralConfigurationError(message)` from
+  `modules/business-central/environment-config.ts`. Medusa's error handler maps an unknown type to
+  500 `{ code/type: "unknown_error", message: "An unknown error occurred." }` and logs the error
+  with `logger.error(err)`. Use the factory in tests that stand in for a configuration error.
+- Verified (installed `error-handler.js`): `UNEXPECTED_STATE` and `DB_ERROR` are 500 but echo the
+  message; `INVALID_DATA` is 400 echoed. Only an unmapped type or a plain `Error` gets the generic
+  body. `getHttpResponseFromError` (from `@medusajs/framework/http`) gives the same mapping in a unit
+  spec.
+- Keep it a `MedusaError`: `prepare-company-bc-sync.ts` reports `failed` only for `instanceof
+  MedusaError`.
+- Integration cases can drive the real BC module into a configuration error by changing
+  `process.env` in the test (inApp server, values read per call) and `jest.spyOn(global, "fetch")`;
+  the runner's blank client id/secret means a DK case must set both to reach the GUID check.
+- Pitfall: `run-http-fix01.sh "customers[\\/]company-sync"` ran the whole HTTP suite; pass a plain
+  file-name fragment (`company-sync.spec`).
+- A token request Azure AD rejects (any non-ok token response) is also a
+  `businessCentralConfigurationError` carrying Azure's reason (it names the app and tenant), so it is
+  logged and answered the generic 500. A token fetch that fails outright stays `UNEXPECTED_STATE`
+  with a fixed message. Other BC response failures stay `UNEXPECTED_STATE` and echo their message.

@@ -39,6 +39,7 @@ import type {
   IBusinessCentralModuleService,
 } from "./types";
 import {
+  businessCentralConfigurationError,
   getBusinessCentralCompanyId,
   getBusinessCentralEndpoint,
   getBusinessCentralLocalCurrency,
@@ -778,17 +779,11 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
     const clientSecret = process.env.BUSINESS_CENTRAL_CLIENT_SECRET;
 
     if (!clientId) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_CLIENT_ID is required"
-      );
+      throw businessCentralConfigurationError("BUSINESS_CENTRAL_CLIENT_ID is required");
     }
 
     if (!clientSecret) {
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
-        "BUSINESS_CENTRAL_CLIENT_SECRET is required"
-      );
+      throw businessCentralConfigurationError("BUSINESS_CENTRAL_CLIENT_SECRET is required");
     }
 
     if (!AZURE_GUID_PATTERN.test(clientId)) {
@@ -796,8 +791,7 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
         ? " BUSINESS_CENTRAL_CLIENT_SECRET looks like a GUID, so the two values may be swapped."
         : "";
 
-      throw new MedusaError(
-        MedusaError.Types.INVALID_DATA,
+      throw businessCentralConfigurationError(
         `BUSINESS_CENTRAL_CLIENT_ID must be the Azure application client ID GUID.${swappedCredentialsHint}`
       );
     }
@@ -991,11 +985,9 @@ class BusinessCentralModuleService implements IBusinessCentralModuleService {
       );
     }
 
+    // Azure AD's reason names the app and the tenant, so it goes to the log only (NIMBUS-261).
     if (!tokenResponse.ok) {
-      throw new MedusaError(
-        MedusaError.Types.UNEXPECTED_STATE,
-        await this.getTokenErrorMessage(tokenResponse)
-      );
+      throw businessCentralConfigurationError(await this.getTokenErrorMessage(tokenResponse));
     }
 
     const tokenBody =

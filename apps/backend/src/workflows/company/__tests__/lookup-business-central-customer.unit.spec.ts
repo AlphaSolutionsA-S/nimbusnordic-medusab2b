@@ -6,6 +6,7 @@ import {
 } from "@medusajs/framework/utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../modules/business-central";
+import { businessCentralConfigurationError } from "../../../modules/business-central/environment-config";
 import type {
   BCCustomer,
   BusinessCentralEnvironment,
@@ -154,6 +155,12 @@ describe("lookupBusinessCentralCustomerWorkflow", () => {
   it.each([
     ["a Business Central error", new MedusaError(MedusaError.Types.UNEXPECTED_STATE, "BC 500")],
     ["an unexpected error", new TypeError("boom 00088888")],
+    [
+      "a missing NO setting",
+      businessCentralConfigurationError(
+        "BUSINESS_CENTRAL_NO_DISCOVERY_URL is required (Business Central environment NO)"
+      ),
+    ],
   ])(
     "reports could_not_check for the environment that fails with %s and keeps the other result",
     async (_case, error) => {
