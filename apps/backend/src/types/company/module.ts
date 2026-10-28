@@ -3,6 +3,7 @@
 import { CustomerGroupDTO } from "@medusajs/framework/types";
 import { CustomerDTO } from "@medusajs/framework/types";
 import { ModuleApprovalSettings } from "../approval/module";
+import type { BusinessCentralEnvironment } from "../../modules/business-central/types";
 
 export enum ModuleCompanySpendingLimitResetFrequency {
   NEVER = "never",
@@ -32,6 +33,9 @@ export type ModuleCompany = {
   currency_code: string | null;
   business_central_customer_number: string | null;
   business_central_synced_at: Date | null;
+  business_central_not_found_at: Date | null;
+  business_central_not_found_environment: BusinessCentralEnvironment | null;
+  business_central_not_found_customer_number: string | null;
   blocked: ModuleCompanyBlockedState;
   credit_limit: number | null;
   vat_number: string | null;

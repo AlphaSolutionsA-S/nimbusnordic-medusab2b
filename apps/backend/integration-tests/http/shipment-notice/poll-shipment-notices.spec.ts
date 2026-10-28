@@ -81,19 +81,19 @@ medusaIntegrationTestRunner({
         const bc = getContainer().resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
         countShipments = jest
           .spyOn(bc, "countShipments")
-          .mockImplementation(async (window) => inWindow(window).length);
+          .mockImplementation(async (_environment, window) => inWindow(window).length);
         listShipmentHeaders = jest
           .spyOn(bc, "listShipmentHeaders")
-          .mockImplementation(async (window) => inWindow(window));
+          .mockImplementation(async (_environment, window) => inWindow(window));
         getShipmentsByNumbers = jest
           .spyOn(bc, "getShipmentsByNumbers")
-          .mockImplementation(async (numbers: readonly string[]) =>
+          .mockImplementation(async (_environment, numbers: readonly string[]) =>
             headers.filter((header) => numbers.includes(header.number)).map(postedShipment)
           );
         // Stubbed too: an unstubbed read would call the configured BC environment.
         jest
           .spyOn(bc, "getShipmentLineVariants")
-          .mockImplementation(async (numbers: readonly string[]) =>
+          .mockImplementation(async (_environment, numbers: readonly string[]) =>
             headers
               .filter((header) => numbers.includes(header.number))
               .map((header) => ({ shipmentNumber: header.number, lineNumber: 10000, variantCode: null }))
@@ -178,7 +178,7 @@ medusaIntegrationTestRunner({
         // A header in the lead window, so the scan needs a second BC request to finish it.
         headers = [{ ...header(at(now, -100 * MINUTE)), customerNumber: "C-NOT-AN-API-CUSTOMER" }];
         const pastDeadline = now.getTime() + 5 * MINUTE;
-        countShipments.mockImplementation(async (window: BCShipmentWindow) => {
+        countShipments.mockImplementation(async (_environment, window: BCShipmentWindow) => {
           // The run's clock passes its deadline while the first window is being sized.
           jest.spyOn(Date, "now").mockReturnValue(pastDeadline);
           return inWindow(window).length;

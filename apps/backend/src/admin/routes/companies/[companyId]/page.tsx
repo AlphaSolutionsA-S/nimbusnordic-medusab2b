@@ -25,6 +25,7 @@ import {
 } from "../bc-managed-fields";
 import { CompanyActionsMenu } from "../components";
 import { BcManagedIndicator } from "../components/bc-managed-indicator";
+import { CompanyBusinessCentralCustomer } from "../components/company-business-central-customer";
 import {
   EmployeeCreateDrawer,
   EmployeesActionsMenu,
@@ -196,6 +197,9 @@ const CompanyDetails = () => {
                     </>
                   )}
                 </Container>
+              </LayoutComposer.Entry>
+              <LayoutComposer.Entry id="business-central-customer">
+                <CompanyBusinessCentralCustomer company={company} />
               </LayoutComposer.Entry>
               <LayoutComposer.Entry id="employees">
                 <Container className="flex flex-col p-0 overflow-hidden">

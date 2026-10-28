@@ -47,3 +47,21 @@ Overlap of customer numbers:
   would route to NO and be not found).
 - ProductionDK holds two companies, so its unscoped standard API calls rely on BC's default company
   being `Nimbus Nordic A/S`; to confirm with the probe before go-live.
+
+## 2026-10-28 recheck (TestNO)
+
+Run by the main session with the same read-only probe (`samples/probe-bc-environment.mjs`) against
+TestNO. Reads only; counts and status codes recorded.
+
+| Check | Result |
+|---|---|
+| Custom API `customerPortal/v2.0` `salesReturnOrders`, `salesOrderReservationEntries` | 200 (was 404) |
+| `$metadata` mentions `CustomerPortalReturns` | yes (was no) |
+| ODataV4 `CS_EnabledReasonCodes` | still 404 |
+| Customer country (all 207) | still `""`: 205, `"NO"`: 2 |
+
+Conclusion: the customer-portal extension is now deployed in TestNO, so open return detail,
+reservations on order detail and return creation can be checked there after deploy.
+`CS_EnabledReasonCodes` is still missing; nothing calls `/store/bc-orders/return-reasons` today and
+return creation hard-codes `NORMAL` (NIMBUS-138), so it is a BC-side follow-up, not a blocker.
+Blank TestNO countries remain test data to fill (or use the two `NO` cards).

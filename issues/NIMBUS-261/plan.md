@@ -1,5 +1,7 @@
 # Plan: Norwegian companies use the Norwegian Business Central for returns, order history and company sync
 
+> Record of NIMBUS-261, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-261 · **Branch:** `feature/NIMBUS-261` from `develop` · **Date:** 2026-10-27
 **Scope:** [scope.md](./scope.md) (approved by Klaus Petersen, 2026-10-27, commit 1a40be8; amended 2026-10-27: same number = same customer, extension status)
 **Plan approved:** Klaus Petersen, 2026-10-27, with every section 2 item answered

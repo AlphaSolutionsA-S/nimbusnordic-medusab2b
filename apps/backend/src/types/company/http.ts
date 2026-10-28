@@ -1,4 +1,5 @@
 import { FindParams, PaginatedResponse } from "@medusajs/framework/types";
+import type { BusinessCentralEnvironment } from "../../modules/business-central/types";
 import { QueryCompany, QueryEmployee } from "./query";
 import { ModuleCompanyFilters, ModuleEmployeeFilters } from "./service";
 import {
@@ -49,6 +50,42 @@ export type AdminUpdateCompany = Partial<AdminCreateCompany> & {
 export type AdminSyncCompanyBusinessCentralResponse = {
   status: "updated" | "skipped" | "failed";
 };
+
+export type AdminBusinessCentralCustomerResponse = {
+  routed_environment: BusinessCentralEnvironment;
+  customer_number: string | null;
+  not_found: {
+    // ISO 8601
+    at: string;
+    environment: BusinessCentralEnvironment;
+    customer_number: string;
+  } | null;
+};
+
+export type AdminBusinessCentralCustomerLookupResult = {
+  environment: BusinessCentralEnvironment;
+  status: "found" | "not_found" | "could_not_check";
+  customer: {
+    name: string;
+    country: string;
+    routes_to: BusinessCentralEnvironment;
+    routes_elsewhere: boolean;
+  } | null;
+};
+
+export type AdminBusinessCentralCustomerLookupResponse = {
+  customer_number: string;
+  results: AdminBusinessCentralCustomerLookupResult[];
+};
+
+export type AdminUseBusinessCentralCustomer = {
+  environment: BusinessCentralEnvironment;
+};
+
+export type AdminUseBusinessCentralCustomerResponse =
+  AdminSyncCompanyBusinessCentralResponse & {
+    country: string;
+  };
 
 /* Employee */
 

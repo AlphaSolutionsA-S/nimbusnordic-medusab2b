@@ -18,6 +18,9 @@ export const Company = model.define("company", {
   currency_code: model.text().nullable(),
   business_central_customer_number: model.text().nullable(),
   business_central_synced_at: model.dateTime().nullable(),
+  business_central_not_found_at: model.dateTime().nullable(),
+  business_central_not_found_environment: model.enum(["DK", "NO"]).nullable(),
+  business_central_not_found_customer_number: model.text().nullable(),
   blocked: model
     .enum(["not_blocked", "Ship", "Invoice", "All"])
     .default("not_blocked"),

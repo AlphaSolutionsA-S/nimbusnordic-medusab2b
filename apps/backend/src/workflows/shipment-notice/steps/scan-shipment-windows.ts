@@ -170,7 +170,8 @@ export const scanShipmentWindowsStep = createStep(
           if (pastDeadline()) {
             return new StepResponse(result);
           }
-          count = await bc.countShipments({ after, until }, deadline);
+          // Shipment notices always come from the Danish Business Central (NIMBUS-261).
+          count = await bc.countShipments("DK", { after, until }, deadline);
           const half =
             count > SHIPMENT_WINDOW_HEADER_BUDGET && halveShipmentWindow({ after, until });
           if (!half) {
@@ -183,7 +184,7 @@ export const scanShipmentWindowsStep = createStep(
           if (pastDeadline()) {
             return new StepResponse(result);
           }
-          const headers = await bc.listShipmentHeaders({ after, until }, deadline);
+          const headers = await bc.listShipmentHeaders("DK", { after, until }, deadline);
           const candidates = await loadOrderCandidates(container, orderIngestion, headers);
           const discoveries = shipmentTrackingForHeaders(headers, candidates, goLiveAt);
           result.headers += headers.length;

@@ -17,6 +17,7 @@ import {
   AdminGetEmployeeParams,
   AdminSyncCompanyBusinessCentral,
   AdminUpdateApprovalSettings,
+  AdminUseBusinessCentralCustomer,
   AdminUpdateCompany,
   AdminUpdateEmployee,
 } from "./validators";
@@ -69,6 +70,11 @@ export const adminCompaniesMiddlewares: MiddlewareRoute[] = [
     method: ["POST"],
     matcher: "/admin/companies/:id/sync-business-central",
     middlewares: [validateAndTransformBody(AdminSyncCompanyBusinessCentral)],
+  },
+  {
+    method: ["POST"],
+    matcher: "/admin/companies/:id/business-central-customer/use",
+    middlewares: [validateAndTransformBody(AdminUseBusinessCentralCustomer)],
   },
 
   /* Employees Middlewares */

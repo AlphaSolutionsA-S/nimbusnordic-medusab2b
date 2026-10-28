@@ -143,3 +143,43 @@
 - Next owner: `task-dispatcher`, on a separate explicit go-ahead from the human.
 - Handover prompt: "Dispatch NIMBUS-261 from `issues/NIMBUS-261/manifest.md` (branch
   `feature/NIMBUS-261` from `develop`)."
+
+## 2026-10-28 — task-dispatcher (at the implementation gate)
+
+- Outcome: all seven tasks implemented, reviewed and committed on `feature/NIMBUS-261` (local, not
+  pushed): 20a7ced (NIMBUS-262), 6c0b521 (NIMBUS-263), 90ba42a (NIMBUS-264), ccffd44 (NIMBUS-265,
+  after one review rework), b7bb0dd (NIMBUS-266, generated migration), ea11a2e (NIMBUS-267),
+  74f5320 (NIMBUS-268); finalization fix 863f0fc; consolidation b928d98. Cross-task review written
+  to `deviation-report.md` (no blocking or wiring findings). Jira sub-tasks NIMBUS-262..268 Done
+  with closing comments; NIMBUS-261 left in Scoping (its workflow offers only "Estimate approved").
+- Verified: unit 618/618, module integration 309/310 (baseline failure), Admin UI 96/96, lint 0
+  errors, typecheck 22 = baseline, `medusa build` passes; HTTP integration run against a throwaway
+  Postgres: every new non-Admin case passes, 21 new Admin contract cases fail only with 401
+  (NIMBUS-236), every other failure also fails on develop 811de63. No run reached Business Central.
+- Next owner: Klaus Petersen (answer the deviation report's open questions 1–6), then
+  `task-dispatcher` resumes at "After the gate".
+- Handover prompt: "Resume the NIMBUS-261 dispatch after the gate: my answers to the deviation
+  report's open questions are <…>."
+
+## 2026-10-28 — task-dispatcher (after the gate; branch ready for review)
+
+- Outcome: Klaus Petersen answered the deviation report's open questions on 2026-10-28 (recorded
+  there): return-route error answers accepted; configuration and credential errors fixed on this
+  branch (fix 02, 26354f1: a logged generic 500 on every store BC route, DK and NO, including a
+  token request Azure AD rejects); Jira moved by Klaus to Internal review; overlapping unit specs
+  kept until NIMBUS-236; `verification.md` wording fixed (b021fdd). TestNO recheck (2026-10-28):
+  customer-portal extension deployed, `CS_EnabledReasonCodes` still 404, 205 of 207 cards without a
+  country. Docs written (0916a7a: new `docs/architecture/business-central-environments.md`, four BC
+  docs updated). Scope status set to Implemented. PR description (for a merge into `develop`) is in
+  the dispatcher's run folder and the final report. Pipeline working files removed by `cleanup`.
+- Verified at 0916a7a: unit 619/619, module integration 312/313 (baseline failure), Admin UI
+  96/96, lint 0 errors, typecheck 22 = baseline, build passes; full HTTP suite against a throwaway
+  Postgres: 120 failing cases, identical to the consolidation run and all pre-existing on develop
+  except 21 new Admin contract cases failing only with 401 (NIMBUS-236). No run reached Business
+  Central.
+- Not verified until after deploy: the TestNO checks in `deviation-report.md` ("Verify after
+  deploy"); production go-live gates (Medusa Cloud NO variables, ProductionNO extension and probe,
+  ProductionDK default-company probe, rollout country check).
+- Next owner: Klaus Petersen (push and merge into `develop`, then the after-deploy checks).
+- Handover prompt: "Push `feature/NIMBUS-261` and open the PR into `develop` with the prepared
+  description; then run the NIMBUS-261 after-deploy checks in TestNO."

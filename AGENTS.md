@@ -280,8 +280,8 @@ excludes `import type`. Review enforces every row (no import-boundary lint); `me
 |`bound-sf-transport-private`|`S/**` outside `S/lib/config.ts`, `S/lib/data/**`, `S/middleware.ts`|`@medusajs/js-sdk`, `S/lib/config.ts`|
 |`bound-sf-server-only`|`S/lib/data/cms.ts`, `S/lib/data/ui-translations.ts`, `S/lib/data/country-languages.ts`|`server-only` required|
 
-Baseline: `bound-route-no-service` in `B/api/store/bc-orders/[id]/returns/route.ts`,
-`B/api/store/ui-translations/[locale]/route.ts`, `B/api/admin/ui-translations/*`;
+Baseline: `bound-route-no-service` in `B/api/store/ui-translations/[locale]/route.ts`,
+`B/api/admin/ui-translations/*`;
 `bound-sf-transport-private` in `S/app/[countryCode]/(main)/products/[handle]/page.tsx`.
 
 ### Locks
@@ -397,8 +397,9 @@ One home per rule; consumers render its verdict. Check here before adding one.
 |Cart access, verified cart–company association|`B/workflows/cart/utils/cart-access.ts`|404 (`authorizeCartAccessWorkflow`)|cart guard; approvals list and decision|ok|
 |Store order read and return: owner, or company admin of the approved source cart (NIMBUS-177)|`B/workflows/order/utils/order-access.ts`|404 (`B/api/middlewares/ensure-order-access.ts`)|`GET /store/orders/:id`, `POST /store/returns`|ok|
 |Order API enabled per company (NIMBUS-217)|`B/utils/order-api-access.ts`|403|order API; shipment jobs; Admin retry|ok|
+|Business Central environment of a company: stored `country` `NO` (trimmed, any case) → NO, else DK (NIMBUS-261)|`B/utils/business-central-environment.ts`|environment (`B/workflows/company/workflows/resolve-business-central-account.ts`)|store BC routes, return creation, company sync, Admin BC customer routes|ok|
 |Order transfer only without an account owner (NIMBUS-177)|`B/workflows/order/utils/order-transfer.ts`|400|`POST /store/orders/:id/transfer/request`|ok|
-|BC company sync: fields written; updated/skipped/failed|`B/workflows/company/steps/prepare-company-bc-sync.ts`|workflow status|login sync, store company read, Admin sync route|ok|
+|BC company sync: fields written; updated/skipped/failed; customer not found writes the not-found record (time, environment, number; reported `skipped`), a found card clears it; blank currency → the environment's local currency (NIMBUS-261)|`B/workflows/company/steps/prepare-company-bc-sync.ts`; LCY: `B/workflows/company/utils/resolve-currency-code.ts`|workflow status|login sync, store company read, Admin sync route|ok|
 |BC-managed company fields are read-only|`B/admin/routes/companies/bc-managed-fields.ts`|admin form; BC sync|storefront company card|ok|
 |Company credit/blocked/reset fields and colleague spending limits: admin-only|`B/api/store/companies/company-projection.ts`|store profiles|storefront|ok; quotes: name only (`B/api/store/quotes/query-config.ts`)|
 |Sent or recorded BC orders: duplicate protection and a force warning|`B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`)|pure verdict|Admin widget; submission guard|ok|
@@ -449,8 +450,9 @@ What a test must prove and at which layer (commands: `ai/AGENTS.md`, Commands).
 
 Per `docs/security-remediation.md` (2026-09-20; re-measure first): `tsc --noEmit` fails in backend
 and storefront (`next build` hides it); one BC module test, 3 storefront and 1 CMS test fail. No CI
-runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_DISCOVERY_URL` is an
-allowed test environment (`integration-tests/global-setup.ts`).
+runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_DISCOVERY_URL` and,
+when set, `BUSINESS_CENTRAL_NO_DISCOVERY_URL` target allowed test environments
+(`BUSINESS_CENTRAL_TEST_ENVIRONMENTS`, default `TestDK,TestNO`; `integration-tests/global-setup.ts`).
 
 Local `test:integration:http` (develop `eea3a01`, 2026-10-23): 77 tests fail with 401 on login
 (NIMBUS-236), in `integration-tests/http/*.spec.ts`: `admin/bc-integration`, `quotes/quotes`,

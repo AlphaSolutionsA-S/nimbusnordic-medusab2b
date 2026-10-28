@@ -171,7 +171,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10000", returnNumber: "31502910" })
+      service.getReturn("DK", { customerNumber: "10000", returnNumber: "31502910" })
     ).resolves.toEqual({
       id: "return-1",
       number: "31502910",
@@ -221,7 +221,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const fetchMock = mockBc({ returnOrder: { body: { value: [] } } });
     const service = new BusinessCentralModuleService();
 
-    await service.getReturn({ customerNumber: "10000", returnNumber: "RO'1" });
+    await service.getReturn("DK", { customerNumber: "10000", returnNumber: "RO'1" });
 
     const [requestUrl] = requestsTo(fetchMock, "/salesReturnOrders");
     expect(`${requestUrl.origin}${requestUrl.pathname}`).toBe(
@@ -246,7 +246,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10000", returnNumber: "99999999" })
+      service.getReturn("DK", { customerNumber: "10000", returnNumber: "99999999" })
     ).resolves.toBeNull();
   });
 
@@ -256,7 +256,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10000", returnNumber: "31502910" })
+      service.getReturn("DK", { customerNumber: "10000", returnNumber: "31502910" })
     ).rejects.toThrow("Business Central return order request failed with status 500");
   });
 
@@ -269,7 +269,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const result = await service.getReturn({
+    const result = await service.getReturn("DK", {
       customerNumber: "10000",
       returnNumber: "31502910",
     });
@@ -300,7 +300,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const result = await service.getReturn({
+    const result = await service.getReturn("DK", {
       customerNumber: "10000",
       returnNumber: "31502910",
     });
@@ -333,7 +333,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const result = await service.getReturn({ customerNumber: "10000", returnNumber: "31502910" });
+    const result = await service.getReturn("DK", { customerNumber: "10000", returnNumber: "31502910" });
 
     expect(result).toMatchObject({
       state: "open",
@@ -358,7 +358,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10000", returnNumber: "31502910" })
+      service.getReturn("DK", { customerNumber: "10000", returnNumber: "31502910" })
     ).resolves.toEqual({
       id: "return-order:31502910",
       number: "31502910",
@@ -392,7 +392,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const result = await service.getReturn({ customerNumber: "10000", returnNumber: "30700003" });
+    const result = await service.getReturn("DK", { customerNumber: "10000", returnNumber: "30700003" });
 
     expect(result).toMatchObject({
       id: "posted-receipt:30700003",
@@ -417,7 +417,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10000", returnNumber: "30700011" })
+      service.getReturn("DK", { customerNumber: "10000", returnNumber: "30700011" })
     ).resolves.toBeNull();
     expect(requestsTo(fetchMock, "/ODataV4/PostedReturnReceiptReturnRcptLines")).toHaveLength(0);
   });
@@ -428,7 +428,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10'00", returnNumber: "RO'1" })
+      service.getReturn("DK", { customerNumber: "10'00", returnNumber: "RO'1" })
     ).resolves.toBeNull();
 
     const receiptRequests = requestsTo(fetchMock, "/ODataV4/PostedReturnReceipt");
@@ -456,7 +456,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    await service.getReturn({ customerNumber: "10000", returnNumber: "31502910" });
+    await service.getReturn("DK", { customerNumber: "10000", returnNumber: "31502910" });
 
     const linesRequests = requestsTo(fetchMock, "/ODataV4/PostedReturnReceiptReturnRcptLines");
     expect(linesRequests).toHaveLength(1);
@@ -475,7 +475,7 @@ describe("BusinessCentralModuleService.getReturn", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.getReturn({ customerNumber: "10000", returnNumber: "31502910" })
+      service.getReturn("DK", { customerNumber: "10000", returnNumber: "31502910" })
     ).rejects.toThrow("Business Central posted return receipts request failed with status 500");
   });
 });

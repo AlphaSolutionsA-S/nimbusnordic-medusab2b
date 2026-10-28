@@ -5,111 +5,55 @@ import {
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../modules/business-central";
-import type { IBusinessCentralModuleService } from "../../../modules/business-central/types";
+import type {
+  BusinessCentralEnvironment,
+  IBusinessCentralModuleService,
+} from "../../../modules/business-central/types";
 import type { ModuleUpdateCompany } from "../../../types";
+import { getBusinessCentralEnvironmentForCountry } from "../../../utils/business-central-environment";
+import { resolveCurrencyCode } from "../utils/resolve-currency-code";
+import type { BusinessCentralAccountCompanyRow } from "./load-business-central-account-company";
 
-export type PrepareCompanyBcSyncInput =
-  | { customerId: string; expectedCompanyId?: string; companyId?: never }
-  | { companyId: string; customerId?: never; expectedCompanyId?: never };
-
-type CompanyBcKey = {
-  companyId: string | null;
-  bcCustomerNumber: string | null;
+export type PrepareCompanyBcSyncInput = {
+  company: BusinessCentralAccountCompanyRow | null;
+  expectedCompanyId?: string;
 };
 
+// Holds no personal data: only when, where and which number was tried.
+export type CompanyBcNotFoundUpdate = {
+  id: string;
+  business_central_not_found_at: Date;
+  business_central_not_found_environment: BusinessCentralEnvironment;
+  business_central_not_found_customer_number: string;
+};
+
+// `not_found` is internal: the workflow writes the record and reports `skipped`.
 export type PreparedCompanyBcSync =
   | { status: "skipped"; update: null }
   | { status: "failed"; update: null }
+  | { status: "not_found"; update: CompanyBcNotFoundUpdate }
   | { status: "ready"; update: ModuleUpdateCompany };
-
-const DEFAULT_BUSINESS_CENTRAL_LCY_CODE = "DKK";
-
-function toCompanyBcKey(
-  company:
-    | { id?: string; business_central_customer_number?: string | null }
-    | null
-    | undefined
-): CompanyBcKey {
-  return {
-    companyId: company?.id ?? null,
-    bcCustomerNumber: company?.business_central_customer_number ?? null,
-  };
-}
 
 function joinAddressLines(line1: string, line2: string): string {
   return [line1, line2].filter(Boolean).join(", ");
 }
 
-/*
-  A blank Currency Code on a Business Central customer is not missing data — it means the
-  customer transacts in the local currency (LCY), which is the normal state for domestic
-  customers. Resolve it to an explicit code so Company.currency_code is always populated.
-*/
-export function resolveCurrencyCode(bcCurrencyCode: string | null): string {
-  if (bcCurrencyCode && bcCurrencyCode.trim()) {
-    return bcCurrencyCode.trim();
-  }
-
-  const configuredLcyCode = process.env.BUSINESS_CENTRAL_LCY_CODE?.trim();
-
-  return configuredLcyCode || DEFAULT_BUSINESS_CENTRAL_LCY_CODE;
-}
-
 export const prepareCompanyBcSyncStep = createStep(
   "prepare-company-bc-sync",
   async (
-    input: PrepareCompanyBcSyncInput,
+    { company, expectedCompanyId }: PrepareCompanyBcSyncInput,
     { container }
   ): Promise<StepResponse<PreparedCompanyBcSync>> => {
     const logger = container.resolve(ContainerRegistrationKeys.LOGGER);
-    const query = container.resolve(ContainerRegistrationKeys.QUERY);
+    const companyId = company?.id ?? null;
+    const bcCustomerNumber = company?.business_central_customer_number ?? null;
+    const environment = getBusinessCentralEnvironmentForCountry(company?.country);
 
-    let companyId: string | null;
-    let bcCustomerNumber: string | null;
-
-    if (input.companyId !== undefined) {
-      const {
-        data: [company],
-      } = await query.graph({
-        entity: "company",
-        fields: ["id", "business_central_customer_number"],
-        filters: { id: input.companyId },
-      });
-
-      if (!company) {
-        throw new MedusaError(
-          MedusaError.Types.NOT_FOUND,
-          `Company with id ${input.companyId} was not found`
-        );
-      }
-
-      ({ companyId, bcCustomerNumber } = toCompanyBcKey(company));
-    } else {
-      const {
-        data: [customer],
-      } = await query.graph({
-        entity: "customer",
-        fields: [
-          "employee.company.id",
-          "employee.company.business_central_customer_number",
-        ],
-        filters: { id: input.customerId },
-      });
-
-      ({ companyId, bcCustomerNumber } = toCompanyBcKey(
-        customer?.employee?.company
-      ));
-
-      if (
-        companyId &&
-        input.expectedCompanyId &&
-        companyId !== input.expectedCompanyId
-      ) {
-        logger.warn(
-          `Business Central sync skipped: customer company ${companyId} does not match expected company ${input.expectedCompanyId}`
-        );
-        return new StepResponse({ status: "skipped", update: null });
-      }
+    if (companyId && expectedCompanyId && companyId !== expectedCompanyId) {
+      logger.warn(
+        `Business Central sync skipped: customer company ${companyId} does not match expected company ${expectedCompanyId}`
+      );
+      return new StepResponse({ status: "skipped", update: null });
     }
 
     if (!companyId || !bcCustomerNumber) {
@@ -123,23 +67,31 @@ export const prepareCompanyBcSyncStep = createStep(
     let bcCustomer;
 
     try {
-      bcCustomer = await bcService.getCustomer(bcCustomerNumber);
+      bcCustomer = await bcService.getCustomer(environment, bcCustomerNumber);
     } catch (error: unknown) {
       if (!(error instanceof MedusaError)) {
         throw error;
       }
 
       logger.error(
-        `Business Central company sync failed for company ${companyId}`
+        `Business Central company sync failed for company ${companyId} (environment ${environment})`
       );
       return new StepResponse({ status: "failed", update: null });
     }
 
     if (!bcCustomer) {
       logger.warn(
-        `Business Central sync skipped: no matching customer for company ${companyId}`
+        `Business Central sync: no matching customer for company ${companyId} (environment ${environment})`
       );
-      return new StepResponse({ status: "skipped", update: null });
+      return new StepResponse({
+        status: "not_found",
+        update: {
+          id: companyId,
+          business_central_not_found_at: new Date(),
+          business_central_not_found_environment: environment,
+          business_central_not_found_customer_number: bcCustomerNumber,
+        },
+      });
     }
 
     const update: ModuleUpdateCompany = {
@@ -158,8 +110,11 @@ export const prepareCompanyBcSyncStep = createStep(
       blocked: bcCustomer.blocked,
       credit_limit: bcCustomer.creditLimit,
       vat_number: bcCustomer.taxRegistrationNumber,
-      currency_code: resolveCurrencyCode(bcCustomer.currencyCode),
+      currency_code: resolveCurrencyCode(environment, bcCustomer.currencyCode),
       business_central_synced_at: new Date(),
+      business_central_not_found_at: null,
+      business_central_not_found_environment: null,
+      business_central_not_found_customer_number: null,
     };
 
     return new StepResponse({ status: "ready", update });

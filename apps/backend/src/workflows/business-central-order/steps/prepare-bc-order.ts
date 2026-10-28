@@ -194,8 +194,9 @@ export const prepareBcOrderStep = createStep(
 
     let bcCustomer: BCCustomer | null;
 
+    // Order submission always goes to the Danish Business Central (NIMBUS-261).
     try {
-      bcCustomer = await bcService.getCustomer(customerNumber);
+      bcCustomer = await bcService.getCustomer("DK", customerNumber);
     } catch (error) {
       logger.error(
         `Business Central customer lookup failed for Medusa order ${order.id}: ${
@@ -218,6 +219,7 @@ export const prepareBcOrderStep = createStep(
 
     try {
       evidence = await bcService.getItemLookupEvidence(
+        "DK",
         payload.lines.map((line) => ({
           lineNumber: line.lineNumber,
           eanNo: line.eanNo,

@@ -70,10 +70,10 @@ medusaIntegrationTestRunner({
         const bc = getContainer().resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
         countShipments = jest
           .spyOn(bc, "countShipments")
-          .mockImplementation(async (window) => fake.inWindow(window).length);
+          .mockImplementation(async (_environment, window) => fake.inWindow(window).length);
         listShipmentHeaders = jest
           .spyOn(bc, "listShipmentHeaders")
-          .mockImplementation(async (window) => {
+          .mockImplementation(async (_environment, window) => {
             if (fake.listFailures > 0) {
               fake.listFailures -= 1;
               throw new Error("Business Central shipment read did not complete (page 2)");
@@ -238,10 +238,10 @@ medusaIntegrationTestRunner({
           ours.map((row) => row.id).sort()
         );
         const tieReads = listShipmentHeaders.mock.calls.filter(
-          ([window]: [BCShipmentWindow]) => window.until.getTime() === tie.getTime()
+          ([, window]: [unknown, BCShipmentWindow]) => window.until.getTime() === tie.getTime()
         );
         expect(tieReads).toHaveLength(1);
-        expect(tieReads[0][0].after.getTime()).toBe(tie.getTime() - 1);
+        expect(tieReads[0][1].after.getTime()).toBe(tie.getTime() - 1);
         const state = (await orderIngestion().retrieveShipmentPollState())!;
         expect(state.lead_cursor.getTime()).toBeGreaterThan(tie.getTime());
         expect(result.complete).toBe(true);
@@ -282,7 +282,7 @@ medusaIntegrationTestRunner({
         await seedApiOrder({ customerNumber: "C-100", externalOrderNumber: "METZ-1", bcOrderNumber: "SO-100" });
         await startPollStateAt(goLive);
         fake.headers = [header(at(now, -30 * MINUTE))];
-        listShipmentHeaders.mockImplementationOnce(async (_window, receivedDeadline) => {
+        listShipmentHeaders.mockImplementationOnce(async (_environment, _window, receivedDeadline) => {
           expect(receivedDeadline).toBe(deadline.getTime());
           jest.spyOn(Date, "now").mockReturnValue(deadline.getTime());
           throw new ShipmentReadDeadlineError();
@@ -310,7 +310,7 @@ medusaIntegrationTestRunner({
         await seedApiOrder({ customerNumber: "C-100", externalOrderNumber: "METZ-1", bcOrderNumber: "SO-100" });
         await startPollStateAt(goLive);
         fake.headers = [header(at(now, -30 * MINUTE))];
-        listShipmentHeaders.mockImplementationOnce(async (window, receivedDeadline) => {
+        listShipmentHeaders.mockImplementationOnce(async (_environment, window, receivedDeadline) => {
           expect(receivedDeadline).toBe(deadline.getTime());
           jest.spyOn(Date, "now").mockReturnValue(deadline.getTime() + 1);
           return fake.inWindow(window);
@@ -456,7 +456,7 @@ medusaIntegrationTestRunner({
         await startPollStateAt(goLive);
         fake.headers = [header(at(now, -30 * MINUTE))];
         const deadline = at(now, 4 * MINUTE);
-        countShipments.mockImplementation(async (window: BCShipmentWindow) => {
+        countShipments.mockImplementation(async (_environment, window: BCShipmentWindow) => {
           // The run's clock passes the deadline while the window is being sized.
           jest.spyOn(Date, "now").mockReturnValue(deadline.getTime() + 1);
           return fake.inWindow(window).length;

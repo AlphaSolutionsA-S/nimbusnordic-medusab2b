@@ -109,7 +109,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     mockTestDkShape();
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 });
+    const result = await service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 });
 
     expect(result).toEqual({
       returns: [
@@ -162,7 +162,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const fetchMock = mockTestDkShape();
     const service = new BusinessCentralModuleService();
 
-    await service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 });
+    await service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 });
 
     const [openReturnsUrl] = requestsTo(fetchMock, "/salesReturnOrders()");
     expect(openReturnsUrl.searchParams.get("$filter")).toBe("sellToCustomerNumber eq '10000'");
@@ -191,7 +191,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const fetchMock = mockTestDkShape();
     const service = new BusinessCentralModuleService();
 
-    await service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 });
+    await service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 });
 
     const linesRequests = requestsTo(fetchMock, "/ODataV4/PostedReturnReceiptReturnRcptLines");
     expect(linesRequests).toHaveLength(1);
@@ -213,7 +213,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const fetchMock = mockTestDkShape();
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listReturns({
+    const result = await service.listReturns("DK", {
       customerNumber: "10000",
       limit: 20,
       offset: 0,
@@ -230,7 +230,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const fetchMock = mockTestDkShape();
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listReturns({ customerNumber: "10000", limit: 1, offset: 1 });
+    const result = await service.listReturns("DK", { customerNumber: "10000", limit: 1, offset: 1 });
 
     expect(result.returns.map((row) => row.number)).toEqual(["31500002"]);
     expect(result).toMatchObject({ count: 3, offset: 1, limit: 1 });
@@ -242,7 +242,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     mockTestDkShape();
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listReturns({
+    const result = await service.listReturns("DK", {
       customerNumber: "10000",
       limit: 20,
       offset: 0,
@@ -262,7 +262,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 })
+      service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 })
     ).rejects.toThrow("Business Central posted return receipts request failed with status 500");
   });
 
@@ -272,7 +272,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 })
+      service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 })
     ).rejects.toThrow("Business Central returns request failed with status 500");
   });
 
@@ -281,7 +281,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const fetchMock = mockBc({});
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 });
+    const result = await service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 });
 
     expect(result).toEqual({ returns: [], count: 0, offset: 0, limit: 20 });
     expect(requestsTo(fetchMock, "/ODataV4/PostedReturnReceiptReturnRcptLines")).toHaveLength(0);
@@ -305,7 +305,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     });
     const service = new BusinessCentralModuleService();
 
-    const result = await service.listReturns({ customerNumber: "10000", limit: 20, offset: 0 });
+    const result = await service.listReturns("DK", { customerNumber: "10000", limit: 20, offset: 0 });
 
     expect(result.returns[0]).toMatchObject({
       status: "Pending Approval",
@@ -326,7 +326,7 @@ describe("BusinessCentralModuleService.listReturns", () => {
     const fetchMock = mockBc({ receipts: { body: { value: receipts } } });
     const service = new BusinessCentralModuleService();
 
-    await service.listReturns({ customerNumber: "10'00", limit: 25, offset: 0 });
+    await service.listReturns("DK", { customerNumber: "10'00", limit: 25, offset: 0 });
 
     const [receiptsUrl] = requestsTo(fetchMock, "/ODataV4/PostedReturnReceipt");
     expect(receiptsUrl.searchParams.get("$filter")).toBe("Sell_to_Customer_No eq '10''00'");

@@ -1,8 +1,9 @@
 # Business Central Order Detail Architecture
 
-**Last updated:** 2026-10-26
+**Last updated:** 2026-10-28
 **Related work:** NIMBUS-255 (size on order detail lines; tasks NIMBUS-256, NIMBUS-257), NIMBUS-170
-(BC sales orders and invoices merged in order history), NIMBUS-137 (order detail)
+(BC sales orders and invoices merged in order history), NIMBUS-137 (order detail), NIMBUS-261 (read
+from the company's BC environment)
 
 ## Overview
 
@@ -10,7 +11,8 @@ The customer portal's order detail page (`/account/bcorders/<number>`) shows a B
 (BC) order as BC holds it: the open sales order, its posted invoices, or both. The portal stores
 none of it; every page load reads BC live through the backend. The same page holds the return table,
 which lists the order's item lines for a return request. Order submission to BC is a separate area
-(`business-central-order.md`).
+(`business-central-order.md`). The order is read from the company's own BC environment, Norway or
+Denmark ([Business Central environments](./business-central-environments.md)).
 
 ## Components
 
@@ -18,7 +20,7 @@ which lists the order's item lines for a return request. Order submission to BC 
 
 | Piece | File | Responsibility |
 |---|---|---|
-| Store route | `api/store/bc-orders/[id]/route.ts` | `GET /store/bc-orders/:id`: resolves the customer's company BC customer number (400 without one), calls `getOrder`, 404 when BC has nothing |
+| Store route | `api/store/bc-orders/[id]/route.ts` | `GET /store/bc-orders/:id`: resolves the company's BC customer number and environment with `resolveBusinessCentralAccountWorkflow` (400 without a number), calls `getOrder(environment, …)`, 404 when BC has nothing |
 | Middleware | `api/store/bc-orders/middlewares.ts` | customer authentication on every `/store/bc-orders*` route |
 | BC adapter | `modules/business-central/service.ts` (`getOrder`, `mapSalesOrderLine`, `mapSalesInvoiceLine`, `variantCodeOf`) | reads the order and its invoices from BC API v2.0 and maps both kinds of line to one `BCOrderLine` shape |
 | Response type | `modules/business-central/types.ts` (`BCOrderDetail`, `BCOrderLine`) | the order detail contract |
@@ -39,8 +41,9 @@ which lists the order's item lines for a return request. Order submission to BC 
 sequenceDiagram
   participant SF as Storefront page
   participant R as GET /store/bc-orders/:id
-  participant BC as Business Central API v2.0
+  participant BC as Business Central API v2.0 (company's environment)
   SF->>R: retrieveBCOrder(number)
+  R->>R: account workflow: customer number and environment (DK or NO)
   R->>BC: customer id for the company's BC customer number
   par one request each, in parallel
     R->>BC: salesOrders (customer + number), $expand salesOrderLines(item, itemVariant)
@@ -78,7 +81,17 @@ sequenceDiagram
 - **Display only.** A return request still identifies lines by line number; `variantCode` is not
   sent back.
 - **Customer scoping.** Both BC reads filter on the BC customer id resolved from the session's
-  company; the order number alone never reaches another customer's order.
+  company; the order number alone never reaches another customer's order. The environment also
+  comes from the session's company, never from the request. An order that exists only in the other
+  environment is not found (404).
+- **Errors.** A BC configuration or credential error answers a logged generic 500 with no setting
+  name in the body ([Business Central environments](./business-central-environments.md)). Until
+  the customer-portal extension is in an environment, the reservations read fails there; it is
+  tolerated and logged, so the order still loads without reservations.
+- **Returns use the same environment.** The return table posts to
+  `POST /store/bc-orders/:id/returns`, which reads and validates the source order and creates the
+  return order in the company's environment. Its error answers: 400 for a line validation error,
+  404 "Order not found.", 503 for an ambiguous BC outcome, otherwise a logged generic 500.
 
 ## Extension Points
 

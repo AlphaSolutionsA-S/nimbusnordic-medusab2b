@@ -109,7 +109,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    await expect(service.createSalesOrder(twoLineOrder)).resolves.toEqual({
+    await expect(service.createSalesOrder("DK", twoLineOrder)).resolves.toEqual({
       id: SALES_ORDER_ID,
       number: "SO-001234",
       status: "Draft",
@@ -138,7 +138,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    await service.createSalesOrder(twoLineOrder);
+    await service.createSalesOrder("DK", twoLineOrder);
 
     const header = bcRequests(fetchMock)[0].body;
     expect(header).toMatchObject({
@@ -175,7 +175,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    await service.createSalesOrder(twoLineOrder);
+    await service.createSalesOrder("DK", twoLineOrder);
 
     expect(bcRequests(fetchMock)[1].body).toEqual({
       lineType: "Item",
@@ -192,7 +192,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     const fetchMock = mockBusinessCentral([headerResponse(), lineResponse()]);
     const service = new BusinessCentralModuleService();
 
-    await service.createSalesOrder({
+    await service.createSalesOrder("DK", {
       customerNumber: "C1",
       externalDocumentNumber: "EXT-1",
       lines: [{ lineNumber: 1, itemId: "item-guid", quantity: 1 }],
@@ -218,7 +218,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    const result = await service.createSalesOrder(twoLineOrder);
+    const result = await service.createSalesOrder("DK", twoLineOrder);
 
     expect(result.id).toEqual(SALES_ORDER_ID);
     expect(result.acceptedLineNumbers).toEqual([1]);
@@ -236,7 +236,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     mockBusinessCentral([headerResponse(), lineResponse(400), lineResponse(400)]);
     const service = new BusinessCentralModuleService();
 
-    const result = await service.createSalesOrder(twoLineOrder);
+    const result = await service.createSalesOrder("DK", twoLineOrder);
 
     expect(result.id).toEqual(SALES_ORDER_ID);
     expect(result.acceptedLineNumbers).toEqual([]);
@@ -248,7 +248,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     const fetchMock = mockBusinessCentral([headerResponse({}, 422)]);
     const service = new BusinessCentralModuleService();
 
-    const error = await service.createSalesOrder(twoLineOrder).catch((e: unknown) => e);
+    const error = await service.createSalesOrder("DK", twoLineOrder).catch((e: unknown) => e);
 
     expect(error).not.toBeInstanceOf(BusinessCentralAmbiguousOutcomeError);
     expect((error as Error).message).toEqual(
@@ -261,7 +261,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     mockBusinessCentral([headerResponse({ number: "SO-1", status: "Draft" })]);
     const service = new BusinessCentralModuleService();
 
-    const error = await service.createSalesOrder(twoLineOrder).catch((e: unknown) => e);
+    const error = await service.createSalesOrder("DK", twoLineOrder).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(BusinessCentralAmbiguousOutcomeError);
     expect((error as BusinessCentralAmbiguousOutcomeError).idempotencyKey).toEqual(
@@ -275,13 +275,13 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.createSalesOrder({ ...twoLineOrder, lines: [] })
+      service.createSalesOrder("DK", { ...twoLineOrder, lines: [] })
     ).rejects.toThrow("at least one line");
     await expect(
-      service.createSalesOrder({ ...twoLineOrder, customerNumber: "" })
+      service.createSalesOrder("DK", { ...twoLineOrder, customerNumber: "" })
     ).rejects.toThrow("customer number");
     await expect(
-      service.createSalesOrder({ ...twoLineOrder, externalDocumentNumber: "" })
+      service.createSalesOrder("DK", { ...twoLineOrder, externalDocumentNumber: "" })
     ).rejects.toThrow("external document number");
     expect(fetchMock).not.toHaveBeenCalled();
   });
@@ -294,7 +294,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    await service.createSalesOrder(twoLineOrder);
+    await service.createSalesOrder("DK", twoLineOrder);
 
     const tokenCalls = fetchMock.mock.calls.filter((call) =>
       String(call[0]).startsWith(TOKEN_URL)
@@ -311,7 +311,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     mockBusinessCentral([headerResponse({}, 503)]);
     const service = new BusinessCentralModuleService();
 
-    const error = await service.createSalesOrder(twoLineOrder).catch((e: unknown) => e);
+    const error = await service.createSalesOrder("DK", twoLineOrder).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(BusinessCentralAmbiguousOutcomeError);
     expect((error as BusinessCentralAmbiguousOutcomeError).idempotencyKey).toEqual(
@@ -326,7 +326,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     global.fetch = fetchMock;
     const service = new BusinessCentralModuleService();
 
-    await expect(service.createSalesOrder(twoLineOrder)).rejects.toBeInstanceOf(
+    await expect(service.createSalesOrder("DK", twoLineOrder)).rejects.toBeInstanceOf(
       BusinessCentralAmbiguousOutcomeError
     );
     expect(bcRequests(fetchMock)).toHaveLength(1);
@@ -340,7 +340,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    await service.createSalesOrder({ ...twoLineOrder, currencyCode: "EUR" });
+    await service.createSalesOrder("DK", { ...twoLineOrder, currencyCode: "EUR" });
 
     expect(bcRequests(fetchMock)[0].body.currencyCode).toEqual("EUR");
   });
@@ -353,7 +353,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    const result = await service.createSalesOrder(twoLineOrder);
+    const result = await service.createSalesOrder("DK", twoLineOrder);
 
     expect(result.rejectedLines).toEqual([]);
     expect(result.acceptedLines).toEqual([
@@ -370,7 +370,7 @@ describe("BusinessCentralModuleService.createSalesOrder", () => {
     ]);
     const service = new BusinessCentralModuleService();
 
-    const result = await service.createSalesOrder(twoLineOrder);
+    const result = await service.createSalesOrder("DK", twoLineOrder);
 
     expect(result.acceptedLines).toEqual([
       { lineNumber: 1, sequence: null },

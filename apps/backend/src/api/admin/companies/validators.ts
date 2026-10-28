@@ -60,6 +60,14 @@ export type AdminSyncCompanyBusinessCentralType = z.infer<
 >;
 export const AdminSyncCompanyBusinessCentral = z.object({}).strict();
 
+// Only the environment: the country written comes from the card re-read on the server (NIMBUS-261).
+export type AdminUseBusinessCentralCustomerType = z.infer<
+  typeof AdminUseBusinessCentralCustomer
+>;
+export const AdminUseBusinessCentralCustomer = z
+  .object({ environment: z.enum(["DK", "NO"]) })
+  .strict();
+
 export type AdminGetCustomerGroupParamsType = z.infer<
   typeof AdminGetCustomerGroupParams
 >;

@@ -1,5 +1,5 @@
 const BUSINESS_CENTRAL_API_HOST = "api.businesscentral.dynamics.com";
-const DEFAULT_BUSINESS_CENTRAL_TEST_ENVIRONMENTS = "TestDK";
+const DEFAULT_BUSINESS_CENTRAL_TEST_ENVIRONMENTS = "TestDK,TestNO";
 
 /**
  * Extracts the environment segment from a Business Central discovery URL of the form
@@ -49,32 +49,43 @@ export function parseAllowedBusinessCentralTestEnvironments(
     .filter(Boolean);
 }
 
-/**
- * Fails closed unless BUSINESS_CENTRAL_DISCOVERY_URL targets an allowed test environment. The
- * error messages contain only the environment name — never the URL, tenant id, client id or
- * secret.
- */
-export function assertBusinessCentralTestEnvironment(
-  env: Readonly<Record<string, string | undefined>>
+function assertAllowedEnvironment(
+  env: Readonly<Record<string, string | undefined>>,
+  variable: string,
+  allowed: readonly string[]
 ): string {
-  const environment = parseBusinessCentralEnvironment(
-    env.BUSINESS_CENTRAL_DISCOVERY_URL
-  );
+  const environment = parseBusinessCentralEnvironment(env[variable]);
 
   if (!environment) {
     throw new Error(
-      "Refusing to run integration tests: BUSINESS_CENTRAL_DISCOVERY_URL is missing or is not a valid Business Central discovery URL"
+      `Refusing to run integration tests: ${variable} is missing or is not a valid Business Central discovery URL`
     );
   }
-
-  const allowed = parseAllowedBusinessCentralTestEnvironments(
-    env.BUSINESS_CENTRAL_TEST_ENVIRONMENTS
-  );
 
   if (!allowed.includes(environment)) {
     throw new Error(
       `Refusing to run integration tests against Business Central environment '${environment}' — not an allowed test environment`
     );
+  }
+
+  return environment;
+}
+
+/**
+ * Fails closed unless BUSINESS_CENTRAL_DISCOVERY_URL targets an allowed test environment, and,
+ * when set, BUSINESS_CENTRAL_NO_DISCOVERY_URL too. Returns the Danish environment. The error
+ * messages contain only the environment name — never the URL, tenant id, client id or secret.
+ */
+export function assertBusinessCentralTestEnvironment(
+  env: Readonly<Record<string, string | undefined>>
+): string {
+  const allowed = parseAllowedBusinessCentralTestEnvironments(
+    env.BUSINESS_CENTRAL_TEST_ENVIRONMENTS
+  );
+  const environment = assertAllowedEnvironment(env, "BUSINESS_CENTRAL_DISCOVERY_URL", allowed);
+
+  if (env.BUSINESS_CENTRAL_NO_DISCOVERY_URL?.trim()) {
+    assertAllowedEnvironment(env, "BUSINESS_CENTRAL_NO_DISCOVERY_URL", allowed);
   }
 
   return environment;

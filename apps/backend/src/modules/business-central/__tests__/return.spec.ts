@@ -58,7 +58,7 @@ describe("BusinessCentralModuleService.createReturnFromSalesOrder", () => {
     const fetchMock = mockFetch(jsonResponse({ value: "RO-0001" }));
     const service = new BusinessCentralModuleService();
 
-    await expect(service.createReturnFromSalesOrder(params)).resolves.toEqual({
+    await expect(service.createReturnFromSalesOrder("DK", params)).resolves.toEqual({
       id: "RO-0001",
       number: "RO-0001",
       status: "Open",
@@ -91,7 +91,7 @@ describe("BusinessCentralModuleService.createReturnFromSalesOrder", () => {
     );
     const service = new BusinessCentralModuleService();
 
-    const error = await service.createReturnFromSalesOrder(params).catch((e) => e);
+    const error = await service.createReturnFromSalesOrder("DK", params).catch((e) => e);
 
     expect(error).toBeInstanceOf(MedusaError);
     expect(error.type).toBe(MedusaError.Types.INVALID_DATA);
@@ -106,7 +106,7 @@ describe("BusinessCentralModuleService.createReturnFromSalesOrder", () => {
     mockFetch(response);
     const service = new BusinessCentralModuleService();
 
-    const error = await service.createReturnFromSalesOrder(params).catch((e) => e);
+    const error = await service.createReturnFromSalesOrder("DK", params).catch((e) => e);
 
     expect(error).toBeInstanceOf(BusinessCentralAmbiguousOutcomeError);
     expect(error.idempotencyKey).toBe("RET-123456");
@@ -116,10 +116,10 @@ describe("BusinessCentralModuleService.createReturnFromSalesOrder", () => {
     const service = new BusinessCentralModuleService();
 
     await expect(
-      service.createReturnFromSalesOrder({ ...params, lines: [] })
+      service.createReturnFromSalesOrder("DK", { ...params, lines: [] })
     ).rejects.toThrow("at least one line");
     await expect(
-      service.createReturnFromSalesOrder({
+      service.createReturnFromSalesOrder("DK", {
         ...params,
         lines: [{ ...params.lines[0], quantityToReturn: 0 }],
       })
@@ -131,7 +131,7 @@ describe("BusinessCentralModuleService.createReturnFromSalesOrder", () => {
     mockFetch();
     const service = new BusinessCentralModuleService();
 
-    await expect(service.createReturnFromSalesOrder(params)).rejects.toThrow(
+    await expect(service.createReturnFromSalesOrder("DK", params)).rejects.toThrow(
       "BUSINESS_CENTRAL_COMPANY_ID"
     );
   });
@@ -151,7 +151,7 @@ describe("BusinessCentralModuleService.listReturnReasons", () => {
     );
     const service = new BusinessCentralModuleService();
 
-    await expect(service.listReturnReasons()).resolves.toEqual([
+    await expect(service.listReturnReasons("DK")).resolves.toEqual([
       { id: "NORMAL", description: "Normal return" },
       { id: "DAMAGED", description: "DAMAGED" },
     ]);

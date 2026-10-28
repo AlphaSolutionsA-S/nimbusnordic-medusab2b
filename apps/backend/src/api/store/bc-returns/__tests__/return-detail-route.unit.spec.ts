@@ -1,4 +1,11 @@
+import type { BusinessCentralAccount } from "../../../../workflows/company/workflows/resolve-business-central-account";
+import { resolveBusinessCentralAccountWorkflow } from "../../../../workflows/company/workflows/resolve-business-central-account";
 import { GET } from "../[number]/route";
+
+jest.mock(
+  "../../../../workflows/company/workflows/resolve-business-central-account",
+  () => ({ resolveBusinessCentralAccountWorkflow: jest.fn() })
+);
 
 type MockResponse = {
   status: jest.Mock;
@@ -15,32 +22,28 @@ function createResponse(): MockResponse {
 function createRequest(options: {
   returnNumber: string;
   bcCustomerNumber: string | null;
+  environment?: BusinessCentralAccount["environment"];
   getReturn?: jest.Mock;
 }) {
-  const query = {
-    graph: jest.fn().mockResolvedValue({
-      data: [
-        {
-          employee: {
-            company: {
-              business_central_customer_number: options.bcCustomerNumber,
-            },
-          },
-        },
-      ],
-    }),
+  const account: BusinessCentralAccount = {
+    companyId: "comp_1",
+    customerNumber: options.bcCustomerNumber,
+    environment: options.environment ?? "DK",
+    notFound: null,
   };
+  const run = jest.fn().mockResolvedValue({ result: account });
+  jest
+    .mocked(resolveBusinessCentralAccountWorkflow)
+    .mockReturnValue({ run } as never);
   const bcService = { getReturn: options.getReturn ?? jest.fn() };
 
   const req = {
     auth_context: { app_metadata: { customer_id: "cus_1" } },
     params: { number: options.returnNumber },
-    scope: {
-      resolve: jest.fn((key: string) => (key === "query" ? query : bcService)),
-    },
+    scope: { resolve: jest.fn(() => bcService) },
   };
 
-  return { req, query, bcService };
+  return { req, run, bcService };
 }
 
 const bcReturn = {
@@ -60,24 +63,21 @@ const bcReturn = {
 };
 
 describe("GET /store/bc-returns/:number", () => {
-  // TC-1: happy path — the return is loaded for the session's BC customer number.
-  it("returns the return scoped to the authenticated customer's company", async () => {
+  // The return is loaded for the session's company: its customer number in its environment.
+  it("returns the return from the authenticated customer's company environment", async () => {
     const getReturn = jest.fn().mockResolvedValue(bcReturn);
-    const { req, query } = createRequest({
+    const { req, run } = createRequest({
       returnNumber: "31502910",
       bcCustomerNumber: "10000",
+      environment: "NO",
       getReturn,
     });
     const res = createResponse();
 
     await GET(req as never, res as never);
 
-    expect(query.graph).toHaveBeenCalledWith({
-      entity: "customer",
-      fields: ["employee.company.business_central_customer_number"],
-      filters: { id: "cus_1" },
-    });
-    expect(getReturn).toHaveBeenCalledWith({
+    expect(run).toHaveBeenCalledWith({ input: { customerId: "cus_1" } });
+    expect(getReturn).toHaveBeenCalledWith("NO", {
       customerNumber: "10000",
       returnNumber: "31502910",
     });
@@ -85,7 +85,7 @@ describe("GET /store/bc-returns/:number", () => {
     expect(res.json).toHaveBeenCalledWith({ return: bcReturn });
   });
 
-  // TC-14 (NIMBUS-172): a processed return is passed through as 200.
+  // NIMBUS-172: a processed return is passed through as 200.
   it("returns a processed return with 200", async () => {
     const processedReturn = {
       ...bcReturn,
@@ -111,7 +111,7 @@ describe("GET /store/bc-returns/:number", () => {
     expect(res.json).toHaveBeenCalledWith({ return: processedReturn });
   });
 
-  // TC-2: security — a foreign/unknown return gives a non-disclosing 404.
+  // Security: a foreign/unknown return gives a non-disclosing 404.
   it("responds 404 when the return is not found for this customer", async () => {
     const getReturn = jest.fn().mockResolvedValue(null);
     const { req } = createRequest({
@@ -127,7 +127,7 @@ describe("GET /store/bc-returns/:number", () => {
     expect(res.json).toHaveBeenCalledWith({ message: "Return not found." });
   });
 
-  // TC-3: edge case — an impossible return number gets the same 404 without calling BC.
+  // An impossible return number gets the same 404 without calling BC.
   it("responds 404 without calling Business Central for a number longer than 20 characters", async () => {
     const getReturn = jest.fn();
     const { req } = createRequest({
@@ -144,7 +144,7 @@ describe("GET /store/bc-returns/:number", () => {
     expect(res.json).toHaveBeenCalledWith({ message: "Return not found." });
   });
 
-  // TC-4: error condition — no BC customer number configured on the company.
+  // No BC customer number configured on the company.
   it("responds 400 when the company has no Business Central customer number", async () => {
     const getReturn = jest.fn();
     const { req } = createRequest({
@@ -163,7 +163,7 @@ describe("GET /store/bc-returns/:number", () => {
     });
   });
 
-  // TC-5: error condition — BC failures propagate to Medusa's error handler (no leak in body).
+  // BC failures propagate to Medusa's error handler (no leak in body).
   it("propagates Business Central errors instead of responding with their details", async () => {
     const getReturn = jest
       .fn()

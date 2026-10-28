@@ -2,6 +2,7 @@ export * from "./order-preview";
 export * from "./quotes";
 export * from "./approvals";
 export * from "./companies";
+export * from "./business-central-customer";
 export * from "./employees";
 export * from "./regions";
 export * from "./variants";

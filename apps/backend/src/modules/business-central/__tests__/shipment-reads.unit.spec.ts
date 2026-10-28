@@ -123,10 +123,10 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 0, value: [] }));
       const service = new BusinessCentralModuleService();
       const operation = read === "count"
-        ? service.countShipments({ after: AFTER, until: UNTIL }, 1000)
+        ? service.countShipments("DK", { after: AFTER, until: UNTIL }, 1000)
         : read === "headers"
-          ? service.listShipmentHeaders({ after: AFTER, until: UNTIL }, 1000)
-          : service.getShipmentsByNumbers(["S-1"], 1000);
+          ? service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL }, 1000)
+          : service.getShipmentsByNumbers("DK", ["S-1"], 1000);
 
       await expect(operation).rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
       expect(fetchMock).not.toHaveBeenCalled();
@@ -136,14 +136,14 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const now = jest.spyOn(Date, "now").mockReturnValue(1000);
       const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 0, value: [] }));
       const service = new BusinessCentralModuleService();
-      await service.countShipments({ after: AFTER, until: UNTIL });
+      await service.countShipments("DK", { after: AFTER, until: UNTIL });
       now.mockReturnValue(4_000_000);
       fetchMock.mockImplementationOnce(async () => {
         now.mockReturnValue(4_000_100);
         return tokenResponse();
       });
 
-      await expect(service.countShipments({ after: AFTER, until: UNTIL }, 4_000_100))
+      await expect(service.countShipments("DK", { after: AFTER, until: UNTIL }, 4_000_100))
         .rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
       expect(tokenRequestCount(fetchMock)).toBe(2);
       expect(shipmentRequests(fetchMock)).toHaveLength(1);
@@ -159,8 +159,8 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
       const operation = read === "headers"
-        ? service.listShipmentHeaders({ after: AFTER, until: UNTIL }, 1100)
-        : service.getShipmentsByNumbers(["S-1"], 1100);
+        ? service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL }, 1100)
+        : service.getShipmentsByNumbers("DK", ["S-1"], 1100);
 
       await expect(operation).rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
       expect(shipmentRequests(fetchMock)).toHaveLength(1);
@@ -174,7 +174,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentsByNumbers(Array.from({ length: 21 }, (_, i) => `S-${i}`), 1100))
+      await expect(service.getShipmentsByNumbers("DK", Array.from({ length: 21 }, (_, i) => `S-${i}`), 1100))
         .rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
       expect(shipmentRequests(fetchMock)).toHaveLength(1);
     });
@@ -187,7 +187,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.listShipmentHeaders({ after: AFTER, until: UNTIL }, 1100))
+      await expect(service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL }, 1100))
         .resolves.toEqual([expect.objectContaining({ number: "S-1" })]);
       expect(shipmentRequests(fetchMock)).toHaveLength(1);
     });
@@ -196,7 +196,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 412, value: [headerRow("S-1")] }));
       const service = new BusinessCentralModuleService();
 
-      await expect(service.countShipments({ after: AFTER, until: UNTIL })).resolves.toBe(412);
+      await expect(service.countShipments("DK", { after: AFTER, until: UNTIL })).resolves.toBe(412);
 
       const [{ url }] = shipmentRequests(fetchMock);
       expect(url.searchParams.get("$filter")).toBe(
@@ -209,7 +209,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       mockBc(() => jsonResponse({ value: [] }));
       const service = new BusinessCentralModuleService();
 
-      await expect(service.countShipments({ after: AFTER, until: UNTIL })).rejects.toThrow(
+      await expect(service.countShipments("DK", { after: AFTER, until: UNTIL })).rejects.toThrow(
         "count"
       );
     });
@@ -220,7 +220,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(() => jsonResponse({ value: [headerRow("S-1")] }));
       const service = new BusinessCentralModuleService();
 
-      await service.listShipmentHeaders({ after: AFTER, until: UNTIL });
+      await service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL });
 
       const [{ url, init }] = shipmentRequests(fetchMock);
       expect(url.searchParams.get("$filter")).toBe(
@@ -238,7 +238,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const service = new BusinessCentralModuleService();
       const until = new Date("2026-10-19T10:00:00.124Z");
 
-      await service.listShipmentHeaders({ after: new Date(until.getTime() - 1), until });
+      await service.listShipmentHeaders("DK", { after: new Date(until.getTime() - 1), until });
 
       const [{ url }] = shipmentRequests(fetchMock);
       expect(url.searchParams.get("$filter")).toBe(
@@ -261,7 +261,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      const headers = await service.listShipmentHeaders({ after: AFTER, until: UNTIL });
+      const headers = await service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL });
 
       expect(headers.map((header) => header.number)).toEqual(["S-1", "S-2", "S-3", "S-4", "S-5"]);
       const requests = shipmentRequests(fetchMock);
@@ -280,7 +280,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      await expect(service.listShipmentHeaders({ after: AFTER, until: UNTIL })).rejects.toThrow(
+      await expect(service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL })).rejects.toThrow(
         "status 500"
       );
     });
@@ -291,7 +291,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      await expect(service.listShipmentHeaders({ after: AFTER, until: UNTIL })).rejects.toThrow(
+      await expect(service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL })).rejects.toThrow(
         "nextLink"
       );
       expect(fetchMock.mock.calls.some(([input]) => String(input).includes("evil.example"))).toBe(
@@ -314,7 +314,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      const [header] = await service.listShipmentHeaders({ after: AFTER, until: UNTIL });
+      const [header] = await service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL });
 
       expect(header).toEqual({
         id: "guid-S-1",
@@ -334,7 +334,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const service = new BusinessCentralModuleService();
       const numbers = Array.from({ length: 45 }, (_, index) => `S-${index + 1}`);
 
-      await service.getShipmentsByNumbers(numbers);
+      await service.getShipmentsByNumbers("DK", numbers);
 
       const filters = shipmentRequests(fetchMock).map(({ url }) => url.searchParams.get("$filter") ?? "");
       expect(filters).toHaveLength(3);
@@ -346,7 +346,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(() => jsonResponse({ value: [] }));
       const service = new BusinessCentralModuleService();
 
-      await service.getShipmentsByNumbers(["O'BRIEN-1"]);
+      await service.getShipmentsByNumbers("DK", ["O'BRIEN-1"]);
 
       const [{ url }] = shipmentRequests(fetchMock);
       expect(url.searchParams.get("$filter")).toBe("number eq 'O''BRIEN-1'");
@@ -356,7 +356,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(() => jsonResponse({ value: [] }));
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentsByNumbers([])).resolves.toEqual([]);
+      await expect(service.getShipmentsByNumbers("DK", [])).resolves.toEqual([]);
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
@@ -419,7 +419,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      const shipments = await service.getShipmentsByNumbers(["S-1", "S-UNKNOWN"]);
+      const shipments = await service.getShipmentsByNumbers("DK", ["S-1", "S-UNKNOWN"]);
 
       const [{ url }] = shipmentRequests(fetchMock);
       expect(url.searchParams.get("$expand")).toMatch(/^salesShipmentLines\(\$select=/);
@@ -509,7 +509,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      const [shipment] = await service.getShipmentsByNumbers(["S-1"]);
+      const [shipment] = await service.getShipmentsByNumbers("DK", ["S-1"]);
 
       expect(shipment.lines.map((line) => line.lineType)).toEqual(["item", "comment", "other", "other"]);
       expect(shipment.lines[1]).toEqual({
@@ -531,7 +531,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       mockBc(() => jsonResponse({}, 429, { "Retry-After": "120" }));
       const service = new BusinessCentralModuleService();
 
-      const error = await service.countShipments({ after: AFTER, until: UNTIL }).catch((e: unknown) => e);
+      const error = await service.countShipments("DK", { after: AFTER, until: UNTIL }).catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(BusinessCentralThrottledError);
       expect((error as BusinessCentralThrottledError).retryAfterSeconds).toBe(120);
@@ -542,7 +542,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const service = new BusinessCentralModuleService();
 
       const error = await service
-        .getShipmentsByNumbers(["S-1"])
+        .getShipmentsByNumbers("DK", ["S-1"])
         .catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(BusinessCentralThrottledError);
@@ -560,7 +560,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       mockBc(() => jsonResponse({}, 400));
       const service = new BusinessCentralModuleService();
 
-      const error = await service.listShipmentHeaders({ after: AFTER, until: UNTIL }).catch((e: unknown) => e);
+      const error = await service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL }).catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(Error);
       expect(error).not.toBeInstanceOf(BusinessCentralThrottledError);
@@ -579,7 +579,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       );
       const service = new BusinessCentralModuleService();
 
-      await expect(service.listShipmentHeaders({ after: AFTER, until: UNTIL })).rejects.toThrow(
+      await expect(service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL })).rejects.toThrow(
         "did not complete"
       );
       expect(timeoutSpy).toHaveBeenCalledWith(20000);
@@ -593,18 +593,18 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(() => jsonResponse({ "@odata.count": 0, value: [] }));
       const service = new BusinessCentralModuleService();
 
-      await service.countShipments({ after: AFTER, until: UNTIL });
-      await service.listShipmentHeaders({ after: AFTER, until: UNTIL });
+      await service.countShipments("DK", { after: AFTER, until: UNTIL });
+      await service.listShipmentHeaders("DK", { after: AFTER, until: UNTIL });
       expect(tokenRequestCount(fetchMock)).toBe(1);
 
       // 3,599 s lifetime: still valid just under 5 minutes before expiry...
       nowSpy.mockReturnValue(1_000_000 + (3599 - 300) * 1000 - 1);
-      await service.getShipmentsByNumbers(["S-1"]);
+      await service.getShipmentsByNumbers("DK", ["S-1"]);
       expect(tokenRequestCount(fetchMock)).toBe(1);
 
       // ...and renewed from 5 minutes before expiry.
       nowSpy.mockReturnValue(1_000_000 + (3599 - 300) * 1000);
-      await service.getShipmentsByNumbers(["S-1"]);
+      await service.getShipmentsByNumbers("DK", ["S-1"]);
       expect(tokenRequestCount(fetchMock)).toBe(2);
       const authorizations = shipmentRequests(fetchMock).map(({ init }) => headerValue(init, "authorization"));
       expect(authorizations.every((value) => value === "Bearer access-token")).toBe(true);
@@ -619,7 +619,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const service = new BusinessCentralModuleService();
       const numbers = Array.from({ length: 45 }, (_, index) => `S-${index + 1}`);
 
-      await service.getShipmentLineVariants(numbers);
+      await service.getShipmentLineVariants("DK", numbers);
 
       const requests = variantRequests(fetchMock);
       expect(requests).toHaveLength(3);
@@ -643,7 +643,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await service.getShipmentLineVariants(["O'BRIEN-1"]);
+      await service.getShipmentLineVariants("DK", ["O'BRIEN-1"]);
 
       const [{ url }] = variantRequests(fetchMock);
       expect(url.searchParams.get("$filter")).toBe("documentNumber eq 'O''BRIEN-1'");
@@ -654,7 +654,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants([])).resolves.toEqual([]);
+      await expect(service.getShipmentLineVariants("DK", [])).resolves.toEqual([]);
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
@@ -671,7 +671,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["30947954", "UNKNOWN"])).resolves.toEqual([
+      await expect(service.getShipmentLineVariants("DK", ["30947954", "UNKNOWN"])).resolves.toEqual([
         { shipmentNumber: "30947954", lineNumber: 10000, variantCode: "M" },
         { shipmentNumber: "30947954", lineNumber: 20000, variantCode: null },
         { shipmentNumber: "30947954", lineNumber: 30000, variantCode: "L" },
@@ -686,7 +686,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       mockBc(noShipments, { variants: () => jsonResponse({ value: [row] }) });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow(field);
+      await expect(service.getShipmentLineVariants("DK", ["S-1"])).rejects.toThrow(field);
     });
 
     it("follows next links on the Business Central origin to the end", async () => {
@@ -706,7 +706,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      const rows = await service.getShipmentLineVariants(["S-1", "S-2"]);
+      const rows = await service.getShipmentLineVariants("DK", ["S-1", "S-2"]);
 
       expect(rows.map((row) => [row.shipmentNumber, row.lineNumber])).toEqual([
         ["S-1", 10000],
@@ -726,7 +726,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow("nextLink");
+      await expect(service.getShipmentLineVariants("DK", ["S-1"])).rejects.toThrow("nextLink");
       expect(fetchMock.mock.calls.some(([input]) => String(input).includes("evil.example"))).toBe(false);
     });
 
@@ -740,7 +740,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow("status 500");
+      await expect(service.getShipmentLineVariants("DK", ["S-1"])).rejects.toThrow("status 500");
     });
 
     it.each([
@@ -755,7 +755,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      const error = await service.getShipmentLineVariants(["S-1"]).catch((e: unknown) => e);
+      const error = await service.getShipmentLineVariants("DK", ["S-1"]).catch((e: unknown) => e);
 
       expect(error).toBeInstanceOf(BusinessCentralThrottledError);
       expect((error as BusinessCentralThrottledError).retryAfterSeconds).toBe(seconds);
@@ -773,7 +773,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
         });
         const service = new BusinessCentralModuleService();
 
-        const error = await service.getShipmentLineVariants(["S-1"]).catch((e: unknown) => e);
+        const error = await service.getShipmentLineVariants("DK", ["S-1"]).catch((e: unknown) => e);
 
         expect(error).toBeInstanceOf(Error);
         expect(error).not.toBeInstanceOf(BusinessCentralThrottledError);
@@ -787,7 +787,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
       const service = new BusinessCentralModuleService();
 
-      await service.getShipmentLineVariants(["S-1"]);
+      await service.getShipmentLineVariants("DK", ["S-1"]);
 
       expect(fetchMock).toHaveBeenCalledTimes(3);
       expect(fetchMock.mock.calls.every(([, init]) => (init as RequestInit | undefined)?.signal)).toBe(true);
@@ -807,7 +807,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["S-1"])).rejects.toThrow("did not complete");
+      await expect(service.getShipmentLineVariants("DK", ["S-1"])).rejects.toThrow("did not complete");
     });
 
     it("starts no request when the deadline has passed", async () => {
@@ -815,7 +815,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["S-1"], 1000)).rejects.toMatchObject({
+      await expect(service.getShipmentLineVariants("DK", ["S-1"], 1000)).rejects.toMatchObject({
         name: "ShipmentReadDeadlineError",
       });
       expect(fetchMock).not.toHaveBeenCalled();
@@ -825,10 +825,10 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const now = jest.spyOn(Date, "now").mockReturnValue(1000);
       const fetchMock = mockBc(noShipments, { variants: () => jsonResponse({ value: [] }) });
       const service = new BusinessCentralModuleService();
-      await service.getShipmentsByNumbers(["S-1"]);
+      await service.getShipmentsByNumbers("DK", ["S-1"]);
       now.mockReturnValue(2000);
 
-      await expect(service.getShipmentLineVariants(["S-1"], 2000)).rejects.toMatchObject({
+      await expect(service.getShipmentLineVariants("DK", ["S-1"], 2000)).rejects.toMatchObject({
         name: "ShipmentReadDeadlineError",
       });
       expect(companyRequests(fetchMock)).toHaveLength(0);
@@ -846,7 +846,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await expect(service.getShipmentLineVariants(["S-1"], 1100)).rejects.toMatchObject({
+      await expect(service.getShipmentLineVariants("DK", ["S-1"], 1100)).rejects.toMatchObject({
         name: "ShipmentReadDeadlineError",
       });
       expect(variantRequests(fetchMock)).toHaveLength(0);
@@ -863,7 +863,7 @@ describe("BusinessCentralModuleService shipment reads", () => {
       const service = new BusinessCentralModuleService();
 
       await expect(
-        service.getShipmentLineVariants(Array.from({ length: 21 }, (_, i) => `S-${i}`), 1100)
+        service.getShipmentLineVariants("DK", Array.from({ length: 21 }, (_, i) => `S-${i}`), 1100)
       ).rejects.toMatchObject({ name: "ShipmentReadDeadlineError" });
       expect(variantRequests(fetchMock)).toHaveLength(1);
     });
@@ -880,17 +880,17 @@ describe("BusinessCentralModuleService shipment reads", () => {
       });
       const service = new BusinessCentralModuleService();
 
-      await service.getShipmentsByNumbers(["S-1"]);
-      await service.getShipmentLineVariants(["S-1"]);
-      await service.getShipmentLineVariants(["S-2"]);
+      await service.getShipmentsByNumbers("DK", ["S-1"]);
+      await service.getShipmentLineVariants("DK", ["S-1"]);
+      await service.getShipmentLineVariants("DK", ["S-2"]);
       expect(tokenRequestCount(fetchMock)).toBe(1);
       expect(companyRequests(fetchMock)).toHaveLength(1);
 
       // Renewed 5 minutes before the 3,599 s lifetime ends.
       nowSpy.mockReturnValue(1_000_000 + (3599 - 300) * 1000);
-      await service.getShipmentsByNumbers(["S-1"]);
-      await service.getShipmentLineVariants(["S-1"]);
-      await service.getShipmentLineVariants(["S-2"]);
+      await service.getShipmentsByNumbers("DK", ["S-1"]);
+      await service.getShipmentLineVariants("DK", ["S-1"]);
+      await service.getShipmentLineVariants("DK", ["S-2"]);
       expect(tokenRequestCount(fetchMock)).toBe(2);
       expect(companyRequests(fetchMock)).toHaveLength(2);
 

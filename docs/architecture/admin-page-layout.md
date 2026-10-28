@@ -29,7 +29,7 @@ Pages, keys and entries (default order; entry ids are stored by Medusa as `core:
 |---|---|---|---|
 | Approvals | `approval.list` | single column | `approvals` |
 | Companies | `company.list` | single column | `companies` |
-| Company details | `company.details` | single column, `data={company}` | `business-central-warning`, `company-information`, `employees` |
+| Company details | `company.details` | single column, `data={company}` | `business-central-warning`, `company-information`, `business-central-customer`, `employees` |
 | Quotes | `quote.list` | single column | `quotes` |
 | Quote details | `quote.details` | two column, `data={quote}` | main: `quote-accepted` (only while the quote is accepted), `quote`, `messages`, `json`; side: `customer`, `company` |
 | Translations | `storefront_translation.list` | single column | `translations` |

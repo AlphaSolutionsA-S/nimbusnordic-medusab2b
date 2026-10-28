@@ -88,13 +88,13 @@ medusaIntegrationTestRunner({
         const bc = getContainer().resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
         getShipmentsByNumbers = jest
           .spyOn(bc, "getShipmentsByNumbers")
-          .mockImplementation(async (numbers: readonly string[]) =>
+          .mockImplementation(async (_environment, numbers: readonly string[]) =>
             [...bcShipments.values()].filter((shipment) => numbers.includes(shipment.number))
           );
         // Stubbed too: an unstubbed read would call the configured BC environment.
         getShipmentLineVariants = jest
           .spyOn(bc, "getShipmentLineVariants")
-          .mockImplementation(async (numbers: readonly string[]) =>
+          .mockImplementation(async (_environment, numbers: readonly string[]) =>
             [...bcShipments.values()]
               .filter((posted) => numbers.includes(posted.number))
               .flatMap((posted) => variantsOf(posted, bcSizes.get(posted.number)))
@@ -467,7 +467,7 @@ medusaIntegrationTestRunner({
           latest_revision: 1,
         });
         expect((await notices(switchedOff)).map((notice) => notice.status)).toEqual(["shipped"]);
-        const requested = getShipmentsByNumbers.mock.calls.flatMap(([numbers]) => numbers);
+        const requested = getShipmentsByNumbers.mock.calls.flatMap(([, numbers]) => numbers);
         expect(requested).toEqual([enabled.number]);
         expect(await row(enabled)).toMatchObject({ state: "open", latest_revision: 2 });
         expect((await notices(enabled)).map((notice) => notice.status)).toEqual([
@@ -622,7 +622,7 @@ medusaIntegrationTestRunner({
           }),
           expect.objectContaining({ bc_line_number: 20000, item_number: "F2", variant_code: null }),
         ]);
-        expect(getShipmentLineVariants).toHaveBeenCalledWith([tracked.number], expect.any(Number));
+        expect(getShipmentLineVariants).toHaveBeenCalledWith("DK", [tracked.number], expect.any(Number));
       });
 
       it("fails only the shipment with an item line that has no size row, storing nothing for it", async () => {
@@ -743,7 +743,7 @@ medusaIntegrationTestRunner({
         await orderIngestion().updateShipmentTrackings({ id: initial.id, attempts: 2, last_error: "bc_error" });
         const before = await row(tracked);
         const deadline = at(new Date(), 4 * MINUTE);
-        getShipmentsByNumbers.mockImplementationOnce(async (_numbers, receivedDeadline) => {
+        getShipmentsByNumbers.mockImplementationOnce(async (_environment, _numbers, receivedDeadline) => {
           expect(receivedDeadline).toBe(deadline.getTime());
           throw new ShipmentReadDeadlineError();
         });
@@ -764,7 +764,7 @@ medusaIntegrationTestRunner({
         const tracked = await track(order.id);
         const snapshot = inBc(tracked, [line(10000, 5)]);
         const deadline = at(new Date(), 4 * MINUTE);
-        getShipmentsByNumbers.mockImplementationOnce(async (_numbers, receivedDeadline) => {
+        getShipmentsByNumbers.mockImplementationOnce(async (_environment, _numbers, receivedDeadline) => {
           expect(receivedDeadline).toBe(deadline.getTime());
           jest.spyOn(Date, "now").mockReturnValue(deadline.getTime() + 1);
           return [snapshot];
@@ -800,7 +800,7 @@ medusaIntegrationTestRunner({
 
         expect(first).toMatchObject({ checked: 200, recorded: 200, backlog_due: 50 });
         expect(first.oldest_due_age_ms).toBeGreaterThanOrEqual(50 * MINUTE);
-        const requested = getShipmentsByNumbers.mock.calls.map(([numbers]) => numbers);
+        const requested = getShipmentsByNumbers.mock.calls.map(([, numbers]) => numbers);
         expect(requested.every((numbers) => numbers.length <= 20)).toBe(true);
         expect(requested.flat().sort()).toEqual(all.slice(0, 200).map((t) => t.number).sort());
 

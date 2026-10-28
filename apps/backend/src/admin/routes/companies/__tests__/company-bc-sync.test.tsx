@@ -23,6 +23,7 @@ jest.mocked(sdk.admin.customerGroup.list).mockResolvedValue({
 });
 
 const SYNC_URL = "/admin/companies/comp_1/sync-business-central";
+const BC_CUSTOMER_URL = "/admin/companies/comp_1/business-central-customer";
 const SYNCED_AT = "2026-10-26T10:15:00.000Z";
 
 // Over HTTP the last-synced time is an ISO string or null, not the Date QueryCompany declares.
@@ -62,7 +63,8 @@ function company(patch: Partial<CompanyJson> = {}): CompanyJson {
   } as CompanyJson;
 }
 
-// The company read answers from a queue (the last reply repeats); the sync POST from `sync`.
+// The company read answers from a queue (the last reply repeats); the sync POST from `sync`; the
+// Business Central customer section's status read with a fixed status.
 function serve(reads: CompanyJson[], sync?: () => Promise<unknown>) {
   const queue = [...reads];
   fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
@@ -70,7 +72,10 @@ function serve(reads: CompanyJson[], sync?: () => Promise<unknown>) {
       if (!sync) throw new Error("Unexpected sync request");
       return sync();
     }
-    if (url.startsWith("/admin/companies/comp_1") && init?.method === "GET") {
+    if (url === BC_CUSTOMER_URL && init?.method === "GET") {
+      return { routed_environment: "DK", customer_number: "C100", not_found: null };
+    }
+    if (url.startsWith("/admin/companies/comp_1?") && init?.method === "GET") {
       const next = queue.length > 1 ? queue.shift() : queue[0];
       return { company: next };
     }

@@ -1,7 +1,7 @@
 # Business Central order submission
 
-**Last updated:** 2026-10-24
-**Related work:** NIMBUS-158, NIMBUS-180
+**Last updated:** 2026-10-28
+**Related work:** NIMBUS-158, NIMBUS-180, NIMBUS-261 (always the Danish environment)
 
 ## Overview
 
@@ -23,6 +23,8 @@ Paths below are relative to `apps/backend/src/`.
 | `workflows/business-central-order/utils/resolve-order-line-item.ts` (`resolveOrderLineItem`) | Pure rule: which BC item and size a line names, or why it is refused |
 
 Delivery uses the existing Business Central module adapter, canonical order metadata and resolved company/customer context. An accepted start can later produce a failed outcome if the required delivery context is missing. There are no additional tables or migrations for Admin status/retry.
+
+Orders are always submitted to the Danish BC environment (`DK`), whatever the company's country: the prepare and submit steps pass `"DK"` explicitly, and the currency override resolves a blank BC customer currency with DK's local currency (`BUSINESS_CENTRAL_LCY_CODE`, default DKK). Customer-portal reads, returns and the company sync are routed per company instead ([Business Central environments](./business-central-environments.md)).
 
 ## State and HTTP contract
 

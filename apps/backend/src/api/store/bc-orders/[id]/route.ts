@@ -2,9 +2,9 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework";
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
 import { BUSINESS_CENTRAL_MODULE } from "../../../../modules/business-central";
 import type { IBusinessCentralModuleService } from "../../../../modules/business-central/types";
+import { resolveBusinessCentralAccountWorkflow } from "../../../../workflows/company/workflows/resolve-business-central-account";
 
 export const GET = async (
   req: AuthenticatedMedusaRequest,
@@ -13,21 +13,10 @@ export const GET = async (
   const { customer_id } = req.auth_context.app_metadata as {
     customer_id: string;
   };
-  const query = req.scope.resolve(ContainerRegistrationKeys.QUERY);
-
-  const {
-    data: [customer],
-  } = await query.graph({
-    entity: "customer",
-    fields: ["employee.company.business_central_customer_number"],
-    filters: { id: customer_id },
-  });
-
-  const bcCustomerNumber =
-    customer?.employee?.company?.business_central_customer_number as
-      | string
-      | undefined
-      | null;
+  const { result: account } = await resolveBusinessCentralAccountWorkflow(
+    req.scope
+  ).run({ input: { customerId: customer_id } });
+  const bcCustomerNumber = account.customerNumber;
 
   if (!bcCustomerNumber) {
     res.status(400).json({
@@ -39,7 +28,7 @@ export const GET = async (
 
   const bcService =
     req.scope.resolve<IBusinessCentralModuleService>(BUSINESS_CENTRAL_MODULE);
-  const order = await bcService.getOrder({
+  const order = await bcService.getOrder(account.environment, {
     customerNumber: bcCustomerNumber,
     orderNumber: req.params.id,
   });
