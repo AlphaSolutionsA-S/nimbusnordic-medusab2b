@@ -76,6 +76,8 @@ export const loadBusinessCentralAccountCompanyStep = createStep(
       return new StepResponse(toAccountCompanyRow(company));
     }
 
+    // Deliberate `data-core-read-workflows` exemption: reads only our own company through the
+    // customer's employee link, no core customer field.
     const {
       data: [customer],
     } = await query.graph({

@@ -50,9 +50,7 @@ export const POST = async (
   req: AuthenticatedMedusaRequest<StoreCreateBCReturnType>,
   res: MedusaResponse
 ): Promise<void> => {
-  const { customer_id } = req.auth_context.app_metadata as {
-    customer_id: string;
-  };
+  const { customer_id } = req.auth_context.app_metadata as { customer_id: string };
   const { result: account } = await resolveBusinessCentralAccountWorkflow(
     req.scope
   ).run({ input: { customerId: customer_id } });
@@ -84,9 +82,7 @@ export const POST = async (
     const answer = getReturnFailureAnswer(error);
 
     if (!answer) {
-      req.scope
-        .resolve(ContainerRegistrationKeys.LOGGER)
-        .error("BC return request failed");
+      req.scope.resolve(ContainerRegistrationKeys.LOGGER).error("BC return request failed");
     }
 
     const { status, message } = answer ?? UNEXPECTED_FAILURE_ANSWER;

@@ -49,7 +49,7 @@
 - LCY rule: `resolveCurrencyCode(environment, code)` in `workflows/company/utils/resolve-currency-code.ts` (delegates to `getBusinessCentralLocalCurrency`). Order submission calls it with `"DK"`.
 - Verified by a unit run: a step's output is serialised before the next step reads it, so a `new Date()` set in the prepare step reaches `updateCompaniesStep` as an ISO string (MikroORM accepts it). Assert step-to-step timestamps as strings in workflow unit specs.
 - `.medusa/types` (gitignored) goes stale after a model change, and typecheck then fails on `query.graph` rows. Without a database, regenerate it with `generate-types.js` in the run scratchpad (`node <script> .` from `apps/backend`), the same `generateTypes` call `medusa build` makes with `skipDbConnection`.
-- Running a real workflow in a unit spec with Query and a module replaced: `src/workflows/company/__tests__/sync-company-from-business-central.unit.spec.ts` (register `ContainerRegistrationKeys.QUERY` as `{ graph }` and `COMPANY_MODULE` as `{ listCompanies, updateCompanies }`).
+- Running a real workflow in a unit spec with Query and a module replaced: `src/workflows/company/__tests__/use-business-central-customer.unit.spec.ts` (the sync's own unit spec was removed in consolidation; register `ContainerRegistrationKeys.QUERY` as `{ graph }` and `COMPANY_MODULE` as `{ listCompanies, updateCompanies }`).
 - `--testPathPattern` with an escaped separator (`workflows[\\/]company`) ran every unit suite; use a file-name fragment.
 
 ## Task 06

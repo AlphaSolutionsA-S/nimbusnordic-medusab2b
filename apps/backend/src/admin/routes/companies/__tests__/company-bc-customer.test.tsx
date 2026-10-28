@@ -132,7 +132,7 @@ type Serve = {
 function serve({ companies = [company()], statuses = [status()], lookup, use, sync }: Serve) {
   const companyQueue = [...companies];
   const statusQueue = [...statuses];
-  const next = <T,>(queue: T[]) => (queue.length > 1 ? queue.shift()! : queue[0]);
+  const next = <T,>(queue: T[]): T => (queue.length > 1 ? queue.splice(0, 1)[0] : queue[0]);
   fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
     const method = init?.method ?? "GET";
     if (url === LOOKUP_URL && method === "GET") {
