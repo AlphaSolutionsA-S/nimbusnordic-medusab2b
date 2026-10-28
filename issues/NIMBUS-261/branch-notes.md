@@ -69,3 +69,13 @@
 - Pitfall: Admin page tests that answer every GET under `/admin/companies/comp_1` with `{ company }` now also hit `…/business-central-customer`; serve that URL a status object (see `company-details-layout.test.tsx`, `company-bc-sync.test.tsx`).
 - Pitfall: importing a value from `@medusajs/js-sdk` (e.g. `FetchError`) in an Admin test fails under jsdom (`TransformStream is not defined`); build `Object.assign(new Error(m), { status })` instead and keep production imports type-only.
 - Medusa UI `Prompt` renders as `alertdialog` in jsdom; `Prompt.Cancel` closes it without calling the action.
+
+## Fix 01 (finalization HTTP failures)
+
+- `admin/shipment-tracking.spec.ts` now expects the `"DK"` first argument on `getShipmentsByNumbers`; passes 9/9.
+- Develop `811de63` fails the same cases as this branch in the 8 other failing suites; the branch adds only
+  21 `companies.spec.ts` Admin cases, all 401 on the Admin request (NIMBUS-236), so none of the new Admin
+  BC customer route contract cases has run green locally.
+- Comparing against develop: `git -c core.longpaths=true worktree add` (path too long otherwise), junction
+  `node_modules` and `apps/backend/node_modules` from the main checkout, copy `.env`; remove the junctions
+  with `rmdir` (never `rm -rf`, which follows them) before `git worktree remove`.
