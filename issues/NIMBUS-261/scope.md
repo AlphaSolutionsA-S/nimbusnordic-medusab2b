@@ -1,5 +1,7 @@
 # Norwegian companies use the Norwegian Business Central for returns, order history and company sync
 
+> Record of NIMBUS-261, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Date:** 2026-10-27
 **Status:** Implemented
 **Type:** Story

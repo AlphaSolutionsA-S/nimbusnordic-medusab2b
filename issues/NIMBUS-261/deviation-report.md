@@ -1,5 +1,7 @@
 # Deviation report: Norwegian companies use the Norwegian Business Central for returns, order history and company sync
 
+> Record of NIMBUS-261, frozen when the work shipped. Not maintained: the code and docs/architecture/ describe current behaviour.
+
 **Key:** NIMBUS-261 · **Branch:** `feature/NIMBUS-261` (HEAD `b928d98`) · **Merge-base:** `811de63` (develop)
 **Reviewed:** 2026-10-28, integration-reviewer · **Commits:** 9 (tasks 01–07, fix 01, consolidation); working tree clean
 
