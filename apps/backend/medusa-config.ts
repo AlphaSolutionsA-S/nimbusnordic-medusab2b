@@ -47,7 +47,8 @@ module.exports = defineConfig({
             id: "local",
             options: {
               channels: [
-                process.env.NODE_ENV === "development"
+                // Tests (NODE_ENV=test, set by Jest) send reset and invitation emails (NIMBUS-236).
+                ["development", "test"].includes(process.env.NODE_ENV ?? "")
                   ? "email"
                   : "feed",
               ],

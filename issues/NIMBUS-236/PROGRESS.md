@@ -40,3 +40,18 @@
   whether to register the remaining failure causes as bugs.
 - Handover prompt: "Review feature/NIMBUS-236 (issues/NIMBUS-236/change-report.md); decide push/PR,
   the Jira status, the NIMBUS-261 unit specs, and which remaining HTTP failures to register."
+
+## 2026-11-23 — follow-up: email channel in tests, committed locally
+
+- Outcome: at Klaus's request, `medusa-config.ts` gives `notification-local` the `email` channel for
+  `NODE_ENV` `test` as well as `development`; production is unchanged (`feed`). Nothing relied on
+  `feed`. Full local HTTP run: 10 failed, 474 passed of 484 (was 15 failed). The email-provider
+  errors are gone. Three tests now fail on the email link origin: the suite's `STORE_CORS` is
+  ignored by the same config-before-env mechanism. Test runs now log recipient addresses and reset
+  URLs with tokens (synthetic data; development already did this). Baseline in `verification.md`
+  updated and mirrors regenerated. Review approved. Committed as a second commit on
+  `feature/NIMBUS-236`; not pushed.
+- Next owner: Klaus. Decide whether to pin `STORE_CORS` in `jest.config.js`, check that Medusa Cloud
+  has an email provider, and give the go-ahead for push or PR, plus the earlier open items.
+- Handover prompt: "Review the email-channel follow-up in issues/NIMBUS-236/change-report.md;
+  decide on pinning STORE_CORS for tests and check the deployed email provider."

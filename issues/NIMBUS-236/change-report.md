@@ -95,3 +95,39 @@ production config were never at fault. `apps/backend/jest.config.js` now sets
   `--max-old-space-size` to the `test:integration:http` script.
 - Docker did not publish port 5432 for `nimbus_postgres_container` on this machine. A local setup
   issue, not a repo change.
+
+## Follow-up: email channel in tests (second commit)
+
+Klaus asked for this on 2026-11-23 ("do give the local provider the email channel when NODE_ENV is
+test as well").
+
+- `apps/backend/medusa-config.ts`: `notification-local` now serves the `email` channel when
+  `NODE_ENV` is `development` or `test`, and `feed` otherwise. Jest sets `NODE_ENV=test`. Only the
+  `test` value changes behaviour: production, staging and an unset `NODE_ENV` still get `feed`
+  (`loadEnv` never assigns `NODE_ENV`). Review approved.
+- Nothing relies on `feed`: no spec or source in `apps/backend` uses it. Every notification is built
+  with channel `email`, and the HTTP suites assert `email`.
+- Results, run the same way as before (throwaway Postgres, `--max-old-space-size=8192`):
+  - `password-recovery` and `employee-invitation` together: 4 failed, 31 passed, down from 9 failed.
+  - Full `test:integration:http`: 10 failed, 474 passed of 484 (before this change: 15 failed). The
+    email-provider error is gone and nothing new fails. The eight email-dependent tests break down
+    as follows:
+    - Five now pass.
+    - Three now fail one step later: the email link's origin is `http://localhost:8000` (the local
+      `.env` `STORE_CORS`) instead of the suite's `STORE_CORS: https://shop.example.test`. It is
+      the same mechanism as the JWT secret: the config is read before the suite's `env` is
+      applied. Not fixed here.
+  - The other seven remaining failures are unchanged (see Tests above).
+- Logging: in test runs the local provider now logs every email through the Medusa logger:
+  recipient address, template and `data`. For password resets, `data` includes the full reset URL
+  with its token. In tests these are synthetic addresses and short-lived tokens in a throwaway
+  database. Development already logged the same. Production is unaffected (`feed`).
+
+### Open questions from the follow-up
+
+- `STORE_CORS` in tests: pinning `STORE_CORS=https://shop.example.test` in `jest.config.js` the way
+  `JWT_SECRET` is pinned would fix the three origin failures. It would also change `STORE_CORS` for
+  every suite. No other suite sets it, and the tests send no `Origin` header. This needs Klaus's go.
+- Deployed email: outside development and test, the only notification provider serves `feed`, while
+  password reset and invitations send on `email`. Unless Medusa Cloud configures another email
+  provider, those emails would fail there with the same error. Not verified against Medusa Cloud.
