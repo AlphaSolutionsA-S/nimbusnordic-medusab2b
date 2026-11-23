@@ -1,5 +1,5 @@
 import type { Logger } from "@medusajs/framework/types";
-import { ContainerRegistrationKeys } from "@medusajs/framework/utils";
+import { ContainerRegistrationKeys, MedusaError } from "@medusajs/framework/utils";
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
 
 import { BUSINESS_CENTRAL_MODULE } from "../../../src/modules/business-central";
@@ -131,7 +131,7 @@ medusaIntegrationTestRunner({
     async function createCustomerCompany(
       country: string | null,
       businessCentralCustomerNumber: string | null
-    ): Promise<void> {
+    ): Promise<string> {
       const response = await api.post(
         "/store/companies",
         {
@@ -158,6 +158,8 @@ medusaIntegrationTestRunner({
           country,
           business_central_customer_number: businessCentralCustomerNumber,
         });
+
+      return companyId;
     }
 
     describe.each<[string, string | null, BusinessCentralEnvironment]>([
@@ -337,7 +339,20 @@ medusaIntegrationTestRunner({
         expect(createReturn).not.toHaveBeenCalled();
       });
 
-      it("answers 400 for a line that cannot be returned", async () => {
+      it.each([
+        [
+          { source_line_no: 99999, quantity: 1, return_reason_code: "NORMAL" },
+          "One or more selected lines cannot be returned.",
+        ],
+        [
+          { source_line_no: 10000, quantity: 3, return_reason_code: "NORMAL" },
+          "The requested return quantity exceeds the available quantity.",
+        ],
+        [
+          { source_line_no: 10000, quantity: 1, return_reason_code: "DAMAGED" },
+          "One or more return reasons are invalid.",
+        ],
+      ])("answers 400 with the validation message for %j", async (line, message) => {
         await createCustomerCompany("NO", CUSTOMER_NUMBER);
         jest.spyOn(bcService(), "getOrder").mockResolvedValueOnce(sourceOrder);
         const createReturn = jest
@@ -346,15 +361,34 @@ medusaIntegrationTestRunner({
 
         const response = await api.post(
           "/store/bc-orders/SO-1001/returns",
-          { lines: [{ source_line_no: 99999, quantity: 1, return_reason_code: "NORMAL" }] },
+          { lines: [line] },
           { ...authenticatedStoreHeaders, validateStatus: () => true }
         );
 
         expect(response.status).toBe(400);
-        expect(response.data).toEqual({
-          message: "One or more selected lines cannot be returned.",
-        });
+        expect(response.data).toEqual({ message });
         expect(createReturn).not.toHaveBeenCalled();
+      });
+
+      // The request id is derived from the customer, order and lines only, so a company that moves
+      // to the other environment keeps the same id for the same request (retries stay idempotent).
+      it("derives the same request id in both environments", async () => {
+        const companyId = await createCustomerCompany("NO", CUSTOMER_NUMBER);
+        jest.spyOn(bcService(), "getOrder").mockResolvedValue(sourceOrder);
+        const createReturn = jest
+          .spyOn(bcService(), "createReturnFromSalesOrder")
+          .mockResolvedValue(createdReturn);
+
+        await api.post("/store/bc-orders/SO-1001/returns", body, authenticatedStoreHeaders);
+        await getContainer()
+          .resolve<ICompanyModuleService>(COMPANY_MODULE)
+          .updateCompanies({ id: companyId, country: "DK" });
+        await api.post("/store/bc-orders/SO-1001/returns", body, authenticatedStoreHeaders);
+
+        expect(createReturn.mock.calls.map(([environment]) => environment)).toEqual(["NO", "DK"]);
+        expect(createReturn.mock.calls[1][1].requestId).toBe(
+          createReturn.mock.calls[0][1].requestId
+        );
       });
 
       it("answers 503 when Business Central's outcome is unknown", async () => {
@@ -378,6 +412,36 @@ medusaIntegrationTestRunner({
         expect(response.data).toEqual({
           message: "We could not confirm the return request. Please try again shortly.",
         });
+      });
+
+      // Security: only the return's own line validation reaches the shopper; Business Central's
+      // rejection message stays out of the answer.
+      it("answers the logged generic 500 when Business Central rejects the return", async () => {
+        await createCustomerCompany("NO", CUSTOMER_NUMBER);
+        jest.spyOn(bcService(), "getOrder").mockResolvedValueOnce(sourceOrder);
+        jest
+          .spyOn(bcService(), "createReturnFromSalesOrder")
+          .mockRejectedValueOnce(
+            new MedusaError(
+              MedusaError.Types.INVALID_DATA,
+              "The return request could not be accepted. Please check the selected lines and try again."
+            )
+          );
+        const loggerError = jest.spyOn(
+          getContainer().resolve<Logger>(ContainerRegistrationKeys.LOGGER),
+          "error"
+        );
+
+        const response = await api.post("/store/bc-orders/SO-1001/returns", body, {
+          ...authenticatedStoreHeaders,
+          validateStatus: () => true,
+        });
+
+        expect(response.status).toBe(500);
+        expect(response.data).toEqual({
+          message: "The return request could not be completed. Please try again later.",
+        });
+        expect(loggerError).toHaveBeenCalledWith("BC return request failed");
       });
 
       it("answers the generic 500 without the setting's name for a Business Central configuration error", async () => {

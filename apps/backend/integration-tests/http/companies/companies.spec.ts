@@ -1397,6 +1397,32 @@ medusaIntegrationTestRunner({
           expect(await readCompany(companyId)).toEqual(before);
         });
 
+        it("keeps the written country and reports failed when the following sync fails", async () => {
+          const companyId = await createCompany("00066666", "DK");
+          const bcService = getContainer().resolve<IBusinessCentralModuleService>(
+            BUSINESS_CENTRAL_MODULE
+          );
+          jest
+            .spyOn(bcService, "getCustomer")
+            .mockResolvedValueOnce(card("NO", "Norsk Kort"))
+            .mockRejectedValueOnce(
+              new MedusaError(MedusaError.Types.UNEXPECTED_STATE, "expected BC failure")
+            );
+
+          const response = await api.post(
+            url(companyId, "/use"),
+            { environment: "NO" },
+            adminHeaders
+          );
+
+          expect(response.status).toBe(200);
+          expect(response.data).toEqual({ status: "failed", country: "NO" });
+          expect(await readCompany(companyId)).toMatchObject({
+            name: "BC Customer Company",
+            country: "NO",
+          });
+        });
+
         it("answers 400 without a Business Central call for a company with no customer number", async () => {
           const companyId = await createCompany(null);
           const getCustomerSpy = stubGetCustomer({ NO: card("NO", "Norsk Kort") });
