@@ -1,7 +1,7 @@
 # Seven local backend HTTP integration tests still fail after NIMBUS-236
 
 **Date:** 2026-11-23
-**Status:** Scoped (awaiting approval)
+**Status:** Scoped (approved 2026-11-23)
 **Type:** Bug
 **Priority:** Medium (Jira; `bug.md` recorded Major at registration, the tracker is authoritative)
 **Issue:** NIMBUS-269
@@ -64,31 +64,31 @@ company field, colleague data or author email was seen in any failing response.
    customer after the 400, now by reading the customer's linked employee.
 3. The store quote privacy cases keep proving, for both roles and all seven store quote response
    routes, with default, additive-malicious and explicit-malicious `fields`: no administrator-only
-   company field, no colleague data, no author email or other author field. What they assert about
-   the related records' `id` follows Q1.
+   company field, no colleague data, no author email or other author field. The related records
+   are asserted exactly, including their `id` pinned to the known value: the company as
+   `{ id: <own company id>, name }`, message authors as `{ id: <staff user or customer id>,
+   first_name, last_name }`.
 4. The store quote create case asserts only order summary fields Medusa 2.21 provides.
 5. The Admin quote message case reaches the message route (its product published in setup) and
    proves the message is stored with the Admin as author, the given item and no customer.
-6. If Q1 is answered B, every store quote response route returns the related records without
-   `id` (and without whatever Q2 adds), while store quote reads, actions and the storefront quote
-   pages keep working.
+6. No production code changes: the store quote responses stay as they are.
 
 ### Non-functional
 
 - Run against a real Postgres as the suites do today; no guard in `integration-tests/global-setup.ts`
   relaxed.
-- The records stay true: `ai/architecture/verification.md` baseline, and with answer A the
-  `decisions.md` row and `docs/architecture/store-access.md` wording.
+- The records stay true: `ai/architecture/verification.md` baseline, the `decisions.md` row and
+  the `docs/architecture/store-access.md` wording.
 
 ## Business rules
 
 - Store employee creation with an existing customer's id → refused (400); no employee is created or
   linked, the account's role is not changed (NIMBUS-243, NIMBUS-252; unchanged).
-- Store quote response, any employee role → company: `name` only per the agreed rule; whether
-  Medusa's `id` may stay is Q1. Administrator-only company fields, colleagues and author contact
-  fields → never, whatever `fields` the caller sends (NIMBUS-207; unchanged).
-- Store quote response, message author → `first_name`, `last_name` per the agreed rule; author `id`
-  follows Q1. The message keeps `admin_id` and `customer_id` (unchanged).
+- Store quote response, any employee role → company: `name` and its `id` (changed from "name
+  only" of NIMBUS-207; Klaus Petersen, 2026-11-23). Administrator-only company fields, colleagues
+  and author contact fields → never, whatever `fields` the caller sends (NIMBUS-207; unchanged).
+- Store quote response, message author → `first_name`, `last_name` and the author's `id` (changed
+  as above). The message keeps `admin_id` and `customer_id` (unchanged).
 - Store quote read or action on another customer's quote → not found (unchanged).
 - Admin posts a quote message → stored with the signed-in Admin as author (`admin_id` = the Admin
   user), the optional item, no customer (unchanged).
@@ -102,11 +102,11 @@ No table, column, link or migration changes.
 |Field in the store quote response|Owner|Written by|Stored or derived|Sensitive?|In the response today|Intended|
 |---|---|---|---|---|---|---|
 |`customer.employee.company.name`|company module (BC-managed)|BC sync|stored|low|yes|yes|
-|`customer.employee.company.id`|company module|system|stored|low; the caller's own company|yes (added by Medusa)|Q1|
-|`customer.employee.company_id`|company module|system|stored|same value as above|yes (added by Medusa)|Q2 (only matters with answer B)|
+|`customer.employee.company.id`|company module|system|stored|low; the caller's own company|yes (added by Medusa)|yes (accepted 2026-11-23)|
+|`customer.employee.company_id`|company module|system|stored|same value as above|yes (added by Medusa)|yes (unchanged)|
 |`customer.employee.id`|company module|system|stored|low; own record|yes (selected on purpose)|yes (unchanged)|
-|`messages[].admin.id`|user module (link)|system|stored|low; equals `admin_id`|yes (added by Medusa)|Q1|
-|`messages[].customer.id`|customer module (link)|system|stored|low; equals `customer_id`|yes (added by Medusa)|Q1|
+|`messages[].admin.id`|user module (link)|system|stored|low; equals `admin_id`|yes (added by Medusa)|yes (accepted 2026-11-23)|
+|`messages[].customer.id`|customer module (link)|system|stored|low; equals `customer_id`|yes (added by Medusa)|yes (accepted 2026-11-23)|
 |company credit limit, blocked, reset frequency, BC sync time, Order API flag, colleagues, author emails|company, user, customer modules|—|—|admin-only or personal|no|no (unchanged)|
 
 ## Security properties (draft)
@@ -115,7 +115,7 @@ No table, column, link or migration changes.
 |---|---|---|---|
 |No administrator-only company field via a store quote|Server-side quote field allowlist (`query-config.ts`); privacy matrix in `security-boundaries`|Route configuration, not the client|Field absent; test fails if present|
 |No colleague data or author contact data via a store quote|Same|Same|Absent|
-|Related-record ids in a store quote|A: allowed, asserted equal to the caller's own company id, the staff user id and the caller's customer id. B: stripped before the response is sent, in one shared place for all seven routes|Route configuration (A); a response-shaping step (B)|A: test fails on any other field. B: test fails if an id appears|
+|Related-record ids in a store quote|Allowed, asserted equal to the caller's own company id, the staff user id and the caller's customer id|Route configuration|Test fails on a different id or any other field|
 |Quote owner only|Customer-scoped queries and workflow ownership checks (unchanged)|Customer session or bearer token|Not found|
 |No company link from store employee creation with an existing account|Store route validation (unchanged); spec reads the customer's linked employee|Server|400, no link|
 |Personal data on failure|Errors log the message only (unchanged)|—|No company or customer data in logs|
@@ -123,10 +123,9 @@ No table, column, link or migration changes.
 ## Affected apps
 
 - Backend (`apps/backend`): the four HTTP spec files and `integration-tests/utils/seeder.ts` or the
-  admin spec's setup; with answer B also the store quote routes or a shared response helper.
-- Storefront: none with answer A. With answer B, check that the quote pages read no related `id`
-  (believed none; `NIMBUS-207` found the storefront reads only the company name).
-- AI base and docs: `ai/architecture/verification.md` (baseline); with answer A also
+  admin spec's setup. No production code.
+- Storefront: none.
+- AI base and docs: `ai/architecture/verification.md` (baseline),
   `ai/architecture/decisions.md` (the "quotes: name only" note) and
   `docs/architecture/store-access.md` (Store quote response projection).
 
@@ -138,21 +137,16 @@ No table, column, link or migration changes.
 3. Admin quote spec setup: publish the product (as `quotes/quotes` does) so the cart can be
    created, then confirm the message case passes; a failure in the message route itself is a new
    finding for the human.
-4. Store quote related-record ids, per Q1:
-   - A: the privacy matrix and the quote detail case assert the related records exactly as
-     `{ id: <known id>, name }` and `{ id: <known id>, first_name, last_name }`, keeping every
-     forbidden-field negative case; update the `decisions.md` note and the `store-access.md`
-     paragraph to say Medusa returns the relation's `id` and that it is accepted.
-   - B: strip the related-record ids (and Q2's fields) from the response of all seven store quote
-     routes in one shared place, verify the Medusa mechanism first (`medusa-boundary.md`), tests
-     unchanged.
+4. Store quote related-record ids: the privacy matrix and the quote detail case assert the related
+   records exactly as `{ id: <known id>, name }` and `{ id: <known id>, first_name, last_name }`,
+   keeping every forbidden-field negative case; update the `decisions.md` note and the
+   `store-access.md` paragraph to say Medusa returns the relation's `id` and that it is accepted.
 5. Re-measure: the full `test:integration:http` run and the unit suite; update the baseline in
    `ai/architecture/verification.md`.
 
-With answer A every task is a test, record or documentation change in one app with the rule
-already clear, so the work meets none of the full-pipeline signals and fits `quick-fix` (Q3). With
-answer B task 4 changes a store response in the company-data area, which stays in the full
-pipeline.
+Every task is a test, record or documentation change in one app with the rule now clear, so the
+work meets none of the full-pipeline signals: the whole bug goes to `quick-fix` (bug mode), one
+flow and one folder (Q3).
 
 ## Open questions
 
@@ -174,6 +168,12 @@ pipeline.
 3. **Flow.** With answer A, hand the whole bug down to `quick-fix` (bug mode) with this case folder,
    as one flow and one folder? Proposed: yes. With answer B, continue with `implementation-planner`
    for all five tasks.
+
+Answer (Klaus Petersen, 2026-11-23, "all good", relayed by the pipeline coordinator): all three as
+proposed. 1: A, accept the related-record ids; the tests pin the exact ids and keep every
+forbidden-field check, and the `decisions.md` and `store-access.md` wording is updated in the
+quick-fix work. 2: not applicable. 3: hand the whole bug down to `quick-fix` (bug mode), one flow
+and one folder, on `feature/NIMBUS-269`.
 
 ## Dependencies
 

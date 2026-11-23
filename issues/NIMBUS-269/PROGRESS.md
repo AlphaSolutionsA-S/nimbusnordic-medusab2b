@@ -38,3 +38,22 @@
 - Next owner: Klaus (scope gate), then `quick-fix` (answer A) or `implementation-planner` (answer B).
 - Handover prompt: "NIMBUS-269 scope is in `issues/NIMBUS-269/scope.md`. Answer Q1–Q3; on
   approval the scoper records the scope in Jira and hands over per Q3."
+
+## 2026-11-23 — scoper: scope approved, handed down to quick-fix
+
+- Outcome: Klaus approved the scope with the proposed answers ("all good", relayed by the pipeline
+  coordinator): Q1 A (accept the related-record ids, tests pin the exact ids and keep every
+  forbidden-field check), Q2 not applicable, Q3 the whole bug goes to `quick-fix` (bug mode), one
+  flow and one folder. `scope.md` records the answers and its body now reads as decided.
+- Tracker: "scope approved" comment and "agreed rule or decision changed" comment (NIMBUS-207 rule
+  "name only" → related-record ids accepted) on NIMBUS-269; a short pointer comment on NIMBUS-207;
+  NIMBUS-269 moved Scoping → Estimation (transition "Scope approved").
+- Branch: `feature/NIMBUS-269`, cut from develop at `bee94df` (the draft scope commit); develop
+  stays at `bee94df`. Nothing pushed.
+- Next owner: `quick-fix` (bug mode), launched by triage.
+- Handover prompt: "Fix NIMBUS-269 in bug mode on `feature/NIMBUS-269` from
+  `issues/NIMBUS-269/scope.md` (Proposed structure 1–5): correct the four groups of stale test
+  assertions and setup, pin the related-record ids in the quote privacy cases, update the
+  `decisions.md` note, `docs/architecture/store-access.md` and the `verification.md` baseline,
+  and re-run the full `test:integration:http`. No production code change is expected; a failure
+  in the Admin quote message route once its setup works is a new finding for Klaus."
