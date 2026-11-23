@@ -131,3 +131,29 @@ test as well").
 - Deployed email: outside development and test, the only notification provider serves `feed`, while
   password reset and invitations send on `email`. Unless Medusa Cloud configures another email
   provider, those emails would fail there with the same error. Not verified against Medusa Cloud.
+
+## Follow-up 2: STORE_CORS pinned for test runs (third commit)
+
+Klaus approved this on 2026-11-23 ("3 fix"). The branch was fast-forwarded to develop `8ed38da`
+(the merge of the first two commits) first.
+
+- `apps/backend/jest.config.js` now also sets `process.env.STORE_CORS = "https://shop.example.test"`
+  before `loadEnv`, next to `JWT_SECRET`. The why-comment covers both. The cause is the same as
+  for `JWT_SECRET`: `medusa-config.ts` is evaluated before a suite's `env`, so the suites'
+  `STORE_CORS` never reached `http.storeCors`.
+- Value check: only two suites set `STORE_CORS`, `security/password-recovery` and
+  `companies/employee-invitation`. Both use `https://shop.example.test` and assert it as the
+  email-link origin. No suite uses a different value. No test reads the `.env` value or sends an
+  `Origin` header to a store route. The only preflight test, in `security-boundaries`, targets an
+  Admin route and uses `ADMIN_CORS`.
+- Results, run the same way as before (throwaway Postgres, `--max-old-space-size=8192`):
+  - `password-recovery` + `employee-invitation`: 1 failed, 34 passed, down from 4 failed. The one
+    remaining failure is the known `Employee.customer_id` test.
+  - Full `test:integration:http`: 7 failed, 477 passed of 484, down from 10. The three
+    link-address tests pass, nothing new fails, and the 7 remaining failures are the known ones
+    (`Employee.customer_id` 2, store quote company `id` 2, quote response shape 2, Admin quote
+    message 400 1).
+- Review approved. `verification.md` baseline updated; `pnpm ai:check --fix` regenerated the
+  copies in `AGENTS.md` and `.github/copilot-instructions.md`.
+- Like `JWT_SECRET`, the pin replaces any `STORE_CORS` a developer exports in the shell for a test
+  run.

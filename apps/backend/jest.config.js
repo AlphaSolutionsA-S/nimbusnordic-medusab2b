@@ -1,8 +1,9 @@
 const { loadEnv } = require("@medusajs/framework/utils");
-// The HTTP suites sign tokens with "supersecret", but the test runner reads medusa-config.ts before
-// it applies a suite's env, so a different JWT_SECRET in .env fails every login (NIMBUS-236).
-// Set before loadEnv: dotenv never overrides an existing variable.
+// The test runner reads medusa-config.ts before it applies a suite's env, so the values the HTTP
+// suites rely on are pinned here, before loadEnv (dotenv never overrides a set variable): they
+// sign tokens with "supersecret" and expect email links on https://shop.example.test (NIMBUS-236).
 process.env.JWT_SECRET = "supersecret";
+process.env.STORE_CORS = "https://shop.example.test";
 // Load .env from this package dir so DATABASE_URL resolves regardless of invocation cwd.
 loadEnv("test", __dirname);
 

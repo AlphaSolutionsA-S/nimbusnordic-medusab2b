@@ -55,3 +55,16 @@
   has an email provider, and give the go-ahead for push or PR, plus the earlier open items.
 - Handover prompt: "Review the email-channel follow-up in issues/NIMBUS-236/change-report.md;
   decide on pinning STORE_CORS for tests and check the deployed email provider."
+
+## 2026-11-23 — follow-up 2: STORE_CORS pinned for tests, committed locally
+
+- Outcome: Klaus approved it ("3 fix"). The branch was fast-forwarded to develop `8ed38da`.
+  `jest.config.js` now pins `STORE_CORS=https://shop.example.test` next to `JWT_SECRET`. Both suites
+  that set `STORE_CORS` use that value, and nothing else depends on it. Full local HTTP run:
+  7 failed, 477 passed of 484 (was 10 failed). The three email link-address tests pass and nothing
+  new fails. Baseline updated, mirrors regenerated, review approved. Committed on
+  `feature/NIMBUS-236`; not pushed or merged.
+- Next owner: Klaus. Give the go-ahead to push or merge. Decide which of the 7 remaining failure
+  causes to register as bugs, and check that Medusa Cloud has an email provider.
+- Handover prompt: "Review follow-up 2 in issues/NIMBUS-236/change-report.md; push or merge
+  feature/NIMBUS-236 and decide on the 7 remaining HTTP failures."
