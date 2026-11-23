@@ -23,3 +23,35 @@
 - Handover prompt: "Continue quick-fix on NIMBUS-236 with the confirmed plan: set the test JWT
   secret before the Medusa config loads (apps/backend/jest.config.js) and update the
   verification.md baseline."
+
+## 2026-11-23 — quick-fix: implemented, committed locally
+
+- Outcome: `apps/backend/jest.config.js` sets `JWT_SECRET=supersecret` before the env files load
+  (test runs only; no auth or production config change). Full local `test:integration:http`
+  (throwaway Docker Postgres, `--max-old-space-size=8192`): before 122 failed / 362 passed of 484,
+  after 15 failed / 469 passed, none with 401. The 15 remaining failures, with their causes, are in
+  `change-report.md`. Updated the `verification.md` baseline (mirrors regenerated) and
+  `business-central-company-sync.md`. Review approved; unit tests and lint pass. Committed locally
+  on `feature/NIMBUS-236`, not pushed. The analysis is in `change-report.md` (Summary, Tests),
+  because the subagent harness refused `analysis.md`.
+- Jira: commented "quick-fix started". The workflow has no in-progress transition from Scoping
+  (only Closed, Park issue, Scope approved), so the status is unchanged and the issue unassigned.
+- Next owner: Klaus. Decide on push or PR, the Jira status, the NIMBUS-261 stand-in unit specs, and
+  whether to register the remaining failure causes as bugs.
+- Handover prompt: "Review feature/NIMBUS-236 (issues/NIMBUS-236/change-report.md); decide push/PR,
+  the Jira status, the NIMBUS-261 unit specs, and which remaining HTTP failures to register."
+
+## 2026-11-23 — follow-up: email channel in tests, committed locally
+
+- Outcome: at Klaus's request, `medusa-config.ts` gives `notification-local` the `email` channel for
+  `NODE_ENV` `test` as well as `development`; production is unchanged (`feed`). Nothing relied on
+  `feed`. Full local HTTP run: 10 failed, 474 passed of 484 (was 15 failed). The email-provider
+  errors are gone. Three tests now fail on the email link origin: the suite's `STORE_CORS` is
+  ignored by the same config-before-env mechanism. Test runs now log recipient addresses and reset
+  URLs with tokens (synthetic data; development already did this). Baseline in `verification.md`
+  updated and mirrors regenerated. Review approved. Committed as a second commit on
+  `feature/NIMBUS-236`; not pushed.
+- Next owner: Klaus. Decide whether to pin `STORE_CORS` in `jest.config.js`, check that Medusa Cloud
+  has an email provider, and give the go-ahead for push or PR, plus the earlier open items.
+- Handover prompt: "Review the email-channel follow-up in issues/NIMBUS-236/change-report.md;
+  decide on pinning STORE_CORS for tests and check the deployed email provider."
