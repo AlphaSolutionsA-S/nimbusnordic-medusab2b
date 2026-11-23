@@ -191,10 +191,9 @@ reload.
 - **A list of companies not found in BC** can filter on `business_central_not_found_at`; the
   columns were chosen over a JSON field for this.
 - Tests: workflow cases in `integration-tests/http/customers/company-sync.spec.ts`, Admin route
-  contracts in `integration-tests/http/companies/companies.spec.ts` (the Admin cases fail locally
-  with a 401 on login until NIMBUS-236 is fixed; until then the unit specs
+  contracts in `integration-tests/http/companies/companies.spec.ts` and the unit specs
   `api/admin/companies/__tests__/business-central-customer-routes.unit.spec.ts` and
-  `workflows/company/__tests__/{lookup,use}-business-central-customer.unit.spec.ts` cover them),
+  `workflows/company/__tests__/{lookup,use}-business-central-customer.unit.spec.ts`,
   authorization negatives in `integration-tests/http/security/security-boundaries.spec.ts`, Admin
   UI in `src/admin/routes/companies/__tests__/company-bc-sync.test.tsx` and
   `company-bc-customer.test.tsx`.

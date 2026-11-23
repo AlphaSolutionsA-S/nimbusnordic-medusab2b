@@ -454,10 +454,13 @@ runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_D
 when set, `BUSINESS_CENTRAL_NO_DISCOVERY_URL` target allowed test environments
 (`BUSINESS_CENTRAL_TEST_ENVIRONMENTS`, default `TestDK,TestNO`; `integration-tests/global-setup.ts`).
 
-Local `test:integration:http` (develop `eea3a01`, 2026-10-23): 77 tests fail with 401 on login
-(NIMBUS-236), in `integration-tests/http/*.spec.ts`: `admin/bc-integration`, `quotes/quotes`,
-`admin/quotes/quotes`, `security/password-recovery`, `translations/translations`,
-`security/security-boundaries`, `companies/companies`.
+Local `test:integration:http` (develop `fef50ee` + NIMBUS-236, 2026-11-23): 15 of 484 fail, none on
+login (`jest.config.js` pins `JWT_SECRET`): email notifications (no `email` channel outside
+`development`) in `security/password-recovery` (6) and `companies/employee-invitation` (2); a
+query on `Employee.customer_id` there and in `security/security-boundaries` (1 each); store quote
+company returns `id` besides `name` in `security-boundaries` (2); response-shape asserts in
+`quotes/quotes` (2); a 400 on the Admin quote message in `admin/quotes/quotes` (1). The default
+heap ran out after 21 suites; the run used `--max-old-space-size=8192`.
 
 ### Whole-branch checks
 
