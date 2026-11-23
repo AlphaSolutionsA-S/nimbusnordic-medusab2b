@@ -38,3 +38,38 @@
 - Next owner: Klaus (scope gate), then `quick-fix` (answer A) or `implementation-planner` (answer B).
 - Handover prompt: "NIMBUS-269 scope is in `issues/NIMBUS-269/scope.md`. Answer Q1–Q3; on
   approval the scoper records the scope in Jira and hands over per Q3."
+
+## 2026-11-23 — scoper: scope approved, handed down to quick-fix
+
+- Outcome: Klaus approved the scope with the proposed answers ("all good", relayed by the pipeline
+  coordinator): Q1 A (accept the related-record ids, tests pin the exact ids and keep every
+  forbidden-field check), Q2 not applicable, Q3 the whole bug goes to `quick-fix` (bug mode), one
+  flow and one folder. `scope.md` records the answers and its body now reads as decided.
+- Tracker: "scope approved" comment and "agreed rule or decision changed" comment (NIMBUS-207 rule
+  "name only" → related-record ids accepted) on NIMBUS-269; a short pointer comment on NIMBUS-207;
+  NIMBUS-269 moved Scoping → Estimation (transition "Scope approved").
+- Branch: `feature/NIMBUS-269`, cut from develop at `bee94df` (the draft scope commit); develop
+  stays at `bee94df`. Nothing pushed.
+- Next owner: `quick-fix` (bug mode), launched by triage.
+- Handover prompt: "Fix NIMBUS-269 in bug mode on `feature/NIMBUS-269` from
+  `issues/NIMBUS-269/scope.md` (Proposed structure 1–5): correct the four groups of stale test
+  assertions and setup, pin the related-record ids in the quote privacy cases, update the
+  `decisions.md` note, `docs/architecture/store-access.md` and the `verification.md` baseline,
+  and re-run the full `test:integration:http`. No production code change is expected; a failure
+  in the Admin quote message route once its setup works is a new finding for Klaus."
+
+## 2026-11-23 — quick-fix: fixed and committed locally
+
+- Outcome: reproduced the seven failures (four files: 7 failed, 117 passed), corrected the four
+  spec files (tests only), pinned the related-record ids, updated `decisions.md`,
+  `store-access.md` and the `verification.md` baseline. Code review approved. Full
+  `test:integration:http`: 489 of 489 pass; unit 1202 and admin 96 pass; modules fail only the known
+  BC `listOrders` baseline test. Group 3a showed nothing beyond the ids; the Admin message route
+  passed once its setup worked. Details in `change-report.md` (the root-cause analysis is there;
+  no separate `analysis.md`).
+- Tracker: "quick-fix started" and "quick-fix done" comments on NIMBUS-269. Status left in
+  Estimation: the only transition forward is "Estimate approved", a human decision.
+- Branch: `feature/NIMBUS-269`, committed locally, not pushed.
+- Next owner: Klaus (push and PR go-ahead; Jira status).
+- Handover prompt: "NIMBUS-269 is committed on `feature/NIMBUS-269` (see `change-report.md`).
+  Decide on the Jira status and give the go-ahead to push and open the PR to develop."

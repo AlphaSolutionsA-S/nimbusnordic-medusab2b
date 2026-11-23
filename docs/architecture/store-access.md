@@ -23,10 +23,14 @@ and "Cart and order access rollout". This document describes how the code is put
 ### Store quote response projection
 
 All seven store quote response routes (create, list, retrieve, preview, accept, reject and message)
-share `api/store/quotes/query-config.ts`. Company data contains only `name`, for company employees
-and administrators alike. Message-author records contain only `first_name` and `last_name`;
-message IDs, text, item/customer/admin references and timestamps remain available. The owned
-customer's contact fields, employee spending limit and administrator flag remain available.
+share `api/store/quotes/query-config.ts`. Company data contains only `name` and the company's
+`id`, for company employees and administrators alike. Message-author records contain only
+`first_name`, `last_name` and the author's `id`; message IDs, text, item/customer/admin references
+and timestamps remain available. Medusa Query returns each related record's `id` alongside the
+selected fields; this was accepted on 2026-11-23 (NIMBUS-269) because the ids are the caller's own
+company (also `customer.employee.company_id`) and the authors already named by the message's
+`admin_id` and `customer_id`. The owned customer's contact fields, employee spending limit and
+administrator flag remain available.
 
 Medusa's exact-path allowlist silently strips caller-selected fields outside this projection,
 including parent wildcards, colleague collections and author emails. Unallowed sort fields return

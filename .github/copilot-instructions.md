@@ -365,7 +365,7 @@ One home per rule; consumers render its verdict. Check here before adding one.
 |Order transfer only without an account owner (NIMBUS-177)|`B/workflows/order/utils/order-transfer.ts`|400|`POST /store/orders/:id/transfer/request`|ok|
 |BC company sync: fields written; updated/skipped/failed; customer not found writes the not-found record (time, environment, number; reported `skipped`), a found card clears it; blank currency → the environment's local currency (NIMBUS-261)|`B/workflows/company/steps/prepare-company-bc-sync.ts`; LCY: `B/workflows/company/utils/resolve-currency-code.ts`|workflow status|login sync, store company read, Admin sync route|ok|
 |BC-managed company fields are read-only|`B/admin/routes/companies/bc-managed-fields.ts`|admin form; BC sync|storefront company card|ok|
-|Company credit/blocked/reset fields and colleague spending limits: admin-only|`B/api/store/companies/company-projection.ts`|store profiles|storefront|ok; quotes: name only (`B/api/store/quotes/query-config.ts`)|
+|Company credit/blocked/reset fields and colleague spending limits: admin-only|`B/api/store/companies/company-projection.ts`|store profiles|storefront|ok; quotes: name and its `id`, message authors' `id` accepted (NIMBUS-269; `B/api/store/quotes/query-config.ts`)|
 |Sent or recorded BC orders: duplicate protection and a force warning|`B/modules/order-ingestion/bc-integration-state.ts` (`hasBusinessCentralOrder`)|pure verdict|Admin widget; submission guard|ok|
 |BC submission skips existing orders unless forced|`B/workflows/business-central-order/utils/admin-bc-integration.ts` (`shouldSkipBcSubmission`)|preparation outcome|automatic and Admin workflows|ok|
 |Order line barcode resolution to BC item and size|`B/workflows/business-central-order/utils/resolve-order-line-item.ts`|line failures|BC order prepare step|ok|
@@ -418,13 +418,12 @@ runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_D
 when set, `BUSINESS_CENTRAL_NO_DISCOVERY_URL` target allowed test environments
 (`BUSINESS_CENTRAL_TEST_ENVIRONMENTS`, default `TestDK,TestNO`; `integration-tests/global-setup.ts`).
 
-Local `test:integration:http` (develop `8ed38da` + NIMBUS-236, 2026-11-23): 7 of 484 fail
-(`jest.config.js` pins `JWT_SECRET` and `STORE_CORS`, as config loads before a suite's `env`): a
-query on `Employee.customer_id` in `companies/employee-invitation` and
-`security/security-boundaries` (1 each); store quote company returns `id` besides `name` in
-`security-boundaries` (2); response-shape asserts in `quotes/quotes` (2); a 400 on the Admin quote
-message in `admin/quotes/quotes` (1). The default heap ran out after 21 suites; the run used
-`--max-old-space-size=8192`.
+Local `test:integration:http` (`feature/NIMBUS-269` on develop `bee94df`, 2026-11-23): all 489
+pass, 22 suites (`jest.config.js` pins `JWT_SECRET` and `STORE_CORS`, as config loads before a
+suite's `env`). The default heap ran out after 21 suites; the run used
+`--max-old-space-size=8192`. Same run: `test:unit` 1202 pass; `test:admin` 96 pass;
+`test:integration:modules` fails only the BC `listOrders` guardrail test, counted twice (`src` and
+the compiled `.medusa/server` copy).
 
 ### Whole-branch checks
 

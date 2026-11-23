@@ -264,7 +264,11 @@ medusaIntegrationTestRunner({
         customer_id: customer.id, is_admin: true,
       }, { ...headers, validateStatus: () => true });
       expect(response.status).toBe(400);
-      expect(await companyService.listEmployees({ customer_id: customer.id })).toHaveLength(0);
+      const { data: customers } = await container.resolve(ContainerRegistrationKeys.QUERY).graph({
+        entity: 'customer', fields: ['id', 'employee.id'], filters: { id: customer.id },
+      });
+      expect(customers).toHaveLength(1);
+      expect(customers[0].employee ?? null).toBeNull();
       const identities = await container.resolve<IAuthModuleService>(Modules.AUTH)
         .listProviderIdentities({ provider: 'emailpass', entity_id: email });
       expect(identities).toHaveLength(1);
@@ -353,16 +357,20 @@ medusaIntegrationTestRunner({
         customer: { employee: { company: unknown } };
         messages: { admin?: unknown; customer?: unknown }[];
       }, populated = true) {
-        expect(quote.customer.employee.company).toEqual({ name: 'Own company' });
+        // Medusa Query returns each related record's id with the selected fields; accepted as
+        // the caller's own company and the authors already named by admin_id/customer_id (NIMBUS-269).
+        const admin = { id: staffId, first_name: 'Quote', last_name: 'Staff' };
+        const author = { id: customerId, first_name: 'Quote', last_name: 'Customer' };
+        expect(quote.customer.employee.company).toEqual({ id: companyId, name: 'Own company' });
         if (populated) {
           expect(quote.messages).toEqual(expect.arrayContaining([
-            expect.objectContaining({ admin: { first_name: 'Quote', last_name: 'Staff' } }),
-            expect.objectContaining({ customer: { first_name: 'Quote', last_name: 'Customer' } }),
+            expect.objectContaining({ admin }),
+            expect.objectContaining({ customer: author }),
           ]));
         }
         for (const message of quote.messages) {
-          if (message.admin) expect(message.admin).toEqual({ first_name: 'Quote', last_name: 'Staff' });
-          if (message.customer) expect(message.customer).toEqual({ first_name: 'Quote', last_name: 'Customer' });
+          if (message.admin) expect(message.admin).toEqual(admin);
+          if (message.customer) expect(message.customer).toEqual(author);
         }
       }
 
