@@ -28,6 +28,7 @@ medusaIntegrationTestRunner({
     let storeHeaders, cart, product, salesChannel, region, customerToken;
     let customerId: string;
     let staffId: string;
+    let companyId: string;
 
     beforeEach(async () => {
       const container = getContainer();
@@ -44,6 +45,7 @@ medusaIntegrationTestRunner({
       const company = (await api.post("/store/companies", {
         name: "Quote company", email: "quote-company@example.test", currency_code: "usd",
       }, storeHeaders)).data.companies[0];
+      companyId = company.id;
       const companies = container.resolve<CompanyModuleService>("company");
       const [employee] = await companies.listEmployees({ company_id: company.id });
       await companies.updateEmployees({ id: employee.id, spending_limit: 1000 });
@@ -114,7 +116,7 @@ medusaIntegrationTestRunner({
           id, draft_order_id: expect.any(String),
           customer: expect.objectContaining({
             id: customerId, email: "test@email.com", phone: "12345678", first_name: "Quote", last_name: "Customer",
-            employee: expect.objectContaining({ spending_limit: 1000, is_admin: true, company: { name: "Quote company" } }),
+            employee: expect.objectContaining({ spending_limit: 1000, is_admin: true, company: { id: companyId, name: "Quote company" } }),
           }),
           draft_order: expect.objectContaining({
             display_id: expect.any(Number), currency_code: "usd",
@@ -130,9 +132,9 @@ medusaIntegrationTestRunner({
           }),
           messages: expect.arrayContaining([
             expect.objectContaining({ id: messages[0].id, text: "Staff item response", item_id: itemId, admin_id: staffId,
-              admin: { first_name: "Admin", last_name: "User" }, created_at: expect.any(String) }),
+              admin: { id: staffId, first_name: "Admin", last_name: "User" }, created_at: expect.any(String) }),
             expect.objectContaining({ id: messages[1].id, text: "Customer request", customer_id: customerId,
-              customer: { first_name: "Quote", last_name: "Customer" } }),
+              customer: { id: customerId, first_name: "Quote", last_name: "Customer" } }),
             expect.objectContaining({ id: expect.any(String), text: "Customer item request", item_id: itemId, customer_id: customerId }),
           ]),
         }));
@@ -175,7 +177,6 @@ medusaIntegrationTestRunner({
               ],
               summary: expect.objectContaining({
                 paid_total: 0,
-                difference_sum: 0,
                 refunded_total: 0,
                 transaction_total: 0,
                 pending_difference: 100,

@@ -189,11 +189,15 @@ medusaIntegrationTestRunner({
       const response = await storeCreate({ customer_id: customer.id });
 
       expect(response.status).toBe(400);
-      expect(
-        await container
-          .resolve<ICompanyModuleService>(COMPANY_MODULE)
-          .listEmployees({ customer_id: customer.id })
-      ).toHaveLength(0);
+      const { data: customers } = await container
+        .resolve(ContainerRegistrationKeys.QUERY)
+        .graph({
+          entity: "customer",
+          fields: ["id", "employee.id"],
+          filters: { id: customer.id },
+        });
+      expect(customers).toHaveLength(1);
+      expect(customers[0].employee ?? null).toBeNull();
       expect(await receivedBeforeControl()).toEqual([]);
     });
 

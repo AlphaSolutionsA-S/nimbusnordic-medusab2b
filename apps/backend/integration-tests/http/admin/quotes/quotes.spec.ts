@@ -1,4 +1,5 @@
 import { medusaIntegrationTestRunner } from "@medusajs/test-utils";
+import type QuoteModuleService from "../../../../src/modules/quote/service";
 import {
   adminHeaders,
   createAdminUser,
@@ -24,10 +25,11 @@ medusaIntegrationTestRunner({
   },
   testSuite: ({ api, getContainer }) => {
     let storeHeaders, cart, product, salesChannel, region, customerToken;
+    let adminUserId: string;
 
     beforeEach(async () => {
       const container = getContainer();
-      await createAdminUser(adminHeaders, container);
+      adminUserId = (await createAdminUser(adminHeaders, container)).user.id;
       const publishableKey = await generatePublishableKey(container);
       storeHeaders = generateStoreHeaders({ publishableKey });
       const res = await createStoreUser({ api, storeHeaders });
@@ -48,6 +50,16 @@ medusaIntegrationTestRunner({
           sales_channels: [{ id: salesChannel.id }],
         },
       });
+      const published = await api.post(
+        `/admin/products/${product.id}`,
+        {
+          status: "published",
+          sales_channels: [{ id: salesChannel.id }],
+        },
+        adminHeaders
+      );
+      expect(published.status).toBe(200);
+      expect(published.data.product.status).toBe("published");
 
       await api.post(
         `/admin/api-keys/${publishableKey.id}/sales-channels`,
@@ -70,17 +82,14 @@ medusaIntegrationTestRunner({
       let quote1;
 
       beforeEach(async () => {
-        const {
-          data: { quote: newQuote },
-        } = await api.post("/store/quotes", { cart_id: cart.id }, storeHeaders);
+        const created = await api.post("/store/quotes", { cart_id: cart.id }, storeHeaders);
+        expect(created.status).toBe(200);
 
-        quote1 = newQuote;
+        quote1 = created.data.quote;
       });
 
       it("successfully creates an admin quote message", async () => {
-        const {
-          data: { quote },
-        } = await api.post(
+        const response = await api.post(
           `/admin/quotes/${quote1.id}/messages`,
           {
             text: "test message",
@@ -89,19 +98,31 @@ medusaIntegrationTestRunner({
           adminHeaders
         );
 
-        expect(quote).toEqual(
+        expect(response.status).toBe(200);
+        expect(response.data.quote).toEqual(
           expect.objectContaining({
             id: quote1.id,
             messages: [
               expect.objectContaining({
                 text: "test message",
                 item_id: cart.items[0].id,
-                admin_id: expect.any(String),
+                admin_id: adminUserId,
                 customer_id: null,
               }),
             ],
           })
         );
+        const stored = await getContainer()
+          .resolve<QuoteModuleService>("quote")
+          .listMessages({ quote_id: quote1.id });
+        expect(stored).toEqual([
+          expect.objectContaining({
+            text: "test message",
+            item_id: cart.items[0].id,
+            admin_id: adminUserId,
+            customer_id: null,
+          }),
+        ]);
       });
     });
   },

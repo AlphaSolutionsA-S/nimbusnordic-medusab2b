@@ -57,3 +57,19 @@
   `decisions.md` note, `docs/architecture/store-access.md` and the `verification.md` baseline,
   and re-run the full `test:integration:http`. No production code change is expected; a failure
   in the Admin quote message route once its setup works is a new finding for Klaus."
+
+## 2026-11-23 — quick-fix: fixed and committed locally
+
+- Outcome: reproduced the seven failures (four files: 7 failed, 117 passed), corrected the four
+  spec files (tests only), pinned the related-record ids, updated `decisions.md`,
+  `store-access.md` and the `verification.md` baseline. Code review approved. Full
+  `test:integration:http`: 489 of 489 pass; unit 1202 and admin 96 pass; modules fail only the known
+  BC `listOrders` baseline test. Group 3a showed nothing beyond the ids; the Admin message route
+  passed once its setup worked. Details in `change-report.md` (the root-cause analysis is there;
+  no separate `analysis.md`).
+- Tracker: "quick-fix started" and "quick-fix done" comments on NIMBUS-269. Status left in
+  Estimation: the only transition forward is "Estimate approved", a human decision.
+- Branch: `feature/NIMBUS-269`, committed locally, not pushed.
+- Next owner: Klaus (push and PR go-ahead; Jira status).
+- Handover prompt: "NIMBUS-269 is committed on `feature/NIMBUS-269` (see `change-report.md`).
+  Decide on the Jira status and give the go-ahead to push and open the PR to develop."
