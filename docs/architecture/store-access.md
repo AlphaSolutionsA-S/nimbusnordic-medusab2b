@@ -120,6 +120,14 @@ template and data at info level, so every invitation logs the invited address an
 (no credential). This was accepted for NIMBUS-242 on 2026-10-25, as the logged reset link was for
 NIMBUS-133.
 
+### Email delivery
+
+Both emails send on channel `email`. On Medusa Cloud, the platform registers the email provider for
+that channel, so deployed delivery does not depend on the providers in `medusa-config.ts`. The
+`notification-local` provider configured there serves `email` only when `NODE_ENV` is
+`development` or `test` (local runs and the HTTP tests, NIMBUS-236) and `feed` otherwise; it logs
+each notification instead of sending it.
+
 Backend paths are relative to `apps/backend/src/`, storefront paths to `apps/storefront/src/`.
 
 ### Backend: rules (L5)
