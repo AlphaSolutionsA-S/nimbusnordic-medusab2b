@@ -418,10 +418,9 @@ runs backend or storefront tests. Backend tests abort unless `BUSINESS_CENTRAL_D
 when set, `BUSINESS_CENTRAL_NO_DISCOVERY_URL` target allowed test environments
 (`BUSINESS_CENTRAL_TEST_ENVIRONMENTS`, default `TestDK,TestNO`; `integration-tests/global-setup.ts`).
 
-Local `test:integration:http` (develop `fef50ee` + NIMBUS-236, 2026-11-23): 10 of 484 fail, none on
-login (`jest.config.js` pins `JWT_SECRET`): email links use the `.env` `STORE_CORS`, not the suite's
-(config loads before suite `env`), in `security/password-recovery` (2) and
-`companies/employee-invitation` (1); a query on `Employee.customer_id` there and in
+Local `test:integration:http` (develop `8ed38da` + NIMBUS-236, 2026-11-23): 7 of 484 fail
+(`jest.config.js` pins `JWT_SECRET` and `STORE_CORS`, as config loads before a suite's `env`): a
+query on `Employee.customer_id` in `companies/employee-invitation` and
 `security/security-boundaries` (1 each); store quote company returns `id` besides `name` in
 `security-boundaries` (2); response-shape asserts in `quotes/quotes` (2); a 400 on the Admin quote
 message in `admin/quotes/quotes` (1). The default heap ran out after 21 suites; the run used
